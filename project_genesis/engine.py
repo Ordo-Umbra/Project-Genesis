@@ -4,7 +4,7 @@ import numpy as np
 
 from .config import EngineConfig
 from .io import load_snapshot, save_snapshot
-from .metrics import calculate_gradients, summarize_field
+from .metrics import calculate_gradients, compute_s_functional, summarize_field
 from .render import render_voxel_slice
 
 
@@ -30,12 +30,14 @@ class GenesisEngine:
         self.field = field.copy() if field is not None else self.rng.random(
             (self.chunk_size, self.chunk_size, self.chunk_size)
         )
+        self.prev_field: np.ndarray | None = None
         self.history = list(history or [])
 
     def calculate_S_gradients(self) -> tuple[np.ndarray, np.ndarray]:
         return calculate_gradients(self.field)
 
     def step(self, dt: float) -> np.ndarray:
+        self.prev_field = self.field.copy()
         laplacian, gradient_squared = self.calculate_S_gradients()
         d_rho = laplacian + (self.BETA * gradient_squared) - (self.G * self.field)
         self.field = self.field + (d_rho * dt)
@@ -60,7 +62,7 @@ class GenesisEngine:
             self.step(delta_t)
             absolute_step = start_step + step
             if step % record_every == 0 or step == total_steps:
-                snapshot = self.summarize_state(step=absolute_step)
+                snapshot = self.summarize_state(step=absolute_step, prev_field=self.prev_field)
                 snapshot["slice_z"] = render_voxel_slice(self.quantize_to_voxels(), axis="z")
                 self.history.append(snapshot)
 
@@ -73,13 +75,19 @@ class GenesisEngine:
         voxel_chunk[self.field >= self.config.soil_threshold] = 2
         return voxel_chunk
 
-    def summarize_state(self, *, step: int | None = None) -> dict[str, float | int]:
+    def summarize_state(
+        self,
+        *,
+        step: int | None = None,
+        prev_field: np.ndarray | None = None,
+    ) -> dict[str, float | int]:
         return summarize_field(
             self.field,
             self.quantize_to_voxels(),
             self.BETA,
             self.G,
             step=step,
+            prev_field=prev_field,
         )
 
     def save(self, path: str | Path) -> Path:
