@@ -36,7 +36,7 @@ class GenesisEngineTests(unittest.TestCase):
         self.assertTrue(np.isfinite(engine.field).all())
         voxel_values = set(np.unique(engine.quantize_to_voxels()).tolist())
         self.assertGreaterEqual(len(voxel_values), 2)
-        self.assertTrue(voxel_values.issubset({0, 1, 2}))
+        self.assertTrue(voxel_values.issubset({0, 1, 2, 3, 4}))
 
     def test_parameter_sensitivity_changes_outcome(self) -> None:
         baseline = GenesisEngine(

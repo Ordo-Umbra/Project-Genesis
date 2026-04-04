@@ -64,9 +64,11 @@ def summarize_field(
         "laplacian_abs_mean": float(np.mean(np.abs(laplacian))),
         "gravity_mean": float(np.mean(gravity_term)),
         "mean_delta": float(np.mean(laplacian + complexity_term - gravity_term)),
-        "air_ratio": float(np.mean(voxel_chunk == 0)),
-        "soil_ratio": float(np.mean(voxel_chunk == 1)),
-        "stone_ratio": float(np.mean(voxel_chunk == 2)),
+        "void_ratio": float(np.mean(voxel_chunk == 0)),
+        "air_ratio": float(np.mean(voxel_chunk == 1)),
+        "soil_ratio": float(np.mean(voxel_chunk == 2)),
+        "stone_ratio": float(np.mean(voxel_chunk == 3)),
+        "bedrock_ratio": float(np.mean(voxel_chunk == 4)),
     }
     if step is not None:
         metrics["step"] = step

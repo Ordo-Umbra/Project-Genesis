@@ -3,9 +3,11 @@ from pathlib import Path
 import numpy as np
 
 VOXEL_SYMBOLS = {
-    0: ".",
-    1: "+",
-    2: "#",
+    0: " ",   # void
+    1: ".",   # air
+    2: "+",   # soil
+    3: "#",   # stone
+    4: "@",   # bedrock
 }
 
 

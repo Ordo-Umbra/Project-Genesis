@@ -70,9 +70,12 @@ class GenesisEngine:
 
     def quantize_to_voxels(self) -> np.ndarray:
         voxel_chunk = np.zeros_like(self.field, dtype=int)
-        voxel_chunk[self.field < self.config.air_threshold] = 0
-        voxel_chunk[(self.field >= self.config.air_threshold) & (self.field < self.config.soil_threshold)] = 1
-        voxel_chunk[self.field >= self.config.soil_threshold] = 2
+        cfg = self.config
+        voxel_chunk[self.field < cfg.void_threshold] = 0
+        voxel_chunk[(self.field >= cfg.void_threshold) & (self.field < cfg.air_threshold)] = 1
+        voxel_chunk[(self.field >= cfg.air_threshold) & (self.field < cfg.soil_threshold)] = 2
+        voxel_chunk[(self.field >= cfg.soil_threshold) & (self.field < cfg.bedrock_threshold)] = 3
+        voxel_chunk[self.field >= cfg.bedrock_threshold] = 4
         return voxel_chunk
 
     def summarize_state(
