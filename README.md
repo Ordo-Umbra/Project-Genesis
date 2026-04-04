@@ -112,6 +112,6 @@ Recommended next steps for expansion:
 
 The foundational theory document remains in:
 
-- `/home/runner/work/Project-Genesis/Project-Genesis/Docs/The Universal Recursion Principle (URP) _260312_170343.txt`
+- `Docs/The Universal Recursion Principle (URP) _260312_170343.txt`
 
 That document describes the broader URP framing this sandbox is intended to explore in executable form.
