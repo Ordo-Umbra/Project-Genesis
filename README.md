@@ -1,6 +1,6 @@
 # Project Genesis: A URP-Driven Terrain Sandbox
 
-Project Genesis is an open-source attempt to turn the Universal Recursion Principle (URP) and Recursive Complexity Model (RCM) into a persistent procedural world.
+Project Genesis is an open-source attempt to turn the Universal Recursion Principle (URP) into a persistent procedural world.
 
 The repository is centered on a first concrete milestone: a **URP terrain sandbox**. The code focuses on making the field simulation deterministic, inspectable, and testable — while progressively layering on the deeper structures described in the URP theory.
 
