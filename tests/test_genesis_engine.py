@@ -51,6 +51,33 @@ class GenesisEngineTests(unittest.TestCase):
 
         self.assertFalse(np.allclose(baseline.field, shifted.field))
 
+    def test_agent_senses_local_terrain(self) -> None:
+        engine = GenesisEngine(config=EngineConfig(chunk_size=8, seed=42))
+        agent = engine.add_agent(position=(4, 4, 4))
+        reading = agent.sense(engine.field)
+        self.assertIn("local_value", reading)
+        self.assertIn("local_gradient", reading)
+        self.assertAlmostEqual(reading["local_value"], float(engine.field[4, 4, 4]))
+
+    def test_agent_moves_during_evolution(self) -> None:
+        engine = GenesisEngine(config=EngineConfig(chunk_size=8, seed=42))
+        agent = engine.add_agent(position=(4, 4, 4))
+        engine.evolve_field(steps=10, dt=0.01)
+        self.assertEqual(len(agent.trail), 11)   # initial position + 10 moves
+        self.assertEqual(len(agent.sense_log), 10)
+        for coord in agent.position:
+            self.assertGreaterEqual(coord, 0)
+            self.assertLess(coord, 8)
+
+    def test_agent_appears_in_metrics(self) -> None:
+        engine = GenesisEngine(config=EngineConfig(chunk_size=8, seed=42))
+        engine.add_agent()
+        engine.evolve_field(steps=5, dt=0.01, record_every=5)
+        last_snapshot = engine.history[-1]
+        self.assertIn("agents", last_snapshot)
+        self.assertEqual(len(last_snapshot["agents"]), 1)
+        self.assertIn("position", last_snapshot["agents"][0])
+
 
 if __name__ == "__main__":
     unittest.main()

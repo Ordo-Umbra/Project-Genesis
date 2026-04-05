@@ -32,9 +32,20 @@ class GenesisEngine:
         )
         self.prev_field: np.ndarray | None = None
         self.history = list(history or [])
+        self.agents: list = []
 
     def calculate_S_gradients(self) -> tuple[np.ndarray, np.ndarray]:
         return calculate_gradients(self.field)
+
+    def add_agent(
+        self,
+        position: tuple[int, int, int] | None = None,
+    ) -> "Agent":
+        """Spawn a new agent in the world at the given position (or random if None)."""
+        from .agent import Agent
+        agent = Agent(position=position, chunk_size=self.chunk_size, rng=self.rng)
+        self.agents.append(agent)
+        return agent
 
     def step(self, dt: float) -> np.ndarray:
         self.prev_field = self.field.copy()
@@ -60,6 +71,9 @@ class GenesisEngine:
 
         for step in range(1, total_steps + 1):
             self.step(delta_t)
+            for agent in self.agents:
+                agent.sense(self.field)
+                agent.step(self.field)
             absolute_step = start_step + step
             if step % record_every == 0 or step == total_steps:
                 snapshot = self.summarize_state(step=absolute_step, prev_field=self.prev_field)
@@ -84,7 +98,7 @@ class GenesisEngine:
         step: int | None = None,
         prev_field: np.ndarray | None = None,
     ) -> dict[str, float | int]:
-        return summarize_field(
+        result = summarize_field(
             self.field,
             self.quantize_to_voxels(),
             self.BETA,
@@ -92,6 +106,9 @@ class GenesisEngine:
             step=step,
             prev_field=prev_field,
         )
+        if self.agents:
+            result["agents"] = [a.to_dict() for a in self.agents]
+        return result
 
     def save(self, path: str | Path) -> Path:
         return save_snapshot(path, self.field, self.config, self.history)
