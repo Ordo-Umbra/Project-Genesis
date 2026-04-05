@@ -65,11 +65,11 @@ The field is quantized into five terrain bands:
 
 | ID | Name | Symbol | Condition |
 |----|------|--------|-----------|
-| 0 | Void | ` ` | field < 0.15 |
-| 1 | Air | `.` | 0.15 ≤ field < 0.30 |
-| 2 | Soil | `+` | 0.30 ≤ field < 0.60 |
-| 3 | Stone | `#` | 0.60 ≤ field < 0.80 |
-| 4 | Bedrock | `@` | field ≥ 0.80 |
+| 0 | Void | ` ` | field < `void_threshold` (default: 0.15) |
+| 1 | Air | `.` | `void_threshold` ≤ field < `air_threshold` (default: 0.30) |
+| 2 | Soil | `+` | `air_threshold` ≤ field < `soil_threshold` (default: 0.60) |
+| 3 | Stone | `#` | `soil_threshold` ≤ field < `bedrock_threshold` (default: 0.80) |
+| 4 | Bedrock | `@` | field ≥ `bedrock_threshold` (default: 0.80) |
 
 ### Agents
 

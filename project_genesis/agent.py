@@ -60,7 +60,11 @@ class Agent:
         explore_prob = 0.2
 
         if self.rng.random() < explore_prob:
-            direction = self.rng.integers(-1, 2, size=3)
+            # Random walk constrained to 6-connected neighborhood (single-axis)
+            axis = int(self.rng.integers(0, 3))
+            delta = int(self.rng.choice([-1, 1]))
+            direction = np.zeros(3, dtype=int)
+            direction[axis] = delta
         else:
             best_direction = np.array([0, 0, 0])
             best_value = float(field[tuple(self.position)])
