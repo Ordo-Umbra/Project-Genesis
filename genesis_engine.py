@@ -14,6 +14,31 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=None, help="Deterministic seed for primordial noise.")
     parser.add_argument("--beta", type=float, default=0.09, help="Complexity coupling used by the field update.")
     parser.add_argument("--gravity", type=float, default=0.22, help="Coherence/gravity damping term.")
+    parser.add_argument("--agent-count", type=int, default=0, help="Number of agents to spawn for a fresh run.")
+    parser.add_argument(
+        "--agent-goal",
+        choices=("density", "explore", "s_functional"),
+        default="density",
+        help="Default decision policy applied to spawned agents.",
+    )
+    parser.add_argument(
+        "--agent-explore-probability",
+        type=float,
+        default=0.2,
+        help="Per-step probability that an agent ignores its goal and explores randomly.",
+    )
+    parser.add_argument(
+        "--agent-interaction-radius",
+        type=int,
+        default=2,
+        help="Distance at which agents report nearby peers.",
+    )
+    parser.add_argument(
+        "--agent-influence",
+        type=float,
+        default=0.0,
+        help="Amount of local field reinforcement applied by agents after moving.",
+    )
     parser.add_argument(
         "--record-every",
         type=int,
@@ -29,11 +54,48 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def export_artifacts(output_dir: Path, engine: GenesisEngine) -> None:
+def build_run_summary(
+    engine: GenesisEngine,
+    *,
+    output_dir: Path,
+    record_every: int,
+    requested_steps: int,
+    resumed_from: str | None,
+) -> dict[str, object]:
+    final_metrics = engine.summarize_state()
+    return {
+        "config": engine.config.to_dict(),
+        "history_length": len(engine.history),
+        "final_step": engine.history[-1]["step"] if engine.history else 0,
+        "record_every": record_every,
+        "requested_steps": requested_steps,
+        "resumed_from": resumed_from,
+        "artifacts_dir": str(output_dir),
+        "final_metrics": final_metrics,
+        "run_metadata": engine.run_metadata,
+    }
+
+
+def export_artifacts(
+    output_dir: Path,
+    engine: GenesisEngine,
+    *,
+    record_every: int,
+    requested_steps: int,
+    resumed_from: str | None = None,
+) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     slices_dir = output_dir / "slices"
+    final_slices_dir = output_dir / "final_slices"
 
     final_metrics = engine.summarize_state()
+    run_summary = build_run_summary(
+        engine,
+        output_dir=output_dir,
+        record_every=record_every,
+        requested_steps=requested_steps,
+        resumed_from=resumed_from,
+    )
     (output_dir / "config.json").write_text(
         json.dumps(engine.config.to_dict(), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -46,7 +108,18 @@ def export_artifacts(output_dir: Path, engine: GenesisEngine) -> None:
         json.dumps(engine.history, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    write_voxel_slice(output_dir / "final_slice_z.txt", engine.quantize_to_voxels(), axis="z")
+    (output_dir / "agent_timelines.json").write_text(
+        json.dumps(engine.agent_timelines(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (output_dir / "run_summary.json").write_text(
+        json.dumps(run_summary, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    voxels = engine.quantize_to_voxels()
+    write_voxel_slice(output_dir / "final_slice_z.txt", voxels, axis="z")
+    for axis in ("x", "y", "z"):
+        write_voxel_slice(final_slices_dir / f"final_slice_{axis}.txt", voxels, axis=axis)
 
     for snapshot in engine.history:
         step = int(snapshot["step"])
@@ -62,12 +135,20 @@ def main() -> None:
 
     if args.resume:
         engine = GenesisEngine.load(args.resume)
+        if args.agent_count > len(engine.agents):
+            engine.populate_agents(args.agent_count - len(engine.agents), goal=args.agent_goal)
+        engine.run_metadata["resumed_from"] = str(args.resume)
     else:
         engine = GenesisEngine(
             config=EngineConfig(
                 chunk_size=args.chunk_size,
                 beta=args.beta,
                 gravity=args.gravity,
+                agent_count=args.agent_count,
+                agent_goal=args.agent_goal,
+                agent_explore_probability=args.agent_explore_probability,
+                agent_interaction_radius=args.agent_interaction_radius,
+                agent_influence=args.agent_influence,
                 seed=args.seed,
                 default_steps=args.steps,
                 default_dt=args.dt,
@@ -75,7 +156,13 @@ def main() -> None:
         )
 
     engine.evolve_field(steps=args.steps, dt=args.dt, record_every=args.record_every)
-    export_artifacts(output_dir, engine)
+    export_artifacts(
+        output_dir,
+        engine,
+        record_every=args.record_every,
+        requested_steps=args.steps,
+        resumed_from=args.resume,
+    )
 
     print(json.dumps(engine.summarize_state(), indent=2, sort_keys=True))
     print(f"Artifacts written to {output_dir}")
