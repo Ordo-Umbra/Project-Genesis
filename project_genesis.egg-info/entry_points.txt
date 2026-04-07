@@ -1,2 +1,0 @@
-[console_scripts]
-project-genesis = genesis_engine:main
