@@ -6,6 +6,11 @@ class EngineConfig:
     chunk_size: int = 32
     beta: float = 0.09
     gravity: float = 0.22
+    agent_count: int = 0
+    agent_goal: str = "density"
+    agent_explore_probability: float = 0.2
+    agent_interaction_radius: int = 2
+    agent_influence: float = 0.0
     void_threshold: float = 0.15
     air_threshold: float = 0.3
     soil_threshold: float = 0.6
@@ -20,6 +25,16 @@ class EngineConfig:
                 "Thresholds must be strictly ordered: "
                 "void_threshold < air_threshold < soil_threshold < bedrock_threshold"
             )
+        if self.agent_count < 0:
+            raise ValueError("agent_count must be non-negative")
+        if self.agent_goal not in {"density", "explore", "s_functional"}:
+            raise ValueError("agent_goal must be one of: density, explore, s_functional")
+        if not 0.0 <= self.agent_explore_probability <= 1.0:
+            raise ValueError("agent_explore_probability must be between 0 and 1")
+        if self.agent_interaction_radius < 0:
+            raise ValueError("agent_interaction_radius must be non-negative")
+        if self.agent_influence < 0.0:
+            raise ValueError("agent_influence must be non-negative")
 
     def to_dict(self) -> dict[str, float | int | None]:
         return asdict(self)

@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "project-genesis"
+version = "0.1.0"
+description = "URP terrain sandbox with multi-agent exploration and artifact export"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "numpy==2.4.4",
+  "scipy==1.17.1",
+]
+
+[project.scripts]
+project-genesis = "genesis_engine:main"
+
+[tool.setuptools]
+py-modules = ["genesis_engine"]
+
+[tool.setuptools.packages.find]
+include = ["project_genesis*"]

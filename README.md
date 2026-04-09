@@ -12,10 +12,11 @@ The sandbox currently provides:
 - deterministic seeding for repeatable terrain runs,
 - five-band voxel sectorization: **void**, **air**, **soil**, **stone**, and **bedrock**,
 - **S-functional tracking** — per-step computation of ΔC (distinction), ΔI (integration), κ (capacity), and S = ΔC + κΔI,
-- **terrain-sensing agents** that perceive the local field and move via gradient-ascent with stochastic exploration,
+- **multi-agent terrain-sensing inhabitants** with configurable density-seeking, exploration, or S-functional-driven policies,
+- agent-agent sensing, shared best-known signals, and optional field influence at visited cells,
 - saved snapshots for resuming or analyzing a run,
-- exported metrics and text slices for inspecting intermediate and final terrain states,
-- automated checks for repeatability, stability, persistence, parameter sensitivity, and agent behavior.
+- exported metrics, run summaries, agent timelines, and text slices for inspecting intermediate and final terrain states,
+- automated checks for repeatability, stability, persistence, parameter sensitivity, agent behavior, artifacts, and CLI flows.
 
 ## Repository Layout
 
@@ -46,7 +47,7 @@ The simulation loop:
 4. Agents sense their local neighborhood and move through the field each step.
 5. Quantize the resulting field into five voxel sectors.
 6. Record metrics (including S-functional components and agent states) and center-slice snapshots.
-7. Export artifacts contributors can inspect or compare between runs.
+7. Share local best signals across agents, apply optional agent field influence, and export inspectable artifacts.
 
 ### S-Functional
 
@@ -73,10 +74,13 @@ The field is quantized into five terrain bands:
 
 ### Agents
 
-Agents are minimal inhabitants that:
-- **Sense** the 6-connected neighborhood at their position (local value, neighbor stats, gradient).
-- **Move** via gradient ascent toward denser terrain (80%) or random exploration (20%).
-- **Log** their trail and sensor readings across steps for analysis.
+Agents are configurable inhabitants that:
+- **Sense** the 6-connected neighborhood at their position (local value, neighbor stats, gradient, local S-signal proxy).
+- **Detect peers** within a configurable interaction radius and include nearby-agent data in their sensor log.
+- **Move** according to one of three policies: density-seeking, exploration-biased novelty, or local S-functional proxy maximization.
+- **Share** best-known local signals each step so the agent population can loosely coordinate.
+- **Influence** the field after moving when `agent_influence` is enabled.
+- **Log** full trails and sensor readings across steps for analysis or resume.
 
 ## Setup
 
@@ -86,12 +90,19 @@ Create a Python environment and install the declared runtime dependencies:
 python -m pip install -r requirements.txt
 ```
 
+You can also install the package with its console entry point:
+
+```bash
+python -m pip install .
+project-genesis --help
+```
+
 ## Running the Sandbox
 
 Run a deterministic sandbox simulation and export inspectable artifacts:
 
 ```bash
-python genesis_engine.py --chunk-size 24 --steps 40 --dt 0.01 --seed 7 --record-every 5 --output-dir artifacts/run_seed_7
+python genesis_engine.py --chunk-size 24 --steps 40 --dt 0.01 --seed 7 --record-every 5 --agent-count 4 --agent-goal s_functional --output-dir artifacts/run_seed_7
 ```
 
 This writes:
@@ -99,7 +110,12 @@ This writes:
 - `config.json`
 - `final_metrics.json` (includes S-functional components: `delta_c`, `delta_i`, `kappa`, `s_increment`)
 - `metrics_history.json`
+- `run_summary.json`
+- `agent_timelines.json`
 - `final_slice_z.txt`
+- `final_slices/final_slice_x.txt`
+- `final_slices/final_slice_y.txt`
+- `final_slices/final_slice_z.txt`
 - `slices/step_XXXX_z.txt`
 - `engine_snapshot.npz`
 
@@ -116,8 +132,16 @@ Agents can be spawned programmatically:
 ```python
 from project_genesis import EngineConfig, GenesisEngine
 
-engine = GenesisEngine(config=EngineConfig(chunk_size=24, seed=7))
-agent = engine.add_agent(position=(12, 12, 12))
+engine = GenesisEngine(
+    config=EngineConfig(
+        chunk_size=24,
+        seed=7,
+        agent_count=3,
+        agent_goal="explore",
+        agent_influence=0.05,
+    )
+)
+agent = engine.add_agent(position=(12, 12, 12), goal="s_functional")
 engine.evolve_field(steps=40, dt=0.01)
 
 # Inspect agent trail and sensor log
@@ -139,19 +163,23 @@ The current checks verify:
 - save/load round-trip integrity,
 - finite evolved fields with multiple voxel classes (across all five sectors),
 - sensitivity to URP parameter changes,
-- agent sensing returns correct local field values,
+- agent sensing returns correct local field values and peer-awareness data,
 - agents move and accumulate trails during evolution,
-- agent state appears in engine metrics snapshots.
+- agent state appears in engine metrics snapshots,
+- multi-agent config is applied automatically,
+- artifact export writes structured summaries and timelines,
+- CLI-driven multi-agent runs produce complete outputs.
 
 ## What Exists Now
 
 - A working terrain prototype based on the URP field equation with S-functional tracking.
 - Five-band voxel sectorization (void, air, soil, stone, bedrock) for richer terrain structure.
 - Per-step S-functional computation (ΔC, ΔI, κ, S) connecting the simulation to URP theory.
-- Minimal terrain-sensing agents that inhabit and explore the world.
+- Goal-driven multi-agent inhabitants with peer sensing and optional field influence.
 - A modular Python package with clean separation of concerns.
-- Artifact export so contributors can inspect runs without graphics dependencies.
-- A validation layer covering repeatability, persistence, sensitivity, and agent behavior.
+- Structured artifact export so contributors can inspect runs without graphics dependencies.
+- An installable console entry point for repeatable sandbox runs.
+- A validation layer covering repeatability, persistence, sensitivity, artifacts, CLI flows, and agent behavior.
 
 ## What Comes Next
 
