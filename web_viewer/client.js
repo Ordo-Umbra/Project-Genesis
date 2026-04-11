@@ -182,7 +182,7 @@ function renderChunk(msg) {
   // Skip 12-byte header (3 x uint32)
   const floats = new Float32Array(raw.buffer, 12);
 
-  const thresholds = [0.15, 0.30, 0.60, 0.80]; // void, air, soil, bedrock
+  const thresholds = [0.15, 0.30, 0.60, 0.80]; // void, air, soil, stone, bedrock
 
   let idx = 0;
   const ox = msg.x * (shape[0]);
