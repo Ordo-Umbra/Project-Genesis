@@ -1,12 +1,15 @@
 import numpy as np
-import scipy.ndimage as nd
+
+from .numba_kernels import gradient_squared_3d, laplacian_3d
 
 
 def calculate_gradients(field: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    laplacian = nd.laplace(field)
-    grad_x, grad_y, grad_z = np.gradient(field)
-    gradient_squared = grad_x**2 + grad_y**2 + grad_z**2
-    return laplacian, gradient_squared
+    """Compute the Laplacian and |∇φ|² using Numba-accelerated kernels."""
+    lap = np.empty_like(field, dtype=np.float64)
+    gsq = np.empty_like(field, dtype=np.float64)
+    laplacian_3d(np.ascontiguousarray(field, dtype=np.float64), lap)
+    gradient_squared_3d(np.ascontiguousarray(field, dtype=np.float64), gsq)
+    return lap, gsq
 
 
 def compute_s_functional(
