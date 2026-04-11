@@ -1,12 +1,15 @@
 from pathlib import Path
 from typing import Any
+import threading
 
 import numpy as np
 
 from .agent import Agent
+from .chunk_manager import ChunkManager
 from .config import EngineConfig
 from .io import load_snapshot, save_snapshot
 from .metrics import calculate_gradients, compute_s_functional, summarize_field
+from .numba_kernels import jit_step
 from .render import render_voxel_slice
 
 
@@ -48,6 +51,33 @@ class GenesisEngine:
         self.run_metadata.setdefault("initial_agent_count", len(self.agents) or config.agent_count)
         if not self.agents and config.agent_count:
             self.populate_agents(config.agent_count)
+
+        # Thread-safety lock for WebSocket reads.
+        self._lock = threading.Lock()
+
+        # Chunk manager for active-region tracking.
+        self.chunk_manager = ChunkManager(self.field.shape, chunk_edge=self.chunk_size)
+
+        # S-functional cache (invalidated each step).
+        self._s_cache: dict[str, float] | None = None
+
+        # Step counter (cumulative across evolve_field calls).
+        self._step_count: int = 0
+
+    # ------------------------------------------------------------------
+    # S-functional caching
+    # ------------------------------------------------------------------
+
+    def _invalidate_s_cache(self) -> None:
+        self._s_cache = None
+
+    def _get_s_functional(self) -> dict[str, float]:
+        """Return cached S-functional or recompute."""
+        if self._s_cache is None:
+            self._s_cache = compute_s_functional(
+                self.field, self.prev_field, self.BETA, self.G
+            )
+        return self._s_cache
 
     def calculate_S_gradients(self) -> tuple[np.ndarray, np.ndarray]:
         return calculate_gradients(self.field)
@@ -142,9 +172,11 @@ class GenesisEngine:
 
     def step(self, dt: float) -> np.ndarray:
         self.prev_field = self.field.copy()
-        laplacian, gradient_squared = self.calculate_S_gradients()
-        d_rho = laplacian + (self.BETA * gradient_squared) - (self.G * self.field)
-        self.field = self.field + (d_rho * dt)
+        new_field, _lap, _gsq = jit_step(self.field, self.BETA, self.G, dt)
+        with self._lock:
+            self.field = new_field
+        self._invalidate_s_cache()
+        self._step_count += 1
         return self.field
 
     def evolve_field(
@@ -172,15 +204,30 @@ class GenesisEngine:
             occupied_positions = {tuple(int(coord) for coord in agent.position) for agent in self.agents}
             for agent in self.agents:
                 occupied_positions.discard(tuple(int(coord) for coord in agent.position))
-                next_position = agent.step(
-                    self.field,
-                    agents=self.agents,
-                    occupied_positions=occupied_positions,
-                    shared_context=shared_context,
-                    beta=self.BETA,
-                )
+                # Check for pending external action; fall back to default policy.
+                if agent.pending_action is not None:
+                    agent.execute_pending_action(self.field)
+                    next_position = tuple(int(c) for c in agent.position)
+                else:
+                    next_position = agent.step(
+                        self.field,
+                        agents=self.agents,
+                        occupied_positions=occupied_positions,
+                        shared_context=shared_context,
+                        beta=self.BETA,
+                    )
                 occupied_positions.add(next_position)
             self._apply_agent_influence(delta_t)
+
+            # Update chunk activity mask periodically.
+            if step % max(1, record_every) == 0:
+                agent_positions = [
+                    tuple(int(c) for c in a.position) for a in self.agents
+                ]
+                self.chunk_manager.update_active_mask(
+                    self.field, self.config.void_threshold, agent_positions
+                )
+
             absolute_step = start_step + step
             if step % record_every == 0 or step == total_steps:
                 snapshot = self.summarize_state(step=absolute_step, prev_field=self.prev_field)
@@ -227,6 +274,38 @@ class GenesisEngine:
             self.agent_timelines(),
             self.run_metadata,
         )
+
+    # ------------------------------------------------------------------
+    # Thread-safe accessors for the WebSocket layer
+    # ------------------------------------------------------------------
+
+    def get_field_snapshot(self) -> np.ndarray:
+        """Return a copy of the current field (safe for concurrent reads)."""
+        with self._lock:
+            return self.field.copy()
+
+    def get_world_summary(self) -> dict:
+        """Return a summary suitable for the ``get_state`` WebSocket call."""
+        with self._lock:
+            return {
+                "dimensions": list(self.field.shape),
+                "step_count": self._step_count,
+                "s_functional": self._get_s_functional(),
+                "agent_positions": [
+                    {"agent_id": a.agent_id, "position": list(int(c) for c in a.position)}
+                    for a in self.agents
+                ],
+                "chunk_grid_shape": list(self.chunk_manager.grid_shape),
+                "active_chunks": self.chunk_manager.active_count,
+            }
+
+    def queue_agent_action(self, agent_id: str, action: dict) -> bool:
+        """Queue an external action for an agent.  Returns True on success."""
+        for agent in self.agents:
+            if agent.agent_id == agent_id:
+                agent.pending_action = action
+                return True
+        return False
 
     @classmethod
     def load(cls, path: str | Path) -> "GenesisEngine":

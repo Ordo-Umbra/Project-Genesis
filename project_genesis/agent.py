@@ -32,6 +32,7 @@ class Agent:
         self.trail: list[tuple[int, int, int]] = [self._position_tuple()]
         self.sense_log: list[dict[str, float | int | str | None]] = []
         self.visit_counts: dict[tuple[int, int, int], int] = {self._position_tuple(): 1}
+        self.pending_action: dict | None = None
 
     def _neighbor_positions(self) -> list[tuple[int, int, np.ndarray]]:
         """Return (axis, delta, neighbor_coord) tuples for the 6-connected neighborhood."""
@@ -183,6 +184,111 @@ class Agent:
             )
 
         self.position = best_position % self.chunk_size
+        position_tuple = self._position_tuple()
+        self.trail.append(position_tuple)
+        self.visit_counts[position_tuple] = self.visit_counts.get(position_tuple, 0) + 1
+        return position_tuple
+
+    # ------------------------------------------------------------------
+    # Perception interface (Phase 4)
+    # ------------------------------------------------------------------
+
+    def get_perception(
+        self,
+        world: np.ndarray,
+        *,
+        agents: list["Agent"] | None = None,
+        beta: float = 0.0,
+        radius: int = 3,
+    ) -> dict:
+        """Return a structured perception dictionary for AI agent interfaces.
+
+        The returned dict contains:
+        - ``scalar_field``: local 3-D sub-grid of scalar field values centred on
+          the agent (with periodic wrapping).
+        - ``s_field``: local 3-D sub-grid of S-functional proxy values
+          (βΔC + κΔI computed per-voxel).
+        - ``nearby_agents``: list of nearby agents with id, type, and position.
+        - ``energy``: agent's current local field value (proxy for energy).
+        - ``position``: agent's current position.
+        """
+        pos = self.position
+        size = 2 * radius + 1
+        scalar_subgrid = np.zeros((size, size, size), dtype=float)
+        s_subgrid = np.zeros((size, size, size), dtype=float)
+
+        for di in range(-radius, radius + 1):
+            for dj in range(-radius, radius + 1):
+                for dk in range(-radius, radius + 1):
+                    xi = (pos[0] + di) % world.shape[0]
+                    xj = (pos[1] + dj) % world.shape[1]
+                    xk = (pos[2] + dk) % world.shape[2]
+                    li = di + radius
+                    lj = dj + radius
+                    lk = dk + radius
+                    val = float(world[xi, xj, xk])
+                    scalar_subgrid[li, lj, lk] = val
+
+                    # Compute per-voxel S-functional proxy.
+                    neighbors_vals: list[float] = []
+                    for ax in range(3):
+                        for delta in (-1, 1):
+                            n = [xi, xj, xk]
+                            n[ax] = (n[ax] + delta) % world.shape[ax]
+                            neighbors_vals.append(float(world[n[0], n[1], n[2]]))
+                    n_mean = float(np.mean(neighbors_vals))
+                    sq_deltas = [(nv - val) ** 2 for nv in neighbors_vals]
+                    grad_energy = float(np.mean(sq_deltas))
+                    kappa = 1.0 / (1.0 + grad_energy)
+                    delta_i = max(0.0, n_mean - val)
+                    s_subgrid[li, lj, lk] = (beta * grad_energy) + (kappa * delta_i)
+
+        nearby: list[dict] = []
+        for other in agents or []:
+            if other is self:
+                continue
+            dist = self._wrapped_distance(other.position)
+            if dist <= self.interaction_radius:
+                nearby.append({
+                    "agent_id": other.agent_id,
+                    "goal": other.goal,
+                    "position": list(int(c) for c in other.position),
+                    "distance": dist,
+                })
+
+        return {
+            "scalar_field": scalar_subgrid.tolist(),
+            "s_field": s_subgrid.tolist(),
+            "nearby_agents": nearby,
+            "energy": float(world[tuple(pos)]),
+            "position": list(int(c) for c in pos),
+            "agent_id": self.agent_id,
+        }
+
+    # ------------------------------------------------------------------
+    # External action execution (Phase 4)
+    # ------------------------------------------------------------------
+
+    def execute_pending_action(self, field: np.ndarray) -> tuple[int, int, int]:
+        """Execute the queued external action and clear it.
+
+        Supported action types:
+        - ``{"type": "move", "direction": [dx, dy, dz]}``
+        """
+        action = self.pending_action
+        self.pending_action = None
+
+        if action is None:
+            return self._position_tuple()
+
+        action_type = action.get("type", "move")
+        if action_type == "move":
+            direction = action.get("direction", [0, 0, 0])
+            new_pos = self.position.copy()
+            for i in range(3):
+                new_pos[i] = (new_pos[i] + int(direction[i])) % self.chunk_size
+            self.position = new_pos
+
         position_tuple = self._position_tuple()
         self.trail.append(position_tuple)
         self.visit_counts[position_tuple] = self.visit_counts.get(position_tuple, 0) + 1

@@ -22,18 +22,29 @@ The sandbox currently provides:
 
 ```text
 project_genesis/
-  __init__.py    Package exports
-  agent.py       Minimal terrain-sensing agent
-  config.py      Engine configuration and defaults
-  engine.py      Field evolution, voxel quantization, agent orchestration, save/load
-  io.py          Snapshot serialization helpers
-  metrics.py     URP terrain summary metrics and S-functional computation
-  render.py      Text-based slice rendering for terrain inspection
+  __init__.py          Package exports
+  agent.py             Terrain-sensing agent with perception and action queue
+  chunk_manager.py     Chunk-based world partitioning for active-region tracking
+  config.py            Engine configuration and defaults
+  engine.py            Field evolution, voxel quantization, agent orchestration, save/load
+  io.py                Snapshot serialization helpers
+  metrics.py           URP terrain summary metrics and S-functional computation
+  network_server.py    WebSocket server for remote monitoring and control
+  numba_kernels.py     Numba JIT-accelerated field evolution kernels
+  render.py            Text-based slice rendering for terrain inspection
+  s_compass_bridge.py  S-compass connector bridge for AI agent integration
 Docs/
   The Universal Recursion Principle (URP) _260312_170343.txt
 tests/
   test_genesis_engine.py
-genesis_engine.py
+  test_new_subsystems.py
+web_viewer/
+  index.html           Three.js live voxel viewer
+  client.js            WebSocket client for the viewer
+benchmarks/
+  bench_field_step.py   Steps-per-second benchmark
+genesis_engine.py       CLI entry point
+run_server.py           Headless simulation server entry point
 requirements.txt
 ```
 
@@ -169,17 +180,109 @@ The current checks verify:
 - multi-agent config is applied automatically,
 - artifact export writes structured summaries and timelines,
 - CLI-driven multi-agent runs produce complete outputs.
+- chunk activation / deactivation logic,
+- WebSocket message serialization / deserialization,
+- S-compass bridge output consistency,
+- headless save / load round-trip integrity,
+- agent perception data structure and action queue execution.
+
+## Headless Server Mode
+
+Run the simulation as a persistent headless server with auto-save and optional WebSocket API:
+
+```bash
+python run_server.py --world-size 64 --save-interval 100 --port 8765 --agent-count 4
+```
+
+The server:
+
+- Runs the simulation loop indefinitely (or up to ``--max-steps``).
+- Auto-saves compressed snapshots every ``--save-interval`` steps.
+- Traps **SIGINT** / **SIGTERM** for graceful shutdown with a final save.
+- Optionally starts a WebSocket server (disable with ``--port 0``).
+- Accepts a ``--config`` JSON file for full configuration control.
+- Supports ``--resume`` to continue from a saved snapshot.
+
+## WebSocket API
+
+When the headless server runs with a non-zero port, the following commands are available over WebSocket (JSON messages):
+
+| Command | Payload | Response |
+|---------|---------|----------|
+| `get_state` | — | World dimensions, step count, S-functional, agent positions, chunk info |
+| `get_chunk` | `{x, y, z}` | Binary voxel data for the requested chunk |
+| `get_agent_view` | `{agent_id}` | Full perception dict for the specified agent |
+| `send_action` | `{agent_id, action}` | Queues an action for an agent; acknowledged |
+
+The server also pushes `chunk_updated` events to connected clients when voxel data changes.
+
+## Web Viewer
+
+Open `web_viewer/index.html` in a browser while the headless server is running. The viewer:
+
+- Connects to the WebSocket server automatically.
+- Renders voxels using Three.js with semi-transparent band materials.
+- Displays a live S-functional graph using Chart.js.
+- Provides play/pause and speed controls.
+- Receives incremental chunk update notifications.
+
+## Perception-Action Interface
+
+Agents now expose a structured perception interface for external AI controllers:
+
+```python
+perception = agent.get_perception(engine.field, agents=engine.agents, beta=engine.BETA)
+# Returns: scalar_field, s_field, nearby_agents, energy, position, agent_id
+```
+
+External actions can be queued via the WebSocket API or programmatically:
+
+```python
+engine.queue_agent_action("agent-0", {"type": "move", "direction": [1, 0, 0]})
+```
+
+### S-Compass Bridge
+
+The `s_compass_bridge` module computes a recommended action vector from perception data:
+
+```python
+from project_genesis.s_compass_bridge import perception_to_action
+
+action = perception_to_action(perception, beta=0.09)
+# Returns: {"type": "move", "direction": [dx, dy, dz]}
+```
+
+## Numba JIT Acceleration
+
+Field evolution now uses Numba-compiled kernels (`numba_kernels.py`) for the Laplacian, gradient, and evolution steps. The kernels use `@njit(parallel=True)` with `prange` for multi-core parallelism. Run the benchmark:
+
+```bash
+python benchmarks/bench_field_step.py --size 64 --steps 200
+```
+
+## Chunk-Based Processing
+
+The `ChunkManager` divides the world into cubic chunks and tracks which contain non-Void voxels or active agents. Only active chunks are processed, improving performance for sparse worlds.
 
 ## What Exists Now
 
 - A working terrain prototype based on the URP field equation with S-functional tracking.
+- **Numba JIT-accelerated** field evolution kernels with parallel stencil operations.
+- **Chunk-based processing** for efficient handling of large, sparse worlds.
+- **S-functional caching** to avoid redundant computation between steps.
 - Five-band voxel sectorization (void, air, soil, stone, bedrock) for richer terrain structure.
 - Per-step S-functional computation (ΔC, ΔI, κ, S) connecting the simulation to URP theory.
 - Goal-driven multi-agent inhabitants with peer sensing and optional field influence.
+- **Perception-action interface** for external AI agent control via structured perception dicts and action queues.
+- **S-compass bridge** for computing recommended actions from local S-functional gradients.
+- **Headless server mode** with auto-save, graceful shutdown, and command-line configuration.
+- **WebSocket API** for remote monitoring, chunk inspection, agent perception, and action dispatch.
+- **Three.js web viewer** with live voxel rendering, S-functional charting, and play/pause controls.
 - A modular Python package with clean separation of concerns.
 - Structured artifact export so contributors can inspect runs without graphics dependencies.
 - An installable console entry point for repeatable sandbox runs.
-- A validation layer covering repeatability, persistence, sensitivity, artifacts, CLI flows, and agent behavior.
+- A validation layer covering repeatability, persistence, sensitivity, artifacts, CLI flows, agent behavior, chunk management, WebSocket serialization, and S-compass consistency.
+- **Performance benchmarks** for measuring steps-per-second.
 
 ## What Comes Next
 
