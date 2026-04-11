@@ -1,6 +1,12 @@
 import numpy as np
 
-from .numba_kernels import gradient_squared_3d, laplacian_3d
+from .numba_kernels import (
+    correlation_kernel_3d,
+    gradient_dot_product_3d,
+    gradient_squared_3d,
+    laplacian_3d,
+    solve_poisson_jacobi,
+)
 
 
 def calculate_gradients(field: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -17,6 +23,12 @@ def compute_s_functional(
     prev_field: np.ndarray | None,
     beta: float,
     gravity: float,
+    *,
+    coherence_potential: bool = False,
+    poisson_iterations: int = 30,
+    integration_functional: bool = False,
+    integration_radius: int = 2,
+    integration_decay: float = 1.0,
 ) -> dict[str, float]:
     """Compute S-functional components: S = ΔC + κΔI."""
     laplacian, gradient_squared = calculate_gradients(field)
@@ -36,12 +48,28 @@ def compute_s_functional(
 
     s_increment = delta_c + kappa * delta_i
 
-    return {
+    result: dict[str, float] = {
         "delta_c": delta_c,
         "delta_i": delta_i,
         "kappa": kappa,
         "s_increment": s_increment,
     }
+
+    f64 = np.ascontiguousarray(field, dtype=np.float64)
+
+    if coherence_potential:
+        potential = np.zeros_like(f64)
+        solve_poisson_jacobi(f64, potential, poisson_iterations)
+        grad_dot = np.empty_like(f64)
+        gradient_dot_product_3d(potential, f64, grad_dot)
+        result["coherence_advection_mean"] = float(np.mean(gravity * grad_dot))
+
+    if integration_functional:
+        integ = np.empty_like(f64)
+        correlation_kernel_3d(f64, integ, integration_radius, integration_decay)
+        result["integration_mean"] = float(np.mean(integ))
+
+    return result
 
 
 def summarize_field(
@@ -52,12 +80,17 @@ def summarize_field(
     *,
     step: int | None = None,
     prev_field: np.ndarray | None = None,
+    coherence_potential: bool = False,
+    poisson_iterations: int = 30,
+    integration_functional: bool = False,
+    integration_radius: int = 2,
+    integration_decay: float = 1.0,
 ) -> dict[str, float | int]:
     laplacian, gradient_squared = calculate_gradients(field)
     complexity_term = beta * gradient_squared
     gravity_term = gravity * field
 
-    metrics = {
+    metrics: dict[str, float | int] = {
         "field_min": float(np.min(field)),
         "field_max": float(np.max(field)),
         "field_mean": float(np.mean(field)),
@@ -76,7 +109,17 @@ def summarize_field(
     if step is not None:
         metrics["step"] = step
 
-    s_metrics = compute_s_functional(field, prev_field, beta, gravity)
+    s_metrics = compute_s_functional(
+        field,
+        prev_field,
+        beta,
+        gravity,
+        coherence_potential=coherence_potential,
+        poisson_iterations=poisson_iterations,
+        integration_functional=integration_functional,
+        integration_radius=integration_radius,
+        integration_decay=integration_decay,
+    )
     metrics.update(s_metrics)
 
     return metrics

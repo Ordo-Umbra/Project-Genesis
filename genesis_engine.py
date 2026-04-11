@@ -51,6 +51,48 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory that receives metrics, slices, and the saved engine snapshot.",
     )
     parser.add_argument("--resume", default=None, help="Optional .npz snapshot path to resume from.")
+    parser.add_argument(
+        "--coherence-potential",
+        action="store_true",
+        default=False,
+        help="Enable the coherence potential V(x,t) satisfying ∇²V = ρ.",
+    )
+    parser.add_argument(
+        "--poisson-iterations",
+        type=int,
+        default=30,
+        help="Jacobi iterations for the Poisson solver (coherence potential).",
+    )
+    parser.add_argument(
+        "--integration-functional",
+        action="store_true",
+        default=False,
+        help="Enable the nonlocal integration functional I[φ].",
+    )
+    parser.add_argument(
+        "--integration-radius",
+        type=int,
+        default=2,
+        help="Radius for the correlation kernel in the integration functional.",
+    )
+    parser.add_argument(
+        "--integration-decay",
+        type=float,
+        default=1.0,
+        help="Exponential decay rate for the correlation kernel.",
+    )
+    parser.add_argument(
+        "--integration-weight",
+        type=float,
+        default=0.01,
+        help="Weight applied to the integration functional contribution.",
+    )
+    parser.add_argument(
+        "--visualize",
+        action="store_true",
+        default=False,
+        help="Generate matplotlib visualization artifacts (voxel_3d.png, field_slices.png, s_history.png).",
+    )
     return parser
 
 
@@ -83,6 +125,7 @@ def export_artifacts(
     record_every: int,
     requested_steps: int,
     resumed_from: str | None = None,
+    visualize: bool = False,
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     slices_dir = output_dir / "slices"
@@ -128,6 +171,11 @@ def export_artifacts(
 
     engine.save(output_dir / "engine_snapshot.npz")
 
+    if visualize:
+        from project_genesis.visualize import save_visualization
+
+        save_visualization(output_dir, voxels, engine.field, engine.history)
+
 
 def main() -> None:
     args = build_parser().parse_args()
@@ -152,6 +200,12 @@ def main() -> None:
                 seed=args.seed,
                 default_steps=args.steps,
                 default_dt=args.dt,
+                use_coherence_potential=args.coherence_potential,
+                poisson_iterations=args.poisson_iterations,
+                use_integration_functional=args.integration_functional,
+                integration_radius=args.integration_radius,
+                integration_decay=args.integration_decay,
+                integration_weight=args.integration_weight,
             )
         )
 
@@ -162,6 +216,7 @@ def main() -> None:
         record_every=args.record_every,
         requested_steps=args.steps,
         resumed_from=args.resume,
+        visualize=args.visualize,
     )
 
     print(json.dumps(engine.summarize_state(), indent=2, sort_keys=True))
