@@ -9,6 +9,8 @@ The repository is centered on a first concrete milestone: a **URP terrain sandbo
 The sandbox currently provides:
 
 - a configurable 3D scalar field evolved with the prototype URP-inspired update rule,
+- **optional full URP coherence potential** V(x,t) satisfying ∇²V = ρ, replacing simple gravity damping with the proper G·∇V·∇φ coherence advection term,
+- **optional nonlocal integration functional** I[φ] using exponential-decay correlation kernels,
 - deterministic seeding for repeatable terrain runs,
 - five-band voxel sectorization: **void**, **air**, **soil**, **stone**, and **bedrock**,
 - **S-functional tracking** — per-step computation of ΔC (distinction), ΔI (integration), κ (capacity), and S = ΔC + κΔI,
@@ -16,7 +18,8 @@ The sandbox currently provides:
 - agent-agent sensing, shared best-known signals, and optional field influence at visited cells,
 - saved snapshots for resuming or analyzing a run,
 - exported metrics, run summaries, agent timelines, and text slices for inspecting intermediate and final terrain states,
-- automated checks for repeatability, stability, persistence, parameter sensitivity, agent behavior, artifacts, and CLI flows.
+- **matplotlib visualization** — 3-D voxel scatter plots, field cross-section heat maps, and S-functional time-series charts,
+- automated checks for repeatability, stability, persistence, parameter sensitivity, agent behavior, artifacts, CLI flows, physics correctness, and visualization output.
 
 ## Repository Layout
 
@@ -33,11 +36,13 @@ project_genesis/
   numba_kernels.py     Numba JIT-accelerated field evolution kernels
   render.py            Text-based slice rendering for terrain inspection
   s_compass_bridge.py  S-compass connector bridge for AI agent integration
+  visualize.py         Matplotlib-based 3-D voxel and S-functional visualization
 Docs/
   The Universal Recursion Principle (URP) _260312_170343.txt
 tests/
   test_genesis_engine.py
   test_new_subsystems.py
+  test_urp_extensions.py
 web_viewer/
   index.html           Three.js live voxel viewer
   client.js            WebSocket client for the viewer
@@ -53,12 +58,13 @@ requirements.txt
 The simulation loop:
 
 1. Initialize a cubic scalar field with seeded primordial noise.
-2. Evolve the field using diffusion, a complexity term (β|∇φ|²), and a gravity/damping term (G·φ).
-3. At each step, compute the **S-functional** — tracking how structural differentiation (ΔC) and coherent integration (ΔI) evolve under capacity constraints (κ).
-4. Agents sense their local neighborhood and move through the field each step.
-5. Quantize the resulting field into five voxel sectors.
-6. Record metrics (including S-functional components and agent states) and center-slice snapshots.
-7. Share local best signals across agents, apply optional agent field influence, and export inspectable artifacts.
+2. Evolve the field using diffusion, a complexity term (β|∇φ|²), and either the simplified gravity damping (G·φ) or the full URP coherence potential (G·∇V·∇φ where ∇²V = ρ).
+3. Optionally compute the nonlocal integration functional I[φ] = ∫∫ K(x,x')φ(x)φ(x') dx dx' using exponential-decay correlation kernels.
+4. At each step, compute the **S-functional** — tracking how structural differentiation (ΔC) and coherent integration (ΔI) evolve under capacity constraints (κ).
+5. Agents sense their local neighborhood and move through the field each step.
+6. Quantize the resulting field into five voxel sectors.
+7. Record metrics (including S-functional components and agent states) and center-slice snapshots.
+8. Share local best signals across agents, apply optional agent field influence, and export inspectable artifacts.
 
 ### S-Functional
 
@@ -70,6 +76,18 @@ The S-functional implements the core URP equation **S = ΔC + κΔI**:
 | **κ** (capacity) | 1 / (1 + mean(\|∇φ\|²)) — high gradients suppress integration |
 | **ΔI** (integration) | Reduction in mean absolute Laplacian between steps (smoothing = integration) |
 | **S** | ΔC + κ · ΔI |
+
+### Coherence Potential V(x,t)
+
+The full URP field equation replaces the simple G·φ damping term with a coherence advection term G·∇V·∇φ, where V is a potential satisfying the Poisson equation ∇²V = ρ (with ρ proportional to the field φ). This models gravitational-like coherence forces that drive the field toward configurations maximizing mutual information across boundaries.
+
+Enable with `--coherence-potential`. The Poisson equation is solved iteratively using Numba-accelerated Jacobi relaxation with periodic boundary conditions. Control the solver precision with `--poisson-iterations` (default: 30).
+
+### Nonlocal Integration Functional I[φ]
+
+The integration functional I[φ] = ∫∫ K(x,x')φ(x)φ(x') dx dx' captures nonlocal correlations in the field using an exponential-decay kernel K(x,x') = exp(-decay·|x-x'|). Its functional derivative δI/δφ enters the field equation as an additional driving term that rewards configurations where nearby regions share coherent structure.
+
+Enable with `--integration-functional`. Configure with `--integration-radius` (default: 2), `--integration-decay` (default: 1.0), and `--integration-weight` (default: 0.01).
 
 ### Voxel Sectors
 
@@ -129,6 +147,20 @@ This writes:
 - `final_slices/final_slice_z.txt`
 - `slices/step_XXXX_z.txt`
 - `engine_snapshot.npz`
+
+### Running with Full URP Physics
+
+Enable the coherence potential and integration functional for the complete URP field equation:
+
+```bash
+python genesis_engine.py --chunk-size 24 --steps 40 --dt 0.01 --seed 7 --coherence-potential --integration-functional --visualize --output-dir artifacts/full_urp_run
+```
+
+This adds the full ∂_t φ = ∇²φ + β|∇φ|² + G·∇V·∇φ + w_I·δI/δφ evolution, and generates matplotlib visualizations:
+
+- `voxel_3d.png` — 3-D scatter plot of the voxel terrain
+- `field_slices.png` — Centre-slice heat maps along x, y, z axes
+- `s_history.png` — S-functional component time series
 
 You can resume from a saved state:
 
@@ -254,10 +286,37 @@ action = perception_to_action(perception, beta=0.09)
 
 ## Numba JIT Acceleration
 
-Field evolution now uses Numba-compiled kernels (`numba_kernels.py`) for the Laplacian, gradient, and evolution steps. The kernels use `@njit(parallel=True)` with `prange` for multi-core parallelism. Run the benchmark:
+Field evolution now uses Numba-compiled kernels (`numba_kernels.py`) for the Laplacian, gradient, evolution, Poisson solver, gradient dot product, and correlation kernel steps. The kernels use `@njit(parallel=True)` with `prange` for multi-core parallelism. Run the benchmark:
 
 ```bash
 python benchmarks/bench_field_step.py --size 64 --steps 200
+```
+
+## Matplotlib Visualization
+
+Generate publication-quality plots of the terrain and S-functional evolution:
+
+```python
+from project_genesis import GenesisEngine, EngineConfig
+from project_genesis.visualize import render_voxels_3d, render_field_slices, plot_s_history, save_visualization
+
+engine = GenesisEngine(config=EngineConfig(chunk_size=24, seed=7))
+engine.evolve_field(steps=40, dt=0.01, record_every=5)
+
+# 3-D voxel scatter plot
+fig = render_voxels_3d(engine.quantize_to_voxels())
+fig.savefig("terrain.png", dpi=150)
+
+# Field cross-sections
+fig2 = render_field_slices(engine.field)
+fig2.savefig("slices.png", dpi=150)
+
+# S-functional time series
+fig3 = plot_s_history(engine.history)
+fig3.savefig("s_history.png", dpi=150)
+
+# Or generate all at once:
+save_visualization("output/", engine.quantize_to_voxels(), engine.field, engine.history)
 ```
 
 ## Chunk-Based Processing
@@ -267,7 +326,9 @@ The `ChunkManager` divides the world into cubic chunks and tracks which contain 
 ## What Exists Now
 
 - A working terrain prototype based on the URP field equation with S-functional tracking.
-- **Numba JIT-accelerated** field evolution kernels with parallel stencil operations.
+- **Full URP coherence potential** V(x,t) satisfying ∇²V = ρ, with Jacobi Poisson solver, replacing simple G·φ damping with G·∇V·∇φ from the complete URP field equation.
+- **Nonlocal integration functional** I[φ] using exponential-decay correlation kernels K(x,x')φ(x)φ(x'), adding coherent-integration driving forces to the field evolution.
+- **Numba JIT-accelerated** field evolution kernels with parallel stencil operations (including the new Poisson solver, gradient dot product, and correlation kernel).
 - **Chunk-based processing** for efficient handling of large, sparse worlds.
 - **S-functional caching** to avoid redundant computation between steps.
 - Five-band voxel sectorization (void, air, soil, stone, bedrock) for richer terrain structure.
@@ -278,22 +339,27 @@ The `ChunkManager` divides the world into cubic chunks and tracks which contain 
 - **Headless server mode** with auto-save, graceful shutdown, and command-line configuration.
 - **WebSocket API** for remote monitoring, chunk inspection, agent perception, and action dispatch.
 - **Three.js web viewer** with live voxel rendering, S-functional charting, and play/pause controls.
+- **Matplotlib visualization** — 3-D voxel scatter plots, field cross-section heat maps, and S-functional time-series charts (via `--visualize` CLI flag or programmatic API).
 - A modular Python package with clean separation of concerns.
 - Structured artifact export so contributors can inspect runs without graphics dependencies.
 - An installable console entry point for repeatable sandbox runs.
-- A validation layer covering repeatability, persistence, sensitivity, artifacts, CLI flows, agent behavior, chunk management, WebSocket serialization, and S-compass consistency.
+- A validation layer covering repeatability, persistence, sensitivity, artifacts, CLI flows, agent behavior, chunk management, WebSocket serialization, S-compass consistency, coherence potential correctness, integration functional output, and visualization output.
 - **Performance benchmarks** for measuring steps-per-second.
 
 ## What Comes Next
 
 Recommended next steps for expansion:
 
-1. Implement a richer coherence potential V(x,t) satisfying ∇²V = ρ, replacing the simple G·φ damping with G·∇V·∇φ from the full URP field equation.
-2. Add the nonlocal integration functional I[φ] using correlation kernels K(x,x')φ(x)φ(x').
-3. Introduce agent-agent interaction — multiple agents that can sense each other and cooperate.
-4. Add agent goal-seeking behavior driven by the S-functional (agents that maximize local S).
-5. Richer visualization — matplotlib or VTK-based 3D voxel rendering.
+1. ~~Implement a richer coherence potential V(x,t) satisfying ∇²V = ρ, replacing the simple G·φ damping with G·∇V·∇φ from the full URP field equation.~~ ✅ Implemented
+2. ~~Add the nonlocal integration functional I[φ] using correlation kernels K(x,x')φ(x)φ(x').~~ ✅ Implemented
+3. ~~Introduce agent-agent interaction — multiple agents that can sense each other and cooperate.~~ ✅ Implemented
+4. ~~Add agent goal-seeking behavior driven by the S-functional (agents that maximize local S).~~ ✅ Implemented
+5. ~~Richer visualization — matplotlib or VTK-based 3D voxel rendering.~~ ✅ Implemented (matplotlib)
 6. Evaluate whether the simulation loop is compelling enough to justify networking and avatars.
+7. Add higher-order field dynamics — second-order time derivatives (∂²φ/∂t²) for wave-like behavior.
+8. Extend the Poisson solver to support anisotropic or spatially varying ρ (e.g., agent-driven source terms).
+9. Explore emergent gauge sectorization — identify conditions under which the field spontaneously partitions into distinct coherent domains.
+10. Implement inter-agent communication protocols — agents that negotiate and share structured messages beyond simple signal sharing.
 
 ## Theory Reference
 

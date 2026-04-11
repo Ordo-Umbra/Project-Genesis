@@ -18,6 +18,12 @@ class EngineConfig:
     seed: int | None = None
     default_steps: int = 50
     default_dt: float = 0.01
+    use_coherence_potential: bool = False
+    poisson_iterations: int = 30
+    use_integration_functional: bool = False
+    integration_radius: int = 2
+    integration_decay: float = 1.0
+    integration_weight: float = 0.01
 
     def __post_init__(self) -> None:
         if not (self.void_threshold < self.air_threshold < self.soil_threshold < self.bedrock_threshold):
@@ -35,6 +41,14 @@ class EngineConfig:
             raise ValueError("agent_interaction_radius must be non-negative")
         if self.agent_influence < 0.0:
             raise ValueError("agent_influence must be non-negative")
+        if self.poisson_iterations <= 0:
+            raise ValueError("poisson_iterations must be > 0")
+        if self.integration_radius <= 0:
+            raise ValueError("integration_radius must be > 0")
+        if self.integration_decay <= 0.0:
+            raise ValueError("integration_decay must be > 0.0")
+        if self.integration_weight < 0.0:
+            raise ValueError("integration_weight must be >= 0.0")
 
     def to_dict(self) -> dict[str, float | int | None]:
         return asdict(self)

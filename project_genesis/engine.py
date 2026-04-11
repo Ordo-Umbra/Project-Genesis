@@ -9,7 +9,7 @@ from .chunk_manager import ChunkManager
 from .config import EngineConfig
 from .io import load_snapshot, save_snapshot
 from .metrics import calculate_gradients, compute_s_functional, summarize_field
-from .numba_kernels import jit_step
+from .numba_kernels import jit_step, jit_step_v2
 from .render import render_voxel_slice
 
 
@@ -172,7 +172,19 @@ class GenesisEngine:
 
     def step(self, dt: float) -> np.ndarray:
         self.prev_field = self.field.copy()
-        new_field, _lap, _gsq = jit_step(self.field, self.BETA, self.G, dt)
+        if self.config.use_coherence_potential or self.config.use_integration_functional:
+            new_field, _lap, _gsq = jit_step_v2(
+                self.field,
+                self.BETA,
+                self.G,
+                dt,
+                poisson_iterations=self.config.poisson_iterations,
+                integration_radius=self.config.integration_radius,
+                integration_decay=self.config.integration_decay,
+                integration_weight=self.config.integration_weight,
+            )
+        else:
+            new_field, _lap, _gsq = jit_step(self.field, self.BETA, self.G, dt)
         with self._lock:
             self.field = new_field
         self._invalidate_s_cache()
