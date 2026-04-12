@@ -72,6 +72,23 @@ def compute_s_functional(
     return result
 
 
+def compute_local_s(patch: np.ndarray, beta: float) -> float:
+    """Compute a scalar S-functional proxy for a small 3-D patch.
+
+    Uses the same formulation as the global S-functional but restricted to
+    the patch volume.  Suitable for evaluating candidate stable objects.
+    """
+    lap = np.empty_like(patch, dtype=np.float64)
+    gsq = np.empty_like(patch, dtype=np.float64)
+    laplacian_3d(np.ascontiguousarray(patch, dtype=np.float64), lap)
+    gradient_squared_3d(np.ascontiguousarray(patch, dtype=np.float64), gsq)
+    delta_c = float(np.mean(beta * gsq))
+    gradient_energy_density = float(np.mean(gsq))
+    kappa = 1.0 / (1.0 + gradient_energy_density)
+    # Without a previous state for the patch we approximate ΔI as 0.
+    return delta_c + kappa * 0.0
+
+
 def summarize_field(
     field: np.ndarray,
     voxel_chunk: np.ndarray,

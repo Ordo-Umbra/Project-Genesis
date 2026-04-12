@@ -8,7 +8,8 @@ from .agent import Agent
 from .chunk_manager import ChunkManager
 from .config import EngineConfig
 from .io import load_snapshot, save_snapshot
-from .metrics import calculate_gradients, compute_s_functional, summarize_field
+from .memory_corpus import MemoryCorpus
+from .metrics import calculate_gradients, compute_local_s, compute_s_functional, summarize_field
 from .numba_kernels import jit_step, jit_step_v2
 from .render import render_voxel_slice
 
@@ -63,6 +64,18 @@ class GenesisEngine:
 
         # Step counter (cumulative across evolve_field calls).
         self._step_count: int = 0
+
+        # Memory corpus for stable-structure detection and recall.
+        if config.enable_memory_corpus:
+            self.memory_corpus: MemoryCorpus | None = MemoryCorpus(
+                max_size=config.corpus_max_size,
+                min_stability=config.corpus_min_stability,
+                min_local_s=config.corpus_min_local_s,
+            )
+            self.stability_map = np.zeros_like(self.field, dtype=np.int32)
+        else:
+            self.memory_corpus = None
+            self.stability_map = None
 
     # ------------------------------------------------------------------
     # S-functional caching
@@ -231,6 +244,13 @@ class GenesisEngine:
                 occupied_positions.add(next_position)
             self._apply_agent_influence(delta_t)
 
+            # === STABLE STRUCTURE DETECTION & RECALL ===
+            if self.memory_corpus is not None and self.stability_map is not None:
+                self._update_stability_map()
+                if step % 5 == 0:
+                    self._scan_and_store_stable_patches()
+                self._maybe_inject_recalled_object()
+
             # Update chunk activity mask periodically.
             if step % max(1, record_every) == 0:
                 agent_positions = [
@@ -247,6 +267,73 @@ class GenesisEngine:
                 self.history.append(snapshot)
 
         return self.field
+
+    # ------------------------------------------------------------------
+    # Memory corpus helpers
+    # ------------------------------------------------------------------
+
+    def _update_stability_map(self) -> None:
+        """Increment stability counters for voxels that barely changed."""
+        assert self.stability_map is not None
+        if self.prev_field is None:
+            return
+        delta = np.abs(self.field - self.prev_field)
+        stable_mask = delta < 0.005
+        self.stability_map[stable_mask] += 1
+        self.stability_map[~stable_mask] = 0
+
+    def _scan_and_store_stable_patches(self) -> None:
+        """Scan non-overlapping patches and store qualifying ones."""
+        assert self.memory_corpus is not None
+        assert self.stability_map is not None
+        patch_size = 8
+        shape = self.field.shape
+        for i in range(0, shape[0], patch_size):
+            for j in range(0, shape[1], patch_size):
+                for k in range(0, shape[2], patch_size):
+                    ie, je, ke = i + patch_size, j + patch_size, k + patch_size
+                    if ie > shape[0] or je > shape[1] or ke > shape[2]:
+                        continue
+                    patch_stability = self.stability_map[i:ie, j:je, k:ke]
+                    local_stability = int(np.mean(patch_stability))
+                    if local_stability < self.memory_corpus.min_stability:
+                        continue
+                    patch_field = self.field[i:ie, j:je, k:ke]
+                    local_s = compute_local_s(patch_field, self.BETA)
+                    if local_s < self.memory_corpus.min_local_s:
+                        continue
+                    patch_voxels = self.quantize_to_voxels()[i:ie, j:je, k:ke]
+                    obj = self.memory_corpus.add_if_stable(
+                        patch_field, patch_voxels, local_s, local_stability,
+                    )
+                    if obj is not None:
+                        print(f"📦 Corpus added stable object {obj.object_id} "
+                              f"(S={obj.avg_s:.4f}, stability={obj.stability_steps})")
+
+    def _maybe_inject_recalled_object(self) -> None:
+        """With small probability, inject a recalled object into a random location."""
+        assert self.memory_corpus is not None
+        if len(self.memory_corpus) == 0:
+            return
+        # 7% chance per step.
+        if self.rng.random() > 0.07:
+            return
+        sampled = self.memory_corpus.sample(n=1, rng=self.rng)
+        if not sampled:
+            return
+        obj = sampled[0]
+        shape = self.field.shape
+        ps = obj.subfield.shape
+        # Choose a random injection location that fits.
+        i = int(self.rng.integers(0, max(1, shape[0] - ps[0] + 1)))
+        j = int(self.rng.integers(0, max(1, shape[1] - ps[1] + 1)))
+        k = int(self.rng.integers(0, max(1, shape[2] - ps[2] + 1)))
+        # Blend: 50/50 mix to avoid harsh discontinuities.
+        ie, je, ke = i + ps[0], j + ps[1], k + ps[2]
+        self.field[i:ie, j:je, k:ke] = (
+            0.5 * self.field[i:ie, j:je, k:ke] + 0.5 * obj.copy_subfield()
+        )
+        print(f"🔄 Corpus recalled object {obj.object_id} at ({i},{j},{k})")
 
     def quantize_to_voxels(self) -> np.ndarray:
         voxel_chunk = np.zeros_like(self.field, dtype=int)
