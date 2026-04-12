@@ -239,7 +239,7 @@ class MemoryCorpus:
         alpha = float(rng.uniform(0.3, 0.7))
         composed_subfield = alpha * a_padded + (1.0 - alpha) * b_padded
 
-        # Voxels: take whichever parent had higher local value at each voxel.
+        # Voxels: pick from the parent with higher field density at each voxel.
         va = _pad_to(obj_a.voxels.astype(np.float64), target_shape)
         vb = _pad_to(obj_b.voxels.astype(np.float64), target_shape)
         composed_voxels = np.where(a_padded >= b_padded, va, vb).astype(int)
