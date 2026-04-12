@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any
+import logging
 import threading
 
 import numpy as np
@@ -12,6 +13,8 @@ from .memory_corpus import MemoryCorpus
 from .metrics import calculate_gradients, compute_local_s, compute_s_functional, summarize_field
 from .numba_kernels import jit_step, jit_step_v2
 from .render import render_voxel_slice
+
+logger = logging.getLogger(__name__)
 
 
 class GenesisEngine:
@@ -307,8 +310,10 @@ class GenesisEngine:
                         patch_field, patch_voxels, local_s, local_stability,
                     )
                     if obj is not None:
-                        print(f"📦 Corpus added stable object {obj.object_id} "
-                              f"(S={obj.avg_s:.4f}, stability={obj.stability_steps})")
+                        logger.info(
+                            "📦 Corpus added stable object %s (S=%.4f, stability=%d)",
+                            obj.object_id, obj.avg_s, obj.stability_steps,
+                        )
 
     def _maybe_inject_recalled_object(self) -> None:
         """With small probability, inject a recalled object into a random location."""
@@ -333,7 +338,7 @@ class GenesisEngine:
         self.field[i:ie, j:je, k:ke] = (
             0.5 * self.field[i:ie, j:je, k:ke] + 0.5 * obj.copy_subfield()
         )
-        print(f"🔄 Corpus recalled object {obj.object_id} at ({i},{j},{k})")
+        logger.info("🔄 Corpus recalled object %s at (%d,%d,%d)", obj.object_id, i, j, k)
 
     def quantize_to_voxels(self) -> np.ndarray:
         voxel_chunk = np.zeros_like(self.field, dtype=int)
