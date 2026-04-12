@@ -28,6 +28,8 @@ class EngineConfig:
     corpus_max_size: int = 50
     corpus_min_stability: int = 5
     corpus_min_local_s: float = 0.01
+    corpus_patch_scales: str = "4,8,16"
+    corpus_compose_probability: float = 0.15
 
     def __post_init__(self) -> None:
         if not (self.void_threshold < self.air_threshold < self.soil_threshold < self.bedrock_threshold):
@@ -59,6 +61,12 @@ class EngineConfig:
             raise ValueError("corpus_min_stability must be >= 0")
         if self.corpus_min_local_s < 0.0:
             raise ValueError("corpus_min_local_s must be >= 0.0")
+        if not all(
+            int(s) > 0 for s in self.corpus_patch_scales.split(",") if s.strip()
+        ):
+            raise ValueError("corpus_patch_scales must be comma-separated positive integers")
+        if not 0.0 <= self.corpus_compose_probability <= 1.0:
+            raise ValueError("corpus_compose_probability must be between 0 and 1")
 
     def to_dict(self) -> dict[str, float | int | None]:
         return asdict(self)

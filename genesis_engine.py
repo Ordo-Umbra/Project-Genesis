@@ -112,6 +112,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="Minimum local S-functional value for a patch to be stored in the corpus.",
     )
     parser.add_argument(
+        "--corpus-patch-scales",
+        type=str,
+        default="4,8,16",
+        help="Comma-separated patch edge sizes for multi-scale stable-structure scanning (e.g. '4,8,16').",
+    )
+    parser.add_argument(
+        "--corpus-compose-probability",
+        type=float,
+        default=0.15,
+        help="Per-injection probability that two objects are composed into a novel building block.",
+    )
+    parser.add_argument(
         "--visualize",
         action="store_true",
         default=False,
@@ -234,6 +246,8 @@ def main() -> None:
                 corpus_max_size=args.corpus_max_size,
                 corpus_min_stability=args.min_stability,
                 corpus_min_local_s=args.min_local_s,
+                corpus_patch_scales=args.corpus_patch_scales,
+                corpus_compose_probability=args.corpus_compose_probability,
             )
         )
 

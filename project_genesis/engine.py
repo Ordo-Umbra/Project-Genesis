@@ -74,6 +74,8 @@ class GenesisEngine:
                 max_size=config.corpus_max_size,
                 min_stability=config.corpus_min_stability,
                 min_local_s=config.corpus_min_local_s,
+                patch_scales=[int(s) for s in config.corpus_patch_scales.split(",")],
+                compose_probability=config.corpus_compose_probability,
             )
             self.stability_map = np.zeros_like(self.field, dtype=np.int32)
         else:
@@ -286,43 +288,68 @@ class GenesisEngine:
         self.stability_map[~stable_mask] = 0
 
     def _scan_and_store_stable_patches(self) -> None:
-        """Scan non-overlapping patches and store qualifying ones."""
+        """Scan non-overlapping patches at multiple scales and store qualifying ones."""
         assert self.memory_corpus is not None
         assert self.stability_map is not None
-        patch_size = 8
         shape = self.field.shape
-        for i in range(0, shape[0], patch_size):
-            for j in range(0, shape[1], patch_size):
-                for k in range(0, shape[2], patch_size):
-                    ie, je, ke = i + patch_size, j + patch_size, k + patch_size
-                    if ie > shape[0] or je > shape[1] or ke > shape[2]:
-                        continue
-                    patch_stability = self.stability_map[i:ie, j:je, k:ke]
-                    local_stability = int(np.mean(patch_stability))
-                    if local_stability < self.memory_corpus.min_stability:
-                        continue
-                    patch_field = self.field[i:ie, j:je, k:ke]
-                    local_s = compute_local_s(patch_field, self.BETA)
-                    if local_s < self.memory_corpus.min_local_s:
-                        continue
-                    patch_voxels = self.quantize_to_voxels()[i:ie, j:je, k:ke]
-                    obj = self.memory_corpus.add_if_stable(
-                        patch_field, patch_voxels, local_s, local_stability,
-                    )
-                    if obj is not None:
-                        logger.info(
-                            "📦 Corpus added stable object %s (S=%.4f, stability=%d)",
-                            obj.object_id, obj.avg_s, obj.stability_steps,
+        voxels = self.quantize_to_voxels()
+        for patch_size in self.memory_corpus.patch_scales:
+            if patch_size > min(shape):
+                continue
+            for i in range(0, shape[0], patch_size):
+                for j in range(0, shape[1], patch_size):
+                    for k in range(0, shape[2], patch_size):
+                        ie, je, ke = i + patch_size, j + patch_size, k + patch_size
+                        if ie > shape[0] or je > shape[1] or ke > shape[2]:
+                            continue
+                        patch_stability = self.stability_map[i:ie, j:je, k:ke]
+                        local_stability = int(np.mean(patch_stability))
+                        if local_stability < self.memory_corpus.min_stability:
+                            continue
+                        patch_field = self.field[i:ie, j:je, k:ke]
+                        local_s = compute_local_s(patch_field, self.BETA)
+                        if local_s < self.memory_corpus.min_local_s:
+                            continue
+                        patch_voxels = voxels[i:ie, j:je, k:ke]
+                        obj = self.memory_corpus.add_if_stable(
+                            patch_field, patch_voxels, local_s, local_stability,
                         )
+                        if obj is not None:
+                            logger.info(
+                                "📦 Corpus added stable object %s (S=%.4f, stability=%d, scale=%d)",
+                                obj.object_id, obj.avg_s, obj.stability_steps, patch_size,
+                            )
 
     def _maybe_inject_recalled_object(self) -> None:
-        """With small probability, inject a recalled object into a random location."""
+        """With small probability, inject a recalled object into a random location.
+
+        If the corpus has at least two objects, there is an additional chance
+        (controlled by ``compose_probability``) that two objects are composed
+        together first, producing a novel building block before injection.
+        """
         assert self.memory_corpus is not None
         if len(self.memory_corpus) == 0:
             return
         # 7% chance per step.
         if self.rng.random() > 0.07:
             return
+
+        # Compositional injection: compose two objects into a new one.
+        if (
+            len(self.memory_corpus) >= 2
+            and self.rng.random() < self.memory_corpus.compose_probability
+        ):
+            parents = self.memory_corpus.sample(n=2, rng=self.rng)
+            if len(parents) == 2:
+                composed = self.memory_corpus.compose(parents[0], parents[1], rng=self.rng)
+                if composed is not None:
+                    logger.info(
+                        "🧬 Corpus composed new object %s from %s + %s",
+                        composed.object_id,
+                        parents[0].object_id,
+                        parents[1].object_id,
+                    )
+
         sampled = self.memory_corpus.sample(n=1, rng=self.rng)
         if not sampled:
             return
@@ -365,6 +392,8 @@ class GenesisEngine:
             prev_field=prev_field,
         )
         result.update(self._agent_summary())
+        if self.memory_corpus is not None:
+            result.update(self.memory_corpus.summary())
         if self.agents:
             result["agents"] = [a.to_dict() for a in self.agents]
         return result
@@ -377,6 +406,8 @@ class GenesisEngine:
             self.history,
             self.agent_timelines(),
             self.run_metadata,
+            memory_corpus=self.memory_corpus,
+            stability_map=self.stability_map,
         )
 
     # ------------------------------------------------------------------
@@ -391,7 +422,7 @@ class GenesisEngine:
     def get_world_summary(self) -> dict:
         """Return a summary suitable for the ``get_state`` WebSocket call."""
         with self._lock:
-            return {
+            summary: dict = {
                 "dimensions": list(self.field.shape),
                 "step_count": self._step_count,
                 "s_functional": self._get_s_functional(),
@@ -402,6 +433,9 @@ class GenesisEngine:
                 "chunk_grid_shape": list(self.chunk_manager.grid_shape),
                 "active_chunks": self.chunk_manager.active_count,
             }
+            if self.memory_corpus is not None:
+                summary["memory_corpus"] = self.memory_corpus.summary()
+            return summary
 
     def queue_agent_action(self, agent_id: str, action: dict) -> bool:
         """Queue an external action for an agent.  Returns True on success."""
@@ -413,7 +447,7 @@ class GenesisEngine:
 
     @classmethod
     def load(cls, path: str | Path) -> "GenesisEngine":
-        field, config, history, agents, run_metadata = load_snapshot(path)
+        field, config, history, agents, run_metadata, corpus, stability_map = load_snapshot(path)
         engine = cls(
             config=config,
             field=field,
@@ -425,4 +459,9 @@ class GenesisEngine:
             run_metadata=run_metadata,
         )
         engine.run_metadata["resumed_from"] = str(path)
+        # Restore persisted corpus and stability map.
+        if corpus is not None and config.enable_memory_corpus:
+            engine.memory_corpus = corpus
+        if stability_map is not None and config.enable_memory_corpus:
+            engine.stability_map = stability_map
         return engine
