@@ -88,6 +88,30 @@ def build_parser() -> argparse.ArgumentParser:
         help="Weight applied to the integration functional contribution.",
     )
     parser.add_argument(
+        "--enable-memory-corpus",
+        action="store_true",
+        default=False,
+        help="Enable the stable-structure memory corpus for structure preservation.",
+    )
+    parser.add_argument(
+        "--corpus-max-size",
+        type=int,
+        default=50,
+        help="Maximum number of stable objects stored in the memory corpus.",
+    )
+    parser.add_argument(
+        "--min-stability",
+        type=int,
+        default=5,
+        help="Minimum mean stability steps for a patch to be stored in the corpus.",
+    )
+    parser.add_argument(
+        "--min-local-s",
+        type=float,
+        default=0.01,
+        help="Minimum local S-functional value for a patch to be stored in the corpus.",
+    )
+    parser.add_argument(
         "--visualize",
         action="store_true",
         default=False,
@@ -206,6 +230,10 @@ def main() -> None:
                 integration_radius=args.integration_radius,
                 integration_decay=args.integration_decay,
                 integration_weight=args.integration_weight,
+                enable_memory_corpus=args.enable_memory_corpus,
+                corpus_max_size=args.corpus_max_size,
+                corpus_min_stability=args.min_stability,
+                corpus_min_local_s=args.min_local_s,
             )
         )
 
