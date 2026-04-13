@@ -16,10 +16,11 @@ The sandbox currently provides:
 - **S-functional tracking** — per-step computation of ΔC (distinction), ΔI (integration), κ (capacity), and S = ΔC + κΔI,
 - **multi-agent terrain-sensing inhabitants** with configurable density-seeking, exploration, or S-functional-driven policies,
 - agent-agent sensing, shared best-known signals, and optional field influence at visited cells,
+- **stable-structure memory corpus** with multi-scale patch scanning, bounded corpus retention, probabilistic recall, compositional injection, and lineage tracking,
 - saved snapshots for resuming or analyzing a run,
-- exported metrics, run summaries, agent timelines, and text slices for inspecting intermediate and final terrain states,
+- exported metrics, run summaries, agent timelines, corpus summaries, and text slices for inspecting intermediate and final terrain states,
 - **matplotlib visualization** — 3-D voxel scatter plots, field cross-section heat maps, and S-functional time-series charts,
-- automated checks for repeatability, stability, persistence, parameter sensitivity, agent behavior, artifacts, CLI flows, physics correctness, and visualization output.
+- automated checks for repeatability, stability, persistence, parameter sensitivity, agent behavior, memory-corpus serialization and recall, artifacts, CLI flows, physics correctness, and visualization output.
 
 ## Repository Layout
 
@@ -32,6 +33,7 @@ project_genesis/
   engine.py            Field evolution, voxel quantization, agent orchestration, save/load
   io.py                Snapshot serialization helpers
   metrics.py           URP terrain summary metrics and S-functional computation
+  memory_corpus.py     Stable-object corpus, composition, serialization, lineage
   network_server.py    WebSocket server for remote monitoring and control
   numba_kernels.py     Numba JIT-accelerated field evolution kernels
   render.py            Text-based slice rendering for terrain inspection
@@ -41,6 +43,7 @@ Docs/
   The Universal Recursion Principle (URP) _260312_170343.txt
 tests/
   test_genesis_engine.py
+  test_memory_corpus.py
   test_new_subsystems.py
   test_urp_extensions.py
 web_viewer/
@@ -63,8 +66,9 @@ The simulation loop:
 4. At each step, compute the **S-functional** — tracking how structural differentiation (ΔC) and coherent integration (ΔI) evolve under capacity constraints (κ).
 5. Agents sense their local neighborhood and move through the field each step.
 6. Quantize the resulting field into five voxel sectors.
-7. Record metrics (including S-functional components and agent states) and center-slice snapshots.
-8. Share local best signals across agents, apply optional agent field influence, and export inspectable artifacts.
+7. Optionally update a stability map, scan multi-scale stable patches into the memory corpus, and probabilistically re-inject recalled or composed structures.
+8. Record metrics (including S-functional components, agent states, and corpus summaries) and center-slice snapshots.
+9. Share local best signals across agents, apply optional agent field influence, and export inspectable artifacts.
 
 ### S-Functional
 
@@ -110,6 +114,25 @@ Agents are configurable inhabitants that:
 - **Share** best-known local signals each step so the agent population can loosely coordinate.
 - **Influence** the field after moving when `agent_influence` is enabled.
 - **Log** full trails and sensor readings across steps for analysis or resume.
+
+### Stable-Structure Memory Corpus
+
+When `--enable-memory-corpus` is set, the engine maintains a bounded library of locally stable 3-D patches:
+
+- scans the field at configurable patch scales (`--corpus-patch-scales`, default `4,8,16`),
+- stores patches that meet local stability and local S thresholds,
+- persists the corpus and stability map inside `engine_snapshot.npz`,
+- samples stored objects for probabilistic recall during evolution,
+- optionally composes two recalled objects into a novel patch before injection (`--corpus-compose-probability`),
+- tracks lineage through `parent_ids` so composed objects remain inspectable.
+
+The feature is tuned with:
+
+- `--corpus-max-size`
+- `--min-stability`
+- `--min-local-s`
+- `--corpus-patch-scales`
+- `--corpus-compose-probability`
 
 ## Setup
 
@@ -168,6 +191,16 @@ You can resume from a saved state:
 python genesis_engine.py --resume artifacts/run_seed_7/engine_snapshot.npz --steps 10 --output-dir artifacts/resumed_run
 ```
 
+### Running with Memory Corpus Recall
+
+Enable the stable-structure memory system and multi-scale patch scanning:
+
+```bash
+python genesis_engine.py --chunk-size 24 --steps 40 --dt 0.01 --seed 7 --enable-memory-corpus --corpus-max-size 64 --min-stability 4 --min-local-s 0.01 --corpus-patch-scales 4,8,16 --corpus-compose-probability 0.2 --output-dir artifacts/memory_corpus_run
+```
+
+When enabled, `final_metrics.json`, `run_summary.json`, and WebSocket world summaries include corpus metrics such as `corpus_size`, `corpus_mean_s`, `corpus_total_usage`, `corpus_mean_stability`, and `corpus_composed_count`.
+
 ## Using Agents
 
 Agents can be spawned programmatically:
@@ -212,6 +245,9 @@ The current checks verify:
 - multi-agent config is applied automatically,
 - artifact export writes structured summaries and timelines,
 - CLI-driven multi-agent runs produce complete outputs.
+- memory corpus objects serialize / deserialize cleanly with lineage metadata,
+- engine save / load preserves corpus contents and the stability map,
+- multi-scale corpus scanning and compositional injection execute without breaking evolution,
 - chunk activation / deactivation logic,
 - WebSocket message serialization / deserialization,
 - S-compass bridge output consistency,
@@ -241,7 +277,7 @@ When the headless server runs with a non-zero port, the following commands are a
 
 | Command | Payload | Response |
 |---------|---------|----------|
-| `get_state` | — | World dimensions, step count, S-functional, agent positions, chunk info |
+| `get_state` | — | World dimensions, step count, S-functional, agent positions, chunk info, optional memory-corpus summary |
 | `get_chunk` | `{x, y, z}` | Binary voxel data for the requested chunk |
 | `get_agent_view` | `{agent_id}` | Full perception dict for the specified agent |
 | `send_action` | `{agent_id, action}` | Queues an action for an agent; acknowledged |
@@ -330,6 +366,7 @@ The `ChunkManager` divides the world into cubic chunks and tracks which contain 
 - **Nonlocal integration functional** I[φ] using exponential-decay correlation kernels K(x,x')φ(x)φ(x'), adding coherent-integration driving forces to the field evolution.
 - **Numba JIT-accelerated** field evolution kernels with parallel stencil operations (including the new Poisson solver, gradient dot product, and correlation kernel).
 - **Chunk-based processing** for efficient handling of large, sparse worlds.
+- **Stable-structure memory corpus** with persistence, multi-scale scanning, probabilistic recall, compositional injection, and lineage tracking.
 - **S-functional caching** to avoid redundant computation between steps.
 - Five-band voxel sectorization (void, air, soil, stone, bedrock) for richer terrain structure.
 - Per-step S-functional computation (ΔC, ΔI, κ, S) connecting the simulation to URP theory.
