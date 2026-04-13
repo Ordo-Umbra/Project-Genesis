@@ -3,12 +3,17 @@
 Detects locally stable regions, stores them as reusable building blocks,
 and periodically re-seeds them into the universe to prevent collapse
 into a single global minimum.
+
+The corpus functions as a digital analog to physical reality: stable
+structures are preserved, and then used as foundations for further
+expansion and exploration of the configuration space.
 """
 
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 
@@ -23,10 +28,44 @@ class StableObject:
     stability_steps: int
     usage_count: int = 0
     object_id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
+    parent_ids: list[str] = field(default_factory=list)
 
     def copy_subfield(self) -> np.ndarray:
         """Return a copy of the stored subfield data."""
         return self.subfield.copy()
+
+    # ------------------------------------------------------------------
+    # Serialization
+    # ------------------------------------------------------------------
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize the object to a JSON-compatible dictionary.
+
+        Array data is stored as nested lists for JSON compatibility.
+        """
+        return {
+            "object_id": self.object_id,
+            "avg_s": self.avg_s,
+            "stability_steps": self.stability_steps,
+            "usage_count": self.usage_count,
+            "parent_ids": list(self.parent_ids),
+            "subfield_shape": list(self.subfield.shape),
+            "subfield": self.subfield.tolist(),
+            "voxels": self.voxels.tolist(),
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> StableObject:
+        """Reconstruct a :class:`StableObject` from a dictionary."""
+        return cls(
+            subfield=np.array(data["subfield"], dtype=np.float64),
+            voxels=np.array(data["voxels"], dtype=int),
+            avg_s=float(data["avg_s"]),
+            stability_steps=int(data["stability_steps"]),
+            usage_count=int(data.get("usage_count", 0)),
+            object_id=str(data["object_id"]),
+            parent_ids=list(data.get("parent_ids", [])),
+        )
 
 
 class MemoryCorpus:
@@ -42,6 +81,14 @@ class MemoryCorpus:
         considered stable enough to store.
     min_local_s:
         Minimum local S-functional value a patch must have.
+    patch_scales:
+        List of cubic patch edge lengths to scan when looking for stable
+        structures.  Defaults to ``[4, 8, 16]`` to capture structures at
+        multiple spatial scales.
+    compose_probability:
+        Per-injection probability that two sampled objects are composed
+        together (blended) to form a novel building block.  Defaults to
+        ``0.15``.
     """
 
     def __init__(
@@ -49,6 +96,8 @@ class MemoryCorpus:
         max_size: int = 50,
         min_stability: int = 5,
         min_local_s: float = 0.01,
+        patch_scales: list[int] | None = None,
+        compose_probability: float = 0.15,
     ) -> None:
         if max_size <= 0:
             raise ValueError("max_size must be > 0")
@@ -56,10 +105,14 @@ class MemoryCorpus:
             raise ValueError("min_stability must be >= 0")
         if min_local_s < 0.0:
             raise ValueError("min_local_s must be >= 0.0")
+        if not 0.0 <= compose_probability <= 1.0:
+            raise ValueError("compose_probability must be between 0 and 1")
 
         self.max_size = max_size
         self.min_stability = min_stability
         self.min_local_s = min_local_s
+        self.patch_scales: list[int] = patch_scales if patch_scales is not None else [4, 8, 16]
+        self.compose_probability = compose_probability
         self._objects: list[StableObject] = []
 
     # ------------------------------------------------------------------
@@ -73,6 +126,29 @@ class MemoryCorpus:
     def objects(self) -> list[StableObject]:
         return list(self._objects)
 
+    def summary(self) -> dict[str, float | int]:
+        """Return summary statistics about the corpus contents."""
+        if not self._objects:
+            return {
+                "corpus_size": 0,
+                "corpus_max_size": self.max_size,
+                "corpus_mean_s": 0.0,
+                "corpus_max_s": 0.0,
+                "corpus_total_usage": 0,
+                "corpus_mean_stability": 0.0,
+                "corpus_composed_count": 0,
+            }
+        s_values = [obj.avg_s for obj in self._objects]
+        return {
+            "corpus_size": len(self._objects),
+            "corpus_max_size": self.max_size,
+            "corpus_mean_s": float(np.mean(s_values)),
+            "corpus_max_s": float(np.max(s_values)),
+            "corpus_total_usage": sum(obj.usage_count for obj in self._objects),
+            "corpus_mean_stability": float(np.mean([obj.stability_steps for obj in self._objects])),
+            "corpus_composed_count": sum(1 for obj in self._objects if obj.parent_ids),
+        }
+
     # ------------------------------------------------------------------
     # Core operations
     # ------------------------------------------------------------------
@@ -83,6 +159,8 @@ class MemoryCorpus:
         voxels: np.ndarray,
         local_s: float,
         stability_steps: int,
+        *,
+        parent_ids: list[str] | None = None,
     ) -> StableObject | None:
         """Add a patch to the corpus if it meets stability and S thresholds.
 
@@ -105,6 +183,7 @@ class MemoryCorpus:
             voxels=voxels.copy(),
             avg_s=local_s,
             stability_steps=stability_steps,
+            parent_ids=list(parent_ids or []),
         )
 
         if len(self._objects) < self.max_size:
@@ -121,6 +200,61 @@ class MemoryCorpus:
                 return None
 
         return obj
+
+    def compose(
+        self,
+        obj_a: StableObject,
+        obj_b: StableObject,
+        *,
+        rng: np.random.Generator | None = None,
+    ) -> StableObject | None:
+        """Compose two objects into a novel building block.
+
+        The composed object blends the subfields of the two parents.
+        If the parents have different shapes, the smaller is zero-padded
+        to match the larger.  The result is added to the corpus if it
+        qualifies.
+
+        Returns the new :class:`StableObject` or ``None``.
+        """
+        rng = rng or np.random.default_rng()
+
+        # Determine common shape (max of each dimension).
+        target_shape = tuple(
+            max(a, b) for a, b in zip(obj_a.subfield.shape, obj_b.subfield.shape)
+        )
+
+        def _pad_to(arr: np.ndarray, shape: tuple[int, ...]) -> np.ndarray:
+            if arr.shape == shape:
+                return arr.copy()
+            padded = np.zeros(shape, dtype=arr.dtype)
+            slices = tuple(slice(0, s) for s in arr.shape)
+            padded[slices] = arr
+            return padded
+
+        a_padded = _pad_to(obj_a.subfield, target_shape)
+        b_padded = _pad_to(obj_b.subfield, target_shape)
+
+        # Stochastic blend ratio for novelty.
+        alpha = float(rng.uniform(0.3, 0.7))
+        composed_subfield = alpha * a_padded + (1.0 - alpha) * b_padded
+
+        # Voxels: pick from the parent with higher field density at each voxel.
+        va = _pad_to(obj_a.voxels.astype(np.float64), target_shape)
+        vb = _pad_to(obj_b.voxels.astype(np.float64), target_shape)
+        composed_voxels = np.where(a_padded >= b_padded, va, vb).astype(int)
+
+        composed_s = alpha * obj_a.avg_s + (1.0 - alpha) * obj_b.avg_s
+        composed_stability = min(obj_a.stability_steps, obj_b.stability_steps)
+        parent_ids = [obj_a.object_id, obj_b.object_id]
+
+        return self.add_if_stable(
+            composed_subfield,
+            composed_voxels,
+            composed_s,
+            composed_stability,
+            parent_ids=parent_ids,
+        )
 
     def sample(
         self,
@@ -151,6 +285,35 @@ class MemoryCorpus:
             obj.usage_count += 1
             result.append(obj)
         return result
+
+    # ------------------------------------------------------------------
+    # Serialization
+    # ------------------------------------------------------------------
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize the entire corpus to a JSON-compatible dictionary."""
+        return {
+            "max_size": self.max_size,
+            "min_stability": self.min_stability,
+            "min_local_s": self.min_local_s,
+            "patch_scales": self.patch_scales,
+            "compose_probability": self.compose_probability,
+            "objects": [obj.to_dict() for obj in self._objects],
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> MemoryCorpus:
+        """Reconstruct a :class:`MemoryCorpus` from a dictionary."""
+        corpus = cls(
+            max_size=int(data["max_size"]),
+            min_stability=int(data["min_stability"]),
+            min_local_s=float(data["min_local_s"]),
+            patch_scales=list(data.get("patch_scales", [4, 8, 16])),
+            compose_probability=float(data.get("compose_probability", 0.15)),
+        )
+        for obj_data in data.get("objects", []):
+            corpus._objects.append(StableObject.from_dict(obj_data))
+        return corpus
 
     # ------------------------------------------------------------------
     # Internal scoring
