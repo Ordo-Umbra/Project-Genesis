@@ -367,6 +367,35 @@ class GenesisEngine:
         )
         logger.info("🔄 Corpus recalled object %s at (%d,%d,%d)", obj.object_id, i, j, k)
 
+    def analyze_sectorisation(
+        self,
+        *,
+        method: str = "std",
+        k: float = 1.0,
+        periodic: bool = True,
+        min_size: int = 1,
+        include_sectors: bool = True,
+    ) -> dict[str, Any]:
+        """Measure the field's β-sectorisation / boundary formation.
+
+        Returns the detected sector count, boundary-work measures, and
+        per-sector distinction/integration statistics. See
+        :mod:`project_genesis.sectorisation`.
+        """
+        from .sectorisation import analyze_sectorisation
+
+        with self._lock:
+            field = self.field.copy()
+        return analyze_sectorisation(
+            field,
+            self.BETA,
+            method=method,
+            k=k,
+            periodic=periodic,
+            min_size=min_size,
+            include_sectors=include_sectors,
+        )
+
     def quantize_to_voxels(self) -> np.ndarray:
         voxel_chunk = np.zeros_like(self.field, dtype=int)
         cfg = self.config

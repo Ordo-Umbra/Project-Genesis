@@ -129,6 +129,18 @@ def build_parser() -> argparse.ArgumentParser:
         default=False,
         help="Generate matplotlib visualization artifacts (voxel_3d.png, field_slices.png, s_history.png).",
     )
+    parser.add_argument(
+        "--analyze-sectors",
+        action="store_true",
+        default=False,
+        help="Measure β-sectorisation / boundary formation and write sectorisation.json.",
+    )
+    parser.add_argument(
+        "--sector-threshold-k",
+        type=float,
+        default=1.0,
+        help="Wall-threshold factor for sector detection (|∇φ| > mean + k·std).",
+    )
     return parser
 
 
@@ -162,6 +174,8 @@ def export_artifacts(
     requested_steps: int,
     resumed_from: str | None = None,
     visualize: bool = False,
+    analyze_sectors: bool = False,
+    sector_threshold_k: float = 1.0,
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     slices_dir = output_dir / "slices"
@@ -206,6 +220,13 @@ def export_artifacts(
         (slices_dir / f"step_{step:04d}_z.txt").write_text(str(snapshot["slice_z"]) + "\n", encoding="utf-8")
 
     engine.save(output_dir / "engine_snapshot.npz")
+
+    if analyze_sectors:
+        sector_report = engine.analyze_sectorisation(k=sector_threshold_k)
+        (output_dir / "sectorisation.json").write_text(
+            json.dumps(sector_report, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
 
     if visualize:
         from project_genesis.visualize import save_visualization
@@ -259,6 +280,8 @@ def main() -> None:
         requested_steps=args.steps,
         resumed_from=args.resume,
         visualize=args.visualize,
+        analyze_sectors=args.analyze_sectors,
+        sector_threshold_k=args.sector_threshold_k,
     )
 
     print(json.dumps(engine.summarize_state(), indent=2, sort_keys=True))

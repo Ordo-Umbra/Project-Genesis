@@ -17,6 +17,7 @@ The sandbox currently provides:
 - **multi-agent terrain-sensing inhabitants** with configurable density-seeking, exploration, or S-functional-driven policies,
 - agent-agent sensing, shared best-known signals, and optional field influence at visited cells,
 - **stable-structure memory corpus** with multi-scale patch scanning, bounded corpus retention, probabilistic recall, compositional injection, and lineage tracking,
+- **β-sectorisation / boundary-formation analysis** — domain-wall detection, periodic connected-component sector counting, per-sector distinction/integration statistics, and triple-junction counting, for empirically testing the URP `N⋆=3` (SU(3)) prediction,
 - saved snapshots for resuming or analyzing a run,
 - exported metrics, run summaries, agent timelines, corpus summaries, and text slices for inspecting intermediate and final terrain states,
 - **matplotlib visualization** — 3-D voxel scatter plots, field cross-section heat maps, and S-functional time-series charts,
@@ -38,6 +39,7 @@ project_genesis/
   numba_kernels.py     Numba JIT-accelerated field evolution kernels
   render.py            Text-based slice rendering for terrain inspection
   s_compass_bridge.py  S-compass connector bridge for AI agent integration
+  sectorisation.py     β-sectorisation / boundary-formation domain analysis
   visualize.py         Matplotlib-based 3-D voxel and S-functional visualization
 Docs/
   The Universal Recursion Principle (URP) _260312_170343.txt
@@ -45,7 +47,10 @@ tests/
   test_genesis_engine.py
   test_memory_corpus.py
   test_new_subsystems.py
+  test_sectorisation.py
   test_urp_extensions.py
+experiments/
+  beta_sectorisation.py β-sweep experiment measuring emergent sector counts
 web_viewer/
   index.html           Three.js live voxel viewer
   client.js            WebSocket client for the viewer
@@ -133,6 +138,26 @@ The feature is tuned with:
 - `--min-local-s`
 - `--corpus-patch-scales`
 - `--corpus-compose-probability`
+
+### β-Sectorisation & Boundary Formation
+
+The URP gauge derivation predicts that the β-nonlinearity drives a continuous medium to partition into a small number of stable domains separated by domain walls, with **N⋆ = 3** the dominant attractor at the QCD-derived β ≈ 0.09 — the seed of color SU(3). Separately, the framing of *The Range* holds that a "being" is not a thing inside a boundary but **is** the boundary: the work of maintaining a coherent domain against its surroundings, through the balance of distinction and integration.
+
+The `sectorisation` module makes both measurable. Given an evolved field it:
+
+- computes the periodic gradient magnitude |∇φ| (reusing the simulation's own kernel),
+- marks **domain walls** where |∇φ| is high (the boundary set, the locus of boundary-work),
+- labels the low-gradient **interiors** into connected components — the *sectors* (candidate "beings"), with optional periodic merging,
+- reports per-sector **distinction** (wall gradient energy, β|∇φ|²) and **integration** (internal coherence, 1/(1+mean|∇φ|²)),
+- counts **triple junctions** — the discrete analogue of the 120° Y-junctions tied to the three-sector attractor.
+
+Measure it on a run with `--analyze-sectors` (writes `sectorisation.json`), via the engine API `engine.analyze_sectorisation()`, or sweep β with the experiment script:
+
+```bash
+python experiments/beta_sectorisation.py --size 32 --steps 200 --seed 7 --trials 3
+```
+
+**Empirical finding (current dynamics):** the sweep shows the field collapses to a single sector (N = 1) at *every* β, including 0.09 — it does **not** spontaneously sectorise. This is an honest negative result, not a tooling bug (the analyzer correctly recovers N = 3 on fields that genuinely contain three domains; see `tests/test_sectorisation.py`). The cause is structural: the implemented overdamped equation reduces the theory's `−(β/4)(∇φ)⁴` wall-tension term to a purely smoothing `β|∇φ|²`, leaving nothing to hold a domain wall against diffusion. Realizing the predicted N⋆ = 3 would require adding the wall-supporting (double-well / gradient-quartic) dynamics the full Lagrangian implies — the analyzer is the instrument that will let that work be verified rather than assumed.
 
 ## Setup
 
@@ -251,6 +276,7 @@ The current checks verify:
 - chunk activation / deactivation logic,
 - WebSocket message serialization / deserialization,
 - S-compass bridge output consistency,
+- β-sectorisation analysis: gradient magnitude, sector labelling (including periodic merging and size filtering), per-sector distinction/integration statistics, triple-junction detection, and the engine integration hook,
 - headless save / load round-trip integrity,
 - agent perception data structure and action queue execution.
 
@@ -395,7 +421,7 @@ Recommended next steps for expansion:
 6. Evaluate whether the simulation loop is compelling enough to justify networking and avatars.
 7. Add higher-order field dynamics — second-order time derivatives (∂²φ/∂t²) for wave-like behavior.
 8. Extend the Poisson solver to support anisotropic or spatially varying ρ (e.g., agent-driven source terms).
-9. Explore emergent gauge sectorization — identify conditions under which the field spontaneously partitions into distinct coherent domains.
+9. Explore emergent gauge sectorization — the `sectorisation` module now *measures* domain count, walls, and Y-junctions (see "β-Sectorisation & Boundary Formation"). The open work is the *dynamics*: add the `−(β/4)(∇φ)⁴` wall-tension / double-well term so the field can actually sustain the predicted N⋆=3 sectors, then verify with the analyzer.
 10. Implement inter-agent communication protocols — agents that negotiate and share structured messages beyond simple signal sharing.
 
 ## Theory Reference
