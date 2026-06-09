@@ -11,7 +11,7 @@ from .config import EngineConfig
 from .io import load_snapshot, save_snapshot
 from .memory_corpus import MemoryCorpus
 from .metrics import calculate_gradients, compute_local_s, compute_s_functional, summarize_field
-from .numba_kernels import jit_step, jit_step_v2
+from .numba_kernels import jit_step, jit_step_v2, sector_potential_drift_3d
 from .render import render_voxel_slice
 
 logger = logging.getLogger(__name__)
@@ -203,6 +203,14 @@ class GenesisEngine:
             )
         else:
             new_field, _lap, _gsq = jit_step(self.field, self.BETA, self.G, dt)
+        if self.config.use_sector_potential:
+            drift = np.empty_like(new_field)
+            sector_potential_drift_3d(
+                np.ascontiguousarray(self.field, dtype=np.float64),
+                self.config.sector_count,
+                drift,
+            )
+            new_field = new_field + self.config.sector_potential_weight * drift * dt
         with self._lock:
             self.field = new_field
         self._invalidate_s_cache()

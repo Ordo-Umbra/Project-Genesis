@@ -88,6 +88,24 @@ def build_parser() -> argparse.ArgumentParser:
         help="Weight applied to the integration functional contribution.",
     )
     parser.add_argument(
+        "--sector-potential",
+        action="store_true",
+        default=False,
+        help="Enable the multi-well sectorisation potential (domain-wall tension term).",
+    )
+    parser.add_argument(
+        "--sector-count",
+        type=int,
+        default=3,
+        help="Number of wells (target sector types) for the sectorisation potential.",
+    )
+    parser.add_argument(
+        "--sector-weight",
+        type=float,
+        default=0.5,
+        help="Strength of the sectorisation potential drift.",
+    )
+    parser.add_argument(
         "--enable-memory-corpus",
         action="store_true",
         default=False,
@@ -263,6 +281,9 @@ def main() -> None:
                 integration_radius=args.integration_radius,
                 integration_decay=args.integration_decay,
                 integration_weight=args.integration_weight,
+                use_sector_potential=args.sector_potential,
+                sector_count=args.sector_count,
+                sector_potential_weight=args.sector_weight,
                 enable_memory_corpus=args.enable_memory_corpus,
                 corpus_max_size=args.corpus_max_size,
                 corpus_min_stability=args.min_stability,

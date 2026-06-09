@@ -50,6 +50,9 @@ def run_one(
     seed: int | None,
     threshold_k: float,
     coherence: bool,
+    sector_potential: bool = False,
+    sector_count: int = 3,
+    sector_weight: float = 0.5,
 ) -> dict[str, float]:
     config = EngineConfig(
         chunk_size=size,
@@ -57,6 +60,9 @@ def run_one(
         seed=seed,
         default_dt=dt,
         use_coherence_potential=coherence,
+        use_sector_potential=sector_potential,
+        sector_count=sector_count,
+        sector_potential_weight=sector_weight,
     )
     engine = GenesisEngine(config=config)
     engine.evolve_field(steps=steps, dt=dt, record_every=max(1, steps // 5))
@@ -89,6 +95,24 @@ def main() -> None:
         default=False,
         help="Enable the coherence potential during evolution.",
     )
+    p.add_argument(
+        "--sector-potential",
+        action="store_true",
+        default=False,
+        help="Enable the multi-well sectorisation potential (wall-tension term).",
+    )
+    p.add_argument(
+        "--sector-count",
+        type=int,
+        default=3,
+        help="Number of wells (target sector types) for the sectorisation potential.",
+    )
+    p.add_argument(
+        "--sector-weight",
+        type=float,
+        default=0.5,
+        help="Strength of the sectorisation potential drift.",
+    )
     args = p.parse_args()
 
     betas = [float(b) for b in args.betas.split(",") if b.strip()]
@@ -117,6 +141,9 @@ def main() -> None:
                 seed=seed,
                 threshold_k=args.threshold_k,
                 coherence=args.coherence,
+                sector_potential=args.sector_potential,
+                sector_count=args.sector_count,
+                sector_weight=args.sector_weight,
             )
             n_values.append(int(report["n_sectors"]))
             wall_fracs.append(float(report["boundary_fraction"]))

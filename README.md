@@ -51,6 +51,8 @@ tests/
   test_urp_extensions.py
 experiments/
   beta_sectorisation.py β-sweep experiment measuring emergent sector counts
+web_toy/
+  index.html           Standalone in-browser URP toy (no server, no build)
 web_viewer/
   index.html           Three.js live voxel viewer
   client.js            WebSocket client for the viewer
@@ -157,7 +159,24 @@ Measure it on a run with `--analyze-sectors` (writes `sectorisation.json`), via 
 python experiments/beta_sectorisation.py --size 32 --steps 200 --seed 7 --trials 3
 ```
 
-**Empirical finding (current dynamics):** the sweep shows the field collapses to a single sector (N = 1) at *every* β, including 0.09 — it does **not** spontaneously sectorise. This is an honest negative result, not a tooling bug (the analyzer correctly recovers N = 3 on fields that genuinely contain three domains; see `tests/test_sectorisation.py`). The cause is structural: the implemented overdamped equation reduces the theory's `−(β/4)(∇φ)⁴` wall-tension term to a purely smoothing `β|∇φ|²`, leaving nothing to hold a domain wall against diffusion. Realizing the predicted N⋆ = 3 would require adding the wall-supporting (double-well / gradient-quartic) dynamics the full Lagrangian implies — the analyzer is the instrument that will let that work be verified rather than assumed.
+**Empirical finding (baseline dynamics):** with only the reduced `β|∇φ|²` term, the field collapses to a single sector (N = 1) at *every* β, including 0.09 — it does **not** spontaneously sectorise. This is an honest negative result, not a tooling bug (the analyzer correctly recovers N = 3 on fields that genuinely contain three domains; see `tests/test_sectorisation.py`). The cause is structural: the overdamped reduction drops the theory's `−(β/4)(∇φ)⁴` wall-tension term, leaving nothing to hold a domain wall against diffusion.
+
+#### Sectorisation potential (wall tension)
+
+Enabling `--sector-potential` adds the missing wall tension as a periodic multi-well potential `V(φ) = −cos(2π·k·φ)`, whose `k` minima (`--sector-count`, default 3) give the field domains to settle into:
+
+```
+∂_t φ = ∇²φ + β|∇φ|² − G·φ − w · sin(2π·k·φ)
+```
+
+With this term the behavior **flips from N = 1 to genuine multi-domain phase separation** — boundary formation now occurs and is measurable:
+
+| dynamics | β = 0.09 sector count |
+|----------|----------------------|
+| baseline (`β\|∇φ\|²` only) | **1** (no walls) |
+| `--sector-potential --sector-count 3` | **many** domains, then coarsening |
+
+Two effects visible in the sweep match the theory's distinction/integration tension: sector count **grows with β** (more distinction → more walls → finer fragmentation), and **falls with evolution time** as Allen–Cahn-style coarsening absorbs small domains. Settling reproducibly onto the predicted `N⋆ = 3` attractor is a genuine coarsening/tuning study (sensitive to initialization, well count, and potential strength) — the analyzer and the [browser toy](web_toy/) are the instruments built to explore it, rather than assuming the answer.
 
 ## Setup
 
@@ -309,6 +328,28 @@ When the headless server runs with a non-zero port, the following commands are a
 | `send_action` | `{agent_id, action}` | Queues an action for an agent; acknowledged |
 
 The server also pushes `chunk_updated` events to connected clients when voxel data changes.
+
+## Browser Toy (zero dependencies)
+
+`web_toy/index.html` is a self-contained, single-file demonstration of the core URP ideas — **just open it in a browser**, no server, no build step, no CDN. It runs a 2-D version of the URP field equation live on a canvas:
+
+```
+∂_t φ = D·∇²φ + β·|∇φ|² − w·sin(2π·k·φ)
+```
+
+and shows:
+
+- the field evolving by gradient-ascent, coloured by **sector** (nearest of `k` wells — red/green/blue for `k=3`) or as a raw field heat map,
+- **domain walls** (high-|∇φ| boundaries) overlaid in real time,
+- the live **S-functional** (`ΔC`, `κ`, `ΔI`, `S`) with an S-over-time graph,
+- the measured **sector count `N`**, coarsening from a fine mosaic toward a few large domains.
+
+Interactive sliders make the distinction/integration trade-off tangible: **raise β** and the field fragments into more sectors (distinction wins); **lower it** and domains coarsen toward a few (integration wins). It is the conceptual companion to the full 3-D Python engine.
+
+```bash
+# any static file server, or literally just double-click the file:
+python -m http.server -d web_toy 8000   # then open http://localhost:8000
+```
 
 ## Web Viewer
 
