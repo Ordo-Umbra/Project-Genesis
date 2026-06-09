@@ -35,6 +35,7 @@ project_genesis/
   io.py                Snapshot serialization helpers
   metrics.py           URP terrain summary metrics and S-functional computation
   memory_corpus.py     Stable-object corpus, composition, serialization, lineage
+  multiphase.py        Three-component Ψ∈ℂ³ sector field with 120° Y-junctions
   network_server.py    WebSocket server for remote monitoring and control
   numba_kernels.py     Numba JIT-accelerated field evolution kernels
   render.py            Text-based slice rendering for terrain inspection
@@ -46,13 +47,15 @@ Docs/
 tests/
   test_genesis_engine.py
   test_memory_corpus.py
+  test_multiphase.py
   test_new_subsystems.py
   test_sectorisation.py
   test_urp_extensions.py
 experiments/
   beta_sectorisation.py β-sweep experiment measuring emergent sector counts
 web_toy/
-  index.html           Standalone in-browser URP toy (no server, no build)
+  index.html           Standalone in-browser URP toy (scalar field)
+  su3.html             Three-component SU(3) sector toy with Y-junctions
 web_viewer/
   index.html           Three.js live voxel viewer
   client.js            WebSocket client for the viewer
@@ -296,6 +299,7 @@ The current checks verify:
 - WebSocket message serialization / deserialization,
 - S-compass bridge output consistency,
 - β-sectorisation analysis: gradient magnitude, sector labelling (including periodic merging and size filtering), per-sector distinction/integration statistics, triple-junction detection, and the engine integration hook,
+- three-component (Ψ∈ℂ³) sector model: vector Allen–Cahn evolution, argmax sector labelling, interface detection, triple-junction counting (2-D and 3-D), S₃ permutation invariance, and report serialization,
 - headless save / load round-trip integrity,
 - agent perception data structure and action queue execution.
 
@@ -329,6 +333,30 @@ When the headless server runs with a non-zero port, the following commands are a
 
 The server also pushes `chunk_updated` events to connected clients when voxel data changes.
 
+### Three-Component Sector Field (Ψ∈ℂ³) — genuine SU(3) Y-junctions
+
+The scalar field above has a structural limit: stacked wells give only **layered** domains — a region in well `n` borders wells `n±1`, so three phases never meet and **no 120° Y-junctions can form**. This is an honest property of a single scalar, and it points at the next layer of the gauge derivation (§4.3.3): a **sector-membership field** `Ψ(x) = (R, G, B)` whose three components compete on equal footing.
+
+`project_genesis.multiphase` implements this as a vector Allen–Cahn field — the multi-phase generalisation of the URP update:
+
+```
+∂_t η_a = D·∇²η_a − [ η_a³ − η_a + 2γ·η_a·(Σ_b η_b² − η_a²) ]
+```
+
+The triple-well free energy is **S₃-symmetric** (relabelling R/G/B is a symmetry — the discrete remnant of the global symmetry surviving deep inside sectors), and with all three phases mutually adjacent, **genuine three-way domains with 120° triple junctions form and coarsen** exactly as in grain-growth / soap-foam physics:
+
+```python
+import numpy as np
+from project_genesis.multiphase import step_multiphase, analyze_multiphase
+
+fields = np.random.default_rng(7).random((3, 96, 96)) * 0.1
+for _ in range(600):
+    fields = step_multiphase(fields, diffusion=1.0, gamma=1.5, dt=0.1)
+print(analyze_multiphase(fields))   # -> n_phases=3, triple_junctions>0, ...
+```
+
+Triple-junction counts fall as the structure coarsens (e.g. ~360 → ~35 over 1500 steps), and are invariant under permuting R/G/B (the S₃ check in `tests/test_multiphase.py`). The model is dimension-agnostic — the same code runs in 2-D (the browser toy) and 3-D (matching the engine).
+
 ## Browser Toy (zero dependencies)
 
 `web_toy/index.html` is a self-contained, single-file demonstration of the core URP ideas — **just open it in a browser**, no server, no build step, no CDN. It runs a 2-D version of the URP field equation live on a canvas:
@@ -346,9 +374,11 @@ and shows:
 
 Interactive sliders make the distinction/integration trade-off tangible: **raise β** and the field fragments into more sectors (distinction wins); **lower it** and domains coarsen toward a few (integration wins). It is the conceptual companion to the full 3-D Python engine.
 
+A second page, `web_toy/su3.html`, runs the **three-component SU(3) sector model** (`multiphase` above) live: three R/G/B colours competing, forming domains with genuine **120° Y-junctions** that coarsen over time, with a live junction count and S-functional. The two pages cross-link so you can directly compare the scalar (layered, no junctions) and three-component (true triple junctions) models — the comparison *is* the lesson.
+
 ```bash
-# any static file server, or literally just double-click the file:
-python -m http.server -d web_toy 8000   # then open http://localhost:8000
+# any static file server, or literally just double-click the files:
+python -m http.server -d web_toy 8000   # then open http://localhost:8000 (and /su3.html)
 ```
 
 ## Web Viewer
@@ -462,7 +492,7 @@ Recommended next steps for expansion:
 6. Evaluate whether the simulation loop is compelling enough to justify networking and avatars.
 7. Add higher-order field dynamics — second-order time derivatives (∂²φ/∂t²) for wave-like behavior.
 8. Extend the Poisson solver to support anisotropic or spatially varying ρ (e.g., agent-driven source terms).
-9. Explore emergent gauge sectorization — the `sectorisation` module now *measures* domain count, walls, and Y-junctions (see "β-Sectorisation & Boundary Formation"). The open work is the *dynamics*: add the `−(β/4)(∇φ)⁴` wall-tension / double-well term so the field can actually sustain the predicted N⋆=3 sectors, then verify with the analyzer.
+9. Emergent gauge sectorization — the `sectorisation` module *measures* domains/walls/junctions; the `--sector-potential` term gives the scalar field the wall tension to phase-separate; and `multiphase` (Ψ∈ℂ³) now produces genuine three-way domains with 120° Y-junctions (see the two browser toys). Open work: couple a gauge connection `A_μ` to the sector field to recover the Yang–Mills boundary modes (gluons) the derivation describes.
 10. Implement inter-agent communication protocols — agents that negotiate and share structured messages beyond simple signal sharing.
 
 ## Theory Reference

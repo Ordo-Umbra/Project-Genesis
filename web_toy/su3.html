@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Project Genesis — SU(3) Sector Toy</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #0d1016; color: #c9d4e3; line-height: 1.45; }
+  header { padding: 18px 22px 6px; }
+  h1 { margin: 0; font-size: 20px; font-weight: 650; }
+  .sub { color: #7d8aa0; font-size: 13px; margin-top: 2px; }
+  .nav { font-size: 13px; margin-top: 6px; }
+  .wrap { display: flex; flex-wrap: wrap; gap: 20px; padding: 14px 22px 28px; }
+  .stage { display: flex; flex-direction: column; gap: 12px; }
+  canvas#field { width: 512px; height: 512px; image-rendering: pixelated; background: #000; border: 1px solid #222b3a; border-radius: 6px; }
+  .panel { width: 320px; display: flex; flex-direction: column; gap: 14px; }
+  .card { background: #141a24; border: 1px solid #1f2a3a; border-radius: 8px; padding: 12px 14px; }
+  .card h2 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #8a98ad; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 7px 0; font-size: 13px; }
+  .row label { color: #aab6c8; }
+  .row input[type=range] { flex: 1; }
+  .val { font-variant-numeric: tabular-nums; color: #e8eef7; min-width: 42px; text-align: right; }
+  .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font-size: 13px; }
+  .metrics .k { color: #8a98ad; }
+  .metrics .v { color: #e8eef7; font-variant-numeric: tabular-nums; text-align: right; }
+  .big { font-size: 22px; font-weight: 650; }
+  button { background: #1d2735; color: #d7e2f1; border: 1px solid #2c3a4f; border-radius: 6px; padding: 7px 12px; font-size: 13px; cursor: pointer; }
+  button:hover { background: #263348; }
+  button.primary { background: #2b6cb0; border-color: #3b82c4; }
+  button.primary:hover { background: #3179bd; }
+  .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  canvas#sgraph { width: 100%; height: 96px; background: #0a0e14; border-radius: 5px; display: block; }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: #9fb0c6; }
+  .swatch { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  .explain { font-size: 12.5px; color: #9aa8bd; }
+  .explain b { color: #cdd9ea; font-weight: 600; }
+  .eq { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; background: #0a0e14; padding: 8px 10px; border-radius: 5px; color: #b8e0c8; overflow-x: auto; }
+  a { color: #6aa9e0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Project Genesis — SU(3) Sector Toy</h1>
+  <div class="sub">The three-component sector field Ψ = (R, G, B): three colours competing on equal footing, forming domains with genuine 120° Y-junctions.</div>
+  <div class="nav">← <a href="index.html">scalar URP toy</a> &nbsp;·&nbsp; you are on the <b>3-component SU(3)</b> model</div>
+</header>
+
+<div class="wrap">
+  <div class="stage">
+    <canvas id="field" width="160" height="160"></canvas>
+    <div class="legend" id="legend"></div>
+    <div class="card" style="width:512px">
+      <h2>Why three components?</h2>
+      <div class="explain">
+        The <a href="index.html">scalar toy</a> can only make <b>layered</b> domains: a region can border its
+        neighbouring wells but three phases never meet, so there are no Y-junctions. The URP gauge derivation's
+        answer (§4.3.3) is a <b>sector-membership field</b> Ψ = (R, G, B) — three components that compete, with
+        one dominating deep inside each domain. Now all three colours are mutually adjacent, and where they meet
+        you get the <b>120° triple junctions</b> the theory ties to colour <b>SU(3)</b> (the domain walls play the
+        role of gluon-like boundary modes). The dynamics are vector Allen–Cahn — the multi-phase generalisation
+        of the URP field update:
+      </div>
+      <div class="eq" style="margin-top:8px">∂ₜη_a = D·∇²η_a − [ η_a³ − η_a + 2γ·η_a·(Σ_b η_b² − η_a²) ]</div>
+      <div class="explain" style="margin-top:8px">
+        The free energy is <b>S₃-symmetric</b> — relabelling R→G→B is a symmetry — the discrete remnant of the
+        global symmetry that survives deep inside sectors. Watch the domains <b>coarsen</b>: small grains shrink,
+        junctions migrate, and the triple-junction count falls, exactly as in soap-foam and grain-growth physics.
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="card">
+      <h2>State</h2>
+      <div class="metrics">
+        <div class="k">domains (N)</div><div class="v big" id="m-n">–</div>
+        <div class="k">Y-junctions</div><div class="v big" id="m-j">–</div>
+        <div class="k">S-functional</div><div class="v" id="m-s">–</div>
+        <div class="k">ΔC distinction</div><div class="v" id="m-dc">–</div>
+        <div class="k">ΔI integration</div><div class="v" id="m-di">–</div>
+        <div class="k">κ capacity</div><div class="v" id="m-k">–</div>
+        <div class="k">wall fraction</div><div class="v" id="m-wall">–</div>
+        <div class="k">step</div><div class="v" id="m-step">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>S over time</h2>
+      <canvas id="sgraph" width="300" height="96"></canvas>
+    </div>
+
+    <div class="card">
+      <h2>Controls</h2>
+      <div class="btns" style="margin-bottom:10px">
+        <button class="primary" id="btn-play">Pause</button>
+        <button id="btn-reset">Reset</button>
+        <button id="btn-walls">Walls: on</button>
+      </div>
+      <div class="row"><label>γ cross-coupling</label><input id="s-g" type="range" min="1.0" max="3.0" step="0.05" value="1.50"><span class="val" id="v-g">1.50</span></div>
+      <div class="row"><label>D diffusion</label><input id="s-D" type="range" min="0.3" max="1.5" step="0.05" value="1.00"><span class="val" id="v-D">1.00</span></div>
+      <div class="row"><label>dt</label><input id="s-dt" type="range" min="0.02" max="0.15" step="0.01" value="0.10"><span class="val" id="v-dt">0.10</span></div>
+      <div class="row"><label>wall margin</label><input id="s-m" type="range" min="0.04" max="0.4" step="0.02" value="0.16"><span class="val" id="v-m">0.16</span></div>
+      <div class="row"><label>speed (steps/frame)</label><input id="s-spd" type="range" min="1" max="8" step="1" value="3"><span class="val" id="v-spd">3</span></div>
+    </div>
+
+    <div class="card explain">
+      Backed by the tested <code>project_genesis.multiphase</code> model (see <code>tests/test_multiphase.py</code>),
+      which runs the same dynamics in 2-D and 3-D and measures the junctions you see here. Part of
+      <a href="https://github.com/Ordo-Umbra/Project-Genesis">Project Genesis</a>.
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+(function () {
+  const N = 160, SIZE = N * N;
+  // Three components R, G, B (+ scratch buffers).
+  let R = new Float32Array(SIZE), G = new Float32Array(SIZE), B = new Float32Array(SIZE);
+  let R2 = new Float32Array(SIZE), G2 = new Float32Array(SIZE), B2 = new Float32Array(SIZE);
+  let prevLapAbs = 0, step = 0;
+
+  const P = { gamma: 1.5, D: 1.0, dt: 0.10, margin: 0.16, speed: 3 };
+  let running = true, showWalls = true;
+
+  const COLORS = [[219, 74, 74], [74, 190, 96], [86, 122, 232]]; // R, G, B
+  const el = (id) => document.getElementById(id);
+  const idx = (x, y) => y * N + x;
+
+  const fieldCanvas = el("field");
+  const fctx = fieldCanvas.getContext("2d");
+  const img = fctx.createImageData(N, N);
+  const sgraph = el("sgraph");
+  const sctx = sgraph.getContext("2d");
+  const sHistory = [];
+  const SHIST_MAX = 300;
+
+  function reset() {
+    let seed = (Math.random() * 2 ** 32) >>> 0;
+    const rng = () => {
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    for (let i = 0; i < SIZE; i++) { R[i] = rng() * 0.1; G[i] = rng() * 0.1; B[i] = rng() * 0.1; }
+    step = 0; prevLapAbs = 0; sHistory.length = 0;
+  }
+
+  function lap(f, x, y, xw, xe, yn, ys) {
+    return f[idx(xe, y)] + f[idx(xw, y)] + f[idx(x, yn)] + f[idx(x, ys)] - 4 * f[idx(x, y)];
+  }
+
+  function evolve() {
+    const { gamma, D, dt } = P;
+    let sumGrad = 0, sumLapAbs = 0;
+    for (let y = 0; y < N; y++) {
+      const yn = (y - 1 + N) % N, ys = (y + 1) % N;
+      for (let x = 0; x < N; x++) {
+        const xw = (x - 1 + N) % N, xe = (x + 1) % N;
+        const i = idx(x, y);
+        const r = R[i], g = G[i], b = B[i];
+        const sumSq = r * r + g * g + b * b;
+        const lr = lap(R, x, y, xw, xe, yn, ys);
+        const lg = lap(G, x, y, xw, xe, yn, ys);
+        const lb = lap(B, x, y, xw, xe, yn, ys);
+        const dr = r * r * r - r + 2 * gamma * r * (sumSq - r * r);
+        const dg = g * g * g - g + 2 * gamma * g * (sumSq - g * g);
+        const db = b * b * b - b + 2 * gamma * b * (sumSq - b * b);
+        R2[i] = r + dt * (D * lr - dr);
+        G2[i] = g + dt * (D * lg - dg);
+        B2[i] = b + dt * (D * lb - db);
+        // Distinction = Σ|∇η|² (use R component pair-diffs as representative sum)
+        const grx = (R[idx(xe, y)] - R[idx(xw, y)]) * 0.5, gry = (R[idx(x, ys)] - R[idx(x, yn)]) * 0.5;
+        const ggx = (G[idx(xe, y)] - G[idx(xw, y)]) * 0.5, ggy = (G[idx(x, ys)] - G[idx(x, yn)]) * 0.5;
+        const gbx = (B[idx(xe, y)] - B[idx(xw, y)]) * 0.5, gby = (B[idx(x, ys)] - B[idx(x, yn)]) * 0.5;
+        sumGrad += grx * grx + gry * gry + ggx * ggx + ggy * ggy + gbx * gbx + gby * gby;
+        sumLapAbs += Math.abs(lr) + Math.abs(lg) + Math.abs(lb);
+      }
+    }
+    let t;
+    t = R; R = R2; R2 = t;
+    t = G; G = G2; G2 = t;
+    t = B; B = B2; B2 = t;
+    step++;
+
+    const meanGrad = sumGrad / SIZE;
+    const meanLapAbs = sumLapAbs / SIZE;
+    const deltaC = 0.09 * meanGrad;
+    const kappa = 1 / (1 + meanGrad);
+    const deltaI = Math.max(0, prevLapAbs - meanLapAbs);
+    prevLapAbs = meanLapAbs;
+    return { deltaC, kappa, deltaI, S: deltaC + kappa * deltaI };
+  }
+
+  function labelAt(i) {
+    const r = R[i], g = G[i], b = B[i];
+    return r >= g ? (r >= b ? 0 : 2) : (g >= b ? 1 : 2);
+  }
+  function isWall(i) {
+    const r = R[i], g = G[i], b = B[i];
+    const m1 = Math.max(r, g, b);
+    const m2 = (r + g + b) - m1 - Math.min(r, g, b);  // middle value
+    return (m1 - m2) < P.margin;
+  }
+
+  function render() {
+    const data = img.data;
+    for (let i = 0; i < SIZE; i++) {
+      const o = i * 4;
+      if (showWalls && isWall(i)) {
+        data[o] = 14; data[o + 1] = 16; data[o + 2] = 22; data[o + 3] = 255;
+        continue;
+      }
+      const c = COLORS[labelAt(i)];
+      data[o] = c[0]; data[o + 1] = c[1]; data[o + 2] = c[2]; data[o + 3] = 255;
+    }
+    fctx.putImageData(img, 0, 0);
+  }
+
+  function analyze() {
+    // sector labels + walls
+    const lab = new Int8Array(SIZE), wall = new Uint8Array(SIZE);
+    for (let i = 0; i < SIZE; i++) { lab[i] = labelAt(i); wall[i] = isWall(i) ? 1 : 0; }
+    // connected components of same-label, non-wall cells (periodic, 4-conn)
+    const seen = new Int32Array(SIZE).fill(-1);
+    const st = new Int32Array(SIZE);
+    let n = 0, wc = 0;
+    for (let i = 0; i < SIZE; i++) {
+      if (wall[i]) wc++;
+      if (seen[i] !== -1 || wall[i]) continue;
+      const comp = n++; let sp = 0; st[sp++] = i; seen[i] = comp; let cnt = 0;
+      while (sp > 0) {
+        const cur = st[--sp]; cnt++;
+        const cx = cur % N, cy = (cur / N) | 0;
+        const nb = [((cy - 1 + N) % N) * N + cx, ((cy + 1) % N) * N + cx, cy * N + ((cx - 1 + N) % N), cy * N + ((cx + 1) % N)];
+        for (const q of nb) if (seen[q] === -1 && !wall[q] && lab[q] === lab[cur]) { seen[q] = comp; st[sp++] = q; }
+      }
+      if (cnt < 8) n--;
+    }
+    // Y-junctions: cells whose 3x3 neighbourhood holds all 3 labels
+    let j = 0;
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      let bits = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++)
+        bits |= 1 << lab[idx((x + dx + N) % N, (y + dy + N) % N)];
+      if (bits === 7) j++;  // all of R,G,B present
+    }
+    return { n, j, wallFrac: wc / SIZE };
+  }
+
+  function renderGraph() {
+    const w = sgraph.width, h = sgraph.height;
+    sctx.clearRect(0, 0, w, h);
+    if (sHistory.length < 2) return;
+    let max = 1e-9; for (const v of sHistory) if (v > max) max = v;
+    sctx.strokeStyle = "#4ade80"; sctx.lineWidth = 1.5; sctx.beginPath();
+    for (let i = 0; i < sHistory.length; i++) {
+      const x = (i / (SHIST_MAX - 1)) * w, yy = h - (sHistory[i] / max) * (h - 6) - 3;
+      i ? sctx.lineTo(x, yy) : sctx.moveTo(x, yy);
+    }
+    sctx.stroke();
+    sctx.fillStyle = "#5b6b82"; sctx.font = "10px system-ui";
+    sctx.fillText("S max " + max.toExponential(2), 6, 12);
+  }
+
+  let frame = 0;
+  function loop() {
+    let last = { deltaC: 0, kappa: 0, deltaI: 0, S: 0 };
+    if (running) {
+      for (let s = 0; s < P.speed; s++) last = evolve();
+      sHistory.push(last.S);
+      if (sHistory.length > SHIST_MAX) sHistory.shift();
+    }
+    render();
+    if (frame % 10 === 0) {
+      const a = analyze();
+      el("m-n").textContent = a.n;
+      el("m-j").textContent = a.j;
+      el("m-wall").textContent = (a.wallFrac * 100).toFixed(1) + "%";
+      renderGraph();
+    }
+    if (running) {
+      el("m-s").textContent = last.S.toExponential(2);
+      el("m-dc").textContent = last.deltaC.toExponential(2);
+      el("m-di").textContent = last.deltaI.toExponential(2);
+      el("m-k").textContent = last.kappa.toFixed(4);
+      el("m-step").textContent = step;
+    }
+    frame++;
+    requestAnimationFrame(loop);
+  }
+
+  function buildLegend() {
+    const names = ["R", "G", "B"];
+    const lg = el("legend"); lg.innerHTML = "";
+    for (let i = 0; i < 3; i++) {
+      const c = COLORS[i], span = document.createElement("span");
+      span.innerHTML = `<span class="swatch" style="background:rgb(${c[0]},${c[1]},${c[2]})"></span>${names[i]}`;
+      lg.appendChild(span);
+    }
+    const wall = document.createElement("span");
+    wall.innerHTML = `<span class="swatch" style="background:#0e1016;border:1px solid #2c3a4f"></span>domain wall`;
+    lg.appendChild(wall);
+  }
+
+  function bindSlider(id, key, fmt) {
+    const s = el(id), v = el("v-" + id.slice(2));
+    s.addEventListener("input", () => { P[key] = parseFloat(s.value); v.textContent = fmt ? fmt(P[key]) : s.value; });
+  }
+  bindSlider("s-g", "gamma", (x) => x.toFixed(2));
+  bindSlider("s-D", "D", (x) => x.toFixed(2));
+  bindSlider("s-dt", "dt", (x) => x.toFixed(2));
+  bindSlider("s-m", "margin", (x) => x.toFixed(2));
+  bindSlider("s-spd", "speed", (x) => x | 0);
+
+  el("btn-play").addEventListener("click", () => { running = !running; el("btn-play").textContent = running ? "Pause" : "Play"; });
+  el("btn-reset").addEventListener("click", reset);
+  el("btn-walls").addEventListener("click", () => { showWalls = !showWalls; el("btn-walls").textContent = "Walls: " + (showWalls ? "on" : "off"); });
+
+  buildLegend();
+  reset();
+  loop();
+})();
+</script>
+</body>
+</html>

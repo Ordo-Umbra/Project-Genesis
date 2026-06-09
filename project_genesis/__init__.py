@@ -4,6 +4,11 @@ from .config import EngineConfig
 from .engine import GenesisEngine
 from .memory_corpus import MemoryCorpus, StableObject
 from .metrics import compute_local_s, compute_s_functional
+from .multiphase import (
+    analyze_multiphase,
+    sector_labels,
+    step_multiphase,
+)
 from .s_compass_bridge import compute_s_gradient, perception_to_action
 from .sectorisation import (
     analyze_sectorisation,
@@ -26,6 +31,7 @@ __all__ = [
     "GenesisEngine",
     "MemoryCorpus",
     "StableObject",
+    "analyze_multiphase",
     "analyze_sectorisation",
     "compute_local_s",
     "compute_s_functional",
@@ -34,7 +40,9 @@ __all__ = [
     "free_energy",
     "label_sectors",
     "perception_to_action",
+    "sector_labels",
     "stationary_sector_count",
+    "step_multiphase",
     "plot_s_history",
     "render_field_slices",
     "render_voxels_3d",
