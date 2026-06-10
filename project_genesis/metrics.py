@@ -29,15 +29,24 @@ def compute_s_functional(
     integration_functional: bool = False,
     integration_radius: int = 2,
     integration_decay: float = 1.0,
+    kappa_field: np.ndarray | None = None,
 ) -> dict[str, float]:
-    """Compute S-functional components: S = ΔC + κΔI."""
+    """Compute S-functional components: S = ΔC + κΔI.
+
+    When ``kappa_field`` is provided (a dynamical capacity field co-evolved
+    with φ), its mean is used as κ directly; otherwise κ falls back to the
+    diagnostic proxy ``1/(1 + mean|∇φ|²)``.
+    """
     laplacian, gradient_squared = calculate_gradients(field)
 
     delta_c = float(np.mean(beta * gradient_squared))
 
-    # Capacity field: high gradient energy suppresses integration capacity.
-    gradient_energy_density = float(np.mean(gradient_squared))
-    kappa = 1.0 / (1.0 + gradient_energy_density)
+    if kappa_field is not None:
+        kappa = float(np.mean(kappa_field))
+    else:
+        # Capacity proxy: high gradient energy suppresses integration capacity.
+        gradient_energy_density = float(np.mean(gradient_squared))
+        kappa = 1.0 / (1.0 + gradient_energy_density)
 
     if prev_field is None:
         delta_i = 0.0
@@ -102,6 +111,7 @@ def summarize_field(
     integration_functional: bool = False,
     integration_radius: int = 2,
     integration_decay: float = 1.0,
+    kappa_field: np.ndarray | None = None,
 ) -> dict[str, float | int]:
     laplacian, gradient_squared = calculate_gradients(field)
     complexity_term = beta * gradient_squared
@@ -136,7 +146,41 @@ def summarize_field(
         integration_functional=integration_functional,
         integration_radius=integration_radius,
         integration_decay=integration_decay,
+        kappa_field=kappa_field,
     )
     metrics.update(s_metrics)
 
     return metrics
+
+
+def kappa_by_scale(
+    kappa_field: np.ndarray,
+    scales: tuple[int, ...] = (4, 8, 16),
+) -> dict[int, dict[str, float]]:
+    """Block-averaged capacity statistics at multiple spatial scales.
+
+    Answers "how do different scales see the capacity field?": at fine scales
+    the depleted texture around domain walls is visible (low minima, high
+    spread), while coarse blocks average it away (means near baseline). Each
+    scale gets the mean / std / min of its block-averaged κ. Scales larger
+    than the field are skipped; non-divisible edges are trimmed.
+    """
+    result: dict[int, dict[str, float]] = {}
+    for scale in scales:
+        if scale <= 0 or scale > min(kappa_field.shape):
+            continue
+        trimmed = kappa_field[
+            tuple(slice(0, (s // scale) * scale) for s in kappa_field.shape)
+        ]
+        blocks_shape: list[int] = []
+        for s in trimmed.shape:
+            blocks_shape.extend([s // scale, scale])
+        blocks = trimmed.reshape(blocks_shape).mean(
+            axis=tuple(range(1, 2 * trimmed.ndim, 2))
+        )
+        result[scale] = {
+            "mean": float(blocks.mean()),
+            "std": float(blocks.std()),
+            "min": float(blocks.min()),
+        }
+    return result

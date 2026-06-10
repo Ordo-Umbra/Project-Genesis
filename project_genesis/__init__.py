@@ -3,7 +3,7 @@ from .chunk_manager import ChunkManager
 from .config import EngineConfig
 from .engine import GenesisEngine
 from .memory_corpus import MemoryCorpus, StableObject
-from .metrics import compute_local_s, compute_s_functional
+from .metrics import compute_local_s, compute_s_functional, kappa_by_scale
 from .multiphase import (
     analyze_multiphase,
     sector_labels,
@@ -38,6 +38,7 @@ __all__ = [
     "compute_s_gradient",
     "count_triple_junctions",
     "free_energy",
+    "kappa_by_scale",
     "label_sectors",
     "perception_to_action",
     "sector_labels",

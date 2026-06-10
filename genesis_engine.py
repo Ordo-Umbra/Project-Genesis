@@ -106,6 +106,36 @@ def build_parser() -> argparse.ArgumentParser:
         help="Strength of the sectorisation potential drift.",
     )
     parser.add_argument(
+        "--dynamic-kappa",
+        action="store_true",
+        default=False,
+        help="Co-evolve a dynamical capacity field κ(x,t) that gates the integration term.",
+    )
+    parser.add_argument(
+        "--kappa-baseline",
+        type=float,
+        default=1.0,
+        help="Baseline capacity κ₀ the field recovers toward.",
+    )
+    parser.add_argument(
+        "--kappa-recovery",
+        type=float,
+        default=0.1,
+        help="Capacity recovery rate r in ∂_t κ = D_κ∇²κ + r(κ₀−κ) − c|∇φ|²κ.",
+    )
+    parser.add_argument(
+        "--kappa-consumption",
+        type=float,
+        default=5.0,
+        help="Capacity consumption rate c (distinction load drains κ).",
+    )
+    parser.add_argument(
+        "--kappa-diffusion",
+        type=float,
+        default=0.5,
+        help="Capacity diffusion D_κ (capacity flows between regions).",
+    )
+    parser.add_argument(
         "--enable-memory-corpus",
         action="store_true",
         default=False,
@@ -284,6 +314,11 @@ def main() -> None:
                 use_sector_potential=args.sector_potential,
                 sector_count=args.sector_count,
                 sector_potential_weight=args.sector_weight,
+                use_dynamic_kappa=args.dynamic_kappa,
+                kappa_baseline=args.kappa_baseline,
+                kappa_recovery=args.kappa_recovery,
+                kappa_consumption=args.kappa_consumption,
+                kappa_diffusion=args.kappa_diffusion,
                 enable_memory_corpus=args.enable_memory_corpus,
                 corpus_max_size=args.corpus_max_size,
                 corpus_min_stability=args.min_stability,

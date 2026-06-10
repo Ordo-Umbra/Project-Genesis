@@ -10,8 +10,20 @@ from .chunk_manager import ChunkManager
 from .config import EngineConfig
 from .io import load_snapshot, save_snapshot
 from .memory_corpus import MemoryCorpus
-from .metrics import calculate_gradients, compute_local_s, compute_s_functional, summarize_field
-from .numba_kernels import jit_step, jit_step_v2, sector_potential_drift_3d
+from .metrics import (
+    calculate_gradients,
+    compute_local_s,
+    compute_s_functional,
+    kappa_by_scale,
+    summarize_field,
+)
+from .numba_kernels import (
+    gradient_squared_3d,
+    jit_step,
+    jit_step_v2,
+    laplacian_3d,
+    sector_potential_drift_3d,
+)
 from .render import render_voxel_slice
 
 logger = logging.getLogger(__name__)
@@ -82,6 +94,14 @@ class GenesisEngine:
             self.memory_corpus = None
             self.stability_map = None
 
+        # Dynamical capacity field κ(x,t): full capacity everywhere at birth.
+        if config.use_dynamic_kappa:
+            self.kappa_field: np.ndarray | None = np.full_like(
+                self.field, config.kappa_baseline, dtype=np.float64
+            )
+        else:
+            self.kappa_field = None
+
     # ------------------------------------------------------------------
     # S-functional caching
     # ------------------------------------------------------------------
@@ -102,6 +122,7 @@ class GenesisEngine:
                 integration_functional=self.config.use_integration_functional,
                 integration_radius=self.config.integration_radius,
                 integration_decay=self.config.integration_decay,
+                kappa_field=self.kappa_field,
             )
         return self._s_cache
 
@@ -196,9 +217,45 @@ class GenesisEngine:
             "agent_mean_local_value": float(np.mean(last_local_values)) if last_local_values else 0.0,
         }
 
+    def _step_dynamic_kappa(self, dt: float) -> np.ndarray:
+        """Evolve φ with κ-gated integration and co-evolve the capacity field.
+
+        The diffusion (integration) term is weighted by the *local* capacity —
+        the S-functional's κΔI gating acting inside the dynamics rather than
+        only in the diagnostics:
+
+            ∂_t φ = κ(x)·∇²φ + β|∇φ|² − G·φ
+
+        while κ itself diffuses (capacity flows between regions), recovers
+        toward its baseline (slack regenerates), and is consumed by local
+        distinction load:
+
+            ∂_t κ = D_κ·∇²κ + r·(κ₀ − κ) − c·|∇φ|²·κ
+        """
+        assert self.kappa_field is not None
+        cfg = self.config
+        f64 = np.ascontiguousarray(self.field, dtype=np.float64)
+        lap = np.empty_like(f64)
+        gsq = np.empty_like(f64)
+        laplacian_3d(f64, lap)
+        gradient_squared_3d(f64, gsq)
+        new_field = f64 + (self.kappa_field * lap + self.BETA * gsq - self.G * f64) * dt
+
+        lap_kappa = np.empty_like(self.kappa_field)
+        laplacian_3d(np.ascontiguousarray(self.kappa_field), lap_kappa)
+        self.kappa_field = self.kappa_field + (
+            cfg.kappa_diffusion * lap_kappa
+            + cfg.kappa_recovery * (cfg.kappa_baseline - self.kappa_field)
+            - cfg.kappa_consumption * gsq * self.kappa_field
+        ) * dt
+        np.clip(self.kappa_field, 0.0, cfg.kappa_baseline, out=self.kappa_field)
+        return new_field
+
     def step(self, dt: float) -> np.ndarray:
         self.prev_field = self.field.copy()
-        if self.config.use_coherence_potential or self.config.use_integration_functional:
+        if self.config.use_dynamic_kappa:
+            new_field = self._step_dynamic_kappa(dt)
+        elif self.config.use_coherence_potential or self.config.use_integration_functional:
             new_field, _lap, _gsq = jit_step_v2(
                 self.field,
                 self.BETA,
@@ -402,6 +459,7 @@ class GenesisEngine:
 
         with self._lock:
             field = self.field.copy()
+            kappa = self.kappa_field.copy() if self.kappa_field is not None else None
         return analyze_sectorisation(
             field,
             self.BETA,
@@ -410,6 +468,7 @@ class GenesisEngine:
             periodic=periodic,
             min_size=min_size,
             include_sectors=include_sectors,
+            kappa_field=kappa,
         )
 
     def quantize_to_voxels(self) -> np.ndarray:
@@ -440,8 +499,14 @@ class GenesisEngine:
             integration_functional=self.config.use_integration_functional,
             integration_radius=self.config.integration_radius,
             integration_decay=self.config.integration_decay,
+            kappa_field=self.kappa_field,
         )
         result.update(self._agent_summary())
+        if self.kappa_field is not None:
+            result["kappa_field_mean"] = float(np.mean(self.kappa_field))
+            result["kappa_field_min"] = float(np.min(self.kappa_field))
+            result["kappa_field_std"] = float(np.std(self.kappa_field))
+            result["kappa_by_scale"] = kappa_by_scale(self.kappa_field)
         if self.memory_corpus is not None:
             result.update(self.memory_corpus.summary())
         if self.agents:
@@ -458,6 +523,7 @@ class GenesisEngine:
             self.run_metadata,
             memory_corpus=self.memory_corpus,
             stability_map=self.stability_map,
+            kappa_field=self.kappa_field,
         )
 
     # ------------------------------------------------------------------
@@ -485,6 +551,8 @@ class GenesisEngine:
             }
             if self.memory_corpus is not None:
                 summary["memory_corpus"] = self.memory_corpus.summary()
+            if self.kappa_field is not None:
+                summary["kappa_field_mean"] = float(np.mean(self.kappa_field))
             return summary
 
     def queue_agent_action(self, agent_id: str, action: dict) -> bool:
@@ -497,7 +565,7 @@ class GenesisEngine:
 
     @classmethod
     def load(cls, path: str | Path) -> "GenesisEngine":
-        field, config, history, agents, run_metadata, corpus, stability_map = load_snapshot(path)
+        field, config, history, agents, run_metadata, corpus, stability_map, kappa_field = load_snapshot(path)
         engine = cls(
             config=config,
             field=field,
@@ -514,4 +582,6 @@ class GenesisEngine:
             engine.memory_corpus = corpus
         if stability_map is not None and config.enable_memory_corpus:
             engine.stability_map = stability_map
+        if kappa_field is not None and config.use_dynamic_kappa:
+            engine.kappa_field = kappa_field
         return engine

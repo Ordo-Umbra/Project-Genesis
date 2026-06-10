@@ -65,6 +65,9 @@ def run_cell(
     weight: float,
     window: int,
     gravity: float = 0.22,
+    dynamic_kappa: bool = False,
+    kappa_consumption: float = 5.0,
+    kappa_recovery: float = 0.1,
 ) -> dict[str, float]:
     """Run one (β, k) cell and return its measurements."""
     config = EngineConfig(
@@ -76,6 +79,9 @@ def run_cell(
         use_sector_potential=True,
         sector_count=wells,
         sector_potential_weight=weight,
+        use_dynamic_kappa=dynamic_kappa,
+        kappa_consumption=kappa_consumption,
+        kappa_recovery=kappa_recovery,
     )
     engine = GenesisEngine(config=config)
 
@@ -86,17 +92,22 @@ def run_cell(
     s_values: list[float] = []
     for _ in range(min(window, steps)):
         engine.step(dt)
-        s = compute_s_functional(engine.field, engine.prev_field, beta, engine.G)
+        s = compute_s_functional(
+            engine.field, engine.prev_field, beta, engine.G,
+            kappa_field=engine.kappa_field,
+        )
         s_values.append(s["s_increment"])
 
-    report = analyze_sectorisation(engine.field, beta, include_sectors=False)
+    report = analyze_sectorisation(
+        engine.field, beta, include_sectors=False, kappa_field=engine.kappa_field
+    )
     n = int(report["n_sectors"])
     volume = size**3
     wall_voxels = float(report["boundary_fraction"]) * volume
     # Total distinction energy locked in walls: mean wall β|∇φ|² × wall volume.
     e_wall = float(report["wall_distinction"]) * wall_voxels
 
-    return {
+    cell: dict[str, float] = {
         "beta": beta,
         "wells": wells,
         "n_sectors": n,
@@ -104,6 +115,10 @@ def run_cell(
         "e_wall": e_wall,
         "boundary_fraction": float(report["boundary_fraction"]),
     }
+    if engine.kappa_field is not None:
+        cell["kappa_mean"] = float(np.mean(engine.kappa_field))
+        cell["wall_kappa_mean"] = float(report.get("wall_kappa_mean", 0.0))
+    return cell
 
 
 def fit_a(n_values: np.ndarray, e_values: np.ndarray) -> float:
@@ -133,6 +148,15 @@ def main() -> None:
         "−G·φ term tilts the multi-well potential toward φ=0, breaking well "
         "degeneracy and accelerating collapse to a single sector.",
     )
+    p.add_argument(
+        "--dynamic-kappa",
+        action="store_true",
+        default=False,
+        help="Co-evolve the dynamical capacity field κ(x,t); S then uses the "
+        "real field κ and b = b(β, κ) gains its missing mechanism.",
+    )
+    p.add_argument("--kappa-consumption", type=float, default=5.0, help="κ consumption rate c.")
+    p.add_argument("--kappa-recovery", type=float, default=0.1, help="κ recovery rate r.")
     p.add_argument("--window", type=int, default=50, help="Trailing steps averaged for S.")
     p.add_argument("--output", default=None, help="Optional path for a JSON results dump.")
     args = p.parse_args()
@@ -165,17 +189,22 @@ def main() -> None:
                     weight=args.weight,
                     window=args.window,
                     gravity=args.gravity,
+                    dynamic_kappa=args.dynamic_kappa,
+                    kappa_consumption=args.kappa_consumption,
+                    kappa_recovery=args.kappa_recovery,
                 )
                 cells.append(cell)
                 all_cells.append(cell)
-            rows.append(
-                {
-                    "wells": wells,
-                    "n_mean": float(np.mean([c["n_sectors"] for c in cells])),
-                    "s_mean": float(np.mean([c["mean_s"] for c in cells])),
-                    "e_wall": float(np.mean([c["e_wall"] for c in cells])),
-                }
-            )
+            row = {
+                "wells": wells,
+                "n_mean": float(np.mean([c["n_sectors"] for c in cells])),
+                "s_mean": float(np.mean([c["mean_s"] for c in cells])),
+                "e_wall": float(np.mean([c["e_wall"] for c in cells])),
+            }
+            if all("kappa_mean" in c for c in cells):
+                row["kappa_mean"] = float(np.mean([c["kappa_mean"] for c in cells]))
+                row["wall_kappa"] = float(np.mean([c["wall_kappa_mean"] for c in cells]))
+            rows.append(row)
 
         # Part B: fit a(β) over cells with N >= 1, then implied b per row.
         usable = [r for r in rows if r["n_mean"] >= 1.0]
@@ -185,9 +214,11 @@ def main() -> None:
 
         best = max(rows, key=lambda r: r["s_mean"])
         b_implied = []
+        has_kappa = all("kappa_mean" in r for r in rows)
+        kappa_header = " | {:>7} | {:>7}".format("κ mean", "κ wall") if has_kappa else ""
         print(f"β = {beta}")
-        print(f"{'k wells':>8} | {'N':>6} | {'mean S':>10} | {'E_wall':>8} | {'b_implied':>9}")
-        print("-" * 55)
+        print(f"{'k wells':>8} | {'N':>6} | {'mean S':>10} | {'E_wall':>8} | {'b_implied':>9}{kappa_header}")
+        print("-" * (55 + (22 if has_kappa else 0)))
         for r in rows:
             if np.isfinite(a_fit) and r["n_mean"] >= 1.0:
                 b_i = 2.0 * a_fit / (3.0 * r["n_mean"] ** (1.0 / 3.0))
@@ -195,10 +226,13 @@ def main() -> None:
                 b_str = f"{b_i:9.4f}"
             else:
                 b_str = "      n/a"
+            kappa_cols = (
+                f" | {r['kappa_mean']:>7.4f} | {r['wall_kappa']:>7.4f}" if has_kappa else ""
+            )
             marker = "  <- max S" if r is best else ""
             print(
                 f"{r['wells']:>8} | {r['n_mean']:>6.1f} | {r['s_mean']:>10.6f} | "
-                f"{r['e_wall']:>8.3f} | {b_str}{marker}"
+                f"{r['e_wall']:>8.3f} | {b_str}{kappa_cols}{marker}"
             )
         if len(b_implied) >= 2:
             spread = float(np.std(b_implied) / np.mean(b_implied)) if np.mean(b_implied) else float("inf")

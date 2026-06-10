@@ -218,6 +218,8 @@ def sector_statistics(
     field: np.ndarray,
     labels: np.ndarray,
     beta: float,
+    *,
+    kappa_field: np.ndarray | None = None,
 ) -> list[dict[str, float | int]]:
     """Per-sector report: volume, mean field, surface area, and a being's
     distinction/integration balance.
@@ -239,18 +241,21 @@ def sector_statistics(
         grad_energy = float(local_gsq.mean())
         distinction = float(beta * grad_energy)
         integration = float(1.0 / (1.0 + grad_energy))
-        stats.append(
-            {
-                "sector_id": sid,
-                "volume": volume,
-                "volume_fraction": volume / field.size,
-                "mean_field": float(field[mask].mean()),
-                "std_field": float(field[mask].std()),
-                "surface_area": _sector_surface_area(labels, sid),
-                "distinction": distinction,
-                "integration": integration,
-            }
-        )
+        entry: dict[str, float | int] = {
+            "sector_id": sid,
+            "volume": volume,
+            "volume_fraction": volume / field.size,
+            "mean_field": float(field[mask].mean()),
+            "std_field": float(field[mask].std()),
+            "surface_area": _sector_surface_area(labels, sid),
+            "distinction": distinction,
+            "integration": integration,
+        }
+        if kappa_field is not None:
+            # Each sector's capacity budget — the resources this "being" has
+            # available to keep integrating its interior.
+            entry["mean_kappa"] = float(kappa_field[mask].mean())
+        stats.append(entry)
     return stats
 
 
@@ -328,12 +333,15 @@ def analyze_sectorisation(
     periodic: bool = True,
     min_size: int = 1,
     include_sectors: bool = True,
+    kappa_field: np.ndarray | None = None,
 ) -> dict[str, Any]:
     """Full β-sectorisation / boundary-formation report for a field.
 
     Returns a JSON-friendly dict combining the sector count (the ``N⋆``
     question), the global boundary-work measures (The Range's "a being is its
-    boundary"), and optional per-sector statistics.
+    boundary"), and optional per-sector statistics. When a dynamical
+    ``kappa_field`` is supplied, the report also splits capacity between
+    walls and interiors and gives each sector its κ budget.
     """
     labels, n_sectors, wall_mask = label_sectors(
         field, method=method, k=k, periodic=periodic, min_size=min_size
@@ -356,6 +364,13 @@ def analyze_sectorisation(
         "wall_threshold_method": method,
         "wall_threshold_k": k,
     }
+    if kappa_field is not None:
+        report["wall_kappa_mean"] = (
+            float(kappa_field[wall_mask].mean()) if wall_mask.any() else 0.0
+        )
+        report["interior_kappa_mean"] = (
+            float(kappa_field[interior_mask].mean()) if interior_mask.any() else 0.0
+        )
     if include_sectors:
-        report["sectors"] = sector_statistics(field, labels, beta)
+        report["sectors"] = sector_statistics(field, labels, beta, kappa_field=kappa_field)
     return report
