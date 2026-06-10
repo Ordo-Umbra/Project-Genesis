@@ -100,9 +100,9 @@ A running tally of what the instruments have actually measured — the verdicts,
 | Boundary (wall) cost scales with β | **Supported** — measured `a(β) ≈ 2.6·β` | [N⋆ experiment](#fitting-fn-from-simulation--the-n-experiment) |
 | The β-nonlinearity alone makes the field sectorise | **Not supported** — the reduced `β\|∇φ\|²` term smooths to a single sector; a wall-tension term is required | [β-Sectorisation](#β-sectorisation--boundary-formation) |
 | Three mutually-adjacent sectors with 120° Y-junctions (colour SU(3)) | **Not from a scalar field** (structurally impossible) — **achieved** with the three-component Ψ∈ℂ³ model | [Three-Component Sector Field](#three-component-sector-field--genuine-su3-y-junctions) |
-| Capacity κ drives selection toward `N⋆ = 3` | **Conditional** — invisible with abundant κ; under a binding capacity budget, `k = 3` becomes S-optimal (robust across seeds, one β/size so far) | [Dynamical κ](#dynamical-κ--capacity-as-a-field) |
+| Capacity κ drives selection toward `N⋆ = 3` | **Conditional** — the 3-well configuration is S-optimal only inside a capacity-**consumption band** (`c ≈ 15–50`), robustly across recovery rate and β; outside it selection runs to more wells (abundant κ) or collapses to two (over-scarce) | [Phase diagram](#the-phase-diagram-of-n3-selection) |
 
-The honest through-line: the *machinery* of URP sectorisation is reproducible and the boundary-cost half of its free-energy argument is measured; the *selection* of three sectors is looking like a scarcity phenomenon that needs dynamical capacity, and mapping its `(consumption, recovery, β)` phase diagram is the open frontier.
+The honest through-line: the *machinery* of URP sectorisation is reproducible and the boundary-cost half of its free-energy argument is measured; the *selection* of three sectors is a **scarcity-band phenomenon** in the capacity dynamics — but the band selects the *imposed well count*, not a cleanly emergent three-domain field (see the caveats below). Closing that gap is the open frontier.
 
 ## Architecture Overview
 
@@ -265,7 +265,30 @@ Per cell it records the realized domain count N, the time-averaged S-functional 
 - **The boundary-cost half of F(N) is supported.** `a(β)` is cleanly measurable and scales linearly: `a ≈ 2.6·β` across β ∈ {0.03, 0.09, 0.2}. Wall cost proportional to β is exactly what the theory's boundary term predicts.
 - **The selection half is not (yet).** Time-averaged S generally *grows* with wall density, picking k = 5–6 rather than an interior optimum at 3; and the implied `b` varies ~45% across k at fixed β, inconsistent with the k-independent `b` the F(N) form requires.
 - **Gravity is a real confound.** The `−G·φ` damping tilts the multi-well potential toward φ = 0, breaking well degeneracy and driving collapse toward one sector. In a gravity-free control at β = 0.09, k = 3 *does* maximize S by a wide margin — suggestive, but reported as anecdote: the domain count degenerates (the wall network percolates at this size), one β, two trials.
-- **Dynamical κ changes the verdict — under scarcity.** With `--dynamic-kappa` at default rates, capacity texture forms (walls depleted) and coarsening slows, but selection stays ΔC-dominated (k = 6 still wins; in quasi-steady state ΔI ≈ 0, so S reduces to wall energy). In the **capacity-scarce regime** (`--kappa-consumption 50 --kappa-recovery 0.02`), however, the selection flips: **k = 3 maximizes time-averaged S, robustly across 4 seeds, with gravity on, by ~17% over the runner-up** — and the b-consistency of the F(N) fit improves (spread 0.45 → 0.33). Read with care: one β, one lattice size, one (c, r) pair, and the k = 3 domains are near-collapsed (N ≈ 1) — but the direction matches the theory's own structure, where `b = b(β, κ)` only has teeth when κ is finite. **Selection appears to be a scarcity phenomenon: with abundant capacity nothing penalizes fragmentation; under a binding capacity budget, three wells become S-optimal.** Mapping the (c, r, β) phase diagram of this selection is the clear next experiment.
+- **Dynamical κ changes the verdict — under scarcity.** With `--dynamic-kappa` at default rates, capacity texture forms (walls depleted) and coarsening slows, but selection stays ΔC-dominated (k = 6 still wins; in quasi-steady state ΔI ≈ 0, so S reduces to wall energy). In the **capacity-scarce regime** (`--kappa-consumption 50 --kappa-recovery 0.02`), the selection flips to **k = 3** — and the full phase diagram below shows this is not a one-off.
+
+### The phase diagram of N⋆=3 selection
+
+`experiments/phase_diagram.py` sweeps the capacity-scarcity space — for each (β, consumption `c`, recovery `r`) it runs the wells sweep with dynamical κ and records which well count maximizes time-averaged S. The full run (3 β × 6 c × 5 r × 5 wells × 3 trials = 1350 runs, 24³, gravity on) gives a strikingly clean structure:
+
+```
+β = 0.09 — winning well count k (★ = k=3)        consumption c (scarcity →)
+  c \ r |  0.01   0.03   0.05    0.1    0.2
+    5.0 |   6      6      6      6      6      abundant κ  → over-fragmentation
+   15.0 |   3★     3★     3★     3★     3★
+   30.0 |   3★     3★     3★     3★     3★     ← the k=3 band
+   50.0 |   3★     3★     3★     3★     3★
+   80.0 |   4      4      4      4      4
+  120.0 |   2      2      2      2      2      over-scarce → collapse to two
+```
+
+Three findings, each with its caveat:
+
+1. **There is a robust k=3 band in consumption.** Three wells are S-optimal for `c ≈ 15–50`, with too-abundant capacity selecting more wells and over-scarcity collapsing to two. The band is **identical across all three β** (0.03, 0.09, 0.2) — only the abundant-capacity corner shifts (k = 5 at β = 0.03 vs k = 6 above). 45 of 90 cells select k = 3; mean win margin 0.23, but some boundary wins are razor-thin (min 0.03).
+2. **Recovery rate does essentially nothing here.** Every row is uniform across `r` ∈ [0.01, 0.2] — selection is set by *consumption* (which fixes the standing capacity level), not by how fast capacity regenerates. Honest flag: recovery may only bite on longer timescales than the 400-step / 50-step-window measurement.
+3. **The decisive caveat — k is the *imposed* well count, not the emergent N.** "k = 3 wins" means the field given a 3-well potential reaches higher quasi-steady S than with 2/4/5/6 wells. The *realized* domain count in those winning cells is **not** 3: at `c = 30–50` it is ≈ 1 (near-collapsed), at `c = 15` it is ≈ 39 (fragmented). So this measures a preference for *three available sector-types*, not a field that settles into three domains. Bridging "3 wells are S-optimal" to "the field forms 3 sectors" is the remaining work — likely needing the Ψ∈ℂ³ model (which sustains genuine three-domain structure) coupled to dynamical κ, rather than the scalar multi-well stand-in.
+
+The honest headline: **N⋆=3 selection is real, robust, and a capacity-*consumption* phenomenon — a Goldilocks band, β- and recovery-independent — but it currently selects the imposed well count rather than a cleanly emergent three-domain field.** Reproduce with `python experiments/phase_diagram.py` (or `--quick`).
 
 ## Setup
 
