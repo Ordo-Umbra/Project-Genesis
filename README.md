@@ -77,6 +77,7 @@ experiments/
   n_star_fit.py         Fits the F(N) free-energy coefficients from run data
   phase_diagram.py      Maps the (consumption, recovery, β) N⋆=3 selection map
   multiphase_kappa.py   κ-coupled Ψ∈ℂ³ run: emergent N vs S-maximizing P
+  standing_integration.py  Tests standing coherence for an interior N⋆
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -102,7 +103,7 @@ A running tally of what the instruments have actually measured — the verdicts,
 | The β-nonlinearity alone makes the field sectorise | **Not supported** — the reduced `β\|∇φ\|²` term smooths to a single sector; a wall-tension term is required | [β-Sectorisation](#β-sectorisation--boundary-formation) |
 | Three mutually-adjacent sectors with 120° Y-junctions (colour SU(3)) | **Not from a scalar field** (structurally impossible) — **achieved** with the three-component Ψ∈ℂ³ model | [Three-Component Sector Field](#three-component-sector-field--genuine-su3-y-junctions) |
 | Capacity κ drives selection toward `N⋆ = 3` | **Conditional / transient** — a 3-well S-optimal band appears *while the field is actively coarsening*, but in steady state selection runs to more sectors; traced to how ΔI is measured (below) | [Phase diagram](#the-phase-diagram-of-n3-selection) |
-| The S-functional rewards an interior sector optimum | **Not as currently measured** — steady-state ΔI → 0, so `S ≈ ΔC` (wall energy) and always prefers fragmentation; needs a *standing* integration measure | [κ × Ψ∈ℂ³](#coupling-κ-to-the-three-component-model--what-it-revealed-about-the-s-functional) |
+| The S-functional rewards an interior sector optimum | **Not yet** — transient ΔI → 0 at equilibrium; a *standing* coherence term survives but is collinear with ΔC (`corr = +1.00`), so still no interior. Needs a non-collinear *topological* (junction/neutrality) term | [κ × Ψ∈ℂ³](#coupling-κ-to-the-three-component-model--what-it-revealed-about-the-s-functional) |
 
 The honest through-line: the *machinery* of URP sectorisation is reproducible and the boundary-cost half of its free-energy argument is measured; the *selection* of three sectors appears only transiently, and the investigation has localized why — the S-functional's integration term ΔI vanishes at equilibrium, collapsing S to pure distinction. The open frontier is now sharply defined: give ΔI a standing (equilibrium-surviving) form so the κΔI term can actually penalize over-fragmentation.
 
@@ -303,7 +304,12 @@ The natural next step was to bridge "3 wells are S-optimal" to "the field forms 
 
 This relocates the open problem. The earlier "scarcity selects 3" result was real but **transient** — it caught the system mid-coarsening, where ΔI is briefly non-zero and contributes; it is also why the scalar phase diagram's margins were razor-thin and timescale-sensitive. The robust steady-state verdict is that S, as currently measured, is just distinction and always prefers fragmentation.
 
-**The missing ingredient is therefore not the field model but a *standing* measure of integration** — coherence shared across domain boundaries that persists at equilibrium, rather than a one-step smoothing rate. The repo already contains the right object: the nonlocal integration functional `I[φ] = ∫∫ K(x,x')φ(x)φ(x')` (the correlation kernel in `numba_kernels.py`). Re-deriving ΔI from a standing coherence functional, so the κΔI term has teeth at equilibrium, is the concrete next experiment — and the clearest path toward an interior N⋆.
+**The missing ingredient looked like a *standing* measure of integration** — coherence shared across domain boundaries that persists at equilibrium, rather than a one-step smoothing rate. So the next experiment (`experiments/standing_integration.py`, `multiphase.coherence_integration`) implemented the nonlocal coherence `I = Σ_a ⟨η_a(x)·η_a(x+δ)⟩ exp(−decay·|δ|)` — the multi-component form of `I[φ] = ∫∫ K(x,x')φ(x)φ(x')`. It half-worked, in an instructive way:
+
+- **The standing measure does survive equilibrium** (verified) — a static coherent field keeps `I > 0` where the transient ΔI read zero. That part of the fix is real.
+- **But `S = ΔC + κ·I` still has no interior optimum** — it flips monotonically from many sectors (w→0) to two (any w>0). The reason, measured directly: **ΔC and coherence are collinear**, `corr(ΔC, −I) = +1.00` at short range and `+0.998` at long range. Both just track wall density, so their weighted sum is monotonic and the optimum sits at a boundary.
+
+This sharpens the frontier one more turn. An interior `N⋆` needs an integration term that is *not* collinear with wall area — and the gauge paper's own §6 says exactly what distinguishes three: **topology**, the 120° Y-junctions that let three (and only three) sectors tile into neutral composites. The integration measure has to be junction-/neutrality-aware, not coherence-magnitude. A second observation blocks the direct route for now: in the κ-pinned scarce regime the frozen domains produce **zero clean triple junctions**, so that topological structure would first have to be coaxed into forming. That — a junction-resolving dynamics plus a topological integration term — is the real next experiment.
 
 ## Setup
 
@@ -613,7 +619,7 @@ The `ChunkManager` divides the world into cubic chunks and tracks which contain 
 
 The frontier questions, roughly in priority order:
 
-1. **Give ΔI a standing form.** The decisive open result (above): in steady state ΔI → 0, so `S ≈ ΔC` and always rewards fragmentation — no interior N⋆ can exist. Re-derive the integration term from the **nonlocal coherence functional `I[φ]`** (already in `numba_kernels.py`) so κΔI survives at equilibrium, then re-run `experiments/multiphase_kappa.py` and `phase_diagram.py` against the new measure. This is the single change most likely to make a genuine three-sector optimum appear.
+1. **A topological integration term + junction-resolving dynamics.** The standing-coherence experiment (above) showed that a nonlocal coherence term survives equilibrium but is collinear with ΔC (`corr = +1.00`), so it cannot create an interior `N⋆`. The gauge paper's §6 says what actually distinguishes three: the 120° Y-junctions that let three sectors tile into neutral composites. So the integration term must be **junction-/neutrality-aware** (e.g. triple-junction density, defect-freeness) — and the κ-pinned dynamics must first be coaxed to form clean triple junctions (currently zero in that regime). This pairing is the single change most likely to make a genuine three-sector optimum appear.
 2. **Couple a gauge connection `A_μ` to the Ψ∈ℂ³ sector field** to recover the Yang–Mills boundary modes (gluons) the derivation describes — the next theoretical layer above the three-component domains.
 3. **Promote the F(N) fit to two free coefficients** by measuring an independent information-gain proxy for `b(β, κ)`, rather than inverting stationarity — the missing half of a non-circular free-energy test.
 4. Higher-order field dynamics — second-order time derivatives (∂²φ/∂t²) for the wave-like behavior in the full Lagrangian (the current model is the overdamped limit).

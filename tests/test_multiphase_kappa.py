@@ -13,8 +13,10 @@ import numpy as np
 
 from project_genesis.multiphase import (
     analyze_multiphase,
+    coherence_integration,
     count_domains,
     multiphase_s_functional,
+    multiphase_s_standing,
     sector_labels,
     step_multiphase,
     step_multiphase_kappa,
@@ -93,6 +95,35 @@ class TestCountDomains(unittest.TestCase):
         labels = np.zeros((10, 10), dtype=int)
         labels[0, 0] = 1  # a single-cell domain of label 1
         self.assertGreater(count_domains(labels, min_size=1), count_domains(labels, min_size=5))
+
+
+class TestStandingCoherence(unittest.TestCase):
+    def test_survives_static_equilibrium(self) -> None:
+        # The key property the transient ΔI lacked: a static coherent field
+        # has a positive, non-vanishing coherence (no time derivative needed).
+        f = np.zeros((3, 16, 16))
+        f[0, :8] = 1.0  # two clean half-domains
+        f[1, 8:] = 1.0
+        self.assertGreater(coherence_integration(f, radius=3), 0.0)
+
+    def test_falls_with_fragmentation(self) -> None:
+        # Few large domains are more coherent than many small ones.
+        coarse = np.zeros((3, 24, 24))
+        coarse[0, :12] = 1.0
+        coarse[1, 12:] = 1.0
+        fine = np.zeros((3, 24, 24))
+        for col in range(24):
+            fine[col % 3, :, col] = 1.0  # thin alternating stripes
+        self.assertGreater(coherence_integration(coarse, radius=3), coherence_integration(fine, radius=3))
+
+    def test_standing_s_does_not_vanish_at_rest(self) -> None:
+        f = np.zeros((3, 16, 16))
+        f[0, :8] = 1.0
+        f[1, 8:] = 1.0
+        s = multiphase_s_standing(f, integration_weight=1.0)
+        self.assertIn("coherence", s)
+        self.assertGreater(s["coherence"], 0.0)
+        self.assertGreater(s["s_increment"], s["delta_c"])  # integration contributes
 
 
 class TestSFunctional(unittest.TestCase):

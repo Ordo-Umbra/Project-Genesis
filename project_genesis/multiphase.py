@@ -204,6 +204,75 @@ def count_domains(labels: np.ndarray, *, min_size: int = 1) -> int:
     return total
 
 
+def coherence_integration(
+    fields: np.ndarray,
+    *,
+    radius: int = 3,
+    decay: float = 1.0,
+) -> float:
+    """Standing nonlocal coherence I = Σ_a ⟨η_a(x)·η_a(x+δ)⟩ weighted by exp(−decay·|δ|).
+
+    The multi-component analogue of the URP integration functional
+    ``I[φ] = ∫∫ K(x,x') φ(x) φ(x')``. Unlike the transient ΔI (a one-step
+    smoothing rate that vanishes at equilibrium), this is a *standing* quantity:
+    a static coherent domain keeps it high, while fragmentation lowers it
+    because domain walls decorrelate neighbourhoods within the kernel radius.
+    It therefore survives at equilibrium and falls monotonically with sector
+    count — the integration half the S-functional was missing.
+
+    Normalised by the kernel-weight sum so the value is intensive (independent
+    of radius/decay scale).
+    """
+    from itertools import product
+
+    spatial = fields.shape[1:]
+    ndim = len(spatial)
+    coherence = 0.0
+    weight_sum = 0.0
+    for off in product(range(-radius, radius + 1), repeat=ndim):
+        dist = float(np.sqrt(sum(o * o for o in off)))
+        if dist == 0.0 or dist > radius:
+            continue
+        w = float(np.exp(-decay * dist))
+        weight_sum += w
+        for a in range(fields.shape[0]):
+            shifted = fields[a]
+            for axis, o in enumerate(off):
+                if o:
+                    shifted = np.roll(shifted, -o, axis=axis)
+            coherence += w * float(np.mean(fields[a] * shifted))
+    return coherence / weight_sum if weight_sum else 0.0
+
+
+def multiphase_s_standing(
+    fields: np.ndarray,
+    *,
+    beta: float = 0.09,
+    kappa_field: np.ndarray | None = None,
+    radius: int = 3,
+    decay: float = 1.0,
+    integration_weight: float = 1.0,
+) -> dict[str, float]:
+    """S = ΔC + κ·w·I using the *standing* nonlocal coherence for integration.
+
+    Distinction ΔC rises with fragmentation (more walls); the coherence term
+    falls with it — so unlike :func:`multiphase_s_functional`, this S can have
+    an interior optimum in sector count. ``integration_weight`` sets the
+    relative scale of the two halves (the b/a ratio of the F(N) tradeoff).
+    """
+    load = _total_gradient_energy(fields)
+    mean_load = float(load.mean())
+    delta_c = float(beta * mean_load)
+    kappa = float(kappa_field.mean()) if kappa_field is not None else 1.0 / (1.0 + mean_load)
+    coherence = coherence_integration(fields, radius=radius, decay=decay)
+    return {
+        "delta_c": delta_c,
+        "kappa": kappa,
+        "coherence": coherence,
+        "s_increment": delta_c + kappa * integration_weight * coherence,
+    }
+
+
 def sector_labels(fields: np.ndarray) -> np.ndarray:
     """Return the dominant-component (argmax) sector label at each voxel."""
     return np.argmax(fields, axis=0)
