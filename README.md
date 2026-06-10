@@ -634,3 +634,8 @@ The foundational theory document remains in:
 - `Docs/The Universal Recursion Principle (URP) _260312_170343.txt`
 
 That document describes the broader URP framing this sandbox is intended to explore in executable form.
+
+A working note distilling this repo's own investigation — how the `N⋆=3`
+question narrowed across six experiments into a sharp, buildable next target —
+is in [`Docs/Narrowing_the_N3_Question.md`](Docs/Narrowing_the_N3_Question.md).
+It is the standalone, pick-up-cold version of the *Findings so far* table.
