@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Project Genesis — URP Toy</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    background: #0d1016; color: #c9d4e3; line-height: 1.45;
+  }
+  header { padding: 18px 22px 6px; }
+  h1 { margin: 0; font-size: 20px; font-weight: 650; }
+  .sub { color: #7d8aa0; font-size: 13px; margin-top: 2px; }
+  .wrap { display: flex; flex-wrap: wrap; gap: 20px; padding: 14px 22px 28px; }
+  .stage { display: flex; flex-direction: column; gap: 12px; }
+  canvas#field {
+    width: 512px; height: 512px; image-rendering: pixelated;
+    background: #000; border: 1px solid #222b3a; border-radius: 6px;
+  }
+  .panel { width: 320px; display: flex; flex-direction: column; gap: 14px; }
+  .card { background: #141a24; border: 1px solid #1f2a3a; border-radius: 8px; padding: 12px 14px; }
+  .card h2 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #8a98ad; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 7px 0; font-size: 13px; }
+  .row label { color: #aab6c8; }
+  .row input[type=range] { flex: 1; }
+  .val { font-variant-numeric: tabular-nums; color: #e8eef7; min-width: 42px; text-align: right; }
+  .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font-size: 13px; }
+  .metrics .k { color: #8a98ad; }
+  .metrics .v { color: #e8eef7; font-variant-numeric: tabular-nums; text-align: right; }
+  .big { font-size: 22px; font-weight: 650; }
+  button {
+    background: #1d2735; color: #d7e2f1; border: 1px solid #2c3a4f; border-radius: 6px;
+    padding: 7px 12px; font-size: 13px; cursor: pointer;
+  }
+  button:hover { background: #263348; }
+  button.primary { background: #2b6cb0; border-color: #3b82c4; }
+  button.primary:hover { background: #3179bd; }
+  .btns { display: flex; gap: 8px; }
+  canvas#sgraph { width: 100%; height: 96px; background: #0a0e14; border-radius: 5px; display: block; }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: #9fb0c6; }
+  .swatch { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  .explain { font-size: 12.5px; color: #9aa8bd; }
+  .explain b { color: #cdd9ea; font-weight: 600; }
+  .eq { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px;
+        background: #0a0e14; padding: 8px 10px; border-radius: 5px; color: #b8e0c8; overflow-x: auto; }
+  a { color: #6aa9e0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Project Genesis — URP Toy</h1>
+  <div class="sub">A lightweight, in-browser demonstration of the Universal Recursion Principle: distinction + integration, the S-functional, and β-sectorisation.</div>
+  <div class="nav" style="font-size:13px;margin-top:6px">you are on the <b>scalar URP</b> model &nbsp;·&nbsp; <a href="su3.html">3-component SU(3) sector toy →</a></div>
+</header>
+
+<div class="wrap">
+  <div class="stage">
+    <canvas id="field" width="160" height="160"></canvas>
+    <div class="legend" id="legend"></div>
+    <div class="card" style="width:512px">
+      <h2>The core idea</h2>
+      <div class="explain">
+        A scalar field <b>φ</b> evolves by gradient-ascent on <b>S = ΔC + κΔI</b> — the balance of
+        <b>distinction</b> (making differences) and <b>integration</b> (binding them coherently).
+        The update rule is a 2-D version of the URP field equation:
+      </div>
+      <div class="eq" style="margin-top:8px">∂ₜφ = D·∇²φ &nbsp;+&nbsp; β·|∇φ|² &nbsp;−&nbsp; w·sin(2π·k·φ)</div>
+      <div class="explain" style="margin-top:8px">
+        The <b>β·|∇φ|²</b> term amplifies gradients (distinction); the diffusion <b>D·∇²φ</b> smooths
+        (integration); the multi-well term <b>w·sin(2π·k·φ)</b> is the <b>wall tension</b> that lets the
+        medium settle into <b>k</b> distinct domains — <b>β-sectorisation</b>. At <b>k = 3</b> the three
+        domains are coloured red / green / blue — the seed of the three-sector <b>colour SU(3)</b> picture,
+        with the cell borders standing in for gluon-like domain walls. (A genuine 3-way tiling with the
+        theory's 120° <b>Y-junctions</b> needs the full 3-component sector field Ψ∈ℂ³; a single scalar field
+        gives layered domains, which is itself an honest result about what this reduced model can and can't show.)
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="card">
+      <h2>State</h2>
+      <div class="metrics">
+        <div class="k">Sectors (N)</div><div class="v big" id="m-n">–</div>
+        <div class="k">S-functional</div><div class="v big" id="m-s">–</div>
+        <div class="k">ΔC distinction</div><div class="v" id="m-dc">–</div>
+        <div class="k">ΔI integration</div><div class="v" id="m-di">–</div>
+        <div class="k">κ capacity</div><div class="v" id="m-k">–</div>
+        <div class="k">step</div><div class="v" id="m-step">0</div>
+        <div class="k">wall fraction</div><div class="v" id="m-wall">–</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>S over time</h2>
+      <canvas id="sgraph" width="300" height="96"></canvas>
+    </div>
+
+    <div class="card">
+      <h2>Controls</h2>
+      <div class="btns" style="margin-bottom:10px">
+        <button class="primary" id="btn-play">Pause</button>
+        <button id="btn-reset">Reset</button>
+        <button id="btn-mode">Mode: Sectors</button>
+        <button id="btn-walls">Walls: on</button>
+      </div>
+      <div class="row"><label>wells&nbsp;k (sectors)</label><input id="s-k" type="range" min="2" max="6" step="1" value="3"><span class="val" id="v-k">3</span></div>
+      <div class="row"><label>β distinction</label><input id="s-beta" type="range" min="0" max="0.5" step="0.01" value="0.03"><span class="val" id="v-beta">0.03</span></div>
+      <div class="row"><label>D diffusion</label><input id="s-D" type="range" min="0.1" max="1.2" step="0.05" value="1.00"><span class="val" id="v-D">1.00</span></div>
+      <div class="row"><label>w wall tension</label><input id="s-w" type="range" min="0" max="1.0" step="0.02" value="0.20"><span class="val" id="v-w">0.20</span></div>
+      <div class="row"><label>dt</label><input id="s-dt" type="range" min="0.02" max="0.25" step="0.01" value="0.18"><span class="val" id="v-dt">0.18</span></div>
+      <div class="row"><label>speed (steps/frame)</label><input id="s-spd" type="range" min="1" max="8" step="1" value="3"><span class="val" id="v-spd">3</span></div>
+    </div>
+
+    <div class="card explain">
+      Part of <a href="https://github.com/Ordo-Umbra/Project-Genesis">Project Genesis</a>. The full Python
+      engine runs the same dynamics in 3-D with agents, a memory corpus of stable "seeds", and the
+      <code>sectorisation</code> analyzer that measures these domains quantitatively.
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+(function () {
+  // ---------- Grid & buffers ----------
+  const N = 160;                 // grid edge
+  const SIZE = N * N;
+  let phi = new Float32Array(SIZE);
+  let next = new Float32Array(SIZE);
+  let prevLapAbs = 0;            // for ΔI (integration = reduction in |∇²φ|)
+
+  // ---------- Parameters ----------
+  const P = { k: 3, beta: 0.03, D: 1.00, w: 0.20, dt: 0.18, speed: 3 };
+  let running = true;
+  let mode = "sectors";          // "sectors" | "field"
+  let showWalls = true;
+  let step = 0;
+
+  // ---------- DOM ----------
+  const fieldCanvas = document.getElementById("field");
+  const fctx = fieldCanvas.getContext("2d");
+  const img = fctx.createImageData(N, N);
+  const sgraph = document.getElementById("sgraph");
+  const sctx = sgraph.getContext("2d");
+  const sHistory = [];
+  const SHIST_MAX = 300;
+
+  const el = (id) => document.getElementById(id);
+  const idx = (x, y) => y * N + x;
+
+  // ---------- Sector palette ----------
+  function palette(k) {
+    const cols = [];
+    for (let i = 0; i < k; i++) {
+      const h = (i / k) * 360;   // k=3 -> 0,120,240 = red, green, blue
+      cols.push(hslToRgb(h, 0.68, 0.55));
+    }
+    return cols;
+  }
+  function hslToRgb(h, s, l) {
+    h /= 360;
+    const a = s * Math.min(l, 1 - l);
+    const f = (n) => {
+      const k = (n + h * 12) % 12;
+      return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1)))));
+    };
+    return [f(0), f(8), f(4)];
+  }
+  let COLORS = palette(P.k);
+
+  // ---------- Init ----------
+  function reset() {
+    // Mulberry32 seeded RNG for repeatable starts.
+    let seed = (Math.random() * 2 ** 32) >>> 0;
+    const rng = () => {
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    for (let i = 0; i < SIZE; i++) phi[i] = rng();
+    step = 0;
+    prevLapAbs = 0;
+    sHistory.length = 0;
+  }
+
+  // ---------- One evolution step ----------
+  function evolve() {
+    const { k, beta, D, w, dt } = P;
+    const twoPiK = 2 * Math.PI * k;
+    let sumGsq = 0, sumLapAbs = 0;
+    for (let y = 0; y < N; y++) {
+      const yn = (y - 1 + N) % N, ys = (y + 1) % N;
+      for (let x = 0; x < N; x++) {
+        const xw = (x - 1 + N) % N, xe = (x + 1) % N;
+        const c = phi[idx(x, y)];
+        const e = phi[idx(xe, y)], wv = phi[idx(xw, y)];
+        const nv = phi[idx(x, yn)], sv = phi[idx(x, ys)];
+        const lap = e + wv + nv + sv - 4 * c;
+        const gx = (e - wv) * 0.5, gy = (sv - nv) * 0.5;
+        const gsq = gx * gx + gy * gy;
+        const drift = -Math.sin(twoPiK * c);
+        let v = c + dt * (D * lap + beta * gsq + w * drift);
+        if (v < -1) v = -1; else if (v > 2) v = 2;   // soft clamp for stability
+        next[idx(x, y)] = v;
+        sumGsq += gsq;
+        sumLapAbs += Math.abs(lap);
+      }
+    }
+    const tmp = phi; phi = next; next = tmp;
+    step++;
+
+    // ---- S-functional ----
+    const meanGsq = sumGsq / SIZE;
+    const meanLapAbs = sumLapAbs / SIZE;
+    const deltaC = beta * meanGsq;
+    const kappa = 1 / (1 + meanGsq);
+    const deltaI = Math.max(0, prevLapAbs - meanLapAbs);  // smoothing = integration
+    prevLapAbs = meanLapAbs;
+    const S = deltaC + kappa * deltaI;
+    return { deltaC, kappa, deltaI, S, meanGsq };
+  }
+
+  // ---------- Sector id (nearest well, mod k) ----------
+  function sectorId(value) {
+    let s = Math.round(value * P.k) % P.k;
+    if (s < 0) s += P.k;
+    return s;
+  }
+
+  // ---------- Connected-component sector count + junctions (periodic) ----------
+  function analyzeSectors(wallThresh) {
+    const labels = new Int32Array(SIZE).fill(-1);
+    const sid = new Int8Array(SIZE);
+    const wall = new Uint8Array(SIZE);
+    // sector id + wall mask
+    for (let y = 0; y < N; y++) {
+      const yn = (y - 1 + N) % N, ys = (y + 1) % N;
+      for (let x = 0; x < N; x++) {
+        const i = idx(x, y);
+        sid[i] = sectorId(phi[i]);
+        const xw = (x - 1 + N) % N, xe = (x + 1) % N;
+        const gx = (phi[idx(xe, y)] - phi[idx(xw, y)]) * 0.5;
+        const gy = (phi[idx(x, ys)] - phi[idx(x, yn)]) * 0.5;
+        wall[i] = (gx * gx + gy * gy) > wallThresh ? 1 : 0;
+      }
+    }
+    // flood fill components of same-sector, non-wall cells (periodic, 4-conn)
+    const stack = new Int32Array(SIZE);
+    let nComp = 0, wallCount = 0;
+    for (let i = 0; i < SIZE; i++) {
+      if (wall[i]) wallCount++;
+      if (labels[i] !== -1 || wall[i]) continue;
+      const comp = nComp++;
+      let sp = 0; stack[sp++] = i; labels[i] = comp;
+      let count = 0;
+      while (sp > 0) {
+        const cur = stack[--sp]; count++;
+        const cx = cur % N, cy = (cur / N) | 0;
+        const neigh = [
+          ((cy - 1 + N) % N) * N + cx, ((cy + 1) % N) * N + cx,
+          cy * N + ((cx - 1 + N) % N), cy * N + ((cx + 1) % N),
+        ];
+        for (const nb of neigh) {
+          if (labels[nb] === -1 && !wall[nb] && sid[nb] === sid[cur]) {
+            labels[nb] = comp; stack[sp++] = nb;
+          }
+        }
+      }
+      if (count < 6) nComp--; // ignore speckle
+    }
+    return { nComp, wallFrac: wallCount / SIZE };
+  }
+
+  // ---------- Render ----------
+  function render(wallThresh) {
+    const data = img.data;
+    for (let i = 0; i < SIZE; i++) {
+      let r, g, b;
+      if (mode === "sectors") {
+        const c = COLORS[sectorId(phi[i])];
+        r = c[0]; g = c[1]; b = c[2];
+      } else {
+        const t = Math.max(0, Math.min(1, phi[i]));
+        // terrain-ish ramp
+        r = (t * 255) | 0; g = (60 + t * 150) | 0; b = (120 + (1 - t) * 100) | 0;
+      }
+      const o = i * 4;
+      data[o] = r; data[o + 1] = g; data[o + 2] = b; data[o + 3] = 255;
+    }
+    if (showWalls) {
+      for (let y = 0; y < N; y++) {
+        const yn = (y - 1 + N) % N, ys = (y + 1) % N;
+        for (let x = 0; x < N; x++) {
+          const i = idx(x, y);
+          const xw = (x - 1 + N) % N, xe = (x + 1) % N;
+          const gx = (phi[idx(xe, y)] - phi[idx(xw, y)]) * 0.5;
+          const gy = (phi[idx(x, ys)] - phi[idx(x, yn)]) * 0.5;
+          if (gx * gx + gy * gy > wallThresh) {
+            const o = i * 4; data[o] = 14; data[o + 1] = 16; data[o + 2] = 22;
+          }
+        }
+      }
+    }
+    fctx.putImageData(img, 0, 0);
+  }
+
+  function renderGraph() {
+    const w = sgraph.width, h = sgraph.height;
+    sctx.clearRect(0, 0, w, h);
+    if (sHistory.length < 2) return;
+    let max = 1e-9;
+    for (const v of sHistory) if (v > max) max = v;
+    sctx.strokeStyle = "#4ade80"; sctx.lineWidth = 1.5; sctx.beginPath();
+    for (let i = 0; i < sHistory.length; i++) {
+      const x = (i / (SHIST_MAX - 1)) * w;
+      const y = h - (sHistory[i] / max) * (h - 6) - 3;
+      i ? sctx.lineTo(x, y) : sctx.moveTo(x, y);
+    }
+    sctx.stroke();
+    sctx.fillStyle = "#5b6b82"; sctx.font = "10px system-ui";
+    sctx.fillText("S max " + max.toExponential(2), 6, 12);
+  }
+
+  // ---------- Main loop ----------
+  let frame = 0;
+  function loop() {
+    let last = { deltaC: 0, kappa: 0, deltaI: 0, S: 0, meanGsq: 0 };
+    if (running) {
+      for (let s = 0; s < P.speed; s++) last = evolve();
+      sHistory.push(last.S);
+      if (sHistory.length > SHIST_MAX) sHistory.shift();
+    } else {
+      // recompute metrics for display when paused (no step)
+      last.meanGsq = 0;
+    }
+
+    // wall threshold: adaptive (mean + std of |∇φ|²) approximated by a factor of meanGsq
+    const wallThresh = Math.max(4e-4, (running ? last.meanGsq : 0.01) * 1.5 + 0.0015);
+
+    render(wallThresh);
+
+    if (frame % 12 === 0) {
+      const a = analyzeSectors(wallThresh);
+      el("m-n").textContent = a.nComp;
+      el("m-wall").textContent = (a.wallFrac * 100).toFixed(1) + "%";
+      renderGraph();
+    }
+    if (running) {
+      el("m-s").textContent = last.S.toExponential(2);
+      el("m-dc").textContent = last.deltaC.toExponential(2);
+      el("m-di").textContent = last.deltaI.toExponential(2);
+      el("m-k").textContent = last.kappa.toFixed(4);
+      el("m-step").textContent = step;
+    }
+    frame++;
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- Legend ----------
+  function buildLegend() {
+    COLORS = palette(P.k);
+    const names = P.k === 3 ? ["R", "G", "B"] : Array.from({ length: P.k }, (_, i) => "sector " + (i + 1));
+    const lg = el("legend");
+    lg.innerHTML = "";
+    for (let i = 0; i < P.k; i++) {
+      const c = COLORS[i];
+      const span = document.createElement("span");
+      span.innerHTML = `<span class="swatch" style="background:rgb(${c[0]},${c[1]},${c[2]})"></span>${names[i]}`;
+      lg.appendChild(span);
+    }
+    const wall = document.createElement("span");
+    wall.innerHTML = `<span class="swatch" style="background:#0e1016;border:1px solid #2c3a4f"></span>domain wall`;
+    lg.appendChild(wall);
+  }
+
+  // ---------- Wire controls ----------
+  function bindSlider(id, key, fmt, after) {
+    const s = el(id), v = el("v-" + id.slice(2));
+    s.addEventListener("input", () => {
+      P[key] = parseFloat(s.value);
+      v.textContent = fmt ? fmt(P[key]) : s.value;
+      if (after) after();
+    });
+  }
+  bindSlider("s-k", "k", (x) => x | 0, buildLegend);
+  bindSlider("s-beta", "beta", (x) => x.toFixed(2));
+  bindSlider("s-D", "D", (x) => x.toFixed(2));
+  bindSlider("s-w", "w", (x) => x.toFixed(2));
+  bindSlider("s-dt", "dt", (x) => x.toFixed(2));
+  bindSlider("s-spd", "speed", (x) => x | 0);
+
+  el("btn-play").addEventListener("click", () => {
+    running = !running;
+    el("btn-play").textContent = running ? "Pause" : "Play";
+  });
+  el("btn-reset").addEventListener("click", reset);
+  el("btn-mode").addEventListener("click", () => {
+    mode = mode === "sectors" ? "field" : "sectors";
+    el("btn-mode").textContent = "Mode: " + (mode === "sectors" ? "Sectors" : "Field");
+  });
+  el("btn-walls").addEventListener("click", () => {
+    showWalls = !showWalls;
+    el("btn-walls").textContent = "Walls: " + (showWalls ? "on" : "off");
+  });
+
+  // ---------- Go ----------
+  buildLegend();
+  reset();
+  loop();
+})();
+</script>
+</body>
+</html>

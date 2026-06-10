@@ -13,7 +13,6 @@ dependencies = [
   "scipy==1.17.1",
   "numba>=0.60",
   "websockets>=13.0",
-  "zstandard>=0.22",
   "matplotlib>=3.8",
 ]
 

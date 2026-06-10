@@ -219,8 +219,35 @@ def correlation_kernel_3d(
 
 
 # ------------------------------------------------------------------
-# Full URP evolution kernel (v2)
+# Sectorisation potential: multi-well drift for domain formation
 # ------------------------------------------------------------------
+
+
+@njit(parallel=True, cache=True)
+def sector_potential_drift_3d(
+    field: np.ndarray,
+    num_wells: int,
+    out: np.ndarray,
+) -> None:
+    """Compute the drift −V'(φ) toward the nearest of ``num_wells`` wells.
+
+    Uses the periodic multi-well potential ``V(φ) = −cos(2π·k·φ)``, whose
+    minima sit at ``φ = n/k`` for integer ``n``. The drift
+
+        −V'(φ) ∝ −sin(2π·k·φ)
+
+    pulls each voxel toward its nearest well, so that the field phase-separates
+    into ``k`` distinct sector types separated by domain walls. This supplies
+    the wall tension the reduced ``β|∇φ|²`` term lacks, letting β-sectorisation
+    actually form (and be measured by :mod:`project_genesis.sectorisation`).
+    """
+    nx, ny, nz = field.shape
+    two_pi_k = 2.0 * np.pi * num_wells
+    for i in prange(nx):
+        for j in range(ny):
+            for k in range(nz):
+                out[i, j, k] = -np.sin(two_pi_k * field[i, j, k])
+
 
 
 @njit(parallel=True, cache=True)

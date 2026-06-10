@@ -24,6 +24,14 @@ class EngineConfig:
     integration_radius: int = 2
     integration_decay: float = 1.0
     integration_weight: float = 0.01
+    use_sector_potential: bool = False
+    sector_count: int = 3
+    sector_potential_weight: float = 0.5
+    use_dynamic_kappa: bool = False
+    kappa_baseline: float = 1.0
+    kappa_recovery: float = 0.1
+    kappa_consumption: float = 5.0
+    kappa_diffusion: float = 0.5
     enable_memory_corpus: bool = False
     corpus_max_size: int = 50
     corpus_min_stability: int = 5
@@ -55,6 +63,23 @@ class EngineConfig:
             raise ValueError("integration_decay must be > 0.0")
         if self.integration_weight < 0.0:
             raise ValueError("integration_weight must be >= 0.0")
+        if self.sector_count < 1:
+            raise ValueError("sector_count must be >= 1")
+        if self.sector_potential_weight < 0.0:
+            raise ValueError("sector_potential_weight must be >= 0.0")
+        if self.kappa_baseline <= 0.0:
+            raise ValueError("kappa_baseline must be > 0.0")
+        if self.kappa_recovery < 0.0:
+            raise ValueError("kappa_recovery must be >= 0.0")
+        if self.kappa_consumption < 0.0:
+            raise ValueError("kappa_consumption must be >= 0.0")
+        if self.kappa_diffusion < 0.0:
+            raise ValueError("kappa_diffusion must be >= 0.0")
+        if self.use_dynamic_kappa and (self.use_coherence_potential or self.use_integration_functional):
+            raise ValueError(
+                "use_dynamic_kappa is not yet supported together with the "
+                "coherence potential or integration functional"
+            )
         if self.corpus_max_size <= 0:
             raise ValueError("corpus_max_size must be > 0")
         if self.corpus_min_stability < 0:

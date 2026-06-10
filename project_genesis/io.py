@@ -18,6 +18,7 @@ def save_snapshot(
     *,
     memory_corpus: MemoryCorpus | None = None,
     stability_map: np.ndarray | None = None,
+    kappa_field: np.ndarray | None = None,
 ) -> Path:
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -34,6 +35,8 @@ def save_snapshot(
         arrays["corpus_json"] = json.dumps(memory_corpus.to_dict())
     if stability_map is not None:
         arrays["stability_map"] = stability_map
+    if kappa_field is not None:
+        arrays["kappa_field"] = kappa_field
 
     np.savez_compressed(target, **arrays)
     return target
@@ -48,6 +51,7 @@ def load_snapshot(
     list[dict],
     dict,
     MemoryCorpus | None,
+    np.ndarray | None,
     np.ndarray | None,
 ]:
     snapshot = np.load(Path(path), allow_pickle=False)
@@ -69,4 +73,8 @@ def load_snapshot(
     if "stability_map" in snapshot.files:
         stability_map = snapshot["stability_map"]
 
-    return field, config, history, agents, run_metadata, corpus, stability_map
+    kappa_field: np.ndarray | None = None
+    if "kappa_field" in snapshot.files:
+        kappa_field = snapshot["kappa_field"]
+
+    return field, config, history, agents, run_metadata, corpus, stability_map, kappa_field

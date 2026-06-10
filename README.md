@@ -17,6 +17,8 @@ The sandbox currently provides:
 - **multi-agent terrain-sensing inhabitants** with configurable density-seeking, exploration, or S-functional-driven policies,
 - agent-agent sensing, shared best-known signals, and optional field influence at visited cells,
 - **stable-structure memory corpus** with multi-scale patch scanning, bounded corpus retention, probabilistic recall, compositional injection, and lineage tracking,
+- **β-sectorisation / boundary-formation analysis** — domain-wall detection, periodic connected-component sector counting, per-sector distinction/integration statistics, and triple-junction counting, for empirically testing the URP `N⋆=3` (SU(3)) prediction,
+- **dynamical capacity field κ(x,t)** — capacity consumed by distinction load, regenerating with slack, diffusing between regions, and gating the integration term in the dynamics, with multi-scale and per-sector capacity reporting,
 - saved snapshots for resuming or analyzing a run,
 - exported metrics, run summaries, agent timelines, corpus summaries, and text slices for inspecting intermediate and final terrain states,
 - **matplotlib visualization** — 3-D voxel scatter plots, field cross-section heat maps, and S-functional time-series charts,
@@ -34,18 +36,27 @@ project_genesis/
   io.py                Snapshot serialization helpers
   metrics.py           URP terrain summary metrics and S-functional computation
   memory_corpus.py     Stable-object corpus, composition, serialization, lineage
+  multiphase.py        Three-component Ψ∈ℂ³ sector field with 120° Y-junctions
   network_server.py    WebSocket server for remote monitoring and control
   numba_kernels.py     Numba JIT-accelerated field evolution kernels
   render.py            Text-based slice rendering for terrain inspection
   s_compass_bridge.py  S-compass connector bridge for AI agent integration
+  sectorisation.py     β-sectorisation / boundary-formation domain analysis
   visualize.py         Matplotlib-based 3-D voxel and S-functional visualization
 Docs/
   The Universal Recursion Principle (URP) _260312_170343.txt
 tests/
   test_genesis_engine.py
   test_memory_corpus.py
+  test_multiphase.py
   test_new_subsystems.py
+  test_sectorisation.py
   test_urp_extensions.py
+experiments/
+  beta_sectorisation.py β-sweep experiment measuring emergent sector counts
+web_toy/
+  index.html           Standalone in-browser URP toy (scalar field)
+  su3.html             Three-component SU(3) sector toy with Y-junctions
 web_viewer/
   index.html           Three.js live voxel viewer
   client.js            WebSocket client for the viewer
@@ -133,6 +144,81 @@ The feature is tuned with:
 - `--min-local-s`
 - `--corpus-patch-scales`
 - `--corpus-compose-probability`
+
+### β-Sectorisation & Boundary Formation
+
+The URP gauge derivation predicts that the β-nonlinearity drives a continuous medium to partition into a small number of stable domains separated by domain walls, with **N⋆ = 3** the dominant attractor at the QCD-derived β ≈ 0.09 — the seed of color SU(3). Separately, the framing of *The Range* holds that a "being" is not a thing inside a boundary but **is** the boundary: the work of maintaining a coherent domain against its surroundings, through the balance of distinction and integration.
+
+The `sectorisation` module makes both measurable. Given an evolved field it:
+
+- computes the periodic gradient magnitude |∇φ| (reusing the simulation's own kernel),
+- marks **domain walls** where |∇φ| is high (the boundary set, the locus of boundary-work),
+- labels the low-gradient **interiors** into connected components — the *sectors* (candidate "beings"), with optional periodic merging,
+- reports per-sector **distinction** (wall gradient energy, β|∇φ|²) and **integration** (internal coherence, 1/(1+mean|∇φ|²)),
+- counts **triple junctions** — the discrete analogue of the 120° Y-junctions tied to the three-sector attractor.
+
+Measure it on a run with `--analyze-sectors` (writes `sectorisation.json`), via the engine API `engine.analyze_sectorisation()`, or sweep β with the experiment script:
+
+```bash
+python experiments/beta_sectorisation.py --size 32 --steps 200 --seed 7 --trials 3
+```
+
+**Empirical finding (baseline dynamics):** with only the reduced `β|∇φ|²` term, the field collapses to a single sector (N = 1) at *every* β, including 0.09 — it does **not** spontaneously sectorise. This is an honest negative result, not a tooling bug (the analyzer correctly recovers N = 3 on fields that genuinely contain three domains; see `tests/test_sectorisation.py`). The cause is structural: the overdamped reduction drops the theory's `−(β/4)(∇φ)⁴` wall-tension term, leaving nothing to hold a domain wall against diffusion.
+
+#### Sectorisation potential (wall tension)
+
+Enabling `--sector-potential` adds the missing wall tension as a periodic multi-well potential `V(φ) = −cos(2π·k·φ)`, whose `k` minima (`--sector-count`, default 3) give the field domains to settle into:
+
+```
+∂_t φ = ∇²φ + β|∇φ|² − G·φ − w · sin(2π·k·φ)
+```
+
+(The sine drift is a *pinning stand-in* for the Lagrangian's true `−(β/4)(∇φ)⁴` wall-tension term, which is numerically stiff under explicit time-stepping; the stand-in supplies the same qualitative ingredient — an energetic preference for discrete field levels separated by walls — in a form the existing integrator handles stably.)
+
+With this term the behavior **flips from N = 1 to genuine multi-domain phase separation** — boundary formation now occurs and is measurable:
+
+| dynamics | β = 0.09 sector count |
+|----------|----------------------|
+| baseline (`β\|∇φ\|²` only) | **1** (no walls) |
+| `--sector-potential --sector-count 3` | **many** domains, then coarsening |
+
+Two effects visible in the sweep match the theory's distinction/integration tension: sector count **grows with β** (more distinction → more walls → finer fragmentation), and **falls with evolution time** as Allen–Cahn-style coarsening absorbs small domains. Settling reproducibly onto the predicted `N⋆ = 3` attractor is a genuine coarsening/tuning study (sensitive to initialization, well count, and potential strength) — the analyzer and the [browser toy](web_toy/) are the instruments built to explore it, rather than assuming the answer.
+
+#### Dynamical κ — capacity as a field
+
+In the theory, κ is not a diagnostic but the protagonist: a local, dynamic constraint on how much integration the system can sustain, "computed as a function of the system's current load … and the accumulated stress of past integrations" (capacity assessment, Phase 2 of the update cycle). `--dynamic-kappa` promotes κ from the recorded proxy `1/(1+mean|∇φ|²)` to a co-evolving field that feeds back into the dynamics:
+
+```
+∂_t φ = κ(x)·∇²φ + β|∇φ|² − G·φ          κ gates the integrating term
+∂_t κ = D_κ·∇²κ + r·(κ₀ − κ) − c·|∇φ|²·κ  diffusion + recovery − load consumption
+```
+
+The S-functional's `κΔI` gating now acts *inside* the evolution rather than only in the metrics: where distinction load is high (domain walls), capacity drains and integration stalls; where there is slack, capacity regenerates and smoothing resumes. Tune with `--kappa-baseline`, `--kappa-recovery`, `--kappa-consumption`, `--kappa-diffusion`. The field persists through snapshots, and S uses the real mean κ when the field is active.
+
+Because **different scales see capacity differently**, the instrumentation reports κ at multiple resolutions: `kappa_by_scale` gives block-averaged capacity statistics per scale (fine scales expose the depleted texture around walls; coarse blocks average it away), snapshots carry `kappa_field_mean/min/std`, and the sectorisation report splits capacity into `wall_kappa_mean` vs `interior_kappa_mean` plus a per-sector `mean_kappa` — each sector's capacity budget, the resources that "being" has available to keep integrating its interior.
+
+Two measured behaviors worth knowing:
+
+- **Capacity texture is real**: walls run measurably depleted relative to interiors (e.g. 0.78 vs 0.91 at default rates), and the multi-scale report shows the depletion visible at scale 4 vanishing by scale 16.
+- **Starved capacity freezes structure**: with κ depleted at walls, integration stalls and fragmentation persists (coarsening slows dramatically) — the field-theory analogue of the theory's "stalled integration" phenomenology, verified in `tests/test_dynamic_kappa.py`.
+
+#### Fitting F(N) from simulation — the N⋆ experiment
+
+The gauge paper's selection argument rests on `F(N) = a·N^(2/3) − b·N` with `N⋆ = (2a/3b)³ = 3` at β ≈ 0.09. Rather than quoting that formula, `experiments/n_star_fit.py` measures its ingredients from runs across a (β, k) grid, where k is the number of wells made available:
+
+```bash
+python experiments/n_star_fit.py --size 24 --steps 400 --trials 2
+python experiments/n_star_fit.py --betas 0.09 --gravity 0   # degenerate-well control
+```
+
+Per cell it records the realized domain count N, the time-averaged S-functional over a trailing window (the theory's selection criterion), and the total wall energy `E_wall` (β|∇φ|² summed over wall voxels), then fits the boundary coefficient `a(β)` by least squares on `E_wall ≈ a·N^(2/3)` and inverts the stationarity condition for the implied `b` per cell.
+
+**Findings (24³, 400 steps, 2 trials — honest, mixed):**
+
+- **The boundary-cost half of F(N) is supported.** `a(β)` is cleanly measurable and scales linearly: `a ≈ 2.6·β` across β ∈ {0.03, 0.09, 0.2}. Wall cost proportional to β is exactly what the theory's boundary term predicts.
+- **The selection half is not (yet).** Time-averaged S generally *grows* with wall density, picking k = 5–6 rather than an interior optimum at 3; and the implied `b` varies ~45% across k at fixed β, inconsistent with the k-independent `b` the F(N) form requires.
+- **Gravity is a real confound.** The `−G·φ` damping tilts the multi-well potential toward φ = 0, breaking well degeneracy and driving collapse toward one sector. In a gravity-free control at β = 0.09, k = 3 *does* maximize S by a wide margin — suggestive, but reported as anecdote: the domain count degenerates (the wall network percolates at this size), one β, two trials.
+- **Dynamical κ changes the verdict — under scarcity.** With `--dynamic-kappa` at default rates, capacity texture forms (walls depleted) and coarsening slows, but selection stays ΔC-dominated (k = 6 still wins; in quasi-steady state ΔI ≈ 0, so S reduces to wall energy). In the **capacity-scarce regime** (`--kappa-consumption 50 --kappa-recovery 0.02`), however, the selection flips: **k = 3 maximizes time-averaged S, robustly across 4 seeds, with gravity on, by ~17% over the runner-up** — and the b-consistency of the F(N) fit improves (spread 0.45 → 0.33). Read with care: one β, one lattice size, one (c, r) pair, and the k = 3 domains are near-collapsed (N ≈ 1) — but the direction matches the theory's own structure, where `b = b(β, κ)` only has teeth when κ is finite. **Selection appears to be a scarcity phenomenon: with abundant capacity nothing penalizes fragmentation; under a binding capacity budget, three wells become S-optimal.** Mapping the (c, r, β) phase diagram of this selection is the clear next experiment.
 
 ## Setup
 
@@ -251,6 +337,9 @@ The current checks verify:
 - chunk activation / deactivation logic,
 - WebSocket message serialization / deserialization,
 - S-compass bridge output consistency,
+- β-sectorisation analysis: gradient magnitude, sector labelling (including periodic merging and size filtering), per-sector distinction/integration statistics, triple-junction detection, and the engine integration hook,
+- three-component (Ψ∈ℂ³) sector model: vector Allen–Cahn evolution, argmax sector labelling, interface detection, triple-junction counting (2-D and 3-D), S₃ permutation invariance, and report serialization,
+- dynamical κ: depletion under load, recovery with slack, boundedness, determinism, κ-gated integration feedback (starved capacity preserves walls), multi-scale capacity reporting, per-sector κ budgets, and snapshot persistence,
 - headless save / load round-trip integrity,
 - agent perception data structure and action queue execution.
 
@@ -283,6 +372,54 @@ When the headless server runs with a non-zero port, the following commands are a
 | `send_action` | `{agent_id, action}` | Queues an action for an agent; acknowledged |
 
 The server also pushes `chunk_updated` events to connected clients when voxel data changes.
+
+### Three-Component Sector Field (Ψ∈ℂ³) — genuine SU(3) Y-junctions
+
+The scalar field above has a structural limit: stacked wells give only **layered** domains — a region in well `n` borders wells `n±1`, so three phases never meet and **no 120° Y-junctions can form**. This is an honest property of a single scalar, and it points at the next layer of the gauge derivation (§4.3.3): a **sector-membership field** `Ψ(x) = (R, G, B)` whose three components compete on equal footing.
+
+`project_genesis.multiphase` implements this as a vector Allen–Cahn field — the multi-phase generalisation of the URP update:
+
+```
+∂_t η_a = D·∇²η_a − [ η_a³ − η_a + 2γ·η_a·(Σ_b η_b² − η_a²) ]
+```
+
+The triple-well free energy is **S₃-symmetric** (relabelling R/G/B is a symmetry — the discrete remnant of the global symmetry surviving deep inside sectors), and with all three phases mutually adjacent, **genuine three-way domains with 120° triple junctions form and coarsen** exactly as in grain-growth / soap-foam physics:
+
+```python
+import numpy as np
+from project_genesis.multiphase import step_multiphase, analyze_multiphase
+
+fields = np.random.default_rng(7).random((3, 96, 96)) * 0.1
+for _ in range(600):
+    fields = step_multiphase(fields, diffusion=1.0, gamma=1.5, dt=0.1)
+print(analyze_multiphase(fields))   # -> n_phases=3, triple_junctions>0, ...
+```
+
+Triple-junction counts fall as the structure coarsens (e.g. ~360 → ~35 over 1500 steps), and are invariant under permuting R/G/B (the S₃ check in `tests/test_multiphase.py`). The model is dimension-agnostic — the same code runs in 2-D (the browser toy) and 3-D (matching the engine).
+
+## Browser Toy (zero dependencies)
+
+`web_toy/index.html` is a self-contained, single-file demonstration of the core URP ideas — **just open it in a browser**, no server, no build step, no CDN. It runs a 2-D version of the URP field equation live on a canvas:
+
+```
+∂_t φ = D·∇²φ + β·|∇φ|² − w·sin(2π·k·φ)
+```
+
+and shows:
+
+- the field evolving by gradient-ascent, coloured by **sector** (nearest of `k` wells — red/green/blue for `k=3`) or as a raw field heat map,
+- **domain walls** (high-|∇φ| boundaries) overlaid in real time,
+- the live **S-functional** (`ΔC`, `κ`, `ΔI`, `S`) with an S-over-time graph,
+- the measured **sector count `N`**, coarsening from a fine mosaic toward a few large domains.
+
+Interactive sliders make the distinction/integration trade-off tangible: **raise β** and the field fragments into more sectors (distinction wins); **lower it** and domains coarsen toward a few (integration wins). It is the conceptual companion to the full 3-D Python engine.
+
+A second page, `web_toy/su3.html`, runs the **three-component SU(3) sector model** (`multiphase` above) live: three R/G/B colours competing, forming domains with genuine **120° Y-junctions** that coarsen over time, with a live junction count and S-functional. The two pages cross-link so you can directly compare the scalar (layered, no junctions) and three-component (true triple junctions) models — the comparison *is* the lesson.
+
+```bash
+# any static file server, or literally just double-click the files:
+python -m http.server -d web_toy 8000   # then open http://localhost:8000 (and /su3.html)
+```
 
 ## Web Viewer
 
@@ -395,7 +532,7 @@ Recommended next steps for expansion:
 6. Evaluate whether the simulation loop is compelling enough to justify networking and avatars.
 7. Add higher-order field dynamics — second-order time derivatives (∂²φ/∂t²) for wave-like behavior.
 8. Extend the Poisson solver to support anisotropic or spatially varying ρ (e.g., agent-driven source terms).
-9. Explore emergent gauge sectorization — identify conditions under which the field spontaneously partitions into distinct coherent domains.
+9. Emergent gauge sectorization — the `sectorisation` module *measures* domains/walls/junctions; the `--sector-potential` term gives the scalar field the wall tension to phase-separate; and `multiphase` (Ψ∈ℂ³) now produces genuine three-way domains with 120° Y-junctions (see the two browser toys). Open work: couple a gauge connection `A_μ` to the sector field to recover the Yang–Mills boundary modes (gluons) the derivation describes.
 10. Implement inter-agent communication protocols — agents that negotiate and share structured messages beyond simple signal sharing.
 
 ## Theory Reference

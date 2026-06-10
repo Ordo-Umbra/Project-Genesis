@@ -88,6 +88,54 @@ def build_parser() -> argparse.ArgumentParser:
         help="Weight applied to the integration functional contribution.",
     )
     parser.add_argument(
+        "--sector-potential",
+        action="store_true",
+        default=False,
+        help="Enable the multi-well sectorisation potential (domain-wall tension term).",
+    )
+    parser.add_argument(
+        "--sector-count",
+        type=int,
+        default=3,
+        help="Number of wells (target sector types) for the sectorisation potential.",
+    )
+    parser.add_argument(
+        "--sector-weight",
+        type=float,
+        default=0.5,
+        help="Strength of the sectorisation potential drift.",
+    )
+    parser.add_argument(
+        "--dynamic-kappa",
+        action="store_true",
+        default=False,
+        help="Co-evolve a dynamical capacity field κ(x,t) that gates the integration term.",
+    )
+    parser.add_argument(
+        "--kappa-baseline",
+        type=float,
+        default=1.0,
+        help="Baseline capacity κ₀ the field recovers toward.",
+    )
+    parser.add_argument(
+        "--kappa-recovery",
+        type=float,
+        default=0.1,
+        help="Capacity recovery rate r in ∂_t κ = D_κ∇²κ + r(κ₀−κ) − c|∇φ|²κ.",
+    )
+    parser.add_argument(
+        "--kappa-consumption",
+        type=float,
+        default=5.0,
+        help="Capacity consumption rate c (distinction load drains κ).",
+    )
+    parser.add_argument(
+        "--kappa-diffusion",
+        type=float,
+        default=0.5,
+        help="Capacity diffusion D_κ (capacity flows between regions).",
+    )
+    parser.add_argument(
         "--enable-memory-corpus",
         action="store_true",
         default=False,
@@ -129,6 +177,18 @@ def build_parser() -> argparse.ArgumentParser:
         default=False,
         help="Generate matplotlib visualization artifacts (voxel_3d.png, field_slices.png, s_history.png).",
     )
+    parser.add_argument(
+        "--analyze-sectors",
+        action="store_true",
+        default=False,
+        help="Measure β-sectorisation / boundary formation and write sectorisation.json.",
+    )
+    parser.add_argument(
+        "--sector-threshold-k",
+        type=float,
+        default=1.0,
+        help="Wall-threshold factor for sector detection (|∇φ| > mean + k·std).",
+    )
     return parser
 
 
@@ -162,6 +222,8 @@ def export_artifacts(
     requested_steps: int,
     resumed_from: str | None = None,
     visualize: bool = False,
+    analyze_sectors: bool = False,
+    sector_threshold_k: float = 1.0,
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     slices_dir = output_dir / "slices"
@@ -207,6 +269,13 @@ def export_artifacts(
 
     engine.save(output_dir / "engine_snapshot.npz")
 
+    if analyze_sectors:
+        sector_report = engine.analyze_sectorisation(k=sector_threshold_k)
+        (output_dir / "sectorisation.json").write_text(
+            json.dumps(sector_report, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+
     if visualize:
         from project_genesis.visualize import save_visualization
 
@@ -242,6 +311,14 @@ def main() -> None:
                 integration_radius=args.integration_radius,
                 integration_decay=args.integration_decay,
                 integration_weight=args.integration_weight,
+                use_sector_potential=args.sector_potential,
+                sector_count=args.sector_count,
+                sector_potential_weight=args.sector_weight,
+                use_dynamic_kappa=args.dynamic_kappa,
+                kappa_baseline=args.kappa_baseline,
+                kappa_recovery=args.kappa_recovery,
+                kappa_consumption=args.kappa_consumption,
+                kappa_diffusion=args.kappa_diffusion,
                 enable_memory_corpus=args.enable_memory_corpus,
                 corpus_max_size=args.corpus_max_size,
                 corpus_min_stability=args.min_stability,
@@ -259,6 +336,8 @@ def main() -> None:
         requested_steps=args.steps,
         resumed_from=args.resume,
         visualize=args.visualize,
+        analyze_sectors=args.analyze_sectors,
+        sector_threshold_k=args.sector_threshold_k,
     )
 
     print(json.dumps(engine.summarize_state(), indent=2, sort_keys=True))
