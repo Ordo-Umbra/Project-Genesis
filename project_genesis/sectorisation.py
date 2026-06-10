@@ -125,24 +125,13 @@ def _merge_periodic_faces(labels: np.ndarray, n_labels: int) -> np.ndarray:
         for a, b in pairs:
             uf.union(int(a), int(b))
 
-    # Relabel to contiguous ids.
-    remap: dict[int, int] = {0: 0}
-    next_id = 1
-    out = np.zeros_like(labels)
-    flat = labels.ravel()
-    out_flat = out.ravel()
-    for idx in range(flat.size):
-        lbl = int(flat[idx])
-        if lbl == 0:
-            continue
-        root = uf.find(lbl)
-        mapped = remap.get(root)
-        if mapped is None:
-            mapped = next_id
-            remap[root] = mapped
-            next_id += 1
-        out_flat[idx] = mapped
-    return out
+    # Vectorised relabel: map each original label to its union-find root,
+    # then compact the surviving roots to contiguous ids 1..K.
+    roots = np.array([uf.find(lbl) for lbl in range(n_labels + 1)], dtype=labels.dtype)
+    unique_roots = np.unique(roots[1:]) if n_labels > 0 else np.array([], dtype=labels.dtype)
+    compact = np.zeros(int(roots.max()) + 1, dtype=labels.dtype)
+    compact[unique_roots] = np.arange(1, len(unique_roots) + 1, dtype=labels.dtype)
+    return compact[roots[labels]]
 
 
 def label_sectors(
@@ -197,17 +186,13 @@ def label_sectors(
         n_labels = int(labels.max())
 
     if min_size > 1 and n_labels > 0:
-        counts = np.bincount(labels.ravel())
-        # Zero out sectors below min_size, then compact the labels.
-        keep = {lbl for lbl in range(1, len(counts)) if counts[lbl] >= min_size}
-        remap = {0: 0}
-        next_id = 1
-        for lbl in sorted(keep):
-            remap[lbl] = next_id
-            next_id += 1
-        vectorised = np.vectorize(lambda v: remap.get(int(v), 0))
-        labels = vectorised(labels).astype(labels.dtype)
-        n_labels = next_id - 1
+        counts = np.bincount(labels.ravel(), minlength=n_labels + 1)
+        # Relabel sectors below min_size to wall (0), compacting the rest.
+        kept = [lbl for lbl in range(1, n_labels + 1) if counts[lbl] >= min_size]
+        remap = np.zeros(n_labels + 1, dtype=labels.dtype)
+        remap[kept] = np.arange(1, len(kept) + 1, dtype=labels.dtype)
+        labels = remap[labels]
+        n_labels = len(kept)
 
     return labels, int(n_labels), wall_mask
 
@@ -264,7 +249,6 @@ def sector_statistics(
                 "surface_area": _sector_surface_area(labels, sid),
                 "distinction": distinction,
                 "integration": integration,
-                "boundary_s": distinction + integration * 0.0,  # ΔC core per The Range
             }
         )
     return stats

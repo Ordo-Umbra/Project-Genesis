@@ -93,7 +93,15 @@ class GenesisEngine:
         """Return cached S-functional or recompute."""
         if self._s_cache is None:
             self._s_cache = compute_s_functional(
-                self.field, self.prev_field, self.BETA, self.G
+                self.field,
+                self.prev_field,
+                self.BETA,
+                self.G,
+                coherence_potential=self.config.use_coherence_potential,
+                poisson_iterations=self.config.poisson_iterations,
+                integration_functional=self.config.use_integration_functional,
+                integration_radius=self.config.integration_radius,
+                integration_decay=self.config.integration_decay,
             )
         return self._s_cache
 
@@ -427,6 +435,11 @@ class GenesisEngine:
             self.G,
             step=step,
             prev_field=prev_field,
+            coherence_potential=self.config.use_coherence_potential,
+            poisson_iterations=self.config.poisson_iterations,
+            integration_functional=self.config.use_integration_functional,
+            integration_radius=self.config.integration_radius,
+            integration_decay=self.config.integration_decay,
         )
         result.update(self._agent_summary())
         if self.memory_corpus is not None:

@@ -100,7 +100,6 @@ def count_triple_junctions(labels: np.ndarray) -> int:
     analogue of the 120° Y-junctions where three colour domains meet. Works in
     2-D and 3-D via periodic neighbour shifts.
     """
-    distinct = np.zeros(labels.shape, dtype=np.int64)
     # Bit-set of labels seen in the (3^d − 1) neighbourhood, via periodic rolls.
     seen_bits = np.zeros(labels.shape, dtype=np.int64)
     offsets = _neighbour_offsets(labels.ndim)
