@@ -172,6 +172,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="Per-injection probability that two objects are composed into a novel building block.",
     )
     parser.add_argument(
+        "--corpus-kappa-threshold",
+        type=float,
+        default=0.3,
+        help="With --dynamic-kappa: minimum local capacity (soil) for a recalled seed to root.",
+    )
+    parser.add_argument(
+        "--corpus-kappa-cost",
+        type=float,
+        default=0.4,
+        help="With --dynamic-kappa: fraction of local capacity a rooted seed consumes.",
+    )
+    parser.add_argument(
         "--visualize",
         action="store_true",
         default=False,
@@ -325,6 +337,8 @@ def main() -> None:
                 corpus_min_local_s=args.min_local_s,
                 corpus_patch_scales=args.corpus_patch_scales,
                 corpus_compose_probability=args.corpus_compose_probability,
+                corpus_kappa_threshold=args.corpus_kappa_threshold,
+                corpus_kappa_cost=args.corpus_kappa_cost,
             )
         )
 

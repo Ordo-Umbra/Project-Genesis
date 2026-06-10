@@ -6,8 +6,13 @@ from .memory_corpus import MemoryCorpus, StableObject
 from .metrics import compute_local_s, compute_s_functional, kappa_by_scale
 from .multiphase import (
     analyze_multiphase,
+    coherence_integration,
+    count_domains,
+    multiphase_s_functional,
+    multiphase_s_standing,
     sector_labels,
     step_multiphase,
+    step_multiphase_kappa,
 )
 from .s_compass_bridge import compute_s_gradient, perception_to_action
 from .sectorisation import (
@@ -35,9 +40,14 @@ __all__ = [
     "analyze_sectorisation",
     "compute_local_s",
     "compute_s_functional",
+    "coherence_integration",
     "compute_s_gradient",
+    "count_domains",
     "count_triple_junctions",
     "free_energy",
+    "multiphase_s_functional",
+    "multiphase_s_standing",
+    "step_multiphase_kappa",
     "kappa_by_scale",
     "label_sectors",
     "perception_to_action",

@@ -76,6 +76,203 @@ def step_multiphase(
     return new
 
 
+def _total_gradient_energy(fields: np.ndarray) -> np.ndarray:
+    """Σ_a |∇η_a|² per voxel — the total distinction load across components."""
+    load = np.zeros(fields.shape[1:], dtype=np.float64)
+    for a in range(fields.shape[0]):
+        for axis in range(fields[a].ndim):
+            g = 0.5 * (np.roll(fields[a], -1, axis) - np.roll(fields[a], 1, axis))
+            load += g * g
+    return load
+
+
+def step_multiphase_kappa(
+    fields: np.ndarray,
+    kappa: np.ndarray,
+    *,
+    diffusion: float = 1.0,
+    gamma: float = 1.5,
+    dt: float = 0.1,
+    kappa_baseline: float = 1.0,
+    kappa_recovery: float = 0.1,
+    kappa_consumption: float = 5.0,
+    kappa_diffusion: float = 0.5,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Advance a multi-phase field with a co-evolving capacity field κ.
+
+    This is the three-component (Ψ∈ℂ³) analogue of the scalar engine's
+    dynamical-κ coupling: capacity gates the *integrating* (surface-tension)
+    term while the bulk triple-well potential is untouched, and κ is consumed
+    by the total distinction load across all components:
+
+        ∂_t η_a = κ·D·∇²η_a − ∂f/∂η_a
+        ∂_t κ   = D_κ·∇²κ + r·(κ₀ − κ) − c·(Σ_b |∇η_b|²)·κ
+
+    Returns the updated ``(fields, kappa)`` pair. Where capacity is depleted
+    (at the dense domain walls), integration stalls and the wall network is
+    pinned — so scarcity can arrest the otherwise unbounded coarsening at a
+    finite number of genuine three-way domains.
+    """
+    if fields.ndim < 2:
+        raise ValueError("fields must have shape (P, *spatial) with P >= 1 component axis")
+    if kappa.shape != fields.shape[1:]:
+        raise ValueError("kappa must have the spatial shape of the field")
+
+    sum_sq = np.sum(fields * fields, axis=0)
+    new = np.empty_like(fields)
+    load = np.zeros(fields.shape[1:], dtype=np.float64)
+    for a in range(fields.shape[0]):
+        fa = fields[a]
+        lap = periodic_laplacian(fa)
+        df = fa**3 - fa + 2.0 * gamma * fa * (sum_sq - fa * fa)
+        new[a] = fa + dt * (kappa * diffusion * lap - df)
+        g_axes = [0.5 * (np.roll(fa, -1, ax) - np.roll(fa, 1, ax)) for ax in range(fa.ndim)]
+        load += sum(g * g for g in g_axes)
+
+    lap_k = periodic_laplacian(kappa)
+    new_kappa = kappa + dt * (
+        kappa_diffusion * lap_k
+        + kappa_recovery * (kappa_baseline - kappa)
+        - kappa_consumption * load * kappa
+    )
+    np.clip(new_kappa, 0.0, kappa_baseline, out=new_kappa)
+    return new, new_kappa
+
+
+def multiphase_s_functional(
+    fields: np.ndarray,
+    prev_fields: np.ndarray | None,
+    *,
+    beta: float = 0.09,
+    kappa_field: np.ndarray | None = None,
+) -> dict[str, float]:
+    """S = ΔC + κΔI for a multi-phase field.
+
+    Distinction is the total gradient energy across components; integration is
+    the step-over-step reduction in mean component curvature (smoothing). When
+    a dynamical ``kappa_field`` is supplied its mean is used for κ, otherwise
+    the diagnostic proxy ``1/(1+mean load)``.
+    """
+    load = _total_gradient_energy(fields)
+    mean_load = float(load.mean())
+    delta_c = float(beta * mean_load)
+    if kappa_field is not None:
+        kappa = float(kappa_field.mean())
+    else:
+        kappa = 1.0 / (1.0 + mean_load)
+
+    if prev_fields is None:
+        delta_i = 0.0
+    else:
+        def mean_abs_lap(f: np.ndarray) -> float:
+            return float(np.mean([np.abs(periodic_laplacian(f[a])) for a in range(f.shape[0])]))
+        delta_i = max(0.0, mean_abs_lap(prev_fields) - mean_abs_lap(fields))
+
+    return {
+        "delta_c": delta_c,
+        "kappa": kappa,
+        "delta_i": delta_i,
+        "s_increment": delta_c + kappa * delta_i,
+    }
+
+
+def count_domains(labels: np.ndarray, *, min_size: int = 1) -> int:
+    """Count connected single-phase domains (periodic, 6-connectivity).
+
+    Unlike :func:`count_triple_junctions` (which counts meeting points), this
+    counts the regions themselves — the emergent ``N`` the phase-diagram work
+    needs in order to ask whether κ scarcity stabilises *three* domains.
+    """
+    try:
+        from scipy import ndimage
+    except ImportError:  # pragma: no cover
+        raise RuntimeError("scipy is required for count_domains")
+    from .sectorisation import _merge_periodic_faces
+
+    structure = ndimage.generate_binary_structure(labels.ndim, 1)
+    total = 0
+    for val in np.unique(labels):
+        mask = labels == val
+        comp, n = ndimage.label(mask, structure=structure)
+        if n > 1:
+            comp = _merge_periodic_faces(comp, n)
+            n = int(comp.max())
+        if min_size > 1 and n > 0:
+            counts = np.bincount(comp.ravel(), minlength=n + 1)
+            n = int(np.sum(counts[1:] >= min_size))
+        total += n
+    return total
+
+
+def coherence_integration(
+    fields: np.ndarray,
+    *,
+    radius: int = 3,
+    decay: float = 1.0,
+) -> float:
+    """Standing nonlocal coherence I = Σ_a ⟨η_a(x)·η_a(x+δ)⟩ weighted by exp(−decay·|δ|).
+
+    The multi-component analogue of the URP integration functional
+    ``I[φ] = ∫∫ K(x,x') φ(x) φ(x')``. Unlike the transient ΔI (a one-step
+    smoothing rate that vanishes at equilibrium), this is a *standing* quantity:
+    a static coherent domain keeps it high, while fragmentation lowers it
+    because domain walls decorrelate neighbourhoods within the kernel radius.
+    It therefore survives at equilibrium and falls monotonically with sector
+    count — the integration half the S-functional was missing.
+
+    Normalised by the kernel-weight sum so the value is intensive (independent
+    of radius/decay scale).
+    """
+    from itertools import product
+
+    spatial = fields.shape[1:]
+    ndim = len(spatial)
+    coherence = 0.0
+    weight_sum = 0.0
+    for off in product(range(-radius, radius + 1), repeat=ndim):
+        dist = float(np.sqrt(sum(o * o for o in off)))
+        if dist == 0.0 or dist > radius:
+            continue
+        w = float(np.exp(-decay * dist))
+        weight_sum += w
+        for a in range(fields.shape[0]):
+            shifted = fields[a]
+            for axis, o in enumerate(off):
+                if o:
+                    shifted = np.roll(shifted, -o, axis=axis)
+            coherence += w * float(np.mean(fields[a] * shifted))
+    return coherence / weight_sum if weight_sum else 0.0
+
+
+def multiphase_s_standing(
+    fields: np.ndarray,
+    *,
+    beta: float = 0.09,
+    kappa_field: np.ndarray | None = None,
+    radius: int = 3,
+    decay: float = 1.0,
+    integration_weight: float = 1.0,
+) -> dict[str, float]:
+    """S = ΔC + κ·w·I using the *standing* nonlocal coherence for integration.
+
+    Distinction ΔC rises with fragmentation (more walls); the coherence term
+    falls with it — so unlike :func:`multiphase_s_functional`, this S can have
+    an interior optimum in sector count. ``integration_weight`` sets the
+    relative scale of the two halves (the b/a ratio of the F(N) tradeoff).
+    """
+    load = _total_gradient_energy(fields)
+    mean_load = float(load.mean())
+    delta_c = float(beta * mean_load)
+    kappa = float(kappa_field.mean()) if kappa_field is not None else 1.0 / (1.0 + mean_load)
+    coherence = coherence_integration(fields, radius=radius, decay=decay)
+    return {
+        "delta_c": delta_c,
+        "kappa": kappa,
+        "coherence": coherence,
+        "s_increment": delta_c + kappa * integration_weight * coherence,
+    }
+
+
 def sector_labels(fields: np.ndarray) -> np.ndarray:
     """Return the dominant-component (argmax) sector label at each voxel."""
     return np.argmax(fields, axis=0)
@@ -133,27 +330,36 @@ def _popcount(arr: np.ndarray) -> np.ndarray:
     return out
 
 
-def analyze_multiphase(fields: np.ndarray, *, beta: float = 0.09) -> dict:
+def analyze_multiphase(
+    fields: np.ndarray,
+    *,
+    beta: float = 0.09,
+    kappa_field: np.ndarray | None = None,
+    count_domains_too: bool = True,
+) -> dict:
     """Summary report for a multi-phase sector field.
 
-    Reports the number of distinct phases present, the triple-junction count
-    (now genuinely non-zero, unlike the scalar model), the boundary fraction,
-    and a distinction/integration decomposition in the spirit of the
-    S-functional.
+    Reports the number of distinct phases present, the emergent domain count,
+    the triple-junction count (genuinely non-zero, unlike the scalar model),
+    the boundary fraction, and a distinction/integration decomposition. When a
+    ``kappa_field`` is supplied, its mean and wall/interior split are included.
     """
     labels = sector_labels(fields)
     walls = interface_mask(fields)
-    # Distinction: gradient energy summed across components.
-    grad_energy = np.zeros(labels.shape, dtype=np.float64)
-    for a in range(fields.shape[0]):
-        for axis in range(fields[a].ndim):
-            g = 0.5 * (np.roll(fields[a], -1, axis) - np.roll(fields[a], 1, axis))
-            grad_energy += g * g
-    mean_grad = float(grad_energy.mean())
-    return {
+    mean_grad = float(_total_gradient_energy(fields).mean())
+    report = {
         "n_phases": int(len(np.unique(labels))),
         "triple_junctions": count_triple_junctions(labels),
         "boundary_fraction": float(walls.mean()),
         "distinction": float(beta * mean_grad),
         "integration": float(1.0 / (1.0 + mean_grad)),
     }
+    if count_domains_too:
+        report["n_domains"] = count_domains(labels)
+    if kappa_field is not None:
+        report["kappa_mean"] = float(kappa_field.mean())
+        report["wall_kappa_mean"] = float(kappa_field[walls].mean()) if walls.any() else 0.0
+        report["interior_kappa_mean"] = (
+            float(kappa_field[~walls].mean()) if (~walls).any() else 0.0
+        )
+    return report

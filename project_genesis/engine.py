@@ -94,6 +94,10 @@ class GenesisEngine:
             self.memory_corpus = None
             self.stability_map = None
 
+        # Seed-rooting tally for the κ-as-soil coupling (run-local).
+        self._corpus_seeds_rooted: int = 0
+        self._corpus_seeds_barren: int = 0
+
         # Dynamical capacity field κ(x,t): full capacity everywhere at birth.
         if config.use_dynamic_kappa:
             self.kappa_field: np.ndarray | None = np.full_like(
@@ -433,12 +437,42 @@ class GenesisEngine:
         i = int(self.rng.integers(0, max(1, shape[0] - ps[0] + 1)))
         j = int(self.rng.integers(0, max(1, shape[1] - ps[1] + 1)))
         k = int(self.rng.integers(0, max(1, shape[2] - ps[2] + 1)))
-        # Blend: 50/50 mix to avoid harsh discontinuities.
+        self._plant_seed(obj, i, j, k)
+
+    def _plant_seed(self, obj, i: int, j: int, k: int) -> bool:
+        """Attempt to root a recalled seed at ``(i, j, k)``; return success.
+
+        When the capacity field κ is active it acts as *soil*: a seed only
+        unfolds where there is enough local capacity (≥ ``corpus_kappa_threshold``);
+        in barren ground it "remains a seed" and does not root. Rooting then
+        *consumes* capacity (``corpus_kappa_cost``), so the same patch cannot be
+        replanted until its soil regenerates — pushing recall to spread into
+        fresh, coherent regions.
+        """
+        assert self.memory_corpus is not None
+        ps = obj.subfield.shape
         ie, je, ke = i + ps[0], j + ps[1], k + ps[2]
+
+        if self.kappa_field is not None and self.config.corpus_kappa_threshold > 0.0:
+            local_kappa = float(np.mean(self.kappa_field[i:ie, j:je, k:ke]))
+            if local_kappa < self.config.corpus_kappa_threshold:
+                self._corpus_seeds_barren += 1
+                logger.info(
+                    "🌱 Corpus seed %s found barren soil (κ=%.3f < %.3f) at (%d,%d,%d) — did not root",
+                    obj.object_id, local_kappa, self.config.corpus_kappa_threshold, i, j, k,
+                )
+                return False
+
+        # Blend: 50/50 mix to avoid harsh discontinuities.
         self.field[i:ie, j:je, k:ke] = (
             0.5 * self.field[i:ie, j:je, k:ke] + 0.5 * obj.copy_subfield()
         )
+        if self.kappa_field is not None:
+            # Planting draws down the local capacity (soil) it took root in.
+            self.kappa_field[i:ie, j:je, k:ke] *= 1.0 - self.config.corpus_kappa_cost
+            self._corpus_seeds_rooted += 1
         logger.info("🔄 Corpus recalled object %s at (%d,%d,%d)", obj.object_id, i, j, k)
+        return True
 
     def analyze_sectorisation(
         self,
@@ -507,6 +541,9 @@ class GenesisEngine:
             result["kappa_field_min"] = float(np.min(self.kappa_field))
             result["kappa_field_std"] = float(np.std(self.kappa_field))
             result["kappa_by_scale"] = kappa_by_scale(self.kappa_field)
+        if self.memory_corpus is not None and self.kappa_field is not None:
+            result["corpus_seeds_rooted"] = self._corpus_seeds_rooted
+            result["corpus_seeds_barren"] = self._corpus_seeds_barren
         if self.memory_corpus is not None:
             result.update(self.memory_corpus.summary())
         if self.agents:

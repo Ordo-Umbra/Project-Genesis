@@ -1,12 +1,28 @@
-# Project Genesis: A URP-Driven Terrain Sandbox
+# Project Genesis: An Executable Testbench for the Universal Recursion Principle
 
-Project Genesis is an open-source attempt to turn the Universal Recursion Principle (URP) into a persistent procedural world.
+Project Genesis turns the **Universal Recursion Principle (URP)** from prose and equations into **running, falsifiable code** — a simulation laboratory where the theory's central claims can be built, measured, and given honest verdicts.
 
-The repository is centered on a first concrete milestone: a **URP terrain sandbox**. The code focuses on making the field simulation deterministic, inspectable, and testable — while progressively layering on the deeper structures described in the URP theory.
+## What this project is (and is not)
 
-## Current MVP Scope
+The URP proposes that sufficiently expressive recursive systems — physical, biological, cognitive — evolve by climbing a single scalar functional
 
-The sandbox currently provides:
+```
+S = ΔC + κΔI
+```
+
+balancing the growth of **distinction** (ΔC — making differences, articulating structure) against **integration** (ΔI — binding those differences into a coherent whole), under a finite **capacity** (κ — the resources available to sustain integration). From that one principle the theory derives a striking range of claims: that the field spontaneously partitions into exactly three sectors (the seed of colour **SU(3)**), that capacity-driven phase transitions break symmetries, that stable structures act as reusable "seeds" planted across scales.
+
+**The goal of this repository is not to prove the theory.** It is to make the theory *executable* — to build the smallest honest simulation that implements the URP field dynamics and the S-functional, and then a set of **instruments** that measure what actually emerges, so each claim becomes a question with a real answer instead of a quotation. Following the framing of the theory's own companion essay *The Range*, the project holds itself to one test: it must be able to produce a **verdict** — *this is supported, that is not, here the model can't decide* — rather than only appreciation. Where the simulation reproduces a prediction, it says so; where it falls short, it says that too, and names the missing physics.
+
+This is, in that essay's terms, a *map and an instrument* — not, by itself, evidence about the physical world. The theory documents live in [`Docs/`](Docs/); this code is the bench they are tested on.
+
+### How it works, in practice
+
+Each capability below arrived as one turn of the same loop: **state a URP claim → build an instrument to measure it → run it → report the verdict, caveats included.** That loop has already produced concrete results — for example, that wall cost scales linearly with β exactly as the boundary term predicts (`a(β) ≈ 2.6·β`), that a single scalar field provably *cannot* form the theory's three-way SU(3) junctions (a three-component field can), and that sector selection toward `N⋆ = 3` appears to be a **capacity-scarcity phenomenon** — invisible with abundant κ, emerging only when a dynamical capacity budget binds. None of these were assumed; all were measured, and all are reproducible from the experiments and tests in this repo.
+
+## Current Scope
+
+The simulation laboratory currently provides:
 
 - a configurable 3D scalar field evolved with the prototype URP-inspired update rule,
 - **optional full URP coherence potential** V(x,t) satisfying ∇²V = ρ, replacing simple gravity damping with the proper G·∇V·∇φ coherence advection term,
@@ -19,6 +35,8 @@ The sandbox currently provides:
 - **stable-structure memory corpus** with multi-scale patch scanning, bounded corpus retention, probabilistic recall, compositional injection, and lineage tracking,
 - **β-sectorisation / boundary-formation analysis** — domain-wall detection, periodic connected-component sector counting, per-sector distinction/integration statistics, and triple-junction counting, for empirically testing the URP `N⋆=3` (SU(3)) prediction,
 - **dynamical capacity field κ(x,t)** — capacity consumed by distinction load, regenerating with slack, diffusing between regions, and gating the integration term in the dynamics, with multi-scale and per-sector capacity reporting,
+- **κ-as-soil corpus coupling** — recalled "seeds" only take root where local capacity is sufficient (fertile soil) and consume it when they do, so structure can only re-grow where the field can support it,
+- **two zero-dependency browser toys** and a Numba-accelerated 3-D engine, sharing the same dynamics so the visual intuition and the measured physics stay in step,
 - saved snapshots for resuming or analyzing a run,
 - exported metrics, run summaries, agent timelines, corpus summaries, and text slices for inspecting intermediate and final terrain states,
 - **matplotlib visualization** — 3-D voxel scatter plots, field cross-section heat maps, and S-functional time-series charts,
@@ -45,15 +63,21 @@ project_genesis/
   visualize.py         Matplotlib-based 3-D voxel and S-functional visualization
 Docs/
   The Universal Recursion Principle (URP) _260312_170343.txt
-tests/
+tests/                 145 checks across the engine, instruments, and physics
   test_genesis_engine.py
+  test_corpus_kappa.py
+  test_dynamic_kappa.py
   test_memory_corpus.py
   test_multiphase.py
   test_new_subsystems.py
   test_sectorisation.py
   test_urp_extensions.py
 experiments/
-  beta_sectorisation.py β-sweep experiment measuring emergent sector counts
+  beta_sectorisation.py β-sweep measuring emergent sector counts
+  n_star_fit.py         Fits the F(N) free-energy coefficients from run data
+  phase_diagram.py      Maps the (consumption, recovery, β) N⋆=3 selection map
+  multiphase_kappa.py   κ-coupled Ψ∈ℂ³ run: emergent N vs S-maximizing P
+  standing_integration.py  Tests standing coherence for an interior N⋆
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -64,8 +88,24 @@ benchmarks/
   bench_field_step.py   Steps-per-second benchmark
 genesis_engine.py       CLI entry point
 run_server.py           Headless simulation server entry point
+.github/workflows/ci.yml CI: runs the full test suite on every push
 requirements.txt
 ```
+
+## Findings so far
+
+A running tally of what the instruments have actually measured — the verdicts, with their caveats. Each links to the section that explains how it was obtained.
+
+| URP claim | Verdict | How |
+|-----------|---------|-----|
+| The S-functional `S = ΔC + κΔI` governs the dynamics | **Implemented** and faithful to the reduced field equation | [S-Functional](#s-functional) |
+| Boundary (wall) cost scales with β | **Supported** — measured `a(β) ≈ 2.6·β` | [N⋆ experiment](#fitting-fn-from-simulation--the-n-experiment) |
+| The β-nonlinearity alone makes the field sectorise | **Not supported** — the reduced `β\|∇φ\|²` term smooths to a single sector; a wall-tension term is required | [β-Sectorisation](#β-sectorisation--boundary-formation) |
+| Three mutually-adjacent sectors with 120° Y-junctions (colour SU(3)) | **Not from a scalar field** (structurally impossible) — **achieved** with the three-component Ψ∈ℂ³ model | [Three-Component Sector Field](#three-component-sector-field--genuine-su3-y-junctions) |
+| Capacity κ drives selection toward `N⋆ = 3` | **Conditional / transient** — a 3-well S-optimal band appears *while the field is actively coarsening*, but in steady state selection runs to more sectors; traced to how ΔI is measured (below) | [Phase diagram](#the-phase-diagram-of-n3-selection) |
+| The S-functional rewards an interior sector optimum | **Not yet** — transient ΔI → 0 at equilibrium; a *standing* coherence term survives but is collinear with ΔC (`corr = +1.00`), so still no interior. Needs a non-collinear *topological* (junction/neutrality) term | [κ × Ψ∈ℂ³](#coupling-κ-to-the-three-component-model--what-it-revealed-about-the-s-functional) |
+
+The honest through-line: the *machinery* of URP sectorisation is reproducible and the boundary-cost half of its free-energy argument is measured; the *selection* of three sectors appears only transiently, and the investigation has localized why — the S-functional's integration term ΔI vanishes at equilibrium, collapsing S to pure distinction. The open frontier is now sharply defined: give ΔI a standing (equilibrium-surviving) form so the κΔI term can actually penalize over-fragmentation.
 
 ## Architecture Overview
 
@@ -144,6 +184,7 @@ The feature is tuned with:
 - `--min-local-s`
 - `--corpus-patch-scales`
 - `--corpus-compose-probability`
+- `--corpus-kappa-threshold` and `--corpus-kappa-cost` (the κ-as-soil coupling; see [κ as soil](#κ-as-soil--coupling-capacity-to-the-memory-corpus))
 
 ### β-Sectorisation & Boundary Formation
 
@@ -202,6 +243,15 @@ Two measured behaviors worth knowing:
 - **Capacity texture is real**: walls run measurably depleted relative to interiors (e.g. 0.78 vs 0.91 at default rates), and the multi-scale report shows the depletion visible at scale 4 vanishing by scale 16.
 - **Starved capacity freezes structure**: with κ depleted at walls, integration stalls and fragmentation persists (coarsening slows dramatically) — the field-theory analogue of the theory's "stalled integration" phenomenology, verified in `tests/test_dynamic_kappa.py`.
 
+#### κ as soil — coupling capacity to the memory corpus
+
+The theory's lineage essay frames stable structures as *seeds*, and is explicit that "a seed requires soil … A seed planted in barren ground remains a seed. It does not die, but it does not unfold." When both `--enable-memory-corpus` and `--dynamic-kappa` are active, the capacity field plays exactly that role of soil:
+
+- a recalled seed only **roots** where the local mean capacity meets `--corpus-kappa-threshold` (fertile ground); below it, the seed does not unfold and the attempt is tallied as *barren*,
+- rooting then **consumes** capacity (`--corpus-kappa-cost`), drawing down the soil it grew in so the same patch cannot be replanted until capacity regenerates — pushing recall to spread into fresh, coherent regions.
+
+Snapshots and run summaries then carry `corpus_seeds_rooted` / `corpus_seeds_barren`. The effect is real and tunable: in a fertile run nearly every recall roots; in a capacity-scarce run (high consumption, low recovery, high threshold) the soil gates **100% of recall attempts as barren** — structure can only re-grow where the field can currently support it. Verified in `tests/test_corpus_kappa.py`.
+
 #### Fitting F(N) from simulation — the N⋆ experiment
 
 The gauge paper's selection argument rests on `F(N) = a·N^(2/3) − b·N` with `N⋆ = (2a/3b)³ = 3` at β ≈ 0.09. Rather than quoting that formula, `experiments/n_star_fit.py` measures its ingredients from runs across a (β, k) grid, where k is the number of wells made available:
@@ -218,7 +268,48 @@ Per cell it records the realized domain count N, the time-averaged S-functional 
 - **The boundary-cost half of F(N) is supported.** `a(β)` is cleanly measurable and scales linearly: `a ≈ 2.6·β` across β ∈ {0.03, 0.09, 0.2}. Wall cost proportional to β is exactly what the theory's boundary term predicts.
 - **The selection half is not (yet).** Time-averaged S generally *grows* with wall density, picking k = 5–6 rather than an interior optimum at 3; and the implied `b` varies ~45% across k at fixed β, inconsistent with the k-independent `b` the F(N) form requires.
 - **Gravity is a real confound.** The `−G·φ` damping tilts the multi-well potential toward φ = 0, breaking well degeneracy and driving collapse toward one sector. In a gravity-free control at β = 0.09, k = 3 *does* maximize S by a wide margin — suggestive, but reported as anecdote: the domain count degenerates (the wall network percolates at this size), one β, two trials.
-- **Dynamical κ changes the verdict — under scarcity.** With `--dynamic-kappa` at default rates, capacity texture forms (walls depleted) and coarsening slows, but selection stays ΔC-dominated (k = 6 still wins; in quasi-steady state ΔI ≈ 0, so S reduces to wall energy). In the **capacity-scarce regime** (`--kappa-consumption 50 --kappa-recovery 0.02`), however, the selection flips: **k = 3 maximizes time-averaged S, robustly across 4 seeds, with gravity on, by ~17% over the runner-up** — and the b-consistency of the F(N) fit improves (spread 0.45 → 0.33). Read with care: one β, one lattice size, one (c, r) pair, and the k = 3 domains are near-collapsed (N ≈ 1) — but the direction matches the theory's own structure, where `b = b(β, κ)` only has teeth when κ is finite. **Selection appears to be a scarcity phenomenon: with abundant capacity nothing penalizes fragmentation; under a binding capacity budget, three wells become S-optimal.** Mapping the (c, r, β) phase diagram of this selection is the clear next experiment.
+- **Dynamical κ changes the verdict — under scarcity.** With `--dynamic-kappa` at default rates, capacity texture forms (walls depleted) and coarsening slows, but selection stays ΔC-dominated (k = 6 still wins; in quasi-steady state ΔI ≈ 0, so S reduces to wall energy). In the **capacity-scarce regime** (`--kappa-consumption 50 --kappa-recovery 0.02`), the selection flips to **k = 3** — and the full phase diagram below shows this is not a one-off.
+
+### The phase diagram of N⋆=3 selection
+
+`experiments/phase_diagram.py` sweeps the capacity-scarcity space — for each (β, consumption `c`, recovery `r`) it runs the wells sweep with dynamical κ and records which well count maximizes time-averaged S. The full run (3 β × 6 c × 5 r × 5 wells × 3 trials = 1350 runs, 24³, gravity on) gives a strikingly clean structure:
+
+```
+β = 0.09 — winning well count k (★ = k=3)        consumption c (scarcity →)
+  c \ r |  0.01   0.03   0.05    0.1    0.2
+    5.0 |   6      6      6      6      6      abundant κ  → over-fragmentation
+   15.0 |   3★     3★     3★     3★     3★
+   30.0 |   3★     3★     3★     3★     3★     ← the k=3 band
+   50.0 |   3★     3★     3★     3★     3★
+   80.0 |   4      4      4      4      4
+  120.0 |   2      2      2      2      2      over-scarce → collapse to two
+```
+
+Three findings, each with its caveat:
+
+1. **There is a robust k=3 band in consumption.** Three wells are S-optimal for `c ≈ 15–50`, with too-abundant capacity selecting more wells and over-scarcity collapsing to two. The band is **identical across all three β** (0.03, 0.09, 0.2) — only the abundant-capacity corner shifts (k = 5 at β = 0.03 vs k = 6 above). 45 of 90 cells select k = 3; mean win margin 0.23, but some boundary wins are razor-thin (min 0.03).
+2. **Recovery rate does essentially nothing here.** Every row is uniform across `r` ∈ [0.01, 0.2] — selection is set by *consumption* (which fixes the standing capacity level), not by how fast capacity regenerates. Honest flag: recovery may only bite on longer timescales than the 400-step / 50-step-window measurement.
+3. **The decisive caveat — k is the *imposed* well count, not the emergent N.** "k = 3 wins" means the field given a 3-well potential reaches higher quasi-steady S than with 2/4/5/6 wells. The *realized* domain count in those winning cells is **not** 3: at `c = 30–50` it is ≈ 1 (near-collapsed), at `c = 15` it is ≈ 39 (fragmented). So this measures a preference for *three available sector-types*, not a field that settles into three domains. Bridging "3 wells are S-optimal" to "the field forms 3 sectors" is the remaining work — likely needing the Ψ∈ℂ³ model (which sustains genuine three-domain structure) coupled to dynamical κ, rather than the scalar multi-well stand-in.
+
+The honest headline: **N⋆=3 selection is real, robust, and a capacity-*consumption* phenomenon — a Goldilocks band, β- and recovery-independent — but it currently selects the imposed well count rather than a cleanly emergent three-domain field.** Reproduce with `python experiments/phase_diagram.py` (or `--quick`).
+
+### Coupling κ to the three-component model — what it revealed about the S-functional
+
+*Running the Ψ∈ℂ³ sector field with the dynamical capacity field.*
+
+The natural next step was to bridge "3 wells are S-optimal" to "the field forms 3 domains" by running the *three-component* model — which sustains genuine three-way domains — coupled to dynamical κ (`step_multiphase_kappa`; experiment `experiments/multiphase_kappa.py`). Two robust results, one expected and one more important than the experiment itself:
+
+- **κ scarcity genuinely arrests coarsening** (verified, `tests/test_multiphase_kappa.py`): capacity depletes at the dense walls, integration stalls there, and the domain network is pinned — a starved run holds many more domains than a fully-integrating one. The emergent domain count lands in the single-to-low-double digits, far closer to 3 than the scalar model's 1-or-39.
+- **But P=3 is *not* robustly selected** — and the reason exposes a flaw in the S-functional itself. Sweeping candidate component counts P ∈ {2…6} against consumption, the S-maximizing P is **5–6, not 3**, with emergent N of 10–40. Tracing the components reveals why: in any quasi-steady state **ΔI → 0** (measured 0.000000–0.000004), because ΔI is defined as the *transient* reduction in field curvature — the rate of smoothing — which vanishes once coarsening stalls. So `S = ΔC + κΔI` collapses to `S ≈ ΔC` = total wall energy, which **monotonically rewards more sectors**. The whole capacity-weighted integration half of the functional is inert in steady state.
+
+This relocates the open problem. The earlier "scarcity selects 3" result was real but **transient** — it caught the system mid-coarsening, where ΔI is briefly non-zero and contributes; it is also why the scalar phase diagram's margins were razor-thin and timescale-sensitive. The robust steady-state verdict is that S, as currently measured, is just distinction and always prefers fragmentation.
+
+**The missing ingredient looked like a *standing* measure of integration** — coherence shared across domain boundaries that persists at equilibrium, rather than a one-step smoothing rate. So the next experiment (`experiments/standing_integration.py`, `multiphase.coherence_integration`) implemented the nonlocal coherence `I = Σ_a ⟨η_a(x)·η_a(x+δ)⟩ exp(−decay·|δ|)` — the multi-component form of `I[φ] = ∫∫ K(x,x')φ(x)φ(x')`. It half-worked, in an instructive way:
+
+- **The standing measure does survive equilibrium** (verified) — a static coherent field keeps `I > 0` where the transient ΔI read zero. That part of the fix is real.
+- **But `S = ΔC + κ·I` still has no interior optimum** — it flips monotonically from many sectors (w→0) to two (any w>0). The reason, measured directly: **ΔC and coherence are collinear**, `corr(ΔC, −I) = +1.00` at short range and `+0.998` at long range. Both just track wall density, so their weighted sum is monotonic and the optimum sits at a boundary.
+
+This sharpens the frontier one more turn. An interior `N⋆` needs an integration term that is *not* collinear with wall area — and the gauge paper's own §6 says exactly what distinguishes three: **topology**, the 120° Y-junctions that let three (and only three) sectors tile into neutral composites. The integration measure has to be junction-/neutrality-aware, not coherence-magnitude. A second observation blocks the direct route for now: in the κ-pinned scarce regime the frozen domains produce **zero clean triple junctions**, so that topological structure would first have to be coaxed into forming. That — a junction-resolving dynamics plus a topological integration term — is the real next experiment.
 
 ## Setup
 
@@ -339,7 +430,9 @@ The current checks verify:
 - S-compass bridge output consistency,
 - β-sectorisation analysis: gradient magnitude, sector labelling (including periodic merging and size filtering), per-sector distinction/integration statistics, triple-junction detection, and the engine integration hook,
 - three-component (Ψ∈ℂ³) sector model: vector Allen–Cahn evolution, argmax sector labelling, interface detection, triple-junction counting (2-D and 3-D), S₃ permutation invariance, and report serialization,
+- κ-coupled multi-phase model: capacity-gated integration, depletion at walls, scarcity arresting coarsening, periodic domain counting, and the multi-phase S-functional,
 - dynamical κ: depletion under load, recovery with slack, boundedness, determinism, κ-gated integration feedback (starved capacity preserves walls), multi-scale capacity reporting, per-sector κ budgets, and snapshot persistence,
+- κ-as-soil corpus coupling: barren-soil rejection, fertile rooting with capacity consumption, replant gating after depletion, and rooting-statistics reporting,
 - headless save / load round-trip integrity,
 - agent perception data structure and action queue execution.
 
@@ -373,7 +466,9 @@ When the headless server runs with a non-zero port, the following commands are a
 
 The server also pushes `chunk_updated` events to connected clients when voxel data changes.
 
-### Three-Component Sector Field (Ψ∈ℂ³) — genuine SU(3) Y-junctions
+### Three-Component Sector Field — genuine SU(3) Y-junctions
+
+*The Ψ∈ℂ³ sector-membership layer of the gauge derivation.*
 
 The scalar field above has a structural limit: stacked wells give only **layered** domains — a region in well `n` borders wells `n±1`, so three phases never meet and **no 120° Y-junctions can form**. This is an honest property of a single scalar, and it points at the next layer of the gauge derivation (§4.3.3): a **sector-membership field** `Ψ(x) = (R, G, B)` whose three components compete on equal footing.
 
@@ -522,18 +617,15 @@ The `ChunkManager` divides the world into cubic chunks and tracks which contain 
 
 ## What Comes Next
 
-Recommended next steps for expansion:
+The frontier questions, roughly in priority order:
 
-1. ~~Implement a richer coherence potential V(x,t) satisfying ∇²V = ρ, replacing the simple G·φ damping with G·∇V·∇φ from the full URP field equation.~~ ✅ Implemented
-2. ~~Add the nonlocal integration functional I[φ] using correlation kernels K(x,x')φ(x)φ(x').~~ ✅ Implemented
-3. ~~Introduce agent-agent interaction — multiple agents that can sense each other and cooperate.~~ ✅ Implemented
-4. ~~Add agent goal-seeking behavior driven by the S-functional (agents that maximize local S).~~ ✅ Implemented
-5. ~~Richer visualization — matplotlib or VTK-based 3D voxel rendering.~~ ✅ Implemented (matplotlib)
-6. Evaluate whether the simulation loop is compelling enough to justify networking and avatars.
-7. Add higher-order field dynamics — second-order time derivatives (∂²φ/∂t²) for wave-like behavior.
-8. Extend the Poisson solver to support anisotropic or spatially varying ρ (e.g., agent-driven source terms).
-9. Emergent gauge sectorization — the `sectorisation` module *measures* domains/walls/junctions; the `--sector-potential` term gives the scalar field the wall tension to phase-separate; and `multiphase` (Ψ∈ℂ³) now produces genuine three-way domains with 120° Y-junctions (see the two browser toys). Open work: couple a gauge connection `A_μ` to the sector field to recover the Yang–Mills boundary modes (gluons) the derivation describes.
-10. Implement inter-agent communication protocols — agents that negotiate and share structured messages beyond simple signal sharing.
+1. **A topological integration term + junction-resolving dynamics.** The standing-coherence experiment (above) showed that a nonlocal coherence term survives equilibrium but is collinear with ΔC (`corr = +1.00`), so it cannot create an interior `N⋆`. The gauge paper's §6 says what actually distinguishes three: the 120° Y-junctions that let three sectors tile into neutral composites. So the integration term must be **junction-/neutrality-aware** (e.g. triple-junction density, defect-freeness) — and the κ-pinned dynamics must first be coaxed to form clean triple junctions (currently zero in that regime). This pairing is the single change most likely to make a genuine three-sector optimum appear.
+2. **Couple a gauge connection `A_μ` to the Ψ∈ℂ³ sector field** to recover the Yang–Mills boundary modes (gluons) the derivation describes — the next theoretical layer above the three-component domains.
+3. **Promote the F(N) fit to two free coefficients** by measuring an independent information-gain proxy for `b(β, κ)`, rather than inverting stationarity — the missing half of a non-circular free-energy test.
+4. Higher-order field dynamics — second-order time derivatives (∂²φ/∂t²) for the wave-like behavior in the full Lagrangian (the current model is the overdamped limit).
+5. Replace the sine pinning potential with the true `−(β/4)(∇φ)⁴` gradient-quartic via an implicit/stabilized integrator.
+
+Earlier roadmap items now implemented: ~~coherence potential V(x,t)~~, ~~nonlocal integration functional I[φ]~~, ~~agent-agent interaction~~, ~~S-functional-driven agents~~, ~~matplotlib visualization~~, ~~emergent gauge sectorisation (measurement + wall tension + Ψ∈ℂ³ Y-junctions)~~, ~~dynamical capacity field κ~~, ~~κ-as-soil corpus coupling~~, ~~`(c, r, β)` phase diagram~~, ~~κ × Ψ∈ℂ³ coupling~~.
 
 ## Theory Reference
 
@@ -542,3 +634,8 @@ The foundational theory document remains in:
 - `Docs/The Universal Recursion Principle (URP) _260312_170343.txt`
 
 That document describes the broader URP framing this sandbox is intended to explore in executable form.
+
+A working note distilling this repo's own investigation — how the `N⋆=3`
+question narrowed across six experiments into a sharp, buildable next target —
+is in [`Docs/Narrowing_the_N3_Question.md`](Docs/Narrowing_the_N3_Question.md).
+It is the standalone, pick-up-cold version of the *Findings so far* table.
