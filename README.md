@@ -75,6 +75,7 @@ tests/                 145 checks across the engine, instruments, and physics
 experiments/
   beta_sectorisation.py β-sweep measuring emergent sector counts
   n_star_fit.py         Fits the F(N) free-energy coefficients from run data
+  phase_diagram.py      Maps the (consumption, recovery, β) N⋆=3 selection map
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
