@@ -172,6 +172,8 @@ Enabling `--sector-potential` adds the missing wall tension as a periodic multi-
 ∂_t φ = ∇²φ + β|∇φ|² − G·φ − w · sin(2π·k·φ)
 ```
 
+(The sine drift is a *pinning stand-in* for the Lagrangian's true `−(β/4)(∇φ)⁴` wall-tension term, which is numerically stiff under explicit time-stepping; the stand-in supplies the same qualitative ingredient — an energetic preference for discrete field levels separated by walls — in a form the existing integrator handles stably.)
+
 With this term the behavior **flips from N = 1 to genuine multi-domain phase separation** — boundary formation now occurs and is measurable:
 
 | dynamics | β = 0.09 sector count |
@@ -180,6 +182,24 @@ With this term the behavior **flips from N = 1 to genuine multi-domain phase sep
 | `--sector-potential --sector-count 3` | **many** domains, then coarsening |
 
 Two effects visible in the sweep match the theory's distinction/integration tension: sector count **grows with β** (more distinction → more walls → finer fragmentation), and **falls with evolution time** as Allen–Cahn-style coarsening absorbs small domains. Settling reproducibly onto the predicted `N⋆ = 3` attractor is a genuine coarsening/tuning study (sensitive to initialization, well count, and potential strength) — the analyzer and the [browser toy](web_toy/) are the instruments built to explore it, rather than assuming the answer.
+
+#### Fitting F(N) from simulation — the N⋆ experiment
+
+The gauge paper's selection argument rests on `F(N) = a·N^(2/3) − b·N` with `N⋆ = (2a/3b)³ = 3` at β ≈ 0.09. Rather than quoting that formula, `experiments/n_star_fit.py` measures its ingredients from runs across a (β, k) grid, where k is the number of wells made available:
+
+```bash
+python experiments/n_star_fit.py --size 24 --steps 400 --trials 2
+python experiments/n_star_fit.py --betas 0.09 --gravity 0   # degenerate-well control
+```
+
+Per cell it records the realized domain count N, the time-averaged S-functional over a trailing window (the theory's selection criterion), and the total wall energy `E_wall` (β|∇φ|² summed over wall voxels), then fits the boundary coefficient `a(β)` by least squares on `E_wall ≈ a·N^(2/3)` and inverts the stationarity condition for the implied `b` per cell.
+
+**Findings (24³, 400 steps, 2 trials — honest, mixed):**
+
+- **The boundary-cost half of F(N) is supported.** `a(β)` is cleanly measurable and scales linearly: `a ≈ 2.6·β` across β ∈ {0.03, 0.09, 0.2}. Wall cost proportional to β is exactly what the theory's boundary term predicts.
+- **The selection half is not (yet).** Time-averaged S generally *grows* with wall density, picking k = 5–6 rather than an interior optimum at 3; and the implied `b` varies ~45% across k at fixed β, inconsistent with the k-independent `b` the F(N) form requires.
+- **Gravity is a real confound.** The `−G·φ` damping tilts the multi-well potential toward φ = 0, breaking well degeneracy and driving collapse toward one sector. In a gravity-free control at β = 0.09, k = 3 *does* maximize S by a wide margin — suggestive, but reported as anecdote: the domain count degenerates (the wall network percolates at this size), one β, two trials.
+- **The missing ingredient is dynamical κ.** In F(N), `b = b(β, κ)`; in the current engine κ is a recorded diagnostic, not a feedback field. Without κ dynamics there is no mechanism to penalize over-fragmentation and stabilize an interior N⋆. Promoting κ to a dynamical capacity field is therefore the concrete, theory-mandated next step for the N⋆ = 3 question — and the experiment above is the instrument that will judge it.
 
 ## Setup
 
