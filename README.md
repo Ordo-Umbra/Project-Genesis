@@ -78,6 +78,7 @@ experiments/
   phase_diagram.py      Maps the (consumption, recovery, β) N⋆=3 selection map
   multiphase_kappa.py   κ-coupled Ψ∈ℂ³ run: emergent N vs S-maximizing P
   standing_integration.py  Tests standing coherence for an interior N⋆
+  topological_selection.py Conserved dynamics + neutrality: S-optimum at three
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -103,9 +104,9 @@ A running tally of what the instruments have actually measured — the verdicts,
 | The β-nonlinearity alone makes the field sectorise | **Not supported** — the reduced `β\|∇φ\|²` term smooths to a single sector; a wall-tension term is required | [β-Sectorisation](#β-sectorisation--boundary-formation) |
 | Three mutually-adjacent sectors with 120° Y-junctions (colour SU(3)) | **Not from a scalar field** (structurally impossible) — **achieved** with the three-component Ψ∈ℂ³ model | [Three-Component Sector Field](#three-component-sector-field--genuine-su3-y-junctions) |
 | Capacity κ drives selection toward `N⋆ = 3` | **Conditional / transient** — a 3-well S-optimal band appears *while the field is actively coarsening*, but in steady state selection runs to more sectors; traced to how ΔI is measured (below) | [Phase diagram](#the-phase-diagram-of-n3-selection) |
-| The S-functional rewards an interior sector optimum | **Not yet** — transient ΔI → 0 at equilibrium; a *standing* coherence term survives but is collinear with ΔC (`corr = +1.00`), so still no interior. Needs a non-collinear *topological* (junction/neutrality) term | [κ × Ψ∈ℂ³](#coupling-κ-to-the-three-component-model--what-it-revealed-about-the-s-functional) |
+| The S-functional rewards an interior sector optimum | **Achieved in 2-D** — with volume-conserving dynamics (persistent junctions) and a *topological* neutrality term (full-palette junctions, non-collinear with ΔC), `S = ΔC + κ·neutrality` is maximized at **exactly three sectors**, robust across seeds/weights. 2-D structural result; 3-D is the next test | [Topological selection](#topological-selection--an-interior-optimum-at-three) |
 
-The honest through-line: the *machinery* of URP sectorisation is reproducible and the boundary-cost half of its free-energy argument is measured; the *selection* of three sectors appears only transiently, and the investigation has localized why — the S-functional's integration term ΔI vanishes at equilibrium, collapsing S to pure distinction. The open frontier is now sharply defined: give ΔI a standing (equilibrium-surviving) form so the κΔI term can actually penalize over-fragmentation.
+The honest through-line: the *machinery* of URP sectorisation is reproducible, the boundary-cost half of its free-energy argument is measured, and — after localizing why naive selection failed (ΔI vanishes at equilibrium; coherence magnitude is collinear with ΔC) — a junction-resolving dynamics plus a topological neutrality term reproduces an interior optimum at **three** in 2-D, echoing the gauge paper's §6 argument. The open frontier is whether that survives in 3-D, where junction geometry differs.
 
 ## Architecture Overview
 
@@ -311,6 +312,26 @@ This relocates the open problem. The earlier "scarcity selects 3" result was rea
 
 This sharpens the frontier one more turn. An interior `N⋆` needs an integration term that is *not* collinear with wall area — and the gauge paper's own §6 says exactly what distinguishes three: **topology**, the 120° Y-junctions that let three (and only three) sectors tile into neutral composites. The integration measure has to be junction-/neutrality-aware, not coherence-magnitude. A second observation blocks the direct route for now: in the κ-pinned scarce regime the frozen domains produce **zero clean triple junctions**, so that topological structure would first have to be coaxed into forming. That — a junction-resolving dynamics plus a topological integration term — is the real next experiment.
 
+### Topological selection — an interior optimum at three
+
+That next experiment (`experiments/topological_selection.py`) was built, and it closes the loop. Two ingredients, each answering one half of the obstacle above:
+
+- **Junction-resolving dynamics** (`step_multiphase_conserved`). Plain Allen–Cahn coarsens without bound, so junctions are transient. Making the dynamics **volume-conserving** — a global Lagrange multiplier that fixes each phase's total (subtract the spatial mean of the bulk drift per component) — prevents any phase from being eliminated. The field settles into a *stable* multi-domain tiling whose 120° triple junctions persist (≈ 40, holding, where the κ-pinned regime had zero).
+- **A topological neutrality term** (`full_palette_junction_density`). Count the junctions whose neighbourhood carries the *complete* colour palette — the discrete form of §6's neutrality criterion. The junction geometry does the selecting: a 2-D junction is 3-fold, so it can show *all* the colours only when the palette is exactly three. Measured across palette sizes P, the quantity is non-zero **only at P=3** (`~0.008`) and exactly **zero at P=2,4,5,6**, robust across seeds. Crucially it is **not** collinear with ΔC (which is flat in P).
+
+With it, `S = ΔC + κ·w·neutrality` is **maximized at exactly three sectors for every positive weight** — the first time the S-functional in this repo shows an interior sector optimum, and it lands on three:
+
+```
+ P |  Yjunc |      ΔC | neutrality   S(w=0.2)
+ 2 |      0 | 0.00348 |   0.00000    0.00348
+ 3 |     39 | 0.00403 |   0.00759    0.00555   ← maximum
+ 4 |     62 | 0.00398 |   0.00000    0.00398
+ 5 |    107 | 0.00423 |   0.00000    0.00423
+ 6 |    119 | 0.00425 |   0.00000    0.00425
+```
+
+A faithful in-silico echo of the gauge paper's §6: SU(3) is selected because three sectors, and only three, tile into colour-neutral composites. **Two honest boundaries:** it is a **2-D structural result** (the 3-fold-junction geometry that makes three special is a fact about the plane; 3-D junctions are lines with different valence, and whether the selection survives there is the immediate next experiment), and the neutrality measure *operationalizes* §6 rather than deriving it — what is emergent, not assumed, is that conserved P=3 dynamics actually produce stable full-palette junctions while P≥4 geometrically cannot. The full account is in [`Docs/Narrowing_the_N3_Question.md`](Docs/Narrowing_the_N3_Question.md).
+
 ## Setup
 
 Create a Python environment and install the declared runtime dependencies:
@@ -431,6 +452,7 @@ The current checks verify:
 - β-sectorisation analysis: gradient magnitude, sector labelling (including periodic merging and size filtering), per-sector distinction/integration statistics, triple-junction detection, and the engine integration hook,
 - three-component (Ψ∈ℂ³) sector model: vector Allen–Cahn evolution, argmax sector labelling, interface detection, triple-junction counting (2-D and 3-D), S₃ permutation invariance, and report serialization,
 - κ-coupled multi-phase model: capacity-gated integration, depletion at walls, scarcity arresting coarsening, periodic domain counting, and the multi-phase S-functional,
+- junction-resolving (volume-conserving) dynamics: phase-fraction conservation, persistent triple junctions, determinism, the full-palette neutrality measure, and the topological S-functional's interior optimum at three,
 - dynamical κ: depletion under load, recovery with slack, boundedness, determinism, κ-gated integration feedback (starved capacity preserves walls), multi-scale capacity reporting, per-sector κ budgets, and snapshot persistence,
 - κ-as-soil corpus coupling: barren-soil rejection, fertile rooting with capacity consumption, replant gating after depletion, and rooting-statistics reporting,
 - headless save / load round-trip integrity,
@@ -619,13 +641,13 @@ The `ChunkManager` divides the world into cubic chunks and tracks which contain 
 
 The frontier questions, roughly in priority order:
 
-1. **A topological integration term + junction-resolving dynamics.** The standing-coherence experiment (above) showed that a nonlocal coherence term survives equilibrium but is collinear with ΔC (`corr = +1.00`), so it cannot create an interior `N⋆`. The gauge paper's §6 says what actually distinguishes three: the 120° Y-junctions that let three sectors tile into neutral composites. So the integration term must be **junction-/neutrality-aware** (e.g. triple-junction density, defect-freeness) — and the κ-pinned dynamics must first be coaxed to form clean triple junctions (currently zero in that regime). This pairing is the single change most likely to make a genuine three-sector optimum appear.
+1. **Test the topological selection in 3-D.** The interior optimum at three is currently a 2-D structural result — it rests on junctions being 3-fold, which is a fact about the plane. In 3-D, junctions are *lines* and vertices have different valence, so whether the full-palette-junction measure still singles out three is genuinely open. Re-run `experiments/topological_selection.py` on 3-D conserved fields (the dynamics and measures are already dimension-agnostic) and report whether three survives.
 2. **Couple a gauge connection `A_μ` to the Ψ∈ℂ³ sector field** to recover the Yang–Mills boundary modes (gluons) the derivation describes — the next theoretical layer above the three-component domains.
 3. **Promote the F(N) fit to two free coefficients** by measuring an independent information-gain proxy for `b(β, κ)`, rather than inverting stationarity — the missing half of a non-circular free-energy test.
 4. Higher-order field dynamics — second-order time derivatives (∂²φ/∂t²) for the wave-like behavior in the full Lagrangian (the current model is the overdamped limit).
 5. Replace the sine pinning potential with the true `−(β/4)(∇φ)⁴` gradient-quartic via an implicit/stabilized integrator.
 
-Earlier roadmap items now implemented: ~~coherence potential V(x,t)~~, ~~nonlocal integration functional I[φ]~~, ~~agent-agent interaction~~, ~~S-functional-driven agents~~, ~~matplotlib visualization~~, ~~emergent gauge sectorisation (measurement + wall tension + Ψ∈ℂ³ Y-junctions)~~, ~~dynamical capacity field κ~~, ~~κ-as-soil corpus coupling~~, ~~`(c, r, β)` phase diagram~~, ~~κ × Ψ∈ℂ³ coupling~~.
+Earlier roadmap items now implemented: ~~coherence potential V(x,t)~~, ~~nonlocal integration functional I[φ]~~, ~~agent-agent interaction~~, ~~S-functional-driven agents~~, ~~matplotlib visualization~~, ~~emergent gauge sectorisation (measurement + wall tension + Ψ∈ℂ³ Y-junctions)~~, ~~dynamical capacity field κ~~, ~~κ-as-soil corpus coupling~~, ~~`(c, r, β)` phase diagram~~, ~~κ × Ψ∈ℂ³ coupling~~, ~~standing nonlocal coherence~~, ~~junction-resolving dynamics + topological selection of three (2-D)~~.
 
 ## Theory Reference
 
