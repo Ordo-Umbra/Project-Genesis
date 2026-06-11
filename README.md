@@ -104,9 +104,9 @@ A running tally of what the instruments have actually measured — the verdicts,
 | The β-nonlinearity alone makes the field sectorise | **Not supported** — the reduced `β\|∇φ\|²` term smooths to a single sector; a wall-tension term is required | [β-Sectorisation](#β-sectorisation--boundary-formation) |
 | Three mutually-adjacent sectors with 120° Y-junctions (colour SU(3)) | **Not from a scalar field** (structurally impossible) — **achieved** with the three-component Ψ∈ℂ³ model | [Three-Component Sector Field](#three-component-sector-field--genuine-su3-y-junctions) |
 | Capacity κ drives selection toward `N⋆ = 3` | **Conditional / transient** — a 3-well S-optimal band appears *while the field is actively coarsening*, but in steady state selection runs to more sectors; traced to how ΔI is measured (below) | [Phase diagram](#the-phase-diagram-of-n3-selection) |
-| The S-functional rewards an interior sector optimum | **Achieved in 2-D** — with volume-conserving dynamics (persistent junctions) and a *topological* neutrality term (full-palette junctions, non-collinear with ΔC), `S = ΔC + κ·neutrality` is maximized at **exactly three sectors**, robust across seeds/weights. 2-D structural result; 3-D is the next test | [Topological selection](#topological-selection--an-interior-optimum-at-three) |
+| The S-functional rewards an interior sector optimum | **Achieved in 2-D and 3-D** — with volume-conserving dynamics (persistent junctions) and a *topological* neutrality term (full-palette junctions, non-collinear with ΔC), `S = ΔC + κ·neutrality` is maximized at **exactly three sectors**, robust across seeds/weights. In 3-D three wins ~10× over four (triple *lines* vs sparse quadruple *points*) | [Topological selection](#topological-selection--an-interior-optimum-at-three) |
 
-The honest through-line: the *machinery* of URP sectorisation is reproducible, the boundary-cost half of its free-energy argument is measured, and — after localizing why naive selection failed (ΔI vanishes at equilibrium; coherence magnitude is collinear with ΔC) — a junction-resolving dynamics plus a topological neutrality term reproduces an interior optimum at **three** in 2-D, echoing the gauge paper's §6 argument. The open frontier is whether that survives in 3-D, where junction geometry differs.
+The honest through-line: the *machinery* of URP sectorisation is reproducible, the boundary-cost half of its free-energy argument is measured, and — after localizing why naive selection failed (ΔI vanishes at equilibrium; coherence magnitude is collinear with ΔC) — a junction-resolving dynamics plus a topological neutrality term reproduces an interior optimum at **three in both 2-D and 3-D**, echoing the gauge paper's §6. The count is no longer a free parameter; it falls out of the junction geometry.
 
 ## Architecture Overview
 
@@ -330,7 +330,11 @@ With it, `S = ΔC + κ·w·neutrality` is **maximized at exactly three sectors f
  6 |    119 | 0.00425 |   0.00000    0.00425
 ```
 
-A faithful in-silico echo of the gauge paper's §6: SU(3) is selected because three sectors, and only three, tile into colour-neutral composites. **Two honest boundaries:** it is a **2-D structural result** (the 3-fold-junction geometry that makes three special is a fact about the plane; 3-D junctions are lines with different valence, and whether the selection survives there is the immediate next experiment), and the neutrality measure *operationalizes* §6 rather than deriving it — what is emergent, not assumed, is that conserved P=3 dynamics actually produce stable full-palette junctions while P≥4 geometrically cannot. The full account is in [`Docs/Narrowing_the_N3_Question.md`](Docs/Narrowing_the_N3_Question.md).
+A faithful in-silico echo of the gauge paper's §6: SU(3) is selected because three sectors, and only three, tile into colour-neutral composites.
+
+**And it survives in 3-D** (`--dim 3`) — for a sharper reason than the 2-D case. The worry was that three rode on junctions being 3-fold, and that 3-D, where Plateau's laws make generic vertices 4-fold (tetrahedral), would select four. The opposite holds: the full-palette density is still sharply peaked at **P=3** (≈ 0.03) and an order of magnitude smaller at P=4 (≈ 0.003), robust across seeds. The reason is dimensional — the locus where *three* domains meet is a **line** (1-D, abundant), while *four* meet at a **point** (0-D, sparse), so a three-colour palette saturates the triple-line network while four lights up only rare vertices. Three wins by the dimensionality of the neutral locus; P=4 is now faintly non-zero (vs exactly zero in 2-D) precisely because those sparse vertices exist.
+
+**The honest boundary** that remains: the neutrality measure *operationalizes* §6 rather than deriving its full gauge/anomaly content — what is emergent, not assumed, is that conserved P=3 dynamics produce stable full-palette junctions while P≥4 (almost) cannot. But the *count* — three, in both 2-D and 3-D, by a clean geometric mechanism — is no longer a free parameter. The full account is in [`Docs/Narrowing_the_N3_Question.md`](Docs/Narrowing_the_N3_Question.md).
 
 ## Setup
 
@@ -452,7 +456,7 @@ The current checks verify:
 - β-sectorisation analysis: gradient magnitude, sector labelling (including periodic merging and size filtering), per-sector distinction/integration statistics, triple-junction detection, and the engine integration hook,
 - three-component (Ψ∈ℂ³) sector model: vector Allen–Cahn evolution, argmax sector labelling, interface detection, triple-junction counting (2-D and 3-D), S₃ permutation invariance, and report serialization,
 - κ-coupled multi-phase model: capacity-gated integration, depletion at walls, scarcity arresting coarsening, periodic domain counting, and the multi-phase S-functional,
-- junction-resolving (volume-conserving) dynamics: phase-fraction conservation, persistent triple junctions, determinism, the full-palette neutrality measure, and the topological S-functional's interior optimum at three,
+- junction-resolving (volume-conserving) dynamics: phase-fraction conservation, persistent triple junctions, determinism, the full-palette neutrality measure, and the topological S-functional's interior optimum at three in both 2-D and 3-D,
 - dynamical κ: depletion under load, recovery with slack, boundedness, determinism, κ-gated integration feedback (starved capacity preserves walls), multi-scale capacity reporting, per-sector κ budgets, and snapshot persistence,
 - κ-as-soil corpus coupling: barren-soil rejection, fertile rooting with capacity consumption, replant gating after depletion, and rooting-statistics reporting,
 - headless save / load round-trip integrity,
@@ -641,13 +645,12 @@ The `ChunkManager` divides the world into cubic chunks and tracks which contain 
 
 The frontier questions, roughly in priority order:
 
-1. **Test the topological selection in 3-D.** The interior optimum at three is currently a 2-D structural result — it rests on junctions being 3-fold, which is a fact about the plane. In 3-D, junctions are *lines* and vertices have different valence, so whether the full-palette-junction measure still singles out three is genuinely open. Re-run `experiments/topological_selection.py` on 3-D conserved fields (the dynamics and measures are already dimension-agnostic) and report whether three survives.
-2. **Couple a gauge connection `A_μ` to the Ψ∈ℂ³ sector field** to recover the Yang–Mills boundary modes (gluons) the derivation describes — the next theoretical layer above the three-component domains.
+1. **Couple a gauge connection `A_μ` to the Ψ∈ℂ³ sector field** to recover the Yang–Mills boundary modes (gluons) the derivation describes — the next theoretical layer above the three-component domains, and the part of §6 the current neutrality measure does *not* yet capture (it operationalizes neutrality rather than deriving the gauge/anomaly content).
 3. **Promote the F(N) fit to two free coefficients** by measuring an independent information-gain proxy for `b(β, κ)`, rather than inverting stationarity — the missing half of a non-circular free-energy test.
 4. Higher-order field dynamics — second-order time derivatives (∂²φ/∂t²) for the wave-like behavior in the full Lagrangian (the current model is the overdamped limit).
 5. Replace the sine pinning potential with the true `−(β/4)(∇φ)⁴` gradient-quartic via an implicit/stabilized integrator.
 
-Earlier roadmap items now implemented: ~~coherence potential V(x,t)~~, ~~nonlocal integration functional I[φ]~~, ~~agent-agent interaction~~, ~~S-functional-driven agents~~, ~~matplotlib visualization~~, ~~emergent gauge sectorisation (measurement + wall tension + Ψ∈ℂ³ Y-junctions)~~, ~~dynamical capacity field κ~~, ~~κ-as-soil corpus coupling~~, ~~`(c, r, β)` phase diagram~~, ~~κ × Ψ∈ℂ³ coupling~~, ~~standing nonlocal coherence~~, ~~junction-resolving dynamics + topological selection of three (2-D)~~.
+Earlier roadmap items now implemented: ~~coherence potential V(x,t)~~, ~~nonlocal integration functional I[φ]~~, ~~agent-agent interaction~~, ~~S-functional-driven agents~~, ~~matplotlib visualization~~, ~~emergent gauge sectorisation (measurement + wall tension + Ψ∈ℂ³ Y-junctions)~~, ~~dynamical capacity field κ~~, ~~κ-as-soil corpus coupling~~, ~~`(c, r, β)` phase diagram~~, ~~κ × Ψ∈ℂ³ coupling~~, ~~standing nonlocal coherence~~, ~~junction-resolving dynamics + topological selection of three (2-D and 3-D)~~.
 
 ## Theory Reference
 

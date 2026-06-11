@@ -52,9 +52,9 @@ from project_genesis.multiphase import (  # noqa: E402
 )
 
 
-def evolve_conserved(P, *, size, steps, gamma, diffusion, dt, seed):
+def evolve_conserved(P, *, dim, size, steps, gamma, diffusion, dt, seed):
     rng = np.random.default_rng(seed)
-    f = rng.random((P, size, size)) * 0.1
+    f = rng.random((P, *([size] * dim))) * 0.1
     for _ in range(steps):
         f, _ = step_multiphase_conserved(f, diffusion=diffusion, gamma=gamma, dt=dt)
     return f
@@ -63,7 +63,9 @@ def evolve_conserved(P, *, size, steps, gamma, diffusion, dt, seed):
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--phases", type=str, default="2,3,4,5,6")
-    p.add_argument("--size", type=int, default=72)
+    p.add_argument("--dim", type=int, default=2, choices=(2, 3),
+                   help="Spatial dimensionality. 2-D junctions are 3-fold; 3-D vertices are 4-fold.")
+    p.add_argument("--size", type=int, default=0, help="Edge length (0 = 72 for 2-D, 36 for 3-D).")
     p.add_argument("--steps", type=int, default=600)
     p.add_argument("--gamma", type=float, default=1.5)
     p.add_argument("--diffusion", type=float, default=1.0)
@@ -75,12 +77,13 @@ def main() -> None:
     p.add_argument("--output", default="artifacts/topological_selection.json")
     args = p.parse_args()
 
+    size = args.size or (72 if args.dim == 2 else 36)
     phases = [int(x) for x in args.phases.split(",") if x.strip()]
     weights = [float(w) for w in args.weights.split(",") if w.strip()]
 
     print(
-        f"Topological selection | conserved dynamics | P ∈ {phases} | {args.size}² × "
-        f"{args.steps} steps × {args.trials} trials\n"
+        f"Topological selection | conserved dynamics | {args.dim}-D | P ∈ {phases} | "
+        f"{size}^{args.dim} × {args.steps} steps × {args.trials} trials\n"
     )
     print(f"{'P':>2} | {'Yjunc':>6} | {'ΔC':>8} | {'neutrality (full-palette Jdensity)':>34}")
     print("-" * 60)
@@ -89,7 +92,7 @@ def main() -> None:
     for P in phases:
         dcs, neuts, juncs = [], [], []
         for t in range(args.trials):
-            f = evolve_conserved(P, size=args.size, steps=args.steps, gamma=args.gamma,
+            f = evolve_conserved(P, dim=args.dim, size=size, steps=args.steps, gamma=args.gamma,
                                  diffusion=args.diffusion, dt=args.dt, seed=args.seed + t)
             lab = sector_labels(f)
             dcs.append(args.beta * float(_total_gradient_energy(f).mean()))
