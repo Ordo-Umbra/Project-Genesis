@@ -2,6 +2,15 @@ from .agent import Agent
 from .chunk_manager import ChunkManager
 from .config import EngineConfig
 from .engine import GenesisEngine
+from .gauge import (
+    apply_gauge_transform,
+    covariant_coherence,
+    naive_coherence,
+    pure_gauge_links,
+    random_unitary,
+    sector_field_to_psi,
+    wilson_action,
+)
 from .memory_corpus import MemoryCorpus, StableObject
 from .metrics import compute_local_s, compute_s_functional, kappa_by_scale
 from .multiphase import (
@@ -41,6 +50,13 @@ __all__ = [
     "StableObject",
     "analyze_multiphase",
     "analyze_sectorisation",
+    "apply_gauge_transform",
+    "covariant_coherence",
+    "naive_coherence",
+    "pure_gauge_links",
+    "random_unitary",
+    "sector_field_to_psi",
+    "wilson_action",
     "compute_local_s",
     "compute_s_functional",
     "coherence_integration",

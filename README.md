@@ -51,6 +51,7 @@ project_genesis/
   chunk_manager.py     Chunk-based world partitioning for active-region tracking
   config.py            Engine configuration and defaults
   engine.py            Field evolution, voxel quantization, agent orchestration, save/load
+  gauge.py             Lattice gauge connection on the Ψ∈ℂ³ sectors (U(1)/SU(2)/SU(3))
   io.py                Snapshot serialization helpers
   metrics.py           URP terrain summary metrics and S-functional computation
   memory_corpus.py     Stable-object corpus, composition, serialization, lineage
@@ -79,6 +80,7 @@ experiments/
   multiphase_kappa.py   κ-coupled Ψ∈ℂ³ run: emergent N vs S-maximizing P
   standing_integration.py  Tests standing coherence for an interior N⋆
   topological_selection.py Conserved dynamics + neutrality: S-optimum at three
+  gauge_coherence.py    Gauge connection as coherence restoration (U(1)/SU(2)/SU(3))
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -104,6 +106,7 @@ A running tally of what the instruments have actually measured — the verdicts,
 | The β-nonlinearity alone makes the field sectorise | **Not supported** — the reduced `β\|∇φ\|²` term smooths to a single sector; a wall-tension term is required | [β-Sectorisation](#β-sectorisation--boundary-formation) |
 | Three mutually-adjacent sectors with 120° Y-junctions (colour SU(3)) | **Not from a scalar field** (structurally impossible) — **achieved** with the three-component Ψ∈ℂ³ model | [Three-Component Sector Field](#three-component-sector-field--genuine-su3-y-junctions) |
 | Capacity κ drives selection toward `N⋆ = 3` | **Conditional / transient** — a 3-well S-optimal band appears *while the field is actively coarsening*, but in steady state selection runs to more sectors; traced to how ΔI is measured (below) | [Phase diagram](#the-phase-diagram-of-n3-selection) |
+| A gauge connection is the minimal structure restoring coherence under local rotations (§2–3) | **Demonstrated** (U(1)/SU(2)/SU(3)) — covariant coherence is gauge-invariant to machine precision while naive coherence is scrambled; a pure-gauge connection has zero curvature; runs on the real Ψ∈ℂ³ sectors. (Yang–Mills *dynamics*/confinement not yet) | [Gauge connection](#gauge-connection--coherence-under-local-rotations) |
 | The S-functional rewards an interior sector optimum | **Achieved in 2-D and 3-D** — with volume-conserving dynamics (persistent junctions) and a *topological* neutrality term (full-palette junctions, non-collinear with ΔC), `S = ΔC + κ·neutrality` is maximized at **exactly three sectors**, robust across seeds/weights. In 3-D three wins ~10× over four (triple *lines* vs sparse quadruple *points*) | [Topological selection](#topological-selection--an-interior-optimum-at-three) |
 
 The honest through-line: the *machinery* of URP sectorisation is reproducible, the boundary-cost half of its free-energy argument is measured, and — after localizing why naive selection failed (ΔI vanishes at equilibrium; coherence magnitude is collinear with ΔC) — a junction-resolving dynamics plus a topological neutrality term reproduces an interior optimum at **three in both 2-D and 3-D**, echoing the gauge paper's §6. The count is no longer a free parameter; it falls out of the junction geometry.
@@ -336,6 +339,26 @@ A faithful in-silico echo of the gauge paper's §6: SU(3) is selected because th
 
 **The honest boundary** that remains: the neutrality measure *operationalizes* §6 rather than deriving its full gauge/anomaly content — what is emergent, not assumed, is that conserved P=3 dynamics produce stable full-palette junctions while P≥4 (almost) cannot. But the *count* — three, in both 2-D and 3-D, by a clean geometric mechanism — is no longer a free parameter. The full account is in [`Docs/Narrowing_the_N3_Question.md`](Docs/Narrowing_the_N3_Question.md).
 
+### Gauge connection — coherence under local rotations
+
+With genuine three-sector structure in hand, the next layer of the derivation
+(§2–3) is the **gauge connection**: when the sector-membership field `ψ(x) ∈ ℂ³`
+(its components are exactly the R/G/B sectors) is rotated *locally*, `ψ(x) → g(x)ψ(x)`,
+the naive inter-site coherence is scrambled — path-dependent transport, the drop
+in integration the theory describes. A connection `U_μ(x) ∈ U(N)` on the lattice
+links is the minimal structure that repairs this. `project_genesis.gauge` +
+`experiments/gauge_coherence.py` demonstrate it for U(1), SU(2), SU(3) and on the
+real coarsened sector field:
+
+- **Covariant coherence is gauge-invariant** — `Σ Re[ψ†(x) U_μ(x) ψ(x+μ̂)]` is unchanged (to ~10⁻¹⁴) under the joint transform `ψ→gψ, U_μ→g(x)U_μ g(x+μ̂)†`, while the naive `Σ Re[ψ†(x) ψ(x+μ̂)]` shifts by O(field size). The connection carries `ψ(x+μ̂)` back into `ψ(x)`'s colour frame before comparing.
+- **It restores destroyed coherence** — a uniform field (coherence 392) scrambled by a local rotation (→ ~0) is brought back to 392 exactly by the pure-gauge connection built from the same `g`. That is the §2.2 claim made literal: the connection is the minimal structure preserving ΔI under local ΔC.
+- **Curvature is coherence stress** — a flat (pure-gauge) connection has zero Wilson action `Σ Re Tr(1 − P_{μν})`; a connection whose parallel transport is path-dependent has positive action. This is the lattice `Tr(F_{μν}F^{μν})` the derivation reads as the cost of residual coherence stress.
+
+**Honest scope:** this demonstrates the *gauge principle* — connection as
+coherence-restoration, curvature as stress — not the Yang–Mills *dynamics*.
+Evolving `U_μ` to extremise S (and looking for confinement / asymptotic freedom)
+is a full lattice-gauge simulation, and the stated next step.
+
 ## Setup
 
 Create a Python environment and install the declared runtime dependencies:
@@ -457,6 +480,7 @@ The current checks verify:
 - three-component (Ψ∈ℂ³) sector model: vector Allen–Cahn evolution, argmax sector labelling, interface detection, triple-junction counting (2-D and 3-D), S₃ permutation invariance, and report serialization,
 - κ-coupled multi-phase model: capacity-gated integration, depletion at walls, scarcity arresting coarsening, periodic domain counting, and the multi-phase S-functional,
 - junction-resolving (volume-conserving) dynamics: phase-fraction conservation, persistent triple junctions, determinism, the full-palette neutrality measure, and the topological S-functional's interior optimum at three in both 2-D and 3-D,
+- lattice gauge connection: U(N)/SU(N) group elements (unitary, unit determinant), gauge-invariance of covariant coherence, non-invariance of the naive coherence, coherence restoration by the pure-gauge connection, and zero curvature of flat connections,
 - dynamical κ: depletion under load, recovery with slack, boundedness, determinism, κ-gated integration feedback (starved capacity preserves walls), multi-scale capacity reporting, per-sector κ budgets, and snapshot persistence,
 - κ-as-soil corpus coupling: barren-soil rejection, fertile rooting with capacity consumption, replant gating after depletion, and rooting-statistics reporting,
 - headless save / load round-trip integrity,
@@ -645,7 +669,7 @@ The `ChunkManager` divides the world into cubic chunks and tracks which contain 
 
 The frontier questions, roughly in priority order:
 
-1. **Couple a gauge connection `A_μ` to the Ψ∈ℂ³ sector field** to recover the Yang–Mills boundary modes (gluons) the derivation describes — the next theoretical layer above the three-component domains, and the part of §6 the current neutrality measure does *not* yet capture (it operationalizes neutrality rather than deriving the gauge/anomaly content).
+1. **Evolve the gauge connection (Yang–Mills dynamics).** The gauge *principle* is now in (`gauge.py`: covariant coherence, curvature as Wilson action, on the Ψ∈ℂ³ sectors). The open step is *dynamics* — evolve `U_μ` to extremise `S` (covariant coherence − curvature stress) and look for the lattice signatures the derivation predicts: gluon-like boundary modes, confinement, asymptotic freedom. That is a full lattice-gauge simulation.
 3. **Promote the F(N) fit to two free coefficients** by measuring an independent information-gain proxy for `b(β, κ)`, rather than inverting stationarity — the missing half of a non-circular free-energy test.
 4. Higher-order field dynamics — second-order time derivatives (∂²φ/∂t²) for the wave-like behavior in the full Lagrangian (the current model is the overdamped limit).
 5. Replace the sine pinning potential with the true `−(β/4)(∇φ)⁴` gradient-quartic via an implicit/stabilized integrator.
