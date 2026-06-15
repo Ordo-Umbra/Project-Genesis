@@ -111,7 +111,7 @@ A running tally of what the instruments have actually measured — the verdicts,
 | Capacity κ drives selection toward `N⋆ = 3` | **Conditional / transient** — a 3-well S-optimal band appears *while the field is actively coarsening*, but in steady state selection runs to more sectors; traced to how ΔI is measured (below) | [Phase diagram](#the-phase-diagram-of-n3-selection) |
 | A gauge connection is the minimal structure restoring coherence under local rotations (§2–3) | **Demonstrated** (U(1)/SU(2)/SU(3)) — covariant coherence is gauge-invariant to machine precision while naive coherence is scrambled; a pure-gauge connection has zero curvature; runs on the real Ψ∈ℂ³ sectors | [Gauge connection](#gauge-connection--coherence-under-local-rotations) |
 | The Yang–Mills equations are the S-stationarity conditions (§3.2) | **Demonstrated** — gradient ascent on `S = coupling·coherence − stress` monotonically raises S and drives the lattice YM residual → 0 (SU(2)/SU(3)); curvature is enriched ~2.6× on the sector walls ("gluons as boundary modes") | [Yang–Mills dynamics](#yangmills-dynamics--gradient-ascent-on-s) |
-| Confinement — Wilson-loop area law / string tension | **Demonstrated** (strong/intermediate coupling) — a checkerboard Metropolis sampler validated against the *exact* 2-D SU(2) plaquette `I₂(β)/I₁(β)` (to ~1%); positive string tension (Creutz ratio = exact `σ = −log⟨P⟩` to ~1-2%) that weakens with coupling, in 2-D and 3-D. Continuum scaling / `T_c` need bigger lattices | [Confinement](#confinement--the-wilson-loop-area-law) |
+| Confinement — Wilson-loop area law / string tension | **Demonstrated** (strong/intermediate coupling) — a checkerboard Metropolis sampler validated against the *exact* 2-D SU(2) plaquette `I₂(β)/I₁(β)` (to ~1%); positive string tension (Creutz ratio tracks exact `σ = −log⟨P⟩` to a few %) that weakens with coupling, in 2-D and 3-D. Continuum scaling / `T_c` need bigger lattices | [Confinement](#confinement--the-wilson-loop-area-law) |
 | The S-functional rewards an interior sector optimum | **Achieved in 2-D and 3-D** — with volume-conserving dynamics (persistent junctions) and a *topological* neutrality term (full-palette junctions, non-collinear with ΔC), `S = ΔC + κ·neutrality` is maximized at **exactly three sectors**, robust across seeds/weights. In 3-D three wins ~10× over four (triple *lines* vs sparse quadruple *points*) | [Topological selection](#topological-selection--an-interior-optimum-at-three) |
 
 The honest through-line: the *machinery* of URP sectorisation is reproducible, the boundary-cost half of its free-energy argument is measured, and — after localizing why naive selection failed (ΔI vanishes at equilibrium; coherence magnitude is collinear with ΔC) — a junction-resolving dynamics plus a topological neutrality term reproduces an interior optimum at **three in both 2-D and 3-D**, echoing the gauge paper's §6. The count is no longer a free parameter; it falls out of the junction geometry.
@@ -388,11 +388,13 @@ checkerboard parities — is exactly what that gate is for.)
 With the sampler trusted:
 
 - **Positive string tension = confinement.** In 2-D the Creutz ratio `χ(2,2)`
-  agrees with the exact `σ = −log⟨P⟩` to ~1-2% (e.g. β=2: 0.81 vs 0.83; β=3:
-  0.54 vs 0.56), and `σ` **decreases as the coupling β increases**, the expected
+  tracks the exact `σ = −log⟨P⟩` to within a few percent (e.g. β=2: χ=0.88 vs
+  σ=0.84; β=3: 0.60 vs 0.57 — small-loop Creutz ratios carry finite-size
+  corrections), and `σ` **decreases as the coupling β increases**, the expected
   march toward the weak-coupling continuum.
 - **Not a 2-D artifact.** In 3-D SU(2) the Creutz ratio is positive (area law /
-  confinement) and likewise weakens with β (e.g. β=1.5: ~1.1 → β=2.5: ~0.55).
+  confinement) and weakens monotonically with β (β=1.5: 1.03 → β=2.5: 0.56 →
+  β=4.0: 0.24).
 
 **Honest scope:** this is the strong/intermediate-coupling confining regime on
 small lattices, with the string tension as the signature. Continuum scaling, the
