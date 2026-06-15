@@ -86,6 +86,65 @@ def _total_gradient_energy(fields: np.ndarray) -> np.ndarray:
     return load
 
 
+def step_multiphase_conserved(
+    fields: np.ndarray,
+    kappa: np.ndarray | None = None,
+    *,
+    diffusion: float = 1.0,
+    gamma: float = 1.5,
+    dt: float = 0.1,
+    kappa_baseline: float = 1.0,
+    kappa_recovery: float = 0.1,
+    kappa_consumption: float = 5.0,
+    kappa_diffusion: float = 0.5,
+) -> tuple[np.ndarray, np.ndarray | None]:
+    """Advance a multi-phase field with **volume-conserving** (junction-resolving)
+    dynamics.
+
+    Plain Allen–Cahn coarsens without bound — every junction is transient and
+    the field collapses to a single domain. Conserving each component's total
+    (a global Lagrange multiplier: subtract the spatial mean of the bulk drift
+    per component) fixes the phase fractions, so the system cannot eliminate a
+    phase. It settles into a *stable* multi-domain tiling whose 120° triple
+    junctions persist — the structure the topological integration measure needs.
+
+    If ``kappa`` is supplied it co-evolves and gates the diffusion exactly as in
+    :func:`step_multiphase_kappa`. Returns ``(fields, kappa)`` (``kappa`` is
+    ``None`` when not used).
+    """
+    if fields.ndim < 2:
+        raise ValueError("fields must have shape (P, *spatial) with P >= 1 component axis")
+    if kappa is not None and kappa.shape != fields.shape[1:]:
+        raise ValueError("kappa must have the spatial shape of the field")
+    sum_sq = np.sum(fields * fields, axis=0)
+    new = np.empty_like(fields)
+    load = np.zeros(fields.shape[1:], dtype=np.float64)
+    # Spatial diffusion coefficient: κ-gated where κ is active, else uniform.
+    diff_coeff = diffusion if kappa is None else kappa * diffusion
+
+    for a in range(fields.shape[0]):
+        fa = fields[a]
+        lap = periodic_laplacian(fa)
+        df = fa**3 - fa + 2.0 * gamma * fa * (sum_sq - fa * fa)
+        df_conserved = df - df.mean()  # subtract mean => ∫η_a conserved
+        new[a] = fa + dt * (diff_coeff * lap - df_conserved)
+        for ax in range(fa.ndim):
+            g = 0.5 * (np.roll(fa, -1, ax) - np.roll(fa, 1, ax))
+            load += g * g
+
+    if kappa is None:
+        return new, None
+
+    lap_k = periodic_laplacian(kappa)
+    new_kappa = kappa + dt * (
+        kappa_diffusion * lap_k
+        + kappa_recovery * (kappa_baseline - kappa)
+        - kappa_consumption * load * kappa
+    )
+    np.clip(new_kappa, 0.0, kappa_baseline, out=new_kappa)
+    return new, new_kappa
+
+
 def step_multiphase_kappa(
     fields: np.ndarray,
     kappa: np.ndarray,
@@ -290,6 +349,18 @@ def interface_mask(fields: np.ndarray, *, margin: float = 0.15) -> np.ndarray:
     return gap < margin
 
 
+def _neighbourhood_label_bits(labels: np.ndarray) -> np.ndarray:
+    """Per-cell bit-set of the sector labels present in its 3^d neighbourhood."""
+    bits = 1 << labels  # include the cell's own label
+    for off in _neighbour_offsets(labels.ndim):
+        shifted = labels
+        for axis, delta in enumerate(off):
+            if delta:
+                shifted = np.roll(shifted, -delta, axis=axis)
+        bits = bits | (1 << shifted)
+    return bits
+
+
 def count_triple_junctions(labels: np.ndarray) -> int:
     """Count cells whose local neighbourhood contains three or more sectors.
 
@@ -297,19 +368,59 @@ def count_triple_junctions(labels: np.ndarray) -> int:
     analogue of the 120° Y-junctions where three colour domains meet. Works in
     2-D and 3-D via periodic neighbour shifts.
     """
-    # Bit-set of labels seen in the (3^d − 1) neighbourhood, via periodic rolls.
-    seen_bits = np.zeros(labels.shape, dtype=np.int64)
-    offsets = _neighbour_offsets(labels.ndim)
-    own = 1 << labels
-    for off in offsets:
-        shifted = labels
-        for axis, delta in enumerate(off):
-            if delta:
-                shifted = np.roll(shifted, -delta, axis=axis)
-        seen_bits = seen_bits | (1 << shifted)
-    seen_bits = seen_bits | own
-    distinct = _popcount(seen_bits)
-    return int(np.sum(distinct >= 3))
+    return int(np.sum(_popcount(_neighbourhood_label_bits(labels)) >= 3))
+
+
+def full_palette_junction_density(labels: np.ndarray, n_palette: int) -> float:
+    """Density of junctions that represent the *complete* colour palette.
+
+    A cell qualifies when its neighbourhood contains a genuine junction
+    (≥ 3 distinct sectors) *and* all ``n_palette`` colours at once. This is the
+    discrete form of the gauge paper's §6 neutrality criterion: a junction is
+    colour-neutral only when it carries the whole palette.
+
+    The geometry does the selecting. In 2-D, junctions are generically 3-fold
+    (three domains meet at a point), so a junction can show *all* the colours
+    only when the palette is exactly three: a 2-colour system forms no triple
+    junctions, and a ≥ 4-colour system cannot fit its whole palette onto a
+    3-fold vertex. The measure is therefore non-zero essentially only at
+    ``n_palette = 3`` — the non-collinear, topological selector the coherence
+    magnitude lacked. (This is a 2-D structural argument; 3-D junction lines
+    have different valence and the clean selection need not transfer.)
+    """
+    bits = _neighbourhood_label_bits(labels)
+    full = (1 << n_palette) - 1
+    distinct = _popcount(bits)
+    return float(np.mean((bits == full) & (distinct >= 3)))
+
+
+def topological_s_functional(
+    fields: np.ndarray,
+    *,
+    n_palette: int | None = None,
+    beta: float = 0.09,
+    kappa_field: np.ndarray | None = None,
+    weight: float = 1.0,
+) -> dict[str, float]:
+    """S = ΔC + κ·w·(full-palette junction density).
+
+    Unlike the coherence-magnitude integration (which is collinear with ΔC),
+    the neutrality term is non-zero essentially only for a three-colour palette,
+    so this S has an interior optimum at three sectors. ``n_palette`` defaults
+    to the number of components.
+    """
+    n = fields.shape[0] if n_palette is None else n_palette
+    load = _total_gradient_energy(fields)
+    mean_load = float(load.mean())
+    delta_c = float(beta * mean_load)
+    kappa = float(kappa_field.mean()) if kappa_field is not None else 1.0 / (1.0 + mean_load)
+    neutrality = full_palette_junction_density(sector_labels(fields), n)
+    return {
+        "delta_c": delta_c,
+        "kappa": kappa,
+        "neutrality": neutrality,
+        "s_increment": delta_c + kappa * weight * neutrality,
+    }
 
 
 def _neighbour_offsets(ndim: int) -> list[tuple[int, ...]]:

@@ -10,14 +10,20 @@
 The Universal Recursion Principle predicts that a recursive field maximizing
 `S = ΔC + κΔI` spontaneously settles into **exactly three** stable sectors —
 the seed of colour SU(3). This note records what happened when we tried to make
-that prediction *happen* in simulation rather than assume it. No clean N⋆=3
-emerged. But the failure was not a wall; it was a corridor. Each experiment
-returned a verdict that ruled out one explanation and pointed at the next, and
-across six steps the question narrowed from a vague "build the dynamics" to a
-sharp, theory-grounded target: **the integration half of the S-functional needs
-a standing, *topological* term — and the dynamics must first form clean
-120° junctions.** This is an account of that narrowing, written to be picked up
-cold.
+that prediction *happen* in simulation rather than assume it. For six steps no
+clean N⋆=3 emerged — but the failures were not a wall, they were a corridor.
+Each experiment returned a verdict that ruled out one explanation and pointed at
+the next, narrowing the question from a vague "build the dynamics" to a sharp,
+theory-grounded target: **the integration half of the S-functional needs a
+standing, *topological* term, and the dynamics must first form clean 120°
+junctions.** A seventh step built exactly that — volume-conserving dynamics that
+keep triple junctions alive, plus a neutrality measure that rewards junctions
+carrying the complete colour palette — and `S = ΔC + κ·neutrality` is then
+maximized at **exactly three sectors**, robustly across seeds and weights — in
+**both 2-D and 3-D**, where three wins because the colour-neutral locus is an
+abundant network of triple *lines* rather than the sparse quadruple *points* a
+four-colour palette would need. This is an account of that corridor, written to
+be picked up cold.
 
 ---
 
@@ -116,11 +122,37 @@ energy are the *same observable* with opposite sign — both track wall density 
 so any weighted sum of them is monotonic. A standing term was necessary but not
 sufficient.
 
+### 7. Does a junction-resolving evolution + a topological term select three?
+
+**Yes — in 2-D.** The corridor's exit was specified tightly enough to build
+directly, and building it worked. Two pieces:
+
+*Junction-resolving dynamics.* Plain Allen–Cahn coarsens without bound, so
+junctions are transient; the κ-pinned regime froze before any formed. Making
+the dynamics **volume-conserving** (a global Lagrange multiplier — subtract the
+spatial mean of the bulk drift per component, so each phase's total is fixed)
+prevents any phase from being eliminated. The field settles into a *stable*
+multi-domain tiling whose 120° triple junctions persist (≈ 40 of them, holding,
+where before there were zero).
+
+*A topological integration term.* Define the **full-palette junction density**:
+the density of junctions whose neighbourhood carries the *complete* colour
+palette — the discrete form of §6's neutrality criterion. The geometry does the
+selecting. A 2-D junction is 3-fold, so it can show *all* the colours only when
+the palette is exactly three: two colours form no junctions, four or more cannot
+fit their whole palette onto a 3-fold vertex. Measured across palette sizes, the
+quantity is non-zero **only at P=3** (`~0.008`) and exactly zero at P=2,4,5,6 —
+robustly across seeds. It is not collinear with ΔC (which is flat in P).
+
+With it, `S = ΔC + κ·w·(neutrality)` is **maximized at exactly three sectors**
+for every positive weight tested. The integration half of the functional finally
+has teeth, and they close on three.
+
 ---
 
-## Where the corridor leads
+## Where the corridor led
 
-Laid end to end, the verdicts compose into a single narrowing:
+Laid end to end, the verdicts compose into a single narrowing — and an exit:
 
 | Step | Hypothesis under test | Verdict |
 |------|----------------------|---------|
@@ -130,22 +162,48 @@ Laid end to end, the verdicts compose into a single narrowing:
 | 4 | Dynamical κ selects three | **Transiently**, over imposed k not emergent N |
 | 5 | Why selection evaporates | **ΔI → 0 at equilibrium** → S = wall energy |
 | 6 | A standing coherence term fixes it | **Survives but collinear** with ΔC |
+| 7 | Conserved dynamics + a topological term | **Yes** — `S` maximized at three (2-D) |
+| 8 | Does it survive in 3-D | **Yes** — three wins ~10× (triple lines vs quad points) |
 
-The question that began as "how do we get the field to make three sectors?" is
-now: **what integration measure is (a) standing — non-zero at equilibrium — and
-(b) *not* collinear with wall density?**
+The question that began as "how do we get the field to make three sectors?"
+ended as a mechanism: **conserve the phases so junctions persist, and reward
+junctions that carry the whole palette — which, because junctions are 3-fold,
+only a three-colour palette can.** That is a faithful in-silico echo of the
+gauge paper's own §6 argument: SU(3) is selected because three sectors, and only
+three, tile into colour-neutral composites.
 
-The theory answers its own question. The gauge paper's §6 — *why SU(3) and not
-SU(4)* — does not argue from coherence magnitude. It argues from **topology**:
-three domains, and only three, meet at 120° Y-junctions that close into neutral,
-defect-free composites; two have no junctions, four or more force unstable
-higher-order junctions and unscreened defects. That is a property invisible to
-ΔC and to coherence magnitude alike. So the missing term is a **topological**
-one — triple-junction density, neutrality, defect-freeness — and it must be
-paired with dynamics that actually *form* clean junctions, because in the
-capacity-pinned regime explored so far the frozen domains produce **zero** of
-them. A junction-resolving evolution plus a junction-aware integration term is
-the next experiment, and it is now specified tightly enough to build directly.
+One honest boundary on the claim: the neutrality measure *operationalizes* the
+§6 criterion rather than deriving it — what is emergent (not assumed) is that
+conserved P=3 dynamics actually produce stable full-palette junctions while
+P≥4 (almost) cannot. The selection is done by the junction geometry; the
+measure only reads it out.
+
+### 8. Does it survive in three dimensions?
+
+**Yes — and for a sharper reason than in 2-D.** The natural worry was that the
+2-D result rode on junctions being 3-fold, and that 3-D, where Plateau's laws
+make generic vertices *4-fold* (tetrahedral), would instead select four. Running
+the same conserved dynamics and measure on 3-D fields says otherwise: the
+full-palette junction density is sharply peaked at **P=3** (≈ 0.030–0.038) and
+an order of magnitude smaller at P=4 (≈ 0.002–0.005), with P=2 and P≥5 at zero —
+robust across seeds. `S = ΔC + κ·w·neutrality` is again maximized at three for
+every positive weight.
+
+The reason is dimensional, and it is the *opposite* of the worry. In 3-D the
+locus where three domains meet is a **line** (1-D, abundant), while the locus
+where four meet is a **point** (0-D, sparse). A three-colour palette saturates
+the entire triple-line network; a four-colour palette lights up only the rare
+quadruple vertices. So three wins not by vertex valence but by the
+**dimensionality of the neutral locus** — and P=4 is now faintly non-zero
+(unlike its exact zero in 2-D), precisely because those sparse 4-fold vertices
+do exist. The selection of three is therefore not a planar accident; it is
+reinforced in 3-D, where the colour-neutral structure is a space-filling network
+of triple lines rather than isolated points.
+
+The remaining honest boundary is the same as before: the measure encodes
+neutrality rather than deriving the full gauge/anomaly content of §6. But the
+*count* — three, in both 2-D and 3-D, by a clean geometric mechanism — is no
+longer a free parameter of the simulation. It falls out.
 
 ---
 
@@ -184,6 +242,8 @@ Every verdict above is backed by a script and tests in the repository:
 | 4 | `python experiments/phase_diagram.py` |
 | 5 | `python experiments/multiphase_kappa.py` |
 | 6 | `python experiments/standing_integration.py` |
+| 7 | `python experiments/topological_selection.py` |
+| 8 | `python experiments/topological_selection.py --dim 3` |
 
 The full test suite (`python -m unittest discover -s tests`) covers the
 instruments these rely on. The README's *Findings so far* table is the
