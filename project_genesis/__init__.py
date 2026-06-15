@@ -15,6 +15,12 @@ from .gauge import (
     wilson_action,
     yang_mills_residual,
 )
+from .gauge_mc import (
+    creutz_ratio,
+    mean_plaquette,
+    metropolis_sweep,
+    wilson_loop,
+)
 from .memory_corpus import MemoryCorpus, StableObject
 from .metrics import compute_local_s, compute_s_functional, kappa_by_scale
 from .multiphase import (
@@ -56,8 +62,12 @@ __all__ = [
     "analyze_sectorisation",
     "apply_gauge_transform",
     "covariant_coherence",
+    "creutz_ratio",
     "curvature_density",
     "flow_step",
+    "mean_plaquette",
+    "metropolis_sweep",
+    "wilson_loop",
     "naive_coherence",
     "pure_gauge_links",
     "random_unitary",

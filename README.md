@@ -52,6 +52,7 @@ project_genesis/
   config.py            Engine configuration and defaults
   engine.py            Field evolution, voxel quantization, agent orchestration, save/load
   gauge.py             Lattice gauge connection on the Ψ∈ℂ³ sectors (U(1)/SU(2)/SU(3))
+  gauge_mc.py          Monte-Carlo lattice gauge theory: confinement / string tension
   io.py                Snapshot serialization helpers
   metrics.py           URP terrain summary metrics and S-functional computation
   memory_corpus.py     Stable-object corpus, composition, serialization, lineage
@@ -82,6 +83,7 @@ experiments/
   topological_selection.py Conserved dynamics + neutrality: S-optimum at three
   gauge_coherence.py    Gauge connection as coherence restoration (U(1)/SU(2)/SU(3))
   yang_mills_flow.py    Gradient ascent on S: YM residual → 0, gluons on walls
+  confinement_mc.py     Monte-Carlo Wilson-loop area law and string tension
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -108,7 +110,8 @@ A running tally of what the instruments have actually measured — the verdicts,
 | Three mutually-adjacent sectors with 120° Y-junctions (colour SU(3)) | **Not from a scalar field** (structurally impossible) — **achieved** with the three-component Ψ∈ℂ³ model | [Three-Component Sector Field](#three-component-sector-field--genuine-su3-y-junctions) |
 | Capacity κ drives selection toward `N⋆ = 3` | **Conditional / transient** — a 3-well S-optimal band appears *while the field is actively coarsening*, but in steady state selection runs to more sectors; traced to how ΔI is measured (below) | [Phase diagram](#the-phase-diagram-of-n3-selection) |
 | A gauge connection is the minimal structure restoring coherence under local rotations (§2–3) | **Demonstrated** (U(1)/SU(2)/SU(3)) — covariant coherence is gauge-invariant to machine precision while naive coherence is scrambled; a pure-gauge connection has zero curvature; runs on the real Ψ∈ℂ³ sectors | [Gauge connection](#gauge-connection--coherence-under-local-rotations) |
-| The Yang–Mills equations are the S-stationarity conditions (§3.2) | **Demonstrated** — gradient ascent on `S = coupling·coherence − stress` monotonically raises S and drives the lattice YM residual → 0 (SU(2)/SU(3)); curvature is enriched ~2.6× on the sector walls ("gluons as boundary modes"). Thermodynamic confinement (area law) needs Monte-Carlo — not yet | [Yang–Mills dynamics](#yangmills-dynamics--gradient-ascent-on-s) |
+| The Yang–Mills equations are the S-stationarity conditions (§3.2) | **Demonstrated** — gradient ascent on `S = coupling·coherence − stress` monotonically raises S and drives the lattice YM residual → 0 (SU(2)/SU(3)); curvature is enriched ~2.6× on the sector walls ("gluons as boundary modes") | [Yang–Mills dynamics](#yangmills-dynamics--gradient-ascent-on-s) |
+| Confinement — Wilson-loop area law / string tension | **Demonstrated** (strong/intermediate coupling) — a checkerboard Metropolis sampler validated against the *exact* 2-D SU(2) plaquette `I₂(β)/I₁(β)` (to ~1%); positive string tension (Creutz ratio = exact `σ = −log⟨P⟩` to ~1-2%) that weakens with coupling, in 2-D and 3-D. Continuum scaling / `T_c` need bigger lattices | [Confinement](#confinement--the-wilson-loop-area-law) |
 | The S-functional rewards an interior sector optimum | **Achieved in 2-D and 3-D** — with volume-conserving dynamics (persistent junctions) and a *topological* neutrality term (full-palette junctions, non-collinear with ΔC), `S = ΔC + κ·neutrality` is maximized at **exactly three sectors**, robust across seeds/weights. In 3-D three wins ~10× over four (triple *lines* vs sparse quadruple *points*) | [Topological selection](#topological-selection--an-interior-optimum-at-three) |
 
 The honest through-line: the *machinery* of URP sectorisation is reproducible, the boundary-cost half of its free-energy argument is measured, and — after localizing why naive selection failed (ΔI vanishes at equilibrium; coherence magnitude is collinear with ΔC) — a junction-resolving dynamics plus a topological neutrality term reproduces an interior optimum at **three in both 2-D and 3-D**, echoing the gauge paper's §6. The count is no longer a free parameter; it falls out of the junction geometry.
@@ -363,7 +366,39 @@ The URP picture is gradient ascent on `S = coupling·(covariant coherence) − (
 - **The flow ascends S and the YM residual → 0.** From a hot random start, `S` rises monotonically while the lattice equation-of-motion residual `‖TA[U_μ Ω_μ]‖` drives toward zero (SU(2): 1.63 → 0.03; SU(3): 1.65 → 0.02 over 160 steps) — the configuration converges onto a solution of the discrete Yang–Mills equations, with the matter current as source. Links stay in SU(N) throughout. A pure-gauge flow (no matter) relaxes the curvature to ~0 (the flat vacuum); a correctness check confirms the staple identity `Σ_μΣ_x Re Tr[U_μ A_μ] = 4(N·n_plaq − S_Wilson)`.
 - **Curvature localizes on the sector walls** (§4.3.4, "gluons as boundary modes"). Fixing ψ to a real three-sector field and flowing only the connection, the resulting curvature density is **enriched ~2.6× on the domain walls** — 57% of the total curvature sits on the 33% of sites that are walls. The gauge field carries the colour-frame mismatch between adjacent sectors, exactly where the derivation places the gluonic excitations.
 
-**Honest scope:** this is deterministic gradient flow — the gauge equations of motion and the boundary-mode localization. Thermodynamic confinement signatures (Wilson-loop area law, string tension, deconfinement temperature) are properties of the finite-temperature *ensemble* and require Monte-Carlo sampling — the stated next step.
+**Honest scope:** this is deterministic gradient flow — the gauge equations of motion and the boundary-mode localization. Thermodynamic confinement signatures are properties of the finite-coupling *ensemble* and require Monte-Carlo sampling — done next.
+
+### Confinement — the Wilson-loop area law
+
+Confinement is not a gradient-flow fixed point; it is a property of the
+finite-coupling *ensemble*. The static quark potential rises linearly with
+separation, which on the lattice is an **area law** for Wilson loops,
+`⟨W(R,T)⟩ ~ exp(−σ·R·T)`, with string tension `σ`. `project_genesis.gauge_mc` +
+`experiments/confinement_mc.py` sample the Wilson-action Boltzmann distribution
+`exp(−β Σ_p (1 − (1/N)Re Tr U_p))` with a **checkerboard Metropolis** updater and
+measure it.
+
+The sampler is held to an exact standard. In 2-D, SU(2) lattice gauge theory is
+solvable: the single plaquette average is `I₂(β)/I₁(β)` and the Wilson loop is
+exactly `⟨P⟩^Area`, so `σ = −log⟨P⟩` exactly. The Metropolis ⟨P⟩ reproduces the
+Bessel result to ~1% across couplings — the correctness gate, not a plausibility
+argument. (Catching the early ~12% bias — a stale staple reused across both
+checkerboard parities — is exactly what that gate is for.)
+
+With the sampler trusted:
+
+- **Positive string tension = confinement.** In 2-D the Creutz ratio `χ(2,2)`
+  agrees with the exact `σ = −log⟨P⟩` to ~1-2% (e.g. β=2: 0.81 vs 0.83; β=3:
+  0.54 vs 0.56), and `σ` **decreases as the coupling β increases**, the expected
+  march toward the weak-coupling continuum.
+- **Not a 2-D artifact.** In 3-D SU(2) the Creutz ratio is positive (area law /
+  confinement) and likewise weakens with β (e.g. β=1.5: ~1.1 → β=2.5: ~0.55).
+
+**Honest scope:** this is the strong/intermediate-coupling confining regime on
+small lattices, with the string tension as the signature. Continuum scaling, the
+precise deconfinement temperature `T_c` the derivation quotes (~150–170 MeV), and
+SU(3) string-tension phenomenology need larger lattices, asymmetric (finite-T)
+geometries, and far more statistics — the honest next tier.
 
 ## Setup
 
@@ -488,6 +523,7 @@ The current checks verify:
 - junction-resolving (volume-conserving) dynamics: phase-fraction conservation, persistent triple junctions, determinism, the full-palette neutrality measure, and the topological S-functional's interior optimum at three in both 2-D and 3-D,
 - lattice gauge connection: U(N)/SU(N) group elements (unitary, unit determinant), gauge-invariance of covariant coherence, non-invariance of the naive coherence, coherence restoration by the pure-gauge connection, and zero curvature of flat connections,
 - Yang–Mills gradient-flow dynamics: traceless-antihermitian projection, staple/matter-current identities, S-ascent, Yang–Mills residual → 0, SU(N)-preserving link updates, pure-gauge curvature relaxation, and covariant matter relaxation,
+- Monte-Carlo lattice gauge theory: checkerboard Metropolis validated against the exact 2-D SU(2) plaquette `I₂(β)/I₁(β)`, Wilson-loop / plaquette observables, Creutz-ratio string tension, and the positive-σ (confinement) signal in 2-D and 3-D,
 - dynamical κ: depletion under load, recovery with slack, boundedness, determinism, κ-gated integration feedback (starved capacity preserves walls), multi-scale capacity reporting, per-sector κ budgets, and snapshot persistence,
 - κ-as-soil corpus coupling: barren-soil rejection, fertile rooting with capacity consumption, replant gating after depletion, and rooting-statistics reporting,
 - headless save / load round-trip integrity,
@@ -676,12 +712,12 @@ The `ChunkManager` divides the world into cubic chunks and tracks which contain 
 
 The frontier questions, roughly in priority order:
 
-1. **Monte-Carlo confinement.** Gradient-flow Yang–Mills dynamics are now in (`gauge.flow_step`: S-ascent → YM residual 0, gluon-like wall modes). The remaining lattice signatures — Wilson-loop **area law**, **string tension**, the **deconfinement temperature** the derivation quotes (~150–170 MeV) — are properties of the finite-temperature ensemble, so they need a Monte-Carlo sampler (heat-bath / Metropolis on the Wilson action) rather than deterministic flow. That is the natural next build on top of the existing `gauge.py` primitives.
+1. **Quantitative lattice QCD: continuum scaling and `T_c`.** Confinement (Wilson-loop area law, string tension) is now demonstrated and validated against exact 2-D (`gauge_mc.py`). The harder, quantitative tier the derivation quotes — continuum scaling of `σ`, the deconfinement temperature `T_c` (~150–170 MeV) via asymmetric finite-temperature lattices, and SU(3) string-tension numbers — needs larger lattices, better updaters (heat-bath/over-relaxation), and far more statistics than the current Metropolis sampler. A natural, well-scoped extension of `gauge_mc.py`.
 3. **Promote the F(N) fit to two free coefficients** by measuring an independent information-gain proxy for `b(β, κ)`, rather than inverting stationarity — the missing half of a non-circular free-energy test.
 4. Higher-order field dynamics — second-order time derivatives (∂²φ/∂t²) for the wave-like behavior in the full Lagrangian (the current model is the overdamped limit).
 5. Replace the sine pinning potential with the true `−(β/4)(∇φ)⁴` gradient-quartic via an implicit/stabilized integrator.
 
-Earlier roadmap items now implemented: ~~coherence potential V(x,t)~~, ~~nonlocal integration functional I[φ]~~, ~~agent-agent interaction~~, ~~S-functional-driven agents~~, ~~matplotlib visualization~~, ~~emergent gauge sectorisation (measurement + wall tension + Ψ∈ℂ³ Y-junctions)~~, ~~dynamical capacity field κ~~, ~~κ-as-soil corpus coupling~~, ~~`(c, r, β)` phase diagram~~, ~~κ × Ψ∈ℂ³ coupling~~, ~~standing nonlocal coherence~~, ~~junction-resolving dynamics + topological selection of three (2-D and 3-D)~~, ~~gauge connection on the Ψ∈ℂ³ sectors~~, ~~Yang–Mills gradient-flow dynamics (S-ascent → YM residual 0, boundary-mode curvature)~~.
+Earlier roadmap items now implemented: ~~coherence potential V(x,t)~~, ~~nonlocal integration functional I[φ]~~, ~~agent-agent interaction~~, ~~S-functional-driven agents~~, ~~matplotlib visualization~~, ~~emergent gauge sectorisation (measurement + wall tension + Ψ∈ℂ³ Y-junctions)~~, ~~dynamical capacity field κ~~, ~~κ-as-soil corpus coupling~~, ~~`(c, r, β)` phase diagram~~, ~~κ × Ψ∈ℂ³ coupling~~, ~~standing nonlocal coherence~~, ~~junction-resolving dynamics + topological selection of three (2-D and 3-D)~~, ~~gauge connection on the Ψ∈ℂ³ sectors~~, ~~Yang–Mills gradient-flow dynamics (S-ascent → YM residual 0, boundary-mode curvature)~~, ~~Monte-Carlo confinement (Wilson-loop area law / string tension, validated vs exact 2-D)~~.
 
 ## Theory Reference
 
