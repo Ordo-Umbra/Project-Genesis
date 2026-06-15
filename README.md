@@ -81,6 +81,7 @@ experiments/
   standing_integration.py  Tests standing coherence for an interior N⋆
   topological_selection.py Conserved dynamics + neutrality: S-optimum at three
   gauge_coherence.py    Gauge connection as coherence restoration (U(1)/SU(2)/SU(3))
+  yang_mills_flow.py    Gradient ascent on S: YM residual → 0, gluons on walls
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -106,7 +107,8 @@ A running tally of what the instruments have actually measured — the verdicts,
 | The β-nonlinearity alone makes the field sectorise | **Not supported** — the reduced `β\|∇φ\|²` term smooths to a single sector; a wall-tension term is required | [β-Sectorisation](#β-sectorisation--boundary-formation) |
 | Three mutually-adjacent sectors with 120° Y-junctions (colour SU(3)) | **Not from a scalar field** (structurally impossible) — **achieved** with the three-component Ψ∈ℂ³ model | [Three-Component Sector Field](#three-component-sector-field--genuine-su3-y-junctions) |
 | Capacity κ drives selection toward `N⋆ = 3` | **Conditional / transient** — a 3-well S-optimal band appears *while the field is actively coarsening*, but in steady state selection runs to more sectors; traced to how ΔI is measured (below) | [Phase diagram](#the-phase-diagram-of-n3-selection) |
-| A gauge connection is the minimal structure restoring coherence under local rotations (§2–3) | **Demonstrated** (U(1)/SU(2)/SU(3)) — covariant coherence is gauge-invariant to machine precision while naive coherence is scrambled; a pure-gauge connection has zero curvature; runs on the real Ψ∈ℂ³ sectors. (Yang–Mills *dynamics*/confinement not yet) | [Gauge connection](#gauge-connection--coherence-under-local-rotations) |
+| A gauge connection is the minimal structure restoring coherence under local rotations (§2–3) | **Demonstrated** (U(1)/SU(2)/SU(3)) — covariant coherence is gauge-invariant to machine precision while naive coherence is scrambled; a pure-gauge connection has zero curvature; runs on the real Ψ∈ℂ³ sectors | [Gauge connection](#gauge-connection--coherence-under-local-rotations) |
+| The Yang–Mills equations are the S-stationarity conditions (§3.2) | **Demonstrated** — gradient ascent on `S = coupling·coherence − stress` monotonically raises S and drives the lattice YM residual → 0 (SU(2)/SU(3)); curvature is enriched ~2.6× on the sector walls ("gluons as boundary modes"). Thermodynamic confinement (area law) needs Monte-Carlo — not yet | [Yang–Mills dynamics](#yangmills-dynamics--gradient-ascent-on-s) |
 | The S-functional rewards an interior sector optimum | **Achieved in 2-D and 3-D** — with volume-conserving dynamics (persistent junctions) and a *topological* neutrality term (full-palette junctions, non-collinear with ΔC), `S = ΔC + κ·neutrality` is maximized at **exactly three sectors**, robust across seeds/weights. In 3-D three wins ~10× over four (triple *lines* vs sparse quadruple *points*) | [Topological selection](#topological-selection--an-interior-optimum-at-three) |
 
 The honest through-line: the *machinery* of URP sectorisation is reproducible, the boundary-cost half of its free-energy argument is measured, and — after localizing why naive selection failed (ΔI vanishes at equilibrium; coherence magnitude is collinear with ΔC) — a junction-resolving dynamics plus a topological neutrality term reproduces an interior optimum at **three in both 2-D and 3-D**, echoing the gauge paper's §6. The count is no longer a free parameter; it falls out of the junction geometry.
@@ -354,10 +356,14 @@ real coarsened sector field:
 - **It restores destroyed coherence** — a uniform field (coherence 392) scrambled by a local rotation (→ ~0) is brought back to 392 exactly by the pure-gauge connection built from the same `g`. That is the §2.2 claim made literal: the connection is the minimal structure preserving ΔI under local ΔC.
 - **Curvature is coherence stress** — a flat (pure-gauge) connection has zero Wilson action `Σ Re Tr(1 − P_{μν})`; a connection whose parallel transport is path-dependent has positive action. This is the lattice `Tr(F_{μν}F^{μν})` the derivation reads as the cost of residual coherence stress.
 
-**Honest scope:** this demonstrates the *gauge principle* — connection as
-coherence-restoration, curvature as stress — not the Yang–Mills *dynamics*.
-Evolving `U_μ` to extremise S (and looking for confinement / asymptotic freedom)
-is a full lattice-gauge simulation, and the stated next step.
+### Yang–Mills dynamics — gradient ascent on S
+
+The URP picture is gradient ascent on `S = coupling·(covariant coherence) − (curvature stress)`, and §3.2 derives the Yang–Mills equations as the *stationarity conditions* of that S. `project_genesis.gauge.flow_step` + `experiments/yang_mills_flow.py` run that flow (Wilson gradient flow: links move along `exp(ε·force)·U` with `force = −TA[U_μ Ω_μ]`, `Ω = coupling·ψ(x+μ̂)ψ(x)† + staple`; ψ optionally relaxes covariantly). Two results:
+
+- **The flow ascends S and the YM residual → 0.** From a hot random start, `S` rises monotonically while the lattice equation-of-motion residual `‖TA[U_μ Ω_μ]‖` drives toward zero (SU(2): 1.63 → 0.03; SU(3): 1.65 → 0.02 over 160 steps) — the configuration converges onto a solution of the discrete Yang–Mills equations, with the matter current as source. Links stay in SU(N) throughout. A pure-gauge flow (no matter) relaxes the curvature to ~0 (the flat vacuum); a correctness check confirms the staple identity `Σ_μΣ_x Re Tr[U_μ A_μ] = 4(N·n_plaq − S_Wilson)`.
+- **Curvature localizes on the sector walls** (§4.3.4, "gluons as boundary modes"). Fixing ψ to a real three-sector field and flowing only the connection, the resulting curvature density is **enriched ~2.6× on the domain walls** — 57% of the total curvature sits on the 33% of sites that are walls. The gauge field carries the colour-frame mismatch between adjacent sectors, exactly where the derivation places the gluonic excitations.
+
+**Honest scope:** this is deterministic gradient flow — the gauge equations of motion and the boundary-mode localization. Thermodynamic confinement signatures (Wilson-loop area law, string tension, deconfinement temperature) are properties of the finite-temperature *ensemble* and require Monte-Carlo sampling — the stated next step.
 
 ## Setup
 
@@ -481,6 +487,7 @@ The current checks verify:
 - κ-coupled multi-phase model: capacity-gated integration, depletion at walls, scarcity arresting coarsening, periodic domain counting, and the multi-phase S-functional,
 - junction-resolving (volume-conserving) dynamics: phase-fraction conservation, persistent triple junctions, determinism, the full-palette neutrality measure, and the topological S-functional's interior optimum at three in both 2-D and 3-D,
 - lattice gauge connection: U(N)/SU(N) group elements (unitary, unit determinant), gauge-invariance of covariant coherence, non-invariance of the naive coherence, coherence restoration by the pure-gauge connection, and zero curvature of flat connections,
+- Yang–Mills gradient-flow dynamics: traceless-antihermitian projection, staple/matter-current identities, S-ascent, Yang–Mills residual → 0, SU(N)-preserving link updates, pure-gauge curvature relaxation, and covariant matter relaxation,
 - dynamical κ: depletion under load, recovery with slack, boundedness, determinism, κ-gated integration feedback (starved capacity preserves walls), multi-scale capacity reporting, per-sector κ budgets, and snapshot persistence,
 - κ-as-soil corpus coupling: barren-soil rejection, fertile rooting with capacity consumption, replant gating after depletion, and rooting-statistics reporting,
 - headless save / load round-trip integrity,
@@ -669,12 +676,12 @@ The `ChunkManager` divides the world into cubic chunks and tracks which contain 
 
 The frontier questions, roughly in priority order:
 
-1. **Evolve the gauge connection (Yang–Mills dynamics).** The gauge *principle* is now in (`gauge.py`: covariant coherence, curvature as Wilson action, on the Ψ∈ℂ³ sectors). The open step is *dynamics* — evolve `U_μ` to extremise `S` (covariant coherence − curvature stress) and look for the lattice signatures the derivation predicts: gluon-like boundary modes, confinement, asymptotic freedom. That is a full lattice-gauge simulation.
+1. **Monte-Carlo confinement.** Gradient-flow Yang–Mills dynamics are now in (`gauge.flow_step`: S-ascent → YM residual 0, gluon-like wall modes). The remaining lattice signatures — Wilson-loop **area law**, **string tension**, the **deconfinement temperature** the derivation quotes (~150–170 MeV) — are properties of the finite-temperature ensemble, so they need a Monte-Carlo sampler (heat-bath / Metropolis on the Wilson action) rather than deterministic flow. That is the natural next build on top of the existing `gauge.py` primitives.
 3. **Promote the F(N) fit to two free coefficients** by measuring an independent information-gain proxy for `b(β, κ)`, rather than inverting stationarity — the missing half of a non-circular free-energy test.
 4. Higher-order field dynamics — second-order time derivatives (∂²φ/∂t²) for the wave-like behavior in the full Lagrangian (the current model is the overdamped limit).
 5. Replace the sine pinning potential with the true `−(β/4)(∇φ)⁴` gradient-quartic via an implicit/stabilized integrator.
 
-Earlier roadmap items now implemented: ~~coherence potential V(x,t)~~, ~~nonlocal integration functional I[φ]~~, ~~agent-agent interaction~~, ~~S-functional-driven agents~~, ~~matplotlib visualization~~, ~~emergent gauge sectorisation (measurement + wall tension + Ψ∈ℂ³ Y-junctions)~~, ~~dynamical capacity field κ~~, ~~κ-as-soil corpus coupling~~, ~~`(c, r, β)` phase diagram~~, ~~κ × Ψ∈ℂ³ coupling~~, ~~standing nonlocal coherence~~, ~~junction-resolving dynamics + topological selection of three (2-D and 3-D)~~.
+Earlier roadmap items now implemented: ~~coherence potential V(x,t)~~, ~~nonlocal integration functional I[φ]~~, ~~agent-agent interaction~~, ~~S-functional-driven agents~~, ~~matplotlib visualization~~, ~~emergent gauge sectorisation (measurement + wall tension + Ψ∈ℂ³ Y-junctions)~~, ~~dynamical capacity field κ~~, ~~κ-as-soil corpus coupling~~, ~~`(c, r, β)` phase diagram~~, ~~κ × Ψ∈ℂ³ coupling~~, ~~standing nonlocal coherence~~, ~~junction-resolving dynamics + topological selection of three (2-D and 3-D)~~, ~~gauge connection on the Ψ∈ℂ³ sectors~~, ~~Yang–Mills gradient-flow dynamics (S-ascent → YM residual 0, boundary-mode curvature)~~.
 
 ## Theory Reference
 

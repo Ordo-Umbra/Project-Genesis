@@ -211,3 +211,144 @@ def wilson_action(links: np.ndarray) -> float:
             tr = np.trace(p, axis1=-2, axis2=-1)
             total += float(np.sum(np.real(n - tr)))
     return total
+
+
+def curvature_density(links: np.ndarray) -> np.ndarray:
+    """Per-site curvature ``Σ_{μ<ν} Re Tr(1 − P_{μν}(x))`` — local coherence stress.
+
+    Returns a scalar field on the lattice. Used to ask *where* the gauge field's
+    curvature lives (e.g. whether it concentrates on the sector domain walls, the
+    derivation's "gluons as boundary modes").
+    """
+    ndim = links.shape[0]
+    n = links.shape[-1]
+    dens = np.zeros(links.shape[1:-2], dtype=np.float64)
+    for mu in range(ndim):
+        for nu in range(mu + 1, ndim):
+            p = plaquette(links, mu, nu)
+            dens += np.real(n - np.trace(p, axis1=-2, axis2=-1))
+    return dens
+
+
+# ----------------------------------------------------------------------
+# Yang–Mills dynamics: gradient ascent on S = coupling·coherence − stress
+# ----------------------------------------------------------------------
+
+
+def _dagger(m: np.ndarray) -> np.ndarray:
+    return np.conjugate(np.swapaxes(m, -1, -2))
+
+
+def traceless_antihermitian(m: np.ndarray) -> np.ndarray:
+    """Project stacked matrices onto su(N): the traceless anti-Hermitian part.
+
+    This is the Lie-algebra gradient direction for ``Re Tr[U·Ω]`` on the group —
+    the force that moves a link to increase that overlap.
+    """
+    ah = 0.5 * (m - _dagger(m))
+    n = m.shape[-1]
+    trace = np.trace(ah, axis1=-2, axis2=-1)
+    return ah - (trace / n)[..., None, None] * np.eye(n)
+
+
+def _expm_antihermitian(a: np.ndarray) -> np.ndarray:
+    """Matrix exponential of stacked anti-Hermitian ``A`` (stays in SU(N))."""
+    return _expm_iH(-1j * a)
+
+
+def gauge_staple(links: np.ndarray, mu: int) -> np.ndarray:
+    """Sum of staples ``A_μ(x)`` so that ``Re Tr[U_μ(x) A_μ(x)]`` equals the sum
+    of ``Re Tr P`` over every plaquette containing the link (forward + backward)."""
+    ndim = links.shape[0]
+    a = np.zeros_like(links[mu])
+    for nu in range(ndim):
+        if nu == mu:
+            continue
+        u_mu, u_nu = links[mu], links[nu]
+        # Forward staple: U_ν(x+μ̂) U_μ(x+ν̂)† U_ν(x)†
+        c_fwd = (
+            np.roll(u_nu, -1, axis=mu)
+            @ _dagger(np.roll(u_mu, -1, axis=nu))
+            @ _dagger(u_nu)
+        )
+        # Backward staple: U_ν(x−ν̂+μ̂)† U_μ(x−ν̂)† U_ν(x−ν̂)
+        u_nu_dn = np.roll(u_nu, 1, axis=nu)            # U_ν(x−ν̂)
+        u_mu_dn = np.roll(u_mu, 1, axis=nu)            # U_μ(x−ν̂)
+        u_nu_dn_fwd = np.roll(u_nu_dn, -1, axis=mu)    # U_ν(x−ν̂+μ̂)
+        c_bwd = _dagger(u_nu_dn_fwd) @ _dagger(u_mu_dn) @ u_nu_dn
+        a += c_fwd + c_bwd
+    return a
+
+
+def link_forces(psi: np.ndarray, links: np.ndarray, coupling: float) -> np.ndarray:
+    """su(N) force on every link for ``S = coupling·coherence − wilson_action``.
+
+    Maximizing S maximizes ``Re Tr[U_μ(x) Ω_μ(x)]`` with
+    ``Ω = coupling·ψ(x+μ̂)ψ(x)† + A_μ(x)`` (matter + gauge staple); the
+    steepest-*ascent* force is ``−TA[U_μ(x) Ω_μ(x)]``. At a fixed point this
+    vanishes — the lattice Yang–Mills equation with the matter current as source.
+    """
+    ndim = links.shape[0]
+    forces = np.empty_like(links)
+    for mu in range(ndim):
+        psi_fwd = np.roll(psi, -1, axis=mu)
+        matter = coupling * np.einsum("...i,...j->...ij", psi_fwd, np.conjugate(psi))
+        omega = matter + gauge_staple(links, mu)
+        forces[mu] = -traceless_antihermitian(links[mu] @ omega)
+    return forces
+
+
+def yang_mills_residual(psi: np.ndarray, links: np.ndarray, coupling: float) -> float:
+    """Mean Frobenius norm of the link force — the lattice Yang–Mills residual.
+
+    ``→ 0`` exactly when the configuration satisfies the discrete equations of
+    motion ``TA[U_μ Ω_μ] = 0`` (gauge curvature balanced by the matter current).
+    """
+    f = link_forces(psi, links, coupling)
+    return float(np.mean(np.sqrt(np.sum(np.abs(f) ** 2, axis=(-2, -1)))))
+
+
+def total_s(psi: np.ndarray, links: np.ndarray, coupling: float) -> float:
+    """The gauge+matter S-functional: ``coupling·covariant_coherence − wilson_action``."""
+    return coupling * covariant_coherence(psi, links) - wilson_action(links)
+
+
+def relax_matter(psi: np.ndarray, links: np.ndarray, rate: float) -> np.ndarray:
+    """One gauge-covariant relaxation step of ψ toward its transported neighbours.
+
+    Each site moves toward the (parallel-transported) average of its neighbours —
+    gradient ascent of the covariant coherence in ψ — then renormalises.
+    """
+    ndim = links.shape[0]
+    nbr = np.zeros_like(psi)
+    for mu in range(ndim):
+        # forward neighbour transported back: U_μ(x) ψ(x+μ̂)
+        nbr += np.einsum("...ij,...j->...i", links[mu], np.roll(psi, -1, axis=mu))
+        # backward neighbour transported: U_μ(x−μ̂)† ψ(x−μ̂)
+        u_back = np.roll(links[mu], 1, axis=mu)
+        nbr += np.einsum("...ij,...j->...i", _dagger(u_back), np.roll(psi, 1, axis=mu))
+    psi_new = psi + rate * nbr
+    norm = np.linalg.norm(psi_new, axis=-1, keepdims=True)
+    return psi_new / np.where(norm == 0.0, 1.0, norm)
+
+
+def flow_step(
+    psi: np.ndarray,
+    links: np.ndarray,
+    *,
+    coupling: float = 1.0,
+    eps: float = 0.05,
+    matter_rate: float = 0.1,
+    evolve_matter: bool = True,
+) -> tuple[np.ndarray, np.ndarray]:
+    """One gradient-ascent (Yang–Mills gradient-flow) step on S.
+
+    Links move along ``exp(eps·force)·U`` (staying in SU(N)); ψ optionally
+    relaxes covariantly. Returns ``(psi, links)``.
+    """
+    forces = link_forces(psi, links, coupling)
+    new_links = np.empty_like(links)
+    for mu in range(links.shape[0]):
+        new_links[mu] = _expm_antihermitian(eps * forces[mu]) @ links[mu]
+    new_psi = relax_matter(psi, new_links, matter_rate) if evolve_matter else psi
+    return new_psi, new_links

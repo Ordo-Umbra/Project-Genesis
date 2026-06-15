@@ -5,11 +5,15 @@ from .engine import GenesisEngine
 from .gauge import (
     apply_gauge_transform,
     covariant_coherence,
+    curvature_density,
+    flow_step,
     naive_coherence,
     pure_gauge_links,
     random_unitary,
     sector_field_to_psi,
+    total_s,
     wilson_action,
+    yang_mills_residual,
 )
 from .memory_corpus import MemoryCorpus, StableObject
 from .metrics import compute_local_s, compute_s_functional, kappa_by_scale
@@ -52,11 +56,15 @@ __all__ = [
     "analyze_sectorisation",
     "apply_gauge_transform",
     "covariant_coherence",
+    "curvature_density",
+    "flow_step",
     "naive_coherence",
     "pure_gauge_links",
     "random_unitary",
     "sector_field_to_psi",
+    "total_s",
     "wilson_action",
+    "yang_mills_residual",
     "compute_local_s",
     "compute_s_functional",
     "coherence_integration",
