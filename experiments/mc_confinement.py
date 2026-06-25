@@ -1,14 +1,8 @@
 #!/usr/bin/env python3
-"""Monte-Carlo measurement of pure-gauge confinement signatures (Wilson area law,
-string tension via Creutz ratios, Polyakov loop).
+"""Monte-Carlo measurement of pure-gauge confinement signatures (v2).
 
-This experiment implements the top item on the Project Genesis roadmap:
-Monte-Carlo sampling of the pure Wilson action to extract thermodynamic
-confinement observables.
-
-Usage examples:
-    python experiments/mc_confinement.py --size 12 --beta 2.3 --n-meas 60
-    python experiments/mc_confinement.py --betas 1.5,2.0,2.5,3.0 --quick
+Supports Metropolis, heat-bath, and over-relaxation updaters,
+and works in 2-D and 3-D.
 """
 
 import argparse
@@ -24,43 +18,34 @@ from project_genesis.gauge_mc import thermalize_and_measure_pure_gauge
 
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--size", type=int, default=10)
-    p.add_argument("--n", type=int, default=3, help="SU(N) (3 for colour)")
+    p.add_argument("--size", type=int, default=8)
+    p.add_argument("--ndim", type=int, default=2)
+    p.add_argument("--n", type=int, default=3)
     p.add_argument("--beta", type=float, default=2.5)
-    p.add_argument("--betas", type=str, default=None, help="Comma-separated list for sweep")
-    p.add_argument("--n-therm", type=int, default=150)
-    p.add_argument("--n-meas", type=int, default=40)
-    p.add_argument("--n-skip", type=int, default=5)
-    p.add_argument("--step-scale", type=float, default=0.18)
+    p.add_argument("--updater", choices=["metropolis", "heatbath", "overrelax"], default="metropolis")
+    p.add_argument("--n-therm", type=int, default=80)
+    p.add_argument("--n-meas", type=int, default=20)
     p.add_argument("--quick", action="store_true")
     p.add_argument("--seed", type=int, default=7)
     args = p.parse_args()
 
-    rng = np.random.default_rng(args.seed)
-    print("Pure-gauge Monte-Carlo confinement signatures (Wilson action)\n")
-
-    betas = [float(b) for b in args.betas.split(",")] if args.betas else [args.beta]
     if args.quick:
-        args.n_therm = min(args.n_therm, 60)
-        args.n_meas = min(args.n_meas, 15)
+        args.n_therm = min(args.n_therm, 40)
+        args.n_meas = min(args.n_meas, 10)
 
-    for beta in betas:
-        print(f"=== β_g = {beta} ===")
-        summary, _ = thermalize_and_measure_pure_gauge(
-            size=args.size, n=args.n, beta_g=beta, rng=rng,
-            n_therm=args.n_therm, n_meas=args.n_meas, n_skip=args.n_skip,
-            step_scale=args.step_scale
-        )
-        print(f"  ⟨acc⟩ therm = {summary['mean_acceptance_therm']:.3f}")
-        print(f"  Polyakov     = {summary['polyakov_mean']:.4f}")
-        for k, v in summary["loop_averages"].items():
-            print(f"  {k} = {v:.4f}")
-        if summary["creutz_ratios_sample"]:
-            print(f"  sample Creutz χ(2,2) ≈ {np.nanmean(summary['creutz_ratios_sample']):.4f}")
-        print()
+    rng = np.random.default_rng(args.seed)
+    print(f"Monte-Carlo confinement (ndim={args.ndim}, updater={args.updater})\n")
 
-    print("Verdict: Wilson loops, Polyakov loop and Creutz ratios measured on ")
-    print("thermalised pure-gauge ensembles. String tension extraction is now executable.")
+    summary, _ = thermalize_and_measure_pure_gauge(
+        size=args.size, n=args.n, beta_g=args.beta, rng=rng,
+        ndim=args.ndim, n_therm=args.n_therm, n_meas=args.n_meas,
+        updater=args.updater
+    )
+
+    print(f"  Polyakov mean = {summary['polyakov_mean']:.4f}")
+    for k, v in summary["loop_averages"].items():
+        print(f"  {k} = {v:.4f}")
+    print(f"  Final action  = {summary['final_wilson_action']:.2f}")
 
 
 if __name__ == "__main__":
