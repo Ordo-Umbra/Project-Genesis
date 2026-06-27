@@ -63,19 +63,29 @@ BETA_CONF = 1.5 # strong coupling / confined regime for SU(2) 2D
 # ---------------------------------------------------------------------------
 
 def _cold(size, ndim=NDIM, n=N_SU2):
-    """Identity-link (cold) configuration."""
-    return identity_links(size, ndim=ndim, n=n)
+    """Identity-link (cold) configuration.
+
+    identity_links(n, spatial) → (ndim, *spatial, n, n)
+    spatial is a tuple of ints, one per dimension.
+    """
+    spatial = (size,) * ndim
+    return identity_links(n, spatial)
 
 
 def _hot(rng, size, ndim=NDIM, n=N_SU2):
-    """Haar-random (hot) configuration."""
+    """Haar-random (hot) configuration.
+
+    random_unitary(rng, n, size_tuple) where size_tuple is the full
+    leading shape (ndim, *spatial) → (*size_tuple, n, n).
+    """
     spatial = (size,) * ndim
-    return random_unitary(rng, n, (ndim, *spatial), special=True, scale=0.7)
+    full_shape = (ndim, *spatial)
+    return random_unitary(rng, n, full_shape, special=True, scale=0.7)
 
 
 def _haar_su2(rng):
-    """Single Haar-random SU(2) matrix."""
-    return random_unitary(rng, 2, special=True, scale=0.7)
+    """Single Haar-random SU(2) matrix — shape (2, 2)."""
+    return random_unitary(rng, 2, (), special=True, scale=0.7)
 
 
 def _apply_gauge_transform(links, g, size, ndim=NDIM):
@@ -212,6 +222,10 @@ def test_action_decreases_from_hot_start():
 
     The Boltzmann weight exp(−β_g S_W) concentrates the ensemble on lower-S
     configurations — the chain should visibly thermalize downward from disorder.
+
+    NOTE: _total_action here is defined as Σ -Re Tr[U A†], which is negative
+    for a typical thermalised config. Thermalization drives it *more* negative,
+    i.e. history[0] > history[-1] (less negative → more negative).
     """
     rng = np.random.default_rng(5)
     links = _hot(rng, L)
@@ -220,8 +234,11 @@ def test_action_decreases_from_hot_start():
         links, _ = metropolis_sweep(links, 2.0, rng, step_scale=0.4)
         if sweep % 20 == 19:
             history.append(_total_action(links))
-    assert history[0] > history[-1], (
-        f"Action did not decrease: initial={history[0]:.3f}, final={history[-1]:.3f}"
+    # Compare first quarter average vs last quarter average
+    early = float(np.mean(history[:len(history)//4]))
+    late  = float(np.mean(history[3*len(history)//4:]))
+    assert early > late, (
+        f"Action did not decrease on average: early_mean={early:.3f}, late_mean={late:.3f}"
     )
 
 
