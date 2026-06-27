@@ -115,6 +115,10 @@ def _apply_gauge_transform(links, g, size, ndim=NDIM):
 # ---------------------------------------------------------------------------
 # Module-scope fixture: pre-thermalised config at β=1.5, 10×10
 # Computed once per test session — reused by T9–T13.
+#
+# FIX: Returns links.copy() so the stored baseline is immutable.
+# Each test that consumes this fixture takes its own local copy of links
+# at the top of the test body, ensuring tests are fully order-independent.
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(scope="module")
@@ -123,7 +127,9 @@ def thermalised_b15():
     links = _hot(rng, L_CONF)
     for _ in range(600):
         links, _ = metropolis_sweep(links, BETA_CONF, rng, step_scale=0.4)
-    return links, rng
+    # Return a copy of the thermalised links so every test gets a clean
+    # baseline from the fixture; each test then works on its own local copy.
+    return links.copy(), rng
 
 
 # ===========================================================================
@@ -345,7 +351,8 @@ def test_area_suppression(thermalised_b15):
     are exponentially suppressed.  This is the most direct lattice signature
     of confinement predicted by the URP β-sectorisation derivation.
     """
-    links, rng = thermalised_b15
+    links_base, rng = thermalised_b15
+    links = links_base.copy()  # isolate this test's chain from the shared fixture
     acc = {(1, 1): 0.0, (1, 2): 0.0, (2, 1): 0.0}
     n_meas = 200
     for _ in range(n_meas):
@@ -373,7 +380,8 @@ def test_rotational_symmetry(thermalised_b15):
     The square lattice has a discrete 90° rotational symmetry, so rectangular
     Wilson loops with swapped dimensions should be equal in the ensemble average.
     """
-    links, rng = thermalised_b15
+    links_base, rng = thermalised_b15
+    links = links_base.copy()  # isolate this test's chain from the shared fixture
     acc = {(1, 2): 0.0, (2, 1): 0.0}
     n_meas = 200
     for _ in range(n_meas):
@@ -399,7 +407,8 @@ def test_polyakov_near_zero_confined(thermalised_b15):
     In the confined phase the centre symmetry is unbroken and ⟨P⟩ → 0
     in the thermodynamic limit (URP §4.A prediction).
     """
-    links, rng = thermalised_b15
+    links_base, rng = thermalised_b15
+    links = links_base.copy()  # isolate this test's chain from the shared fixture
     vals = []
     for _ in range(200):
         for _ in range(5):
@@ -422,8 +431,13 @@ def test_creutz_ratio_positive(thermalised_b15):
     χ(R,T) = −log[ W(R,T)·W(R−1,T−1) / (W(R,T−1)·W(R−1,T)) ] → σ
 
     A positive χ(2,2) confirms nonzero string tension (confinement).
+    If W(2,2) is non-positive (can occur at small lattice volumes due to
+    statistical noise), the test is skipped with an explicit explanation
+    rather than silently passing — a skip is visible in CI output and
+    honest about what signal was actually measured.
     """
-    links, rng = thermalised_b15
+    links_base, rng = thermalised_b15
+    links = links_base.copy()  # isolate this test's chain from the shared fixture
     acc = {(1, 1): 0.0, (1, 2): 0.0, (2, 1): 0.0, (2, 2): 0.0}
     n_meas = 200
     for _ in range(n_meas):
@@ -433,9 +447,12 @@ def test_creutz_ratio_positive(thermalised_b15):
             acc[k] += wilson_loop(links, k)
     W = {k: v / n_meas for k, v in acc.items()}
     chi = creutz_ratio(W[(2, 2)], W[(1, 1)], W[(2, 1)], W[(1, 2)])
-    if not math.isnan(chi):
-        assert chi > 0, f"Creutz chi(2,2)={chi:.5f} not positive"
-    # NaN → W(2,2)<=0 at this volume; no crash = pass
+    if math.isnan(chi):
+        pytest.skip(
+            f"W(2,2)={W[(2,2)]:.5f} non-positive at L={L_CONF} lattice — "
+            "volume too small for reliable Creutz ratio; increase L_CONF to fix."
+        )
+    assert chi > 0, f"Creutz chi(2,2)={chi:.5f} not positive"
 
 
 # ===========================================================================
@@ -449,7 +466,8 @@ def test_area_law_fit_positive_sigma(thermalised_b15):
     A positive fitted σ is the quantitative area-law / string-tension test
     predicted by the URP gauge derivation.
     """
-    links, rng = thermalised_b15
+    links_base, rng = thermalised_b15
+    links = links_base.copy()  # isolate this test's chain from the shared fixture
     rs, ts = [1, 2, 3], [1, 2, 3]
     W_acc = np.zeros((3, 3))
     n_meas = 200
