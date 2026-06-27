@@ -1,0 +1,160 @@
+name: Monte Carlo Confinement Analysis
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly run every Monday 09:00 UTC so drift is caught early
+    - cron: '0 9 * * 1'
+  workflow_dispatch:   # allow manual trigger from the Actions tab
+
+jobs:
+  # -----------------------------------------------------------------------
+  # Job 1: Unit + confinement tests
+  # -----------------------------------------------------------------------
+  tests:
+    name: "Confinement test suite (pytest)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy scipy matplotlib pytest
+          # install the project itself (editable) if a setup file exists
+          if [ -f pyproject.toml ] || [ -f setup.py ] || [ -f setup.cfg ]; then
+            pip install -e .
+          fi
+
+      - name: Run gauge_mc unit tests
+        run: |
+          pytest tests/test_gauge_mc.py -v --tb=short 2>&1 | tee results_unit_tests.txt
+
+      - name: Run confinement-specific tests
+        run: |
+          pytest tests/test_gauge_mc_confinement.py -v --tb=short 2>&1 | tee results_confinement_tests.txt
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs
+          path: |
+            results_unit_tests.txt
+            results_confinement_tests.txt
+          retention-days: 30
+
+  # -----------------------------------------------------------------------
+  # Job 2: Quick analysis smoke test + full scan + figures
+  # -----------------------------------------------------------------------
+  analysis:
+    name: "Confinement analysis & figures"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Run analysis even if tests fail, so we can see figures for debugging
+    if: always()
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy scipy matplotlib
+          if [ -f pyproject.toml ] || [ -f setup.py ] || [ -f setup.cfg ]; then
+            pip install -e .
+          fi
+
+      - name: Create output directories
+        run: mkdir -p results/confinement
+
+      - name: Quick smoke test (--quick flag, ~30 s)
+        run: |
+          echo "======================================" | tee results/confinement/quick_run.txt
+          echo "  QUICK SMOKE TEST" | tee -a results/confinement/quick_run.txt
+          echo "======================================" | tee -a results/confinement/quick_run.txt
+          python experiments/analyse_confinement.py \
+            --quick \
+            --no-plots \
+            --outdir results/confinement \
+            --seed 2026 2>&1 | tee -a results/confinement/quick_run.txt
+          echo "Exit code: $?" | tee -a results/confinement/quick_run.txt
+
+      - name: Full beta scan with figures (size=6, 7 beta points)
+        run: |
+          echo "======================================" | tee results/confinement/full_scan.txt
+          echo "  FULL BETA SCAN" | tee -a results/confinement/full_scan.txt
+          echo "======================================" | tee -a results/confinement/full_scan.txt
+          python experiments/analyse_confinement.py \
+            --size 6 \
+            --n 2 \
+            --ndim 2 \
+            --beta-min 0.5 \
+            --beta-max 3.5 \
+            --beta-steps 7 \
+            --n-therm 150 \
+            --n-meas 80 \
+            --n-skip 4 \
+            --updater heatbath \
+            --seed 2026 \
+            --outdir results/confinement 2>&1 | tee -a results/confinement/full_scan.txt || true
+          # '|| true' so the job doesn't fail if some predictions miss
+          # (we want the artifact uploaded regardless)
+
+      - name: List generated figures
+        run: ls -lh results/confinement/
+
+      - name: Upload confinement results & figures
+        uses: actions/upload-artifact@v4
+        with:
+          name: confinement-results-${{ github.sha }}
+          path: results/confinement/
+          retention-days: 90
+
+      # -------------------------------------------------------------------
+      # Post a summary to the GitHub Actions job summary page
+      # (visible from the Actions tab on mobile without downloading anything)
+      # -------------------------------------------------------------------
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## Monte Carlo Confinement Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`  " >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}  " >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Quick smoke test output" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -40 results/confinement/quick_run.txt >> $GITHUB_STEP_SUMMARY || echo '(no output)' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Full scan — theory comparison" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep -A 30 'Theory comparison' results/confinement/full_scan.txt >> $GITHUB_STEP_SUMMARY || echo '(scan not yet complete)' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Figures" >> $GITHUB_STEP_SUMMARY
+          echo "Download the \`confinement-results\` artifact above to view:" >> $GITHUB_STEP_SUMMARY
+          echo "- \`sigma_vs_beta.png\` — string tension σ(β_g)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`polyakov_vs_beta.png\` — Polyakov order parameter |⟨P⟩|" >> $GITHUB_STEP_SUMMARY
+          echo "- \`wilson_loops.png\` — W(R,T) area-law decay" >> $GITHUB_STEP_SUMMARY
+          echo "- \`creutz_ratios.png\` — Creutz ratios χ(R,T)" >> $GITHUB_STEP_SUMMARY
