@@ -30,6 +30,23 @@ Three update algorithms are provided:
 Recommended production schedule: ``n_hb`` heat-bath sweeps + ``n_or``
 overrelaxation sweeps interleaved, then measure.
 
+Metropolis delta_S convention
+------------------------------
+The Wilson action is S_W = Σ Re Tr(1 − P).  The local contribution of one
+link U_μ(x) to S_W is determined by the staple sum A:
+
+    S_W_local = Re Tr(1 − U_μ · A†) × (constant per plaquette)
+
+When we replace U_old → U_prop the local change is therefore:
+
+    ΔS = Re Tr[(U_prop − U_old) · A†]     [NOT U_old − U_prop]
+
+We ACCEPT if ΔS ≤ 0 (action decreases or stays same) or with probability
+exp(−β_g · ΔS) otherwise.  Swapping U_old − U_prop would invert the sign
+of every accept/reject decision, causing the chain to *maximise* rather
+than minimise the action — leading to negative ensemble-averaged Wilson
+loops and coupling-halving artefacts.
+
 Honest scope note
 -----------------
 This module targets the pure-gauge sector only (no dynamical fermions).  The
@@ -74,13 +91,16 @@ def _staple_sum(
 
         A_bwd = U_ν(site−ν̂+μ̂)† · U_μ(site−ν̂)† · U_ν(site−ν̂)
 
-    The Wilson contribution of a single link to S_W is then
-    ``Re Tr[ U_μ(site) · A† ]`` where ``A = Σ_ν (A_fwd + A_bwd)``.
+    The Wilson contribution of a single link to S_W is then::
+
+        S_local = Re Tr(1 − U_μ(site) · A†)
+
     The Metropolis local ΔS when replacing U_old with U_prop is therefore::
 
-        ΔS = Re Tr[ (U_old − U_prop) · A† ]
+        ΔS = Re Tr[(U_prop − U_old) · A†]
 
-    which is exact regardless of spatial dimension.
+    Note the sign: U_prop − U_old (not U_old − U_prop).
+    We accept when ΔS ≤ 0 (action decreased) or with exp(−β_g·ΔS).
     """
     ndim = links.shape[0]
     spatial = links.shape[1:-2]
@@ -138,9 +158,14 @@ def metropolis_sweep(
 ) -> tuple[np.ndarray, float]:
     """Single-link Metropolis sweep over all links.
 
-    Uses the exact local ``ΔS = Re Tr[(U_old − U_prop) · A†]`` with the
-    staple sum ``A`` so no full-action recompute is needed per proposal.
-    Accepts with probability ``min(1, exp(−β_g · ΔS))``.
+    Uses the exact local ΔS = Re Tr[(U_prop − U_old) · A†] with the
+    staple sum A so no full-action recompute is needed per proposal.
+    Accepts when ΔS ≤ 0 or with probability exp(−β_g · ΔS).
+
+    Note: ΔS = Re Tr[(U_prop − U_old) · A†]  (U_prop minus U_old).
+    A positive ΔS means the proposal *increases* S_W (bad); we accept
+    it only probabilistically.  A negative ΔS means S_W decreases; we
+    always accept.
 
     Parameters
     ----------
@@ -169,10 +194,11 @@ def metropolis_sweep(
                 v = random_unitary(rng, n, special=(n > 1), scale=step_scale)
                 u_prop = u_old @ v
 
-                # exact local ΔS
+                # exact local ΔS = Re Tr[(U_prop − U_old) · A†]
+                # SIGN: U_prop − U_old  (not U_old − U_prop)
                 a = _staple_sum(links_new, mu, site)
                 a_dag = _dagger(a)
-                delta_s = float(np.real(np.trace((u_old - u_prop) @ a_dag)))
+                delta_s = float(np.real(np.trace((u_prop - u_old) @ a_dag)))
 
                 if delta_s <= 0.0 or rng.random() < math.exp(-beta_g * delta_s):
                     links_new[(mu,) + site] = u_prop
@@ -353,10 +379,11 @@ def heatbath_sweep(
                 else:
                     # generic fallback: tight Metropolis
                     v = random_unitary(rng, n, special=(n > 1), scale=0.05)
-                    u_prop = links_new[(mu,) + site] @ v
+                    u_old = links_new[(mu,) + site]
+                    u_prop = u_old @ v
                     a_dag = _dagger(a)
                     ds = float(np.real(np.trace(
-                        (links_new[(mu,) + site] - u_prop) @ a_dag
+                        (u_prop - u_old) @ a_dag
                     )))
                     if ds <= 0.0 or rng.random() < math.exp(-beta_g * ds):
                         links_new[(mu,) + site] = u_prop

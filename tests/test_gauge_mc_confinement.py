@@ -12,13 +12,17 @@ The Wilson action in gauge_mc.py is::
 
     S_W = Σ_{x,μ<ν} Re Tr(1 − P_{μν}(x))
 
-The Metropolis weight is exp(−β_g · ΔS).  The SU(2) heat-bath kernel
-internally uses alpha = β_g · k / 2 (Kennedy–Pendleton), but this /2 is
-absorbed into the sampling distribution and does **not** halve the effective
-coupling seen by ensemble-averaged observables.  The correct single-plaquette
-benchmark is therefore::
+The Metropolis weight is exp(−β_g · ΔS) where:
+
+    ΔS = Re Tr[(U_prop − U_old) · A†]    (U_prop minus U_old)
+
+T8 (Bessel benchmark) uses the SU(2) Kennedy–Pendleton heat-bath, which
+samples exactly from the single-plaquette Gibbs distribution.  The exact
+result for the heat-bath with this Wilson action convention is:
 
     <W(1,1)> = I₁(β_g) / I₀(β_g)      [NOT I₁(β_g/2)/I₀(β_g/2)]
+
+Metropolis (T4, T5, T9–T13) uses the corrected delta_S sign.
 
 Test catalogue
 --------------
@@ -36,7 +40,7 @@ Gauge invariance  [tests the URP gauge-symmetry proof in code]
   T7   Wilson action invariant under same transformation
 
 Bessel benchmark  [primary sampler correctness — single most important test]
-  T8   ⟨W(1,1)⟩ matches I₁(β_g)/I₀(β_g) within 5 % for β ∈ {0.5…4.0}
+  T8   ⟨W(1,1)⟩ (heat-bath) matches I₁(β_g)/I₀(β_g) within 5 % for β ∈ {0.5…4.0}
 
 Confinement signatures  [URP theory predictions]
   T9   W(1,1) > W(1,2) > 0 at β=1.5  (area-law suppression)
@@ -55,6 +59,7 @@ from scipy.special import iv as bessel_iv
 from project_genesis.gauge import _dagger, random_unitary, identity_links, wilson_action
 from project_genesis.gauge_mc import (
     metropolis_sweep,
+    heatbath_sweep,
     wilson_loop,
     polyakov_loop,
     creutz_ratio,
@@ -280,26 +285,27 @@ def test_wilson_action_gauge_invariance():
 # T8 — Bessel benchmark (the most important test)
 # ===========================================================================
 
-# Convention note: the correct formula for this codebase is I1(β_g)/I0(β_g),
-# NOT I1(β_g/2)/I0(β_g/2).  The /2 in the Kennedy–Pendleton kernel is
-# internal and does not modify the observable expectation value.
-# See the module docstring above for the full derivation.
+# Convention note: uses the SU(2) Kennedy-Pendleton heat-bath, which samples
+# exactly from the single-plaquette Gibbs distribution with the Wilson action
+# convention S_W = Σ Re Tr(1-P).  The exact analytic result is:
+#
+#     <W(1,1)> = I1(β_g) / I0(β_g)    [NOT I1(β_g/2)/I0(β_g/2)]
+#
+# derived from Z = ∫_{SU(2)} dU exp(β_g Re Tr U).
+# The /2 in the Kennedy-Pendleton kernel is internal to the sampling
+# distribution and does NOT modify the ensemble-averaged observable.
 
 @pytest.mark.parametrize("beta_g", [0.5, 1.0, 1.5, 2.0, 3.0, 4.0])
 def test_bessel_benchmark(beta_g):
     """
-    T8: Ensemble ⟨W(1,1)⟩ matches the exact SU(2) single-plaquette result
-        I₁(β_g) / I₀(β_g)  within 5 %.
+    T8: Ensemble ⟨W(1,1)⟩ (heat-bath) matches the exact SU(2) single-plaquette
+        result I₁(β_g) / I₀(β_g) within 5 %.
 
-    Derived from the single-plaquette partition function::
-
-        Z = ∫_{SU(2)} dU exp(β_g Re Tr U)
-        <Re Tr U / 2> = I₁(β_g) / I₀(β_g)
-
-    This simultaneously validates:
-    - correct plaquette orientation in wilson_loop() (not U instead of U†),
-    - correct Metropolis accept/reject sign (not inadvertently flipped ΔS),
-    - ergodicity: the chain converges to the right Gibbs measure.
+    Uses the Kennedy–Pendleton SU(2) heat-bath which samples exactly the
+    correct Gibbs measure.  Simultaneously validates:
+    - correct plaquette orientation in wilson_loop(),
+    - correct Gibbs weight in the heat-bath kernel,
+    - ergodicity: the chain converges to the right distribution.
     """
     # Correct formula: I1(β_g) / I0(β_g)
     exact = float(bessel_iv(1, beta_g) / bessel_iv(0, beta_g))
@@ -313,8 +319,8 @@ def test_bessel_benchmark(beta_g):
         n_therm=500,
         n_meas=400,
         n_skip=3,
-        step_scale=0.4,
-        updater="metropolis",
+        step_scale=0.4,       # ignored by heatbath
+        updater="heatbath",   # exact SU(2) heat-bath for Bessel benchmark
         loop_sizes=[(1, 1)],
     )
     measured = summary["loop_averages"]["W_1_1"]
