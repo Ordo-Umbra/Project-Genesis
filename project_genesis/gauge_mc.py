@@ -44,6 +44,7 @@ implemented here — consistent with the README's stated next step of
 from __future__ import annotations
 
 import math
+import sys
 from typing import Sequence
 
 import numpy as np
@@ -64,24 +65,7 @@ def _staple_sum(
     mu: int,
     site: tuple[int, ...],
 ) -> np.ndarray:
-    """Sum of all staples touching the link U_μ(site).
-
-    For a rectangular plaquette in the (μ,ν) plane the *forward* staple is::
-
-        A_fwd = U_ν(site+μ̂) · U_μ(site+ν̂)† · U_ν(site)†
-
-    and the *backward* staple is::
-
-        A_bwd = U_ν(site−ν̂+μ̂)† · U_μ(site−ν̂)† · U_ν(site−ν̂)
-
-    The Wilson contribution of a single link to S_W is then
-    ``Re Tr[ U_μ(site) · A† ]`` where ``A = Σ_ν (A_fwd + A_bwd)``.
-    The Metropolis local ΔS when replacing U_old with U_prop is therefore::
-
-        ΔS = Re Tr[ (U_old − U_prop) · A† ]
-
-    which is exact regardless of spatial dimension.
-    """
+    """Sum of all staples touching the link U_μ(site)."""
     ndim = links.shape[0]
     spatial = links.shape[1:-2]
     n = links.shape[-1]
@@ -94,31 +78,29 @@ def _staple_sum(
         Lnu = spatial[nu]
         Lmu = spatial[mu]
 
-        # --- forward staple ---
         s_fwd_nu = list(s)
-        s_fwd_nu[mu] = (s[mu] + 1) % Lmu   # site + μ̂
+        s_fwd_nu[mu] = (s[mu] + 1) % Lmu
         s_fwd_nuL = list(s)
-        s_fwd_nuL[nu] = (s[nu] + 1) % Lnu  # site + ν̂
-        s_fwd_nuL[mu] = (s[mu] + 1) % Lmu  # site + μ̂ + ν̂  (not needed directly)
+        s_fwd_nuL[nu] = (s[nu] + 1) % Lnu
+        s_fwd_nuL[mu] = (s[mu] + 1) % Lmu
         s_nu_fwd = list(s)
-        s_nu_fwd[mu] = (s[mu] + 1) % Lmu   # site + μ̂
+        s_nu_fwd[mu] = (s[mu] + 1) % Lmu
 
-        u_nu_fwd   = links[(nu,) + tuple(s_fwd_nu)]    # U_ν(site+μ̂)
+        u_nu_fwd   = links[(nu,) + tuple(s_fwd_nu)]
         s_mu_nu    = list(s)
-        s_mu_nu[nu] = (s[nu] + 1) % Lnu               # site+ν̂
-        u_mu_nu    = links[(mu,) + tuple(s_mu_nu)]      # U_μ(site+ν̂)
-        u_nu_here  = links[(nu,) + tuple(s)]            # U_ν(site)
+        s_mu_nu[nu] = (s[nu] + 1) % Lnu
+        u_mu_nu    = links[(mu,) + tuple(s_mu_nu)]
+        u_nu_here  = links[(nu,) + tuple(s)]
         staple += u_nu_fwd @ _dagger(u_mu_nu) @ _dagger(u_nu_here)
 
-        # --- backward staple ---
         s_dn = list(s)
-        s_dn[nu] = (s[nu] - 1) % Lnu    # site − ν̂
+        s_dn[nu] = (s[nu] - 1) % Lnu
         s_dn_mu  = list(s_dn)
-        s_dn_mu[mu] = (s[mu] + 1) % Lmu  # site − ν̂ + μ̂
+        s_dn_mu[mu] = (s[mu] + 1) % Lmu
 
-        u_nu_dn     = links[(nu,) + tuple(s_dn)]     # U_ν(site−ν̂)
-        u_mu_dn     = links[(mu,) + tuple(s_dn)]     # U_μ(site−ν̂)
-        u_nu_dn_fwd = links[(nu,) + tuple(s_dn_mu)]  # U_ν(site−ν̂+μ̂)
+        u_nu_dn     = links[(nu,) + tuple(s_dn)]
+        u_mu_dn     = links[(mu,) + tuple(s_dn)]
+        u_nu_dn_fwd = links[(nu,) + tuple(s_dn_mu)]
         staple += _dagger(u_nu_dn_fwd) @ _dagger(u_mu_dn) @ u_nu_dn
 
     return staple
@@ -136,26 +118,7 @@ def metropolis_sweep(
     n_sweeps: int = 1,
     step_scale: float = 0.18,
 ) -> tuple[np.ndarray, float]:
-    """Single-link Metropolis sweep over all links.
-
-    Uses the exact local ``ΔS = Re Tr[(U_old − U_prop) · A†]`` with the
-    staple sum ``A`` so no full-action recompute is needed per proposal.
-    Accepts with probability ``min(1, exp(−β_g · ΔS))``.
-
-    Parameters
-    ----------
-    links : ndarray, shape (ndim, *spatial, n, n)
-    beta_g : float  — inverse gauge coupling (Wilson β)
-    rng : Generator
-    n_sweeps : int  — number of full sweeps over the lattice
-    step_scale : float  — scale of the random SU(N) perturbation; tune so
-        acceptance ≈ 50–70 % for the target β_g.
-
-    Returns
-    -------
-    links_new : ndarray
-    acceptance_rate : float
-    """
+    """Single-link Metropolis sweep over all links."""
     ndim = links.shape[0]
     spatial = links.shape[1:-2]
     n = links.shape[-1]
@@ -169,7 +132,6 @@ def metropolis_sweep(
                 v = random_unitary(rng, n, special=(n > 1), scale=step_scale)
                 u_prop = u_old @ v
 
-                # exact local ΔS
                 a = _staple_sum(links_new, mu, site)
                 a_dag = _dagger(a)
                 delta_s = float(np.real(np.trace((u_old - u_prop) @ a_dag)))
@@ -191,35 +153,17 @@ def _heatbath_su2_from_staple(
     beta_g: float,
     rng: np.random.Generator,
 ) -> np.ndarray:
-    """Exact SU(2) heat-bath for one link given its staple sum.
-
-    Implements the Kennedy–Pendleton (1985) / Creutz algorithm:
-
-    1.  Compute ``k = |det(A)|^{1/2}`` where ``A`` is the staple.
-    2.  The new link samples the distribution
-        ``P(U) ∝ exp(β_g/2 · Re Tr[U·A†])`` — a von Mises-like distribution
-        on SU(2).
-    3.  Accept/reject to get the correct Boltzmann weight for
-        ``S_W = β_g/2 · Σ Re Tr(1 − P)``.
-
-    The returned link satisfies ``U ∈ SU(2)``.
-    """
-    # normalise A so we work with the effective coupling k·β_g/2
+    """Exact SU(2) heat-bath for one link given its staple sum."""
     a = staple
-    # SU(2) staple sum: write A = k·V, V ∈ SU(2), k = sqrt(det A)
     det_a = np.linalg.det(a)
     k = float(np.real(np.sqrt(np.abs(det_a))))
     if k < 1e-14:
-        # degenerate staple: draw uniformly from SU(2)
         return random_unitary(rng, 2, special=True, scale=1.0)
 
-    v = a / k  # approximately SU(2); re-project
+    v = a / k
     vd = _dagger(v)
-
     alpha = beta_g * k / 2.0
 
-    # Kennedy–Pendleton: sample a0 from the density
-    # p(a0) ∝ sqrt(1-a0²) exp(2·α·a0),  a0 ∈ [−1,1]
     while True:
         x1 = rng.random()
         x2 = rng.random()
@@ -231,23 +175,19 @@ def _heatbath_su2_from_staple(
         if rng.random() ** 2 <= 1.0 - a0_candidate ** 2:
             a0 = a0_candidate
             break
-        # clamp rare numerical overflows
         if a0_candidate < -1.0 or a0_candidate > 1.0:
             continue
 
-    # random unit 3-vector for the SU(2) Lie-algebra component
     sr = math.sqrt(max(0.0, 1.0 - a0 ** 2))
     theta = math.acos(max(-1.0, min(1.0, 1.0 - 2.0 * rng.random())))
     phi = 2.0 * math.pi * rng.random()
     avec = np.array([sr * math.sin(theta) * math.cos(phi),
                      sr * math.sin(theta) * math.sin(phi),
                      sr * math.cos(theta)])
-    # SU(2) element: a0·I + i·avec·σ
     su2 = (a0 * np.eye(2, dtype=np.complex128)
            + 1j * avec[2] * np.array([[1, 0], [0, -1]], dtype=np.complex128)
            + 1j * avec[0] * np.array([[0, 1], [1, 0]], dtype=np.complex128)
            + 1j * avec[1] * np.array([[0, -1j], [1j, 0]], dtype=np.complex128))
-    # new link: su2 · V† so that U·A† is SU(2) × (k·I) with the right weight
     return su2 @ vd
 
 
@@ -260,9 +200,7 @@ def _cm_su2_embed(size: int, indices: tuple[int, int]) -> callable:
     i, j = indices
 
     def extract(u: np.ndarray) -> np.ndarray:
-        """Project the 2×2 block (i,j) onto SU(2)."""
         b = u[np.ix_([i, j], [i, j])]
-        # re-project onto SU(2) via normalised first row
         r0 = b[0].copy()
         nrm = np.linalg.norm(r0)
         if nrm < 1e-14:
@@ -272,7 +210,6 @@ def _cm_su2_embed(size: int, indices: tuple[int, int]) -> callable:
         return np.array([r0, r1])
 
     def embed(r: np.ndarray) -> np.ndarray:
-        """Embed SU(2) matrix r into SU(size) at positions (i,j)."""
         out = np.eye(size, dtype=np.complex128)
         out[i, i] = r[0, 0]
         out[i, j] = r[0, 1]
@@ -289,27 +226,17 @@ def _cabibbo_marinari_su3_update(
     beta_g: float,
     rng: np.random.Generator,
 ) -> np.ndarray:
-    """One Cabibbo–Marinari pseudo-heat-bath step for a single SU(3) link.
-
-    Cycles through the three SU(2) subgroups {(0,1), (0,2), (1,2)}, updating
-    each with an exact SU(2) heat-bath in the background of the current link.
-    This is the standard algorithm for SU(N≥3) heat-bath (Cabibbo & Marinari
-    1982).
-    """
+    """One Cabibbo–Marinari pseudo-heat-bath step for a single SU(3) link."""
     u_new = u.copy()
     for (i, j) in ((0, 1), (0, 2), (1, 2)):
         extract, embed = _cm_su2_embed(3, (i, j))
-        # Effective SU(2) staple: project u·staple† onto the (i,j) block
         w = u_new @ _dagger(staple)
         w_block = w[np.ix_([i, j], [i, j])]
-        # build SU(2) staple
         nrm = float(np.real(np.sqrt(np.abs(np.linalg.det(w_block)))))
         if nrm < 1e-14:
             continue
         su2_staple = w_block / nrm
-        # heat-bath step in SU(2)
         r = _heatbath_su2_from_staple(su2_staple * nrm, beta_g, rng)
-        # embed back
         u_new = embed(r) @ u_new
     return u_new
 
@@ -325,16 +252,7 @@ def heatbath_sweep(
     *,
     n_sweeps: int = 1,
 ) -> tuple[np.ndarray, float]:
-    """Heat-bath sweep over all links.
-
-    * SU(2): exact Kennedy–Pendleton update per link.
-    * SU(3): Cabibbo–Marinari pseudo-heat-bath (three SU(2) sub-updates).
-    * SU(N>3): falls back to a Metropolis step with tight step_scale.
-
-    Returns ``(links, 1.0)`` — acceptance is 100 % by construction for exact
-    heat-bath; the returned scalar is kept for API uniformity with
-    ``metropolis_sweep``.
-    """
+    """Heat-bath sweep over all links."""
     ndim = links.shape[0]
     spatial = links.shape[1:-2]
     n = links.shape[-1]
@@ -351,7 +269,6 @@ def heatbath_sweep(
                         links_new[(mu,) + site], a, beta_g, rng
                     )
                 else:
-                    # generic fallback: tight Metropolis
                     v = random_unitary(rng, n, special=(n > 1), scale=0.05)
                     u_prop = links_new[(mu,) + site] @ v
                     a_dag = _dagger(a)
@@ -375,22 +292,7 @@ def overrelaxation_sweep(
     n_sweeps: int = 1,
     omega: float = 1.0,
 ) -> tuple[np.ndarray, float]:
-    """Overrelaxation sweep — energy-conserving link updates.
-
-    For each link ``U``, the overrelaxed update is::
-
-        U_new = A† · (U · A†)†   where A = staple_sum
-
-    This is the *reflection* of U through the SU(N) manifold defined by the
-    local action minimum ``U_min ∝ A†``.  It leaves the local action
-    ``Re Tr[U·A†]`` unchanged (microcanonical) while strongly decorrelating
-    the link orientation — particularly useful between heat-bath sweeps.
-
-    ``omega`` ∈ (0, 2] is an over-relaxation parameter; ``omega=1`` gives the
-    standard reflection.  Values > 1 do a partial over-shoot (use with care).
-
-    Returns ``(links, 1.0)`` — acceptance is always 1 by construction.
-    """
+    """Overrelaxation sweep — energy-conserving link updates."""
     ndim = links.shape[0]
     spatial = links.shape[1:-2]
     n = links.shape[-1]
@@ -402,16 +304,11 @@ def overrelaxation_sweep(
                 a = _staple_sum(links_new, mu, site)
                 a_dag = _dagger(a)
                 u_old = links_new[(mu,) + site]
-                # U_new = A† · (U · A†)† = A† · A · U†
                 u_ref = a_dag @ (u_old @ a_dag).conj().swapaxes(-1, -2)
                 if omega != 1.0:
-                    # interpolate between U_old (ω=0) and U_ref (ω=1), overshoot ω>1
-                    # re-project to SU(N) via matrix exp of the su(N) displacement
                     disp = u_ref - u_old
-                    # first-order tangent step, then re-project via QR
                     u_new = u_old + omega * disp
                     q, r = np.linalg.qr(u_new)
-                    # fix determinant phase
                     if n > 1:
                         d = np.linalg.det(q)
                         q[..., -1] /= d
@@ -431,22 +328,7 @@ def wilson_loop(
     extents: tuple[int, int],
     plane: tuple[int, int] = (0, 1),
 ) -> float:
-    """Ensemble-average ⟨Re Tr W(R,T)⟩ / N for a single link configuration.
-
-    Averages over *all* origins in the lattice (translational invariance) to
-    improve statistics.  The loop is a rectangle in the ``plane = (μ, ν)``
-    with side lengths ``extents = (R, T)`` in lattice units.
-
-    Parameters
-    ----------
-    links : ndarray, shape (ndim, *spatial, n, n)
-    extents : (R, T)  — loop side lengths (must fit within spatial dims)
-    plane : (μ, ν)   — the two directions spanning the loop
-
-    Returns
-    -------
-    float in [−1, 1]
-    """
+    """Ensemble-average ⟨Re Tr W(R,T)⟩ / N for a single link configuration."""
     ndim = links.shape[0]
     spatial = links.shape[1:-2]
     n = links.shape[-1]
@@ -482,12 +364,7 @@ def wilson_loop(
 # ---------------------------------------------------------------------------
 
 def polyakov_loop(links: np.ndarray, temporal_axis: int = -1) -> float:
-    """Spatially averaged Polyakov loop (real part), normalised to [0, 1].
-
-    ``⟨|P|⟩ ≈ 0`` in the confined phase (Z_N symmetry unbroken), positive
-    in the deconfined phase.  The temporal direction is ``temporal_axis``
-    (default: last spatial axis, i.e. axis ``ndim − 1``).
-    """
+    """Spatially averaged Polyakov loop (real part), normalised to [0, 1]."""
     ndim = links.shape[0]
     spatial = links.shape[1:-2]
     n = links.shape[-1]
@@ -498,11 +375,9 @@ def polyakov_loop(links: np.ndarray, temporal_axis: int = -1) -> float:
     pl_sum = 0.0 + 0.0j
     n_spatial = 0
 
-    # iterate over the spatial hyper-slice orthogonal to `axis`
     transverse = [i for i in range(ndim) if i != axis]
     trans_sizes = [spatial[i] for i in transverse]
     for trans_site in np.ndindex(*trans_sizes):
-        # rebuild full site with temporal=0
         pos = [0] * ndim
         for k, i in enumerate(transverse):
             pos[i] = trans_site[k]
@@ -526,12 +401,7 @@ def creutz_ratio(
     w_i_jm1: float,
     w_im1_j: float,
 ) -> float:
-    """Creutz ratio χ(R,T) = −log[W(R,T)·W(R-1,T-1) / W(R,T-1)·W(R-1,T)].
-
-    This estimator of the string tension cancels the perimeter (self-energy)
-    contribution to leading order, giving a cleaner signal for σ than a raw
-    area-law fit.  Returns ``nan`` if any Wilson loop is ≤ 0.
-    """
+    """Creutz ratio χ(R,T) = −log[W(R,T)·W(R-1,T-1) / W(R,T-1)·W(R-1,T)]."""
     if any(w <= 0.0 for w in (w_ij, w_im1_jm1, w_i_jm1, w_im1_j)):
         return float("nan")
     return -math.log((w_ij * w_im1_jm1) / (w_i_jm1 * w_im1_j))
@@ -546,32 +416,11 @@ def fit_area_law(
     r_values: Sequence[int],
     t_values: Sequence[int],
 ) -> dict:
-    """Fit the area-law ansatz W(R,T) = exp(−σ·R·T − c·(R+T)) to a matrix of
-    ensemble-averaged Wilson loops.
-
-    Parameters
-    ----------
-    loop_matrix : ndarray, shape (len(r_values), len(t_values))
-        Ensemble-averaged ⟨W(R,T)⟩ values.
-    r_values : sequence of R (spatial separations)
-    t_values : sequence of T (temporal separations)
-
-    Returns
-    -------
-    dict with keys:
-        ``sigma``   — string tension (area coefficient; > 0 = confined)
-        ``perimeter_coeff``  — perimeter coefficient c
-        ``fit_residual``     — mean absolute residual of the log fit
-        ``creutz_ratios``    — dict {"chi_R_T": value} for adjacent pairs
-        ``raw_loops``        — the input matrix as a nested list
-    """
+    """Fit W(R,T) = exp(−σ·R·T − c·(R+T)) to ensemble-averaged Wilson loops."""
     rs = list(r_values)
     ts = list(t_values)
-    nr, nt = len(rs), len(ts)
     W = np.array(loop_matrix)
 
-    # build least-squares system: log W(R,T) = -σ·R·T - c·(R+T)
-    # only use positive-valued loops
     rows_A, rows_b = [], []
     for i, r in enumerate(rs):
         for j, t in enumerate(ts):
@@ -593,7 +442,6 @@ def fit_area_law(
         except np.linalg.LinAlgError:
             pass
 
-    # Creutz ratios for adjacent (R,T) pairs
     creutz: dict[str, float] = {}
     for i, r in enumerate(rs[1:], 1):
         for j, t in enumerate(ts[1:], 1):
@@ -625,20 +473,29 @@ def deconfinement_scan(
     n_skip: int = 5,
     updater: str = "heatbath",
     loop_sizes: list[tuple[int, int]] | None = None,
+    verbose_progress: bool = True,
 ) -> list[dict]:
     """Scan β_g and record string tension and Polyakov-loop order parameter.
 
-    For each β value the lattice is thermalised from a *hot start*, then
-    ``n_meas`` measurements are taken every ``n_skip`` sweeps.  Useful for
-    identifying the deconfinement transition: σ → 0 and ⟨|P|⟩ becomes
-    non-zero as β_g increases through the critical β.
-
-    Returns a list of summary dicts (one per β value).
+    Parameters
+    ----------
+    verbose_progress : bool
+        If True (default), print a one-liner per beta point to stdout so that
+        CI runners and terminals show forward progress instead of appearing
+        hung.  Set to False in unit tests where output is unwanted.
     """
     if loop_sizes is None:
         loop_sizes = [(1, 1), (2, 2), (3, 3)]
+    beta_list = list(beta_values)
+    n_beta = len(beta_list)
     results = []
-    for beta_g in beta_values:
+    for idx, beta_g in enumerate(beta_list, 1):
+        if verbose_progress:
+            print(
+                f"  beta {idx}/{n_beta}  β_g={beta_g:.3f}  "
+                f"(therm={n_therm} meas={n_meas} skip={n_skip} updater={updater})",
+                flush=True,
+            )
         summary, _ = thermalize_and_measure_pure_gauge(
             size=size,
             n=n,
@@ -651,6 +508,13 @@ def deconfinement_scan(
             updater=updater,
             loop_sizes=loop_sizes,
         )
+        if verbose_progress:
+            sigma = summary["area_law_fit"]["sigma"]
+            poly  = abs(summary["polyakov_mean"])
+            print(
+                f"    → sigma={sigma:+.5f}  |<P>|={poly:.4f}",
+                flush=True,
+            )
         results.append(summary)
     return results
 
@@ -673,28 +537,7 @@ def thermalize_and_measure_pure_gauge(
     updater: str = "metropolis",
     loop_sizes: list[tuple[int, int]] | None = None,
 ) -> tuple[dict, np.ndarray]:
-    """Thermalise and measure Wilson loops + Polyakov loop for a pure SU(N) theory.
-
-    Parameters
-    ----------
-    size : int — lattice side length (cubic: *size*^ndim)
-    n : int — gauge group SU(N)
-    beta_g : float — inverse gauge coupling (Wilson β)
-    rng : Generator
-    ndim : int — spatial dimensions (default 2; use 3 or 4 for full study)
-    n_therm : int — thermalisation sweeps (hot start)
-    n_meas : int — number of measurements
-    n_skip : int — sweeps between measurements (decorrelation)
-    step_scale : float — Metropolis step scale (tune for ~50 % acceptance)
-    updater : str — "metropolis" | "heatbath" | "overrelax"
-    loop_sizes : list of (R, T) tuples to measure
-
-    Returns
-    -------
-    summary : dict — contains beta_g, updater, loop_averages, polyakov_mean,
-        final_wilson_action, and area_law_fit
-    links : ndarray — final link configuration
-    """
+    """Thermalise and measure Wilson loops + Polyakov loop for a pure SU(N) theory."""
     if loop_sizes is None:
         loop_sizes = [(1, 1), (2, 2), (3, 3)]
 
@@ -714,7 +557,6 @@ def thermalize_and_measure_pure_gauge(
     for _ in range(n_therm):
         links = _sweep(links)
 
-    # build a full W(R,T) matrix
     rs = sorted({s[0] for s in loop_sizes})
     ts = sorted({s[1] for s in loop_sizes})
     W_accum = np.zeros((len(rs), len(ts)), dtype=np.float64)
