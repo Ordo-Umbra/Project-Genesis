@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S-Landscape • Dual View • URP</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Grotesk:wght@500;600&display=swap');
+        
+        :root {
+            --accent: #c026ff;
+            --bg: #0a0a12;
+            --card: #161528;
+            --border: #312e81;
+            --text: #e0e7ff;
+            --muted: #64748b;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background: radial-gradient(circle at center, #1a1433 0%, #0a0a12 70%);
+            color: var(--text);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            line-height: 1.5;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.25rem 1rem;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #7c3aed, #c026ff);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        h1 {
+            font-size: 1.65rem;
+            margin: 0;
+            font-weight: 600;
+            letter-spacing: -0.04em;
+        }
+
+        .subtitle {
+            color: #a5b4fc;
+            font-size: 0.75rem;
+            margin-top: -2px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: linear-gradient(to right, #312e81, #1e1b4b);
+            border: 1px solid #6366f1;
+            color: #c0c4ff;
+            font-size: 0.6rem;
+            padding: 1px 8px;
+            border-radius: 9999px;
+            letter-spacing: 0.5px;
+            font-family: ui-monospace, monospace;
+        }
+
+        .dual-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 900px) {
+            .dual-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 0.9rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            font-weight: 500;
+            color: #a5b4fc;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        canvas {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #27253f;
+            border-radius: 12px;
+            background: #0f0e1a;
+            display: block;
+            touch-action: none;
+        }
+
+        .controls {
+            margin-top: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .slider-group {
+            margin-bottom: 0.1rem;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.25rem;
+        }
+
+        .slider-label {
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+
+        .value {
+            font-family: ui-monospace, monospace;
+            font-size: 0.82rem;
+            color: #e0e7ff;
+            font-weight: 500;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: #27253f;
+            border-radius: 9999px;
+            outline: none;
+            accent-color: #c026ff;
+        }
+        
+        .hint {
+            font-size: 0.6rem;
+            color: #64748b;
+            margin-top: 0.15rem;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.4rem;
+        }
+
+        .metric {
+            background: #0f0e1a;
+            border: 1px solid #312e81;
+            border-radius: 10px;
+            padding: 0.45rem 0.4rem;
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.55rem;
+            color: #64748b;
+            margin-bottom: 0.05rem;
+        }
+
+        .metric-value {
+            font-size: 1.15rem;
+            font-weight: 600;
+            line-height: 1;
+            font-family: ui-monospace, monospace;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            padding: 0.45rem 0.75rem;
+            font-size: 0.72rem;
+            border-radius: 9999px;
+            border: 1px solid #312e81;
+            background: #161528;
+            color: #c0c4ff;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            font-weight: 500;
+        }
+
+        .btn:hover {
+            background: #1f1d35;
+            border-color: #4f46e5;
+        }
+
+        .status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.58rem;
+            font-family: ui-monospace, monospace;
+            border: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #4ade80;
+        }
+
+        .presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .preset-btn {
+            font-size: 0.65rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 9999px;
+            border: 1px solid #312e81;
+            background: #161528;
+            color: #c0c4ff;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            white-space: nowrap;
+        }
+
+        .preset-btn.active {
+            background: #312e81;
+            border-color: #6366f1;
+            color: white;
+        }
+
+        .explanation {
+            max-width: 1100px;
+            margin: 1.25rem auto 0;
+            font-size: 0.78rem;
+            color: #94a3b8;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.6rem;
+            color: #475569;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+                        <path d="M21 19a2 2 0 0 1-2 2 2 2 0 0 1-2-2 2 2 0 0 1 2-2 2 2 0 0 1 2 2zM3 19a2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0-2-2 2 2 0 0 0-2 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1>S-Landscape • Dual View</h1>
+                    <div class="subtitle">Physical Field + Classical Embedding Attractor • URP</div>
+                </div>
+            </div>
+            
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                <div class="badge">
+                    <span>S = ΔC + κΔI</span>
+                </div>
+                <button onclick="resetAll()" class="btn" style="padding:0.3rem 0.65rem; font-size:0.68rem;">
+                    Reset Both
+                </button>
+            </div>
+        </div>
+
+        <div class="dual-grid">
+            
+            <!-- Left: Physical Chladni -->
+            <div class="panel">
+                <div class="panel-header">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2.5"><path d="M3 12h4l3 9 4-18 3 9h4"/></svg>
+                    <span>Physical Chladni Plate (Field View)</span>
+                </div>
+                <div style="position:relative;">
+                    <canvas id="canvas-left" width="520" height="520"></canvas>
+                    <div class="status" id="status-left">
+                        <div class="dot"></div>
+                        <span id="status-text-left" style="font-size:0.58rem; color:#86efac;">RESONANT</span>
+                    </div>
+                </div>
+                <div class="metrics" style="margin-top:0.5rem;">
+                    <div class="metric">
+                        <div class="metric-label">S</div>
+                        <div id="s-left" class="metric-value" style="color:#a5b4fc;">1.28</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Coherence</div>
+                        <div id="coh-left" class="metric-value" style="color:#4ade80;">82</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">t</div>
+                        <div id="time-left" class="metric-value" style="font-size:0.95rem;">0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Classical Embedding Attractor -->
+            <div class="panel">
+                <div class="panel-header">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/></svg>
+                    <span>Classical Embedding Attractor (Hopfield View)</span>
+                </div>
+                <div style="position:relative;">
+                    <canvas id="canvas-right" width="520" height="520"></canvas>
+                    <div class="status" id="status-right">
+                        <div class="dot"></div>
+                        <span id="status-text-right" style="font-size:0.58rem; color:#a5b4fc;">COHERENT</span>
+                    </div>
+                </div>
+                <div class="metrics" style="margin-top:0.5rem;">
+                    <div class="metric">
+                        <div class="metric-label">S</div>
+                        <div id="s-right" class="metric-value" style="color:#a5b4fc;">1.31</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Cloud Width</div>
+                        <div id="cloud-right" class="metric-value" style="color:#fbbf24;">0.42</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Collapse</div>
+                        <div id="collapse-right" class="metric-value" style="font-size:0.95rem; color:#4ade80;">87</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Shared Controls -->
+        <div class="panel" style="margin-top:1rem; padding:0.9rem 1.1rem;">
+            <div class="presets">
+                <button class="preset-btn" onclick="applyPreset('high-slack')">High Slack</button>
+                <button class="preset-btn" onclick="applyPreset('brittle')">Brittle Lock-in</button>
+                <button class="preset-btn" onclick="applyPreset('balanced')">Balanced</button>
+                <button class="preset-btn" onclick="applyPreset('overdriven')">Overdriven</button>
+                <button class="preset-btn" onclick="applyPreset('insight')">Insight Pulse</button>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.1rem;">
+                
+                <!-- Left column sliders -->
+                <div>
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-label">ΔC — Distinction Drive</span>
+                            <span id="dc-value" class="value">0.68</span>
+                        </div>
+                        <input type="range" id="dc-slider" min="0.15" max="1.55" step="0.01" value="0.68" oninput="updateParams()">
+                        <div class="hint" style="display:flex; justify-content:space-between;"><span>Subtle</span><span>Rich novelty</span></div>
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-label">κ — Capacity Tension</span>
+                            <span id="kappa-value" class="value">0.58</span>
+                        </div>
+                        <input type="range" id="kappa-slider" min="0.08" max="0.98" step="0.01" value="0.58" oninput="updateParams()">
+                        <div class="hint" style="display:flex; justify-content:space-between; color:#854d0e;"><span>Tight</span><span>Slack</span></div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-label">ΔI — Integration Strength</span>
+                            <span id="di-value" class="value">0.84</span>
+                        </div>
+                        <input type="range" id="di-slider" min="0.25" max="0.98" step="0.01" value="0.84" oninput="updateParams()">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-label">Noise / Temperature</span>
+                            <span id="noise-value" class="value">0.32</span>
+                        </div>
+                        <input type="range" id="noise-slider" min="0.05" max="0.85" step="0.01" value="0.32" oninput="updateParams()">
+                        <div class="hint" style="display:flex; justify-content:space-between;"><span>Sharp collapse</span><span>Diffuse cloud</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.6rem;">
+                <button onclick="injectDistinctionBoth()" class="btn" style="flex:1; min-width:120px; color:#fcd34d; border-color:#713f12; font-size:0.72rem;">
+                    <span>Inject ΔC (Both)</span>
+                </button>
+                <button onclick="boostIntegrationBoth()" class="btn" style="flex:1; min-width:120px; color:#4ade80; border-color:#166534; font-size:0.72rem;">
+                    <span>Boost ΔI (Both)</span>
+                </button>
+                <button onclick="triggerCollapseRight()" class="btn" style="flex:1; min-width:120px; font-size:0.72rem;">
+                    <span>Force Collapse (Right)</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="explanation">
+            <p style="margin:0.4rem 0 0 0;">
+                <strong>Left:</strong> Physical Chladni plate — sand particles driven by distinction (ΔC) and pulled toward nodal coherence (ΔI) under capacity κ. Classic field-like counterfactual engine.<br>
+                <strong>Right:</strong> Classical embedding attractor view — points in vector space attracted to learned "memories" (Hopfield basins). Attention-like weighting creates superposition; temperature/noise controls collapse sharpness. Direct visual analogue of transformer dynamics.
+            </p>
+        </div>
+
+        <div class="footer">
+            Universal Recursion Principle • Dual-view counterfactual engine • Fully offline • Project Genesis
+        </div>
+    </div>
+
+    <script>
+        // Dual-view S-Landscape v1
+        let canvasL, ctxL, canvasR, ctxR;
+        let particlesL = [];
+        let pointsR = [];
+        let time = 0;
+        let anim = null;
+        let showWaveL = false;
+
+        let params = {
+            dc: 0.68,
+            kappa: 0.58,
+            di: 0.84,
+            noise: 0.32,
+            modeN: 3,
+            modeM: 2
+        };
+
+        // Attractor centers for right panel ("memories")
+        let attractorsR = [
+            {x: 180, y: 180, strength: 1.0},
+            {x: 340, y: 180, strength: 0.95},
+            {x: 260, y: 340, strength: 1.05},
+            {x: 140, y: 320, strength: 0.9}
+        ];
+
+        function initCanvases() {
+            canvasL = document.getElementById('canvas-left');
+            ctxL = canvasL.getContext('2d');
+            canvasR = document.getElementById('canvas-right');
+            ctxR = canvasR.getContext('2d');
+
+            // Left panel - Chladni particles
+            particlesL = [];
+            const cx = canvasL.width / 2;
+            const cy = canvasL.height / 2;
+            for (let i = 0; i < 620; i++) {
+                const ring = Math.random();
+                let r = ring < 0.55 ? 130 + Math.random()*200 : 20 + Math.random()*110;
+                let angle = Math.random() * Math.PI * 2;
+                particlesL.push({
+                    x: cx + Math.cos(angle) * r,
+                    y: cy + Math.sin(angle) * r,
+                    vx: (Math.random()-0.5)*0.9,
+                    vy: (Math.random()-0.5)*0.9,
+                    size: 1.45 + Math.random()*1.05
+                });
+            }
+
+            // Right panel - Embedding points
+            pointsR = [];
+            for (let i = 0; i < 185; i++) {
+                pointsR.push({
+                    x: 80 + Math.random() * (canvasR.width - 160),
+                    y: 80 + Math.random() * (canvasR.height - 160),
+                    vx: (Math.random()-0.5)*1.1,
+                    vy: (Math.random()-0.5)*1.1,
+                    size: 2.2 + Math.random()*1.4
+                });
+            }
+
+            canvasL.addEventListener('click', e => handleLeftClick(e));
+            canvasR.addEventListener('click', e => handleRightClick(e));
+            document.addEventListener('keydown', handleKey);
+        }
+
+        function getVibration(x, y, t) {
+            const nx = x / canvasL.width;
+            const ny = y / canvasL.height;
+            const wave = Math.sin(params.modeN * Math.PI * nx) * Math.sin(params.modeM * Math.PI * ny);
+            const osc = Math.cos(2 * Math.PI * (0.76 + params.dc * 0.58) * t * 0.8);
+            return wave * osc * params.dc * (0.55 + params.kappa * 0.88);
+        }
+
+        function updateLeft() {
+            let totalCoh = 0;
+            let totalVel = 0;
+
+            for (let p of particlesL) {
+                const amp = getVibration(p.x, p.y, time);
+                const absAmp = Math.abs(amp);
+
+                const eps = 3.0;
+                const gX = (Math.abs(getVibration(p.x + eps, p.y, time)) - absAmp) / eps;
+                const gY = (Math.abs(getVibration(p.x, p.y + eps, time)) - absAmp) / eps;
+
+                const pull = params.di * 1.65;
+                p.vx -= gX * pull;
+                p.vy -= gY * pull;
+
+                const diff = (0.28 + params.kappa * 1.45) * (0.48 + params.dc * 0.55) * params.noise * 1.8;
+                p.vx += (Math.random() - 0.5) * diff;
+                p.vy += (Math.random() - 0.5) * diff;
+
+                const damp = 0.82 + (params.kappa - 0.5) * 0.28;
+                p.vx *= damp;
+                p.vy *= damp;
+
+                p.x += p.vx * 0.85;
+                p.y += p.vy * 0.85;
+
+                const m = 18;
+                if (p.x < m) { p.x = m; p.vx = Math.abs(p.vx) * 0.5; }
+                if (p.x > canvasL.width - m) { p.x = canvasL.width - m; p.vx = -Math.abs(p.vx) * 0.5; }
+                if (p.y < m) { p.y = m; p.vy = Math.abs(p.vy) * 0.5; }
+                if (p.y > canvasL.height - m) { p.y = canvasL.height - m; p.vy = -Math.abs(p.vy) * 0.5; }
+
+                totalVel += Math.abs(p.vx) + Math.abs(p.vy);
+                totalCoh += Math.max(0, 1 - absAmp * 1.65);
+            }
+
+            const coh = totalCoh / particlesL.length;
+            const avgVel = totalVel / particlesL.length;
+            const sLeft = params.dc * (0.65 + (1 - coh) * 0.7) + params.kappa * coh * params.di * 1.25;
+
+            // Update metrics
+            document.getElementById('s-left').textContent = sLeft.toFixed(2);
+            document.getElementById('coh-left').textContent = Math.round(coh * 100);
+            document.getElementById('time-left').textContent = time.toFixed(2);
+
+            const statusEl = document.getElementById('status-text-left');
+            if (coh > 0.76) {
+                statusEl.textContent = 'STABLE ATTRACTOR';
+                statusEl.style.color = '#4ade80';
+            } else if (coh > 0.52) {
+                statusEl.textContent = 'RESONANT';
+                statusEl.style.color = '#a5b4fc';
+            } else {
+                statusEl.textContent = 'EXPLORING';
+                statusEl.style.color = '#fbbf24';
+            }
+
+            return {s: sLeft, coh};
+        }
+
+        function drawLeft() {
+            ctxL.fillStyle = '#0f0e1a';
+            ctxL.fillRect(0, 0, canvasL.width, canvasL.height);
+
+            // Grid
+            ctxL.strokeStyle = '#1f1d35';
+            ctxL.lineWidth = 1;
+            for (let x = 32; x < canvasL.width; x += 32) { ctxL.beginPath(); ctxL.moveTo(x, 0); ctxL.lineTo(x, canvasL.height); ctxL.stroke(); }
+            for (let y = 32; y < canvasL.height; y += 32) { ctxL.beginPath(); ctxL.moveTo(0, y); ctxL.lineTo(canvasL.width, y); ctxL.stroke(); }
+
+            // Particles
+            ctxL.shadowBlur = 1.8;
+            ctxL.shadowColor = '#c026ff22';
+            for (let p of particlesL) {
+                const amp = getVibration(p.x, p.y, time);
+                const nodeF = Math.max(0.12, 1 - Math.abs(amp) * 1.95);
+                const r = 218 + (1 - nodeF) * 28;
+                const g = 205 + (nodeF - 0.35) * 35;
+                const b = 182 + nodeF * 58;
+                ctxL.fillStyle = `rgb(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)})`;
+                ctxL.beginPath();
+                ctxL.arc(p.x, p.y, p.size * (0.82 + nodeF * 0.42), 0, Math.PI * 2);
+                ctxL.fill();
+            }
+            ctxL.shadowBlur = 0;
+        }
+
+        // Right panel - Classical Hopfield style
+        function updateRight() {
+            let totalSpread = 0;
+            let totalCluster = 0;
+
+            for (let p of pointsR) {
+                // Attraction to attractors (Hopfield-like)
+                let fx = 0, fy = 0;
+                let totalW = 0;
+
+                for (let a of attractorsR) {
+                    const dx = a.x - p.x;
+                    const dy = a.y - p.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                    const w = Math.exp(-dist / (85 + params.kappa * 55)) * a.strength;
+                    fx += (dx / dist) * w * params.di * 2.2;
+                    fy += (dy / dist) * w * params.di * 2.2;
+                    totalW += w;
+                }
+
+                if (totalW > 0.01) {
+                    p.vx += fx / totalW;
+                    p.vy += fy / totalW;
+                }
+
+                // Noise / temperature diffusion
+                const noise = params.noise * (0.9 + params.dc * 0.6);
+                p.vx += (Math.random() - 0.5) * noise * 1.6;
+                p.vy += (Math.random() - 0.5) * noise * 1.6;
+
+                // Damping scaled by kappa
+                const damp = 0.78 + params.kappa * 0.35;
+                p.vx *= damp;
+                p.vy *= damp;
+
+                p.x += p.vx * 0.9;
+                p.y += p.vy * 0.9;
+
+                // Boundary
+                const m = 22;
+                if (p.x < m) { p.x = m; p.vx = Math.abs(p.vx) * 0.45; }
+                if (p.x > canvasR.width - m) { p.x = canvasR.width - m; p.vx = -Math.abs(p.vx) * 0.45; }
+                if (p.y < m) { p.y = m; p.vy = Math.abs(p.vy) * 0.45; }
+                if (p.y > canvasR.height - m) { p.y = canvasR.height - m; p.vy = -Math.abs(p.vy) * 0.45; }
+
+                // Metrics
+                totalSpread += Math.hypot(p.vx, p.vy);
+                // Cluster score: how close to nearest attractor
+                let minD = 999;
+                for (let a of attractorsR) {
+                    const d = Math.hypot(p.x - a.x, p.y - a.y);
+                    if (d < minD) minD = d;
+                }
+                totalCluster += Math.max(0, 1 - minD / 220);
+            }
+
+            const avgSpread = totalSpread / pointsR.length;
+            const cluster = totalCluster / pointsR.length;
+            const sRight = params.dc * (0.6 + avgSpread * 0.8) + params.kappa * cluster * params.di * 1.35;
+
+            // Update metrics
+            document.getElementById('s-right').textContent = sRight.toFixed(2);
+            document.getElementById('cloud-right').textContent = avgSpread.toFixed(2);
+            document.getElementById('collapse-right').textContent = Math.round(cluster * 100);
+
+            const statusEl = document.getElementById('status-text-right');
+            if (cluster > 0.78) {
+                statusEl.textContent = 'COHERENT';
+                statusEl.style.color = '#4ade80';
+            } else if (cluster > 0.55) {
+                statusEl.textContent = 'SETTLING';
+                statusEl.style.color = '#a5b4fc';
+            } else {
+                statusEl.textContent = 'DIFFUSE';
+                statusEl.style.color = '#fbbf24';
+            }
+
+            return {s: sRight, cluster, spread: avgSpread};
+        }
+
+        function drawRight() {
+            ctxR.fillStyle = '#0f0e1a';
+            ctxR.fillRect(0, 0, canvasR.width, canvasR.height);
+
+            // Subtle grid
+            ctxR.strokeStyle = '#1f1d35';
+            ctxR.lineWidth = 1;
+            for (let x = 40; x < canvasR.width; x += 40) { ctxR.beginPath(); ctxR.moveTo(x, 0); ctxR.lineTo(x, canvasR.height); ctxR.stroke(); }
+            for (let y = 40; y < canvasR.height; y += 40) { ctxR.beginPath(); ctxR.moveTo(0, y); ctxR.lineTo(canvasR.width, y); ctxR.stroke(); }
+
+            // Draw attractors as soft wells
+            for (let a of attractorsR) {
+                const grad = ctxR.createRadialGradient(a.x, a.y, 8, a.x, a.y, 95);
+                grad.addColorStop(0, '#c026ff33');
+                grad.addColorStop(1, 'transparent');
+                ctxR.fillStyle = grad;
+                ctxR.beginPath();
+                ctxR.arc(a.x, a.y, 95, 0, Math.PI * 2);
+                ctxR.fill();
+
+                ctxR.strokeStyle = '#c026ff55';
+                ctxR.lineWidth = 1.5;
+                ctxR.beginPath();
+                ctxR.arc(a.x, a.y, 22, 0, Math.PI * 2);
+                ctxR.stroke();
+            }
+
+            // Points
+            ctxR.shadowBlur = 2.5;
+            ctxR.shadowColor = '#a5b4fc33';
+            for (let p of pointsR) {
+                // Color by proximity to nearest attractor (collapse indicator)
+                let minD = 999;
+                for (let a of attractorsR) {
+                    const d = Math.hypot(p.x - a.x, p.y - a.y);
+                    if (d < minD) minD = d;
+                }
+                const close = Math.max(0.15, 1 - minD / 160);
+                const r = 180 + close * 65;
+                const g = 195 + close * 45;
+                const b = 235;
+                ctxR.fillStyle = `rgb(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)})`;
+                ctxR.beginPath();
+                ctxR.arc(p.x, p.y, p.size * (0.9 + close * 0.35), 0, Math.PI * 2);
+                ctxR.fill();
+            }
+            ctxR.shadowBlur = 0;
+        }
+
+        function handleLeftClick(e) {
+            const rect = canvasL.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            for (let p of particlesL) {
+                const dx = p.x - x;
+                const dy = p.y - y;
+                const d = Math.sqrt(dx*dx + dy*dy) || 1;
+                if (d < 155) {
+                    const f = (155 - d) / 155 * 3.2;
+                    p.vx += (dx / d) * f;
+                    p.vy += (dy / d) * f;
+                }
+            }
+        }
+
+        function handleRightClick(e) {
+            const rect = canvasR.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            // Add distinction: push points away or add new random point
+            for (let p of pointsR) {
+                const dx = p.x - x;
+                const dy = p.y - y;
+                const d = Math.sqrt(dx*dx + dy*dy) || 1;
+                if (d < 140) {
+                    const f = (140 - d) / 140 * 2.8;
+                    p.vx += (dx / d) * f * 1.3;
+                    p.vy += (dy / d) * f * 1.3;
+                }
+            }
+            // Occasionally add a new point near click
+            if (Math.random() < 0.6) {
+                pointsR.push({
+                    x: x + (Math.random()-0.5)*25,
+                    y: y + (Math.random()-0.5)*25,
+                    vx: (Math.random()-0.5)*2.2,
+                    vy: (Math.random()-0.5)*2.2,
+                    size: 2.1 + Math.random()*1.3
+                });
+                if (pointsR.length > 260) pointsR.shift();
+            }
+        }
+
+        function updateParams() {
+            params.dc = parseFloat(document.getElementById('dc-slider').value);
+            params.kappa = parseFloat(document.getElementById('kappa-slider').value);
+            params.di = parseFloat(document.getElementById('di-slider').value);
+            params.noise = parseFloat(document.getElementById('noise-slider').value);
+
+            document.getElementById('dc-value').textContent = params.dc.toFixed(2);
+            document.getElementById('kappa-value').textContent = params.kappa.toFixed(2);
+            document.getElementById('di-value').textContent = params.di.toFixed(2);
+            document.getElementById('noise-value').textContent = params.noise.toFixed(2);
+        }
+
+        function syncSliders() {
+            document.getElementById('dc-slider').value = params.dc;
+            document.getElementById('kappa-slider').value = params.kappa;
+            document.getElementById('di-slider').value = params.di;
+            document.getElementById('noise-slider').value = params.noise;
+            updateParams();
+        }
+
+        function applyPreset(type) {
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            let t = {};
+
+            if (type === 'high-slack') t = {dc: 0.72, kappa: 0.9, di: 0.78, noise: 0.28};
+            else if (type === 'brittle') t = {dc: 0.95, kappa: 0.18, di: 0.92, noise: 0.18};
+            else if (type === 'balanced') t = {dc: 0.65, kappa: 0.55, di: 0.85, noise: 0.32};
+            else if (type === 'overdriven') t = {dc: 1.42, kappa: 0.28, di: 0.68, noise: 0.55};
+            else if (type === 'insight') t = {dc: 0.82, kappa: 0.62, di: 0.9, noise: 0.25};
+
+            Object.assign(params, t);
+            syncSliders();
+
+            const btns = document.querySelectorAll('.preset-btn');
+            btns.forEach(b => {
+                if (b.textContent.toLowerCase().includes(type.split('-')[0])) b.classList.add('active');
+            });
+
+            // Gentle reset on right for clean comparison
+            setTimeout(() => {
+                for (let p of pointsR) {
+                    p.vx *= 0.35;
+                    p.vy *= 0.35;
+                }
+            }, 80);
+        }
+
+        function injectDistinctionBoth() {
+            // Left
+            const cx = canvasL.width / 2, cy = canvasL.height / 2;
+            for (let p of particlesL) {
+                const dx = p.x - cx;
+                const dy = p.y - cy;
+                const d = Math.sqrt(dx*dx + dy*dy) || 40;
+                p.vx += (dx / d) * 2.8;
+                p.vy += (dy / d) * 2.8;
+            }
+
+            // Right - add distinction (push + new points)
+            for (let p of pointsR) {
+                p.vx += (Math.random() - 0.5) * 3.8;
+                p.vy += (Math.random() - 0.5) * 3.8;
+            }
+            for (let i = 0; i < 8; i++) {
+                pointsR.push({
+                    x: 120 + Math.random() * (canvasR.width - 240),
+                    y: 120 + Math.random() * (canvasR.height - 240),
+                    vx: (Math.random()-0.5)*3.2,
+                    vy: (Math.random()-0.5)*3.2,
+                    size: 2.0 + Math.random()*1.2
+                });
+            }
+            if (pointsR.length > 280) pointsR = pointsR.slice(-280);
+        }
+
+        function boostIntegrationBoth() {
+            // Left
+            for (let p of particlesL) {
+                p.vx *= 0.28;
+                p.vy *= 0.28;
+            }
+
+            // Right - strong pull to attractors
+            for (let p of pointsR) {
+                let fx = 0, fy = 0, tw = 0;
+                for (let a of attractorsR) {
+                    const dx = a.x - p.x;
+                    const dy = a.y - p.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                    const w = Math.exp(-dist / 70) * a.strength;
+                    fx += (dx / dist) * w;
+                    fy += (dy / dist) * w;
+                    tw += w;
+                }
+                if (tw > 0.01) {
+                    p.vx = fx / tw * 2.8;
+                    p.vy = fy / tw * 2.8;
+                }
+            }
+        }
+
+        function triggerCollapseRight() {
+            // Sharp collapse on right panel
+            for (let p of pointsR) {
+                let bestA = attractorsR[0];
+                let minD = 999;
+                for (let a of attractorsR) {
+                    const d = Math.hypot(p.x - a.x, p.y - a.y);
+                    if (d < minD) { minD = d; bestA = a; }
+                }
+                const dx = bestA.x - p.x;
+                const dy = bestA.y - p.y;
+                const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                p.vx = (dx / dist) * 4.5;
+                p.vy = (dy / dist) * 4.5;
+            }
+        }
+
+        function updateAll() {
+            time += 0.016;
+
+            updateLeft();
+            updateRight();
+
+            drawLeft();
+            drawRight();
+
+            anim = requestAnimationFrame(updateAll);
+        }
+
+        function resetAll() {
+            // Reset left
+            particlesL = [];
+            const cx = canvasL.width / 2;
+            const cy = canvasL.height / 2;
+            for (let i = 0; i < 620; i++) {
+                const ring = Math.random();
+                let r = ring < 0.55 ? 130 + Math.random()*200 : 20 + Math.random()*110;
+                let angle = Math.random() * Math.PI * 2;
+                particlesL.push({
+                    x: cx + Math.cos(angle) * r,
+                    y: cy + Math.sin(angle) * r,
+                    vx: (Math.random()-0.5)*0.9,
+                    vy: (Math.random()-0.5)*0.9,
+                    size: 1.45 + Math.random()*1.05
+                });
+            }
+
+            // Reset right
+            pointsR = [];
+            for (let i = 0; i < 185; i++) {
+                pointsR.push({
+                    x: 80 + Math.random() * (canvasR.width - 160),
+                    y: 80 + Math.random() * (canvasR.height - 160),
+                    vx: (Math.random()-0.5)*1.1,
+                    vy: (Math.random()-0.5)*1.1,
+                    size: 2.2 + Math.random()*1.4
+                });
+            }
+
+            time = 0;
+        }
+
+        function handleKey(e) {
+            if (e.key.toLowerCase() === 'r') resetAll();
+            if (e.key.toLowerCase() === 'd') injectDistinctionBoth();
+            if (e.key.toLowerCase() === 'i') boostIntegrationBoth();
+            if (e.key.toLowerCase() === 'c') triggerCollapseRight();
+            if (e.key === '?') {
+                e.preventDefault();
+                alert('Keys: R = reset both • D = inject ΔC • I = boost ΔI • C = force collapse on right');
+            }
+        }
+
+        function start() {
+            initCanvases();
+            syncSliders();
+
+            // Gentle initial motion
+            setTimeout(() => {
+                for (let p of particlesL) { p.vx *= 0.45; p.vy *= 0.45; }
+                for (let p of pointsR) { p.vx *= 0.4; p.vy *= 0.4; }
+            }, 120);
+
+            updateAll();
+
+            // Initial distinction on both
+            setTimeout(() => {
+                if (particlesL.length > 50) {
+                    const cx = canvasL.width / 2, cy = canvasL.height / 2;
+                    for (let i = 0; i < 18; i++) {
+                        const p = particlesL[i % particlesL.length];
+                        const dx = p.x - cx;
+                        const dy = p.y - cy;
+                        const d = Math.sqrt(dx*dx + dy*dy) || 40;
+                        p.vx += (dx / d) * 1.1;
+                        p.vy += (dy / d) * 1.1;
+                    }
+                }
+            }, 650);
+
+            console.log('%c[S-Landscape Dual View] Ready — Physical + Classical Hopfield counterfactual engine.', 'color:#475569');
+        }
+
+        window.onload = start;
+
+        // Expose for console / future extension
+        window.URP_DualLandscape = {
+            reset: () => resetAll(),
+            inject: () => injectDistinctionBoth(),
+            boost: () => boostIntegrationBoth(),
+            collapseRight: () => triggerCollapseRight(),
+            setParams: (p) => { Object.assign(params, p); syncSliders(); }
+        };
+    </script>
+</body>
+</html>
