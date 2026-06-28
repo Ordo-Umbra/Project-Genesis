@@ -60,7 +60,7 @@ observables in this setting.  Asymptotic freedom (the running coupling
 dependence on the lattice spacing ``a``) and matching to a physical string
 tension in MeV/fm require additional renormalisation-group input that is not
 implemented here — consistent with the README's stated next step of
-\"lattice signatures\" rather than a full continuum-limit QCD study.
+"lattice signatures" rather than a full continuum-limit QCD study.
 """
 
 from __future__ import annotations
@@ -425,9 +425,24 @@ def wilson_loop(
 ) -> float:
     """⟨Re Tr W(R,T)⟩ / N averaged over all origins, vectorised.
 
-    Builds the R×T rectangular loop product using ``np.roll`` path products
-    rather than a per-origin Python loop.  The translational average is exact
-    (all origins are summed implicitly via the roll).
+    Builds the R×T rectangular loop product using ``np.roll`` path products.
+    All lattice origins are averaged simultaneously — no per-origin Python loop.
+
+    Algorithm
+    ---------
+    The loop at origin x traverses:
+      1. R forward steps in μ:  U_μ(x), U_μ(x+μ̂), …, U_μ(x+(R-1)μ̂)
+      2. T forward steps in ν:  U_ν(x+Rμ̂), …, U_ν(x+Rμ̂+(T-1)ν̂)
+      3. R backward steps in μ: U_μ(x+(R-1)μ̂+Tν̂)†, …, U_μ(x+Tν̂)†
+      4. T backward steps in ν: U_ν(x+(T-1)ν̂)†, …, U_ν(x)†
+
+    To evaluate leg 1 for *all* origins at once: "the link k steps ahead in μ
+    from origin x" is ``np.roll(links[mu], -k, axis=mu)[x]``, so the batched
+    array is just ``np.roll(links[mu], -k, axis=mu)``.
+
+    After taking R steps in μ, the current position is x+Rμ̂.  The ν links
+    from that corner are ``np.roll(links[nu], -R, axis=mu)`` (shift the whole
+    ν-field by R in the μ direction).  Successive ν steps then roll in axis=nu.
 
     Parameters
     ----------
@@ -443,45 +458,34 @@ def wilson_loop(
     mu, nu = plane
     R, T = extents
 
-    # Start: identity on every site.  Shape (*spatial, n, n)
-    prod = np.broadcast_to(np.eye(n, dtype=np.complex128), links[mu].shape).copy()
+    # current holds the running path product for every origin simultaneously
+    # shape: (*spatial, n, n)
+    current = np.broadcast_to(
+        np.eye(n, dtype=np.complex128), links[mu].shape
+    ).copy()
 
-    # Walk R steps in μ direction
-    for step in range(R):
-        prod = prod @ np.roll(links[mu], -step, axis=mu)
+    # --- leg 1: R forward steps in μ ---
+    for k in range(R):
+        current = current @ np.roll(links[mu], -k, axis=mu)
 
-    # Walk T steps in ν direction (from the corner after R steps in μ)
-    for step in range(T):
-        prod = prod @ np.roll(links[nu], -(R + step), axis=nu)  # conceptually shifted
+    # --- leg 2: T forward steps in ν (corner is at x + R·μ̂) ---
+    # Shift the ν-link field by R in μ to align with the corner, then
+    # step in ν one at a time.
+    nu_field_at_corner = np.roll(links[nu], -R, axis=mu)
+    for k in range(T):
+        current = current @ np.roll(nu_field_at_corner, -k, axis=nu)
 
-    # Actually we need to track the running position properly.
-    # Rebuild correctly: accumulate the path product at each origin.
-    # For full correctness with periodic boundary we reuse the roll approach
-    # but track cumulative shifts.
-    prod = np.broadcast_to(np.eye(n, dtype=np.complex128), links[mu].shape).copy()
-    shift = [0] * links.ndim  # shift[0] is direction axis offset (unused), rest are spatial
+    # --- leg 3: R backward steps in μ (corner is at x + R·μ̂ + T·ν̂) ---
+    # Shift the μ-link field by T in ν; traverse backwards.
+    mu_field_top = np.roll(links[mu], -T, axis=nu)
+    for k in range(R - 1, -1, -1):
+        current = current @ _dagger(np.roll(mu_field_top, -k, axis=mu))
 
-    # Forward R steps in mu
-    pos_mu = 0
-    pos_nu = 0
-    current = prod.copy()
-    for _ in range(R):
-        current = current @ np.roll(links[mu], -pos_mu, axis=mu)
-        pos_mu += 1
-    # Forward T steps in nu
-    for _ in range(T):
-        current = current @ np.roll(np.roll(links[nu], -pos_mu, axis=mu), -pos_nu, axis=nu)
-        pos_nu += 1
-    # Backward R steps in mu (dagger)
-    for _ in range(R):
-        pos_mu -= 1
-        current = current @ _dagger(np.roll(links[mu], -pos_mu, axis=mu))
-    # Backward T steps in nu (dagger)
-    for _ in range(T):
-        pos_nu -= 1
-        current = current @ _dagger(np.roll(np.roll(links[nu], -pos_mu, axis=mu), -pos_nu, axis=nu))
+    # --- leg 4: T backward steps in ν (back along the left edge to origin) ---
+    for k in range(T - 1, -1, -1):
+        current = current @ _dagger(np.roll(links[nu], -k, axis=nu))
 
-    # Average Re Tr over all origins (the roll sum gives the translational average)
+    # Average Re Tr / N over all origins
     tr = np.real(np.trace(current, axis1=-2, axis2=-1))  # (*spatial,)
     return float(np.mean(tr)) / n
 
