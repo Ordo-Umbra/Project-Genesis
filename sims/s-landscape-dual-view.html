@@ -286,6 +286,17 @@
             font-size: 0.6rem;
             color: #475569;
         }
+
+        .attractor-hint {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            font-size: 0.55rem;
+            color: #64748b;
+            background: rgba(0,0,0,0.4);
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -350,6 +361,7 @@
                 <div class="panel-header">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/></svg>
                     <span>Classical Embedding Attractor (Hopfield View)</span>
+                    <span class="attractor-hint">Drag to move • Double-click to add • Right-click to remove</span>
                 </div>
                 <div style="position:relative;">
                     <canvas id="canvas-right" width="520" height="520"></canvas>
@@ -444,8 +456,8 @@
 
         <div class="explanation">
             <p style="margin:0.4rem 0 0 0;">
-                <strong>Left:</strong> Physical Chladni plate — sand particles driven by distinction (ΔC) and pulled toward nodal coherence (ΔI) under capacity κ. Classic field-like counterfactual engine.<br>
-                <strong>Right:</strong> Classical embedding attractor view — points in vector space attracted to learned "memories" (Hopfield basins). Attention-like weighting creates superposition; temperature/noise controls collapse sharpness. Direct visual analogue of transformer dynamics.
+                <strong>Left:</strong> Physical Chladni plate — sand particles driven by distinction (ΔC) and pulled toward nodal coherence (ΔI) under capacity κ.<br>
+                <strong>Right:</strong> Classical embedding attractor view with <strong>editable attractors</strong> (drag to move, double-click to add, right-click to remove) and <strong>visible attention lines</strong> showing weighted pull toward each memory. Temperature/noise controls how diffuse the cloud stays before collapse. Direct visual of transformer-like dynamics.
             </p>
         </div>
 
@@ -455,13 +467,12 @@
     </div>
 
     <script>
-        // Dual-view S-Landscape v1
+        // Dual-view S-Landscape v2 - with editable attractors + attention visualization
         let canvasL, ctxL, canvasR, ctxR;
         let particlesL = [];
         let pointsR = [];
         let time = 0;
         let anim = null;
-        let showWaveL = false;
 
         let params = {
             dc: 0.68,
@@ -472,13 +483,17 @@
             modeM: 2
         };
 
-        // Attractor centers for right panel ("memories")
+        // Editable attractors for right panel
         let attractorsR = [
             {x: 180, y: 180, strength: 1.0},
             {x: 340, y: 180, strength: 0.95},
             {x: 260, y: 340, strength: 1.05},
             {x: 140, y: 320, strength: 0.9}
         ];
+
+        let draggingAttractor = null;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
 
         function initCanvases() {
             canvasL = document.getElementById('canvas-left');
@@ -515,8 +530,20 @@
                 });
             }
 
+            // Mouse / touch handlers for right canvas (editable attractors + attention)
+            canvasR.addEventListener('mousedown', handleRightMouseDown);
+            canvasR.addEventListener('mousemove', handleRightMouseMove);
+            canvasR.addEventListener('mouseup', handleRightMouseUp);
+            canvasR.addEventListener('mouseleave', handleRightMouseUp);
+            canvasR.addEventListener('dblclick', handleRightDoubleClick);
+            canvasR.addEventListener('contextmenu', handleRightContextMenu);
+
+            // Touch support for mobile
+            canvasR.addEventListener('touchstart', handleRightTouchStart, { passive: false });
+            canvasR.addEventListener('touchmove', handleRightTouchMove, { passive: false });
+            canvasR.addEventListener('touchend', handleRightTouchEnd);
+
             canvasL.addEventListener('click', e => handleLeftClick(e));
-            canvasR.addEventListener('click', e => handleRightClick(e));
             document.addEventListener('keydown', handleKey);
         }
 
@@ -569,7 +596,6 @@
             const avgVel = totalVel / particlesL.length;
             const sLeft = params.dc * (0.65 + (1 - coh) * 0.7) + params.kappa * coh * params.di * 1.25;
 
-            // Update metrics
             document.getElementById('s-left').textContent = sLeft.toFixed(2);
             document.getElementById('coh-left').textContent = Math.round(coh * 100);
             document.getElementById('time-left').textContent = time.toFixed(2);
@@ -593,13 +619,11 @@
             ctxL.fillStyle = '#0f0e1a';
             ctxL.fillRect(0, 0, canvasL.width, canvasL.height);
 
-            // Grid
             ctxL.strokeStyle = '#1f1d35';
             ctxL.lineWidth = 1;
             for (let x = 32; x < canvasL.width; x += 32) { ctxL.beginPath(); ctxL.moveTo(x, 0); ctxL.lineTo(x, canvasL.height); ctxL.stroke(); }
             for (let y = 32; y < canvasL.height; y += 32) { ctxL.beginPath(); ctxL.moveTo(0, y); ctxL.lineTo(canvasL.width, y); ctxL.stroke(); }
 
-            // Particles
             ctxL.shadowBlur = 1.8;
             ctxL.shadowColor = '#c026ff22';
             for (let p of particlesL) {
@@ -616,13 +640,12 @@
             ctxL.shadowBlur = 0;
         }
 
-        // Right panel - Classical Hopfield style
+        // Right panel update with editable attractors
         function updateRight() {
             let totalSpread = 0;
             let totalCluster = 0;
 
             for (let p of pointsR) {
-                // Attraction to attractors (Hopfield-like)
                 let fx = 0, fy = 0;
                 let totalW = 0;
 
@@ -641,12 +664,10 @@
                     p.vy += fy / totalW;
                 }
 
-                // Noise / temperature diffusion
                 const noise = params.noise * (0.9 + params.dc * 0.6);
                 p.vx += (Math.random() - 0.5) * noise * 1.6;
                 p.vy += (Math.random() - 0.5) * noise * 1.6;
 
-                // Damping scaled by kappa
                 const damp = 0.78 + params.kappa * 0.35;
                 p.vx *= damp;
                 p.vy *= damp;
@@ -654,16 +675,14 @@
                 p.x += p.vx * 0.9;
                 p.y += p.vy * 0.9;
 
-                // Boundary
                 const m = 22;
                 if (p.x < m) { p.x = m; p.vx = Math.abs(p.vx) * 0.45; }
                 if (p.x > canvasR.width - m) { p.x = canvasR.width - m; p.vx = -Math.abs(p.vx) * 0.45; }
                 if (p.y < m) { p.y = m; p.vy = Math.abs(p.vy) * 0.45; }
                 if (p.y > canvasR.height - m) { p.y = canvasR.height - m; p.vy = -Math.abs(p.vy) * 0.45; }
 
-                // Metrics
                 totalSpread += Math.hypot(p.vx, p.vy);
-                // Cluster score: how close to nearest attractor
+
                 let minD = 999;
                 for (let a of attractorsR) {
                     const d = Math.hypot(p.x - a.x, p.y - a.y);
@@ -676,7 +695,6 @@
             const cluster = totalCluster / pointsR.length;
             const sRight = params.dc * (0.6 + avgSpread * 0.8) + params.kappa * cluster * params.di * 1.35;
 
-            // Update metrics
             document.getElementById('s-right').textContent = sRight.toFixed(2);
             document.getElementById('cloud-right').textContent = avgSpread.toFixed(2);
             document.getElementById('collapse-right').textContent = Math.round(cluster * 100);
@@ -700,13 +718,12 @@
             ctxR.fillStyle = '#0f0e1a';
             ctxR.fillRect(0, 0, canvasR.width, canvasR.height);
 
-            // Subtle grid
             ctxR.strokeStyle = '#1f1d35';
             ctxR.lineWidth = 1;
             for (let x = 40; x < canvasR.width; x += 40) { ctxR.beginPath(); ctxR.moveTo(x, 0); ctxR.lineTo(x, canvasR.height); ctxR.stroke(); }
             for (let y = 40; y < canvasR.height; y += 40) { ctxR.beginPath(); ctxR.moveTo(0, y); ctxR.lineTo(canvasR.width, y); ctxR.stroke(); }
 
-            // Draw attractors as soft wells
+            // Draw attractors as soft wells + centers
             for (let a of attractorsR) {
                 const grad = ctxR.createRadialGradient(a.x, a.y, 8, a.x, a.y, 95);
                 grad.addColorStop(0, '#c026ff33');
@@ -716,18 +733,49 @@
                 ctxR.arc(a.x, a.y, 95, 0, Math.PI * 2);
                 ctxR.fill();
 
-                ctxR.strokeStyle = '#c026ff55';
-                ctxR.lineWidth = 1.5;
+                ctxR.strokeStyle = '#c026ff66';
+                ctxR.lineWidth = 2;
                 ctxR.beginPath();
-                ctxR.arc(a.x, a.y, 22, 0, Math.PI * 2);
+                ctxR.arc(a.x, a.y, 18, 0, Math.PI * 2);
                 ctxR.stroke();
+
+                // Small center dot
+                ctxR.fillStyle = '#c026ff';
+                ctxR.beginPath();
+                ctxR.arc(a.x, a.y, 4, 0, Math.PI * 2);
+                ctxR.fill();
             }
+
+            // Draw attention / attraction lines (weighted pull visualization)
+            ctxR.strokeStyle = '#a5b4fc44';
+            ctxR.lineWidth = 0.8;
+            for (let p of pointsR) {
+                let bestA = null;
+                let bestW = 0;
+                for (let a of attractorsR) {
+                    const dx = a.x - p.x;
+                    const dy = a.y - p.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                    const w = Math.exp(-dist / (85 + params.kappa * 55)) * a.strength;
+                    if (w > bestW) {
+                        bestW = w;
+                        bestA = a;
+                    }
+                }
+                if (bestA && bestW > 0.15) {
+                    ctxR.globalAlpha = Math.min(0.65, bestW * 0.9);
+                    ctxR.beginPath();
+                    ctxR.moveTo(p.x, p.y);
+                    ctxR.lineTo(bestA.x, bestA.y);
+                    ctxR.stroke();
+                }
+            }
+            ctxR.globalAlpha = 1.0;
 
             // Points
             ctxR.shadowBlur = 2.5;
             ctxR.shadowColor = '#a5b4fc33';
             for (let p of pointsR) {
-                // Color by proximity to nearest attractor (collapse indicator)
                 let minD = 999;
                 for (let a of attractorsR) {
                     const d = Math.hypot(p.x - a.x, p.y - a.y);
@@ -745,6 +793,105 @@
             ctxR.shadowBlur = 0;
         }
 
+        // === Editable attractors handlers ===
+        function getAttractorAt(x, y) {
+            for (let i = 0; i < attractorsR.length; i++) {
+                const a = attractorsR[i];
+                const d = Math.hypot(x - a.x, y - a.y);
+                if (d < 28) return {index: i, attractor: a};
+            }
+            return null;
+        }
+
+        function handleRightMouseDown(e) {
+            const rect = canvasR.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const hit = getAttractorAt(x, y);
+            if (hit) {
+                draggingAttractor = hit.index;
+                dragOffsetX = x - hit.attractor.x;
+                dragOffsetY = y - hit.attractor.y;
+            }
+        }
+
+        function handleRightMouseMove(e) {
+            if (draggingAttractor !== null) {
+                const rect = canvasR.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                attractorsR[draggingAttractor].x = x - dragOffsetX;
+                attractorsR[draggingAttractor].y = y - dragOffsetY;
+            }
+        }
+
+        function handleRightMouseUp() {
+            draggingAttractor = null;
+        }
+
+        function handleRightDoubleClick(e) {
+            const rect = canvasR.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Add new attractor
+            attractorsR.push({
+                x: x,
+                y: y,
+                strength: 0.95 + Math.random() * 0.15
+            });
+
+            // Keep max 8 attractors
+            if (attractorsR.length > 8) attractorsR.shift();
+        }
+
+        function handleRightContextMenu(e) {
+            e.preventDefault();
+            const rect = canvasR.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const hit = getAttractorAt(x, y);
+            if (hit && attractorsR.length > 1) {
+                attractorsR.splice(hit.index, 1);
+            }
+        }
+
+        // Touch support
+        function handleRightTouchStart(e) {
+            e.preventDefault();
+            if (e.touches.length === 1) {
+                const rect = canvasR.getBoundingClientRect();
+                const x = e.touches[0].clientX - rect.left;
+                const y = e.touches[0].clientY - rect.top;
+
+                const hit = getAttractorAt(x, y);
+                if (hit) {
+                    draggingAttractor = hit.index;
+                    dragOffsetX = x - hit.attractor.x;
+                    dragOffsetY = y - hit.attractor.y;
+                }
+            }
+        }
+
+        function handleRightTouchMove(e) {
+            e.preventDefault();
+            if (draggingAttractor !== null && e.touches.length === 1) {
+                const rect = canvasR.getBoundingClientRect();
+                const x = e.touches[0].clientX - rect.left;
+                const y = e.touches[0].clientY - rect.top;
+
+                attractorsR[draggingAttractor].x = x - dragOffsetX;
+                attractorsR[draggingAttractor].y = y - dragOffsetY;
+            }
+        }
+
+        function handleRightTouchEnd() {
+            draggingAttractor = null;
+        }
+
         function handleLeftClick(e) {
             const rect = canvasL.getBoundingClientRect();
             const x = e.clientX - rect.left;
@@ -758,34 +905,6 @@
                     p.vx += (dx / d) * f;
                     p.vy += (dy / d) * f;
                 }
-            }
-        }
-
-        function handleRightClick(e) {
-            const rect = canvasR.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            // Add distinction: push points away or add new random point
-            for (let p of pointsR) {
-                const dx = p.x - x;
-                const dy = p.y - y;
-                const d = Math.sqrt(dx*dx + dy*dy) || 1;
-                if (d < 140) {
-                    const f = (140 - d) / 140 * 2.8;
-                    p.vx += (dx / d) * f * 1.3;
-                    p.vy += (dy / d) * f * 1.3;
-                }
-            }
-            // Occasionally add a new point near click
-            if (Math.random() < 0.6) {
-                pointsR.push({
-                    x: x + (Math.random()-0.5)*25,
-                    y: y + (Math.random()-0.5)*25,
-                    vx: (Math.random()-0.5)*2.2,
-                    vy: (Math.random()-0.5)*2.2,
-                    size: 2.1 + Math.random()*1.3
-                });
-                if (pointsR.length > 260) pointsR.shift();
             }
         }
 
@@ -827,7 +946,6 @@
                 if (b.textContent.toLowerCase().includes(type.split('-')[0])) b.classList.add('active');
             });
 
-            // Gentle reset on right for clean comparison
             setTimeout(() => {
                 for (let p of pointsR) {
                     p.vx *= 0.35;
@@ -837,7 +955,6 @@
         }
 
         function injectDistinctionBoth() {
-            // Left
             const cx = canvasL.width / 2, cy = canvasL.height / 2;
             for (let p of particlesL) {
                 const dx = p.x - cx;
@@ -847,7 +964,6 @@
                 p.vy += (dy / d) * 2.8;
             }
 
-            // Right - add distinction (push + new points)
             for (let p of pointsR) {
                 p.vx += (Math.random() - 0.5) * 3.8;
                 p.vy += (Math.random() - 0.5) * 3.8;
@@ -865,13 +981,11 @@
         }
 
         function boostIntegrationBoth() {
-            // Left
             for (let p of particlesL) {
                 p.vx *= 0.28;
                 p.vy *= 0.28;
             }
 
-            // Right - strong pull to attractors
             for (let p of pointsR) {
                 let fx = 0, fy = 0, tw = 0;
                 for (let a of attractorsR) {
@@ -891,7 +1005,6 @@
         }
 
         function triggerCollapseRight() {
-            // Sharp collapse on right panel
             for (let p of pointsR) {
                 let bestA = attractorsR[0];
                 let minD = 999;
@@ -920,7 +1033,6 @@
         }
 
         function resetAll() {
-            // Reset left
             particlesL = [];
             const cx = canvasL.width / 2;
             const cy = canvasL.height / 2;
@@ -937,7 +1049,6 @@
                 });
             }
 
-            // Reset right
             pointsR = [];
             for (let i = 0; i < 185; i++) {
                 pointsR.push({
@@ -950,6 +1061,14 @@
             }
 
             time = 0;
+
+            // Reset attractors to default
+            attractorsR = [
+                {x: 180, y: 180, strength: 1.0},
+                {x: 340, y: 180, strength: 0.95},
+                {x: 260, y: 340, strength: 1.05},
+                {x: 140, y: 320, strength: 0.9}
+            ];
         }
 
         function handleKey(e) {
@@ -959,7 +1078,7 @@
             if (e.key.toLowerCase() === 'c') triggerCollapseRight();
             if (e.key === '?') {
                 e.preventDefault();
-                alert('Keys: R = reset both • D = inject ΔC • I = boost ΔI • C = force collapse on right');
+                alert('Keys: R = reset • D = inject ΔC • I = boost ΔI • C = force collapse\nRight canvas: Drag attractors • Double-click = add • Right-click = remove');
             }
         }
 
@@ -967,7 +1086,6 @@
             initCanvases();
             syncSliders();
 
-            // Gentle initial motion
             setTimeout(() => {
                 for (let p of particlesL) { p.vx *= 0.45; p.vy *= 0.45; }
                 for (let p of pointsR) { p.vx *= 0.4; p.vy *= 0.4; }
@@ -975,7 +1093,6 @@
 
             updateAll();
 
-            // Initial distinction on both
             setTimeout(() => {
                 if (particlesL.length > 50) {
                     const cx = canvasL.width / 2, cy = canvasL.height / 2;
@@ -990,12 +1107,11 @@
                 }
             }, 650);
 
-            console.log('%c[S-Landscape Dual View] Ready — Physical + Classical Hopfield counterfactual engine.', 'color:#475569');
+            console.log('%c[S-Landscape Dual View v2] Editable attractors + attention lines ready.', 'color:#475569');
         }
 
         window.onload = start;
 
-        // Expose for console / future extension
         window.URP_DualLandscape = {
             reset: () => resetAll(),
             inject: () => injectDistinctionBoth(),
