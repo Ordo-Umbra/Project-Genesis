@@ -31,6 +31,8 @@ Reference
 ---------
     Docs/Kernel_Moments_Derivation.md
     Docs/The_Lucidic_Compass.md  Sections 3-5
+
+# Triggered: 2026-07-02
 """
 
 from __future__ import annotations
