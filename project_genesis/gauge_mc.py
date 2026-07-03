@@ -56,6 +56,20 @@ from project_genesis.gauge import (
     wilson_action,
 )
 
+try:  # optional JIT acceleration; the pure-Python reference path always works
+    from project_genesis import gauge_mc_kernels as _nbk
+    _HAVE_NUMBA = True
+except Exception:  # pragma: no cover - numba is a declared dependency
+    _nbk = None
+    _HAVE_NUMBA = False
+
+
+def _use_numba_default(n: int, use_numba: bool | None) -> bool:
+    """Resolve the ``use_numba`` tri-state: None = auto (if available)."""
+    if use_numba is None:
+        return _HAVE_NUMBA and n in (2, 3)
+    return bool(use_numba) and _HAVE_NUMBA
+
 
 # ---------------------------------------------------------------------------
 # Low-level staple helper (generalised ndim)
@@ -298,11 +312,23 @@ def heatbath_sweep(
     rng: np.random.Generator,
     *,
     n_sweeps: int = 1,
+    use_numba: bool | None = None,
 ) -> tuple[np.ndarray, float]:
-    """Heat-bath sweep over all links."""
+    """Heat-bath sweep over all links.
+
+    ``use_numba=None`` (default) uses the JIT kernels when available for
+    SU(2)/SU(3); ``False`` forces the pure-Python reference path.  Both
+    paths implement the same update with the same random-draw order.
+    """
     ndim = links.shape[0]
     spatial = links.shape[1:-2]
     n = links.shape[-1]
+
+    if _use_numba_default(n, use_numba):
+        flat, fwd, bwd, spatial = _nbk.flatten_links(links)
+        _nbk.heatbath_sweep_flat(flat, fwd, bwd, float(beta_g), rng, n_sweeps)
+        return _nbk.unflatten_links(flat, spatial), 1.0
+
     links_new = links.copy()
 
     for _ in range(n_sweeps):
@@ -364,6 +390,7 @@ def overrelaxation_sweep(
     *,
     n_sweeps: int = 1,
     omega: float = 1.0,
+    use_numba: bool | None = None,
 ) -> tuple[np.ndarray, float]:
     """Overrelaxation sweep — energy-conserving link updates.
 
@@ -373,6 +400,13 @@ def overrelaxation_sweep(
     """
     ndim = links.shape[0]
     spatial = links.shape[1:-2]
+    n = links.shape[-1]
+
+    if _use_numba_default(n, use_numba):
+        flat, fwd, bwd, spatial = _nbk.flatten_links(links)
+        _nbk.overrelaxation_sweep_flat(flat, fwd, bwd, n_sweeps)
+        return _nbk.unflatten_links(flat, spatial), 1.0
+
     links_new = links.copy()
 
     for _ in range(n_sweeps):
@@ -394,6 +428,8 @@ def wilson_loop(
     links: np.ndarray,
     extents: tuple[int, int],
     plane: tuple[int, int] = (0, 1),
+    *,
+    use_numba: bool | None = None,
 ) -> float:
     """Ensemble-average ⟨Re Tr W(R,T)⟩ / N for a single link configuration."""
     ndim = links.shape[0]
@@ -401,6 +437,10 @@ def wilson_loop(
     n = links.shape[-1]
     mu, nu = plane
     R, T = extents
+
+    if _HAVE_NUMBA and use_numba is not False:
+        flat, fwd, bwd, _ = _nbk.flatten_links(links)
+        return float(_nbk.wilson_loop_flat(flat, fwd, bwd, R, T, mu, nu))
     dag = _dagger
     loops = 0.0
     count = 0
@@ -430,7 +470,12 @@ def wilson_loop(
 # Polyakov loop
 # ---------------------------------------------------------------------------
 
-def polyakov_loop(links: np.ndarray, temporal_axis: int = -1) -> float:
+def polyakov_loop(
+    links: np.ndarray,
+    temporal_axis: int = -1,
+    *,
+    use_numba: bool | None = None,
+) -> float:
     """Spatially averaged Polyakov loop (real part), normalised to [0, 1]."""
     ndim = links.shape[0]
     spatial = links.shape[1:-2]
@@ -439,6 +484,14 @@ def polyakov_loop(links: np.ndarray, temporal_axis: int = -1) -> float:
         temporal_axis = ndim - 1
     axis = temporal_axis
     Nt = spatial[axis]
+
+    if _HAVE_NUMBA and use_numba is not False:
+        flat, fwd, bwd, _ = _nbk.flatten_links(links)
+        idx = np.arange(flat.shape[1]).reshape(spatial)
+        starts = np.ascontiguousarray(
+            np.take(idx, 0, axis=axis).ravel().astype(np.int64)
+        )
+        return float(_nbk.polyakov_loop_flat(flat, fwd, axis, starts, Nt))
     pl_sum = 0.0 + 0.0j
     n_spatial = 0
 

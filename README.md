@@ -36,6 +36,7 @@ The simulation laboratory currently provides:
 - **β-sectorisation / boundary-formation analysis** — domain-wall detection, periodic connected-component sector counting, per-sector distinction/integration statistics, and triple-junction counting, for empirically testing the URP `N⋆=3` (SU(3)) prediction,
 - **dynamical capacity field κ(x,t)** — capacity consumed by distinction load, regenerating with slack, diffusing between regions, and gating the integration term in the dynamics, with multi-scale and per-sector capacity reporting,
 - **κ-as-soil corpus coupling** — recalled "seeds" only take root where local capacity is sufficient (fertile soil) and consume it when they do, so structure can only re-grow where the field can support it,
+- **Monte-Carlo lattice gauge sampling** — exact SU(2) heat-bath / Cabibbo–Marinari SU(3) / overrelaxation updates of the Wilson ensemble with Numba-JIT kernels, plus Wilson-loop, Creutz-ratio, and Polyakov-loop instruments for measuring confinement (σ > 0) with jackknife errors,
 - **two zero-dependency browser toys** and a Numba-accelerated 3-D engine, sharing the same dynamics so the visual intuition and the measured physics stay in step,
 - saved snapshots for resuming or analyzing a run,
 - exported metrics, run summaries, agent timelines, corpus summaries, and text slices for inspecting intermediate and final terrain states,
@@ -52,6 +53,8 @@ project_genesis/
   config.py            Engine configuration and defaults
   engine.py            Field evolution, voxel quantization, agent orchestration, save/load
   gauge.py             Lattice gauge connection on the Ψ∈ℂ³ sectors (U(1)/SU(2)/SU(3))
+  gauge_mc.py          Monte-Carlo sampling of exp(−β_g·S_W): heat-bath, overrelaxation, Wilson/Polyakov loops
+  gauge_mc_kernels.py  Numba JIT kernels for the MC layer (~50–100× the reference path)
   io.py                Snapshot serialization helpers
   metrics.py           URP terrain summary metrics and S-functional computation
   memory_corpus.py     Stable-object corpus, composition, serialization, lineage
@@ -64,14 +67,21 @@ project_genesis/
   visualize.py         Matplotlib-based 3-D voxel and S-functional visualization
 Docs/
   The Universal Recursion Principle (URP) _260312_170343.txt
-tests/                 253 checks across the engine, instruments, and physics
+tests/                 272 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_corpus_kappa.py
   test_dynamic_kappa.py
+  test_gauge.py
+  test_gauge_mc.py
+  test_gauge_mc_confinement.py
+  test_gauge_mc_numba.py
   test_memory_corpus.py
   test_multiphase.py
+  test_multiphase_kappa.py
   test_new_subsystems.py
   test_sectorisation.py
+  test_sigma_scan.py
+  test_topological_selection.py
   test_urp_extensions.py
 experiments/
   beta_sectorisation.py β-sweep measuring emergent sector counts
@@ -82,6 +92,7 @@ experiments/
   topological_selection.py Conserved dynamics + neutrality: S-optimum at three
   gauge_coherence.py    Gauge connection as coherence restoration (U(1)/SU(2)/SU(3))
   yang_mills_flow.py    Gradient ascent on S: YM residual → 0, gluons on walls
+  confinement_sigma_scan.py σ(β_g) area-law scan: Creutz ratios with jackknife errors
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -108,7 +119,8 @@ A running tally of what the instruments have actually measured — the verdicts,
 | Three mutually-adjacent sectors with 120° Y-junctions (colour SU(3)) | **Not from a scalar field** (structurally impossible) — **achieved** with the three-component Ψ∈ℂ³ model | [Three-Component Sector Field](#three-component-sector-field--genuine-su3-y-junctions) |
 | Capacity κ drives selection toward `N⋆ = 3` | **Conditional / transient** — a 3-well S-optimal band appears *while the field is actively coarsening*, but in steady state selection runs to more sectors; traced to how ΔI is measured (below) | [Phase diagram](#the-phase-diagram-of-n3-selection) |
 | A gauge connection is the minimal structure restoring coherence under local rotations (§2–3) | **Demonstrated** (U(1)/SU(2)/SU(3)) — covariant coherence is gauge-invariant to machine precision while naive coherence is scrambled; a pure-gauge connection has zero curvature; runs on the real Ψ∈ℂ³ sectors | [Gauge connection](#gauge-connection--coherence-under-local-rotations) |
-| The Yang–Mills equations are the S-stationarity conditions (§3.2) | **Demonstrated** — gradient ascent on `S = coupling·coherence − stress` monotonically raises S and drives the lattice YM residual → 0 (SU(2)/SU(3)); curvature is enriched ~2.6× on the sector walls ("gluons as boundary modes"). Thermodynamic confinement (area law) needs Monte-Carlo — not yet | [Yang–Mills dynamics](#yangmills-dynamics--gradient-ascent-on-s) |
+| The Yang–Mills equations are the S-stationarity conditions (§3.2) | **Demonstrated** — gradient ascent on `S = coupling·coherence − stress` monotonically raises S and drives the lattice YM residual → 0 (SU(2)/SU(3)); curvature is enriched ~2.6× on the sector walls ("gluons as boundary modes") | [Yang–Mills dynamics](#yangmills-dynamics--gradient-ascent-on-s) |
+| Confinement: Wilson loops obey an area law with σ > 0 (§4.A) | **Measured** — Monte-Carlo ensembles of exp(−β_g·S_W): the SU(2) 2-D instrument reproduces the *exact* analytic σ(β_g) within errors at every scanned coupling (calibration), and SU(3) in 3-D shows σ > 0 with sub-percent errors across β_g ∈ [1, 5], decreasing with β_g, with confined Polyakov loops throughout. Small lattices, no continuum limit — lattice-units signatures, not physical σ | [Monte-Carlo confinement](#monte-carlo-confinement--the-measured-area-law) |
 | The S-functional rewards an interior sector optimum | **Achieved in 2-D and 3-D** — with volume-conserving dynamics (persistent junctions) and a *topological* neutrality term (full-palette junctions, non-collinear with ΔC), `S = ΔC + κ·neutrality` is maximized at **exactly three sectors**, robust across seeds/weights. In 3-D three wins ~10× over four (triple *lines* vs sparse quadruple *points*) | [Topological selection](#topological-selection--an-interior-optimum-at-three) |
 
 The honest through-line: the *machinery* of URP sectorisation is reproducible, the boundary-cost half of its free-energy argument is measured, and — after localizing why naive selection failed (ΔI vanishes at equilibrium; coherence magnitude is collinear with ΔC) — a junction-resolving dynamics plus a topological neutrality term reproduces an interior optimum at **three in both 2-D and 3-D**, echoing the gauge paper's §6. The count is no longer a free parameter; it falls out of the junction geometry.
@@ -363,7 +375,17 @@ The URP picture is gradient ascent on `S = coupling·(covariant coherence) − (
 - **The flow ascends S and the YM residual → 0.** From a hot random start, `S` rises monotonically while the lattice equation-of-motion residual `‖TA[U_μ Ω_μ]‖` drives toward zero (SU(2): 1.63 → 0.03; SU(3): 1.65 → 0.02 over 160 steps) — the configuration converges onto a solution of the discrete Yang–Mills equations, with the matter current as source. Links stay in SU(N) throughout. A pure-gauge flow (no matter) relaxes the curvature to ~0 (the flat vacuum); a correctness check confirms the staple identity `Σ_μΣ_x Re Tr[U_μ A_μ] = 4(N·n_plaq − S_Wilson)`.
 - **Curvature localizes on the sector walls** (§4.3.4, "gluons as boundary modes"). Fixing ψ to a real three-sector field and flowing only the connection, the resulting curvature density is **enriched ~2.6× on the domain walls** — 57% of the total curvature sits on the 33% of sites that are walls. The gauge field carries the colour-frame mismatch between adjacent sectors, exactly where the derivation places the gluonic excitations.
 
-**Honest scope:** this is deterministic gradient flow — the gauge equations of motion and the boundary-mode localization. Thermodynamic confinement signatures (Wilson-loop area law, string tension, deconfinement temperature) are properties of the finite-temperature *ensemble* and require Monte-Carlo sampling — the stated next step.
+**Honest scope:** this is deterministic gradient flow — the gauge equations of motion and the boundary-mode localization. Thermodynamic confinement signatures (Wilson-loop area law, string tension) are properties of the *ensemble*, and are measured by the Monte-Carlo layer below.
+
+### Monte-Carlo confinement — the measured area law
+
+`project_genesis.gauge_mc` samples the Boltzmann ensemble `exp(−β_g·S_W)` of the Wilson action with an exact SU(2) heat-bath (Kennedy–Pendleton at strong effective coupling, Creutz at weak, so link updates never stall), Cabibbo–Marinari subgroup updates for SU(3), and exact microcanonical overrelaxation. `project_genesis.gauge_mc_kernels` provides Numba JIT versions of the sweeps and loop measurements (~50× SU(2), ~100× SU(3) over the pure-Python reference; the two paths share the same random-draw order and are held equal by `tests/test_gauge_mc_numba.py`). `experiments/confinement_sigma_scan.py` uses them to measure the string tension honestly, with binned-jackknife errors:
+
+- **Calibration against an exact result.** 2-D SU(2) is exactly solvable — plaquettes decouple and `σ_exact(β_g) = −ln[I₂(2β_g)/I₁(2β_g)]`. On a 16² lattice (1600 measurements/point, 1 heat-bath + 2 overrelaxation sweeps per compound update) the measured Creutz ratio χ(2,2) tracks the exact curve at all seven couplings β_g ∈ [0.75, 4], worst pull 2.2σ. The instrument measures what it claims to measure.
+- **SU(3) confinement in 3-D.** On an 8³ lattice, χ(2,2) = σ runs from 1.73(16) at β_g = 1 to 0.1290(3) at β_g = 5 — positive at >10σ at every coupling, monotonically decreasing (the lattice-units echo of asymptotic freedom), with `|⟨P⟩| ≲ 0.003` (confined, Z₃ unbroken) across the whole scan. This is the expected behaviour of 2+1-D Yang–Mills, which confines at all couplings — and it is now measured here, not quoted.
+- Reproduce with `python experiments/confinement_sigma_scan.py` (≈ 10 minutes; `--quick` for a smoke run). Artifacts: per-point Wilson loops, Creutz ratios with jackknife errors, Polyakov loops, a σ(β_g) figure, and a summary with explicit verdict lines.
+
+**Honest scope:** these are lattice-units signatures on small lattices — no continuum limit, no scale setting, no physical σ in MeV/fm, and 2-D/3-D rather than 3+1-D. What the instrument establishes is that the URP-side gauge sector, sampled as a proper thermodynamic ensemble, exhibits the area law and confined order parameter the theory's §4.A points to — with a calibration line showing the estimator is trustworthy.
 
 ## Setup
 

@@ -571,8 +571,20 @@ class TestURPConfinementSignals(unittest.TestCase):
         )
 
     def test_positive_string_tension(self):
-        """fit_area_law must return σ > 0 at β_g=0.5 (URP §4.A)."""
-        sigma = self._fit["sigma"]
+        """fit_area_law must return σ > 0 at β_g=0.5 (URP §4.A).
+
+        The fit is restricted to loops with R,T ≤ 2: at β_g = 0.5 the true
+        W(3,3) ≈ 6·10⁻⁶ sits far below the ensemble noise at this budget,
+        and feeding pure noise into the log-fit makes the fitted σ a coin
+        flip rather than a measurement.
+        """
+        loops = self._loops
+        w = np.array([
+            [loops["W_1_1"], loops["W_1_2"]],
+            [loops["W_2_1"], loops["W_2_2"]],
+        ])
+        fit = fit_area_law(w, [1, 2], [1, 2])
+        sigma = fit["sigma"]
         self.assertGreater(
             sigma, 0.0,
             f"String tension σ={sigma:.5f} should be positive in confined phase"
