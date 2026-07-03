@@ -22,8 +22,10 @@ Three update algorithms are provided:
 
 1. **Metropolis** — correct for any SU(N); exact local ΔS via the staple
    sum (O(ndim) links touched, no full-action recompute).
-2. **SU(2) Kennedy–Pendleton heat-bath** — exact for SU(2); wrapped into
-   Cabibbo–Marinari subgroup updates for SU(3).
+2. **SU(2) heat-bath** — exact for SU(2), using Kennedy–Pendleton sampling
+   at strong effective coupling and Creutz sampling at weak effective
+   coupling so link updates never stall; wrapped into Cabibbo–Marinari
+   subgroup updates for SU(3).
 3. **Overrelaxation** (microcanonical) — energy-preserving; decorrelates the
    field faster than Metropolis at moderate β_g.
 
@@ -44,7 +46,6 @@ implemented here — consistent with the README's stated next step of
 from __future__ import annotations
 
 import math
-import sys
 from typing import Sequence
 
 import numpy as np
@@ -132,9 +133,10 @@ def metropolis_sweep(
                 v = random_unitary(rng, n, special=(n > 1), scale=step_scale)
                 u_prop = u_old @ v
 
+                # S(U) = const − Re Tr(U·A) with A the staple sum, because every
+                # plaquette containing U_μ(x) factorises as Tr(U_μ(x)·staple).
                 a = _staple_sum(links_new, mu, site)
-                a_dag = _dagger(a)
-                delta_s = float(np.real(np.trace((u_old - u_prop) @ a_dag)))
+                delta_s = float(np.real(np.trace((u_old - u_prop) @ a)))
 
                 if delta_s <= 0.0 or rng.random() < math.exp(-beta_g * delta_s):
                     links_new[(mu,) + site] = u_prop
@@ -148,76 +150,120 @@ def metropolis_sweep(
 # SU(2) Kennedy–Pendleton heat-bath
 # ---------------------------------------------------------------------------
 
+def _sample_su2_a0(c: float, rng: np.random.Generator) -> float:
+    """Sample a0 ∈ [−1, 1] from P(a0) ∝ √(1 − a0²)·exp(c·a0), c ≥ 0.
+
+    Two exact rejection samplers are combined so the expected iteration
+    count is O(1) for *every* c:
+
+    - **c > 2 — Kennedy–Pendleton.**  Draw δ = 1 − a0 from Gamma(3/2, rate c)
+      via δ = −(ln x1 + cos²(2πx2)·ln x3)/c, then accept with probability
+      √(1 − δ/2).  Efficient at large c (δ concentrates near 0) but the
+      acceptance collapses like c^{3/2} as c → 0 — the previous
+      implementation used this branch for all c, which is what made single
+      link updates hang for minutes at strong coupling.
+    - **c ≤ 2 — Creutz.**  Draw a0 from the truncated exponential
+      ∝ exp(c·a0) on [−1, 1] by inverse CDF, then accept with probability
+      √(1 − a0²).  Acceptance ≥ π·I₁(c)/(2·sinh c) ≥ 0.6 on this range.
+
+    A finite retry cap on the KP branch falls back to the always-safe
+    Creutz branch, so the sampler provably terminates.
+    """
+    if c > 2.0:
+        for _ in range(64):
+            x1 = rng.random()
+            x2 = rng.random()
+            x3 = rng.random()
+            delta = -(math.log(max(x1, 1e-300))
+                      + math.cos(2.0 * math.pi * x2) ** 2
+                      * math.log(max(x3, 1e-300))) / c
+            if delta <= 2.0 and rng.random() ** 2 <= 1.0 - delta / 2.0:
+                return 1.0 - delta
+        # Statistically unreachable for c > 2; fall through to Creutz.
+    while True:
+        x = rng.random()
+        if c < 1e-9:
+            a0 = 2.0 * x - 1.0
+        else:
+            # Inverse CDF of exp(c·a0) on [−1, 1], written to stay finite
+            # for large c: a0 = 1 + ln(x + (1−x)e^{−2c})/c.
+            a0 = 1.0 + math.log(x + (1.0 - x) * math.exp(-2.0 * c)) / c
+        a0 = max(-1.0, min(1.0, a0))
+        if rng.random() ** 2 <= 1.0 - a0 * a0:
+            return a0
+
+
+def _su2_from_a0(a0: float, rng: np.random.Generator) -> np.ndarray:
+    """Build X = a0·1 + i·a⃗·σ⃗ ∈ SU(2) with a⃗ uniform on the sphere of radius √(1−a0²)."""
+    sr = math.sqrt(max(0.0, 1.0 - a0 ** 2))
+    cos_t = 1.0 - 2.0 * rng.random()
+    sin_t = math.sqrt(max(0.0, 1.0 - cos_t ** 2))
+    phi = 2.0 * math.pi * rng.random()
+    a1 = sr * sin_t * math.cos(phi)
+    a2 = sr * sin_t * math.sin(phi)
+    a3 = sr * cos_t
+    return np.array(
+        [[a0 + 1j * a3, a2 + 1j * a1],
+         [-a2 + 1j * a1, a0 - 1j * a3]],
+        dtype=np.complex128,
+    )
+
+
 def _heatbath_su2_from_staple(
     staple: np.ndarray,
     beta_g: float,
     rng: np.random.Generator,
 ) -> np.ndarray:
-    """Exact SU(2) heat-bath for one link given its staple sum."""
-    a = staple
-    det_a = np.linalg.det(a)
-    k = float(np.real(np.sqrt(np.abs(det_a))))
+    """Exact SU(2) heat-bath for one link given its (effective) staple sum.
+
+    The staple sum of SU(2) matrices is proportional to an SU(2) matrix,
+    A = k·V with k = √det(A).  The Boltzmann weight for the link is
+    exp(β_g·Re Tr(U·A)) = exp(2·β_g·k·a0) where X = U·V and Re Tr X = 2·a0,
+    so a0 is sampled from √(1 − a0²)·exp(c·a0) with c = 2·β_g·k and the new
+    link is U = X·V†.
+    """
+    # Project onto the quaternionic part first: for an exact SU(2) staple
+    # this is a no-op, but it strips the accumulated float noise that would
+    # otherwise be amplified by 1/k below and compound sweep over sweep,
+    # driving the links off the group manifold.
+    a = _su2_quaternion_part(staple)
+    k = float(np.real(np.sqrt(np.abs(np.linalg.det(a)))))
+    c = 2.0 * beta_g * k
+    a0 = _sample_su2_a0(c, rng)
+    x = _su2_from_a0(a0, rng)
     if k < 1e-14:
-        return random_unitary(rng, 2, special=True, scale=1.0)
-
-    v = a / k
-    vd = _dagger(v)
-    alpha = beta_g * k / 2.0
-
-    while True:
-        x1 = rng.random()
-        x2 = rng.random()
-        x3 = rng.random()
-        r1 = -math.log(max(x1, 1e-300)) / alpha
-        r2 = -math.log(max(x2, 1e-300)) / alpha
-        cos_theta = math.cos(2.0 * math.pi * x3) ** 2
-        a0_candidate = 1.0 - r1 - r2 * cos_theta
-        if rng.random() ** 2 <= 1.0 - a0_candidate ** 2:
-            a0 = a0_candidate
-            break
-        if a0_candidate < -1.0 or a0_candidate > 1.0:
-            continue
-
-    sr = math.sqrt(max(0.0, 1.0 - a0 ** 2))
-    theta = math.acos(max(-1.0, min(1.0, 1.0 - 2.0 * rng.random())))
-    phi = 2.0 * math.pi * rng.random()
-    avec = np.array([sr * math.sin(theta) * math.cos(phi),
-                     sr * math.sin(theta) * math.sin(phi),
-                     sr * math.cos(theta)])
-    su2 = (a0 * np.eye(2, dtype=np.complex128)
-           + 1j * avec[2] * np.array([[1, 0], [0, -1]], dtype=np.complex128)
-           + 1j * avec[0] * np.array([[0, 1], [1, 0]], dtype=np.complex128)
-           + 1j * avec[1] * np.array([[0, -1j], [1j, 0]], dtype=np.complex128))
-    return su2 @ vd
+        return x  # weight is flat: any Haar sample is exact
+    return x @ _dagger(a / k)
 
 
 # ---------------------------------------------------------------------------
 # Cabibbo–Marinari SU(3) pseudo-heat-bath
 # ---------------------------------------------------------------------------
 
-def _cm_su2_embed(size: int, indices: tuple[int, int]) -> callable:
-    """Return functions to extract and embed the SU(2) subgroup at (i,j)."""
+def _su2_quaternion_part(m: np.ndarray) -> np.ndarray:
+    """Project a 2×2 complex matrix onto its quaternionic (∝ SU(2)) part.
+
+    Any 2×2 complex M splits as Q + i·Q' with Q, Q' real-quaternionic
+    (real combinations of {1, iσ⃗}).  For R ∈ SU(2), Re Tr(R·M) = Re Tr(R·Q),
+    so only Q matters for the subgroup Boltzmann weight.  Skipping this
+    projection (as the previous implementation did) both samples the wrong
+    subgroup distribution and lets SU(3) links drift off the group manifold.
+    """
+    q0 = 0.5 * (m[0, 0] + m[1, 1].conjugate())
+    q1 = 0.5 * (m[0, 1] - m[1, 0].conjugate())
+    return np.array([[q0, q1], [-q1.conjugate(), q0.conjugate()]],
+                    dtype=np.complex128)
+
+
+def _cm_embed(size: int, indices: tuple[int, int], r: np.ndarray) -> np.ndarray:
+    """Embed an SU(2) matrix r into the (i,j) subgroup of SU(size)."""
     i, j = indices
-
-    def extract(u: np.ndarray) -> np.ndarray:
-        b = u[np.ix_([i, j], [i, j])]
-        r0 = b[0].copy()
-        nrm = np.linalg.norm(r0)
-        if nrm < 1e-14:
-            return np.eye(2, dtype=np.complex128)
-        r0 /= nrm
-        r1 = np.array([-r0[1].conjugate(), r0[0].conjugate()])
-        return np.array([r0, r1])
-
-    def embed(r: np.ndarray) -> np.ndarray:
-        out = np.eye(size, dtype=np.complex128)
-        out[i, i] = r[0, 0]
-        out[i, j] = r[0, 1]
-        out[j, i] = r[1, 0]
-        out[j, j] = r[1, 1]
-        return out
-
-    return extract, embed
+    out = np.eye(size, dtype=np.complex128)
+    out[i, i] = r[0, 0]
+    out[i, j] = r[0, 1]
+    out[j, i] = r[1, 0]
+    out[j, j] = r[1, 1]
+    return out
 
 
 def _cabibbo_marinari_su3_update(
@@ -226,18 +272,19 @@ def _cabibbo_marinari_su3_update(
     beta_g: float,
     rng: np.random.Generator,
 ) -> np.ndarray:
-    """One Cabibbo–Marinari pseudo-heat-bath step for a single SU(3) link."""
+    """One Cabibbo–Marinari pseudo-heat-bath step for a single SU(3) link.
+
+    The link update U → R_emb·U changes the weight through
+    Re Tr(R_emb·U·A) = Re Tr₂(R·(U·A)_block) + const, so each SU(2)
+    subgroup rotation R is drawn by the exact SU(2) heat-bath against the
+    quaternionic part of the corresponding 2×2 block of W = U·A.
+    """
     u_new = u.copy()
     for (i, j) in ((0, 1), (0, 2), (1, 2)):
-        extract, embed = _cm_su2_embed(3, (i, j))
-        w = u_new @ _dagger(staple)
-        w_block = w[np.ix_([i, j], [i, j])]
-        nrm = float(np.real(np.sqrt(np.abs(np.linalg.det(w_block)))))
-        if nrm < 1e-14:
-            continue
-        su2_staple = w_block / nrm
-        r = _heatbath_su2_from_staple(su2_staple * nrm, beta_g, rng)
-        u_new = embed(r) @ u_new
+        w = u_new @ staple
+        w_q = _su2_quaternion_part(w[np.ix_([i, j], [i, j])])
+        r = _heatbath_su2_from_staple(w_q, beta_g, rng)
+        u_new = _cm_embed(3, (i, j), r) @ u_new
     return u_new
 
 
@@ -271,9 +318,8 @@ def heatbath_sweep(
                 else:
                     v = random_unitary(rng, n, special=(n > 1), scale=0.05)
                     u_prop = links_new[(mu,) + site] @ v
-                    a_dag = _dagger(a)
                     ds = float(np.real(np.trace(
-                        (links_new[(mu,) + site] - u_prop) @ a_dag
+                        (links_new[(mu,) + site] - u_prop) @ a
                     )))
                     if ds <= 0.0 or rng.random() < math.exp(-beta_g * ds):
                         links_new[(mu,) + site] = u_prop
@@ -285,6 +331,33 @@ def heatbath_sweep(
 # Overrelaxation (microcanonical)
 # ---------------------------------------------------------------------------
 
+def _overrelax_link(u: np.ndarray, staple: np.ndarray) -> np.ndarray:
+    """Microcanonical reflection of one link about its staple.
+
+    For each SU(2) subgroup, the weight-relevant quaternionic part of the
+    2×2 block of W = U·A is k·Ṽ with Ṽ ∈ SU(2); the reflection R = (Ṽ†)²
+    exactly preserves Re Tr₂(R·k·Ṽ) — and hence the Wilson action — while
+    moving the link as far as possible.  For SU(2) the single "subgroup" is
+    the whole group, so the update is the exact classic reflection; for
+    SU(3) it is applied per Cabibbo–Marinari subgroup.  The previous
+    implementation used A†·A·U†, which is neither unitary nor
+    action-preserving.
+    """
+    n = u.shape[-1]
+    subgroups = [(0, 1)] if n == 2 else [(0, 1), (0, 2), (1, 2)]
+    u_new = u.copy()
+    for (i, j) in subgroups:
+        w = u_new @ staple
+        w_q = _su2_quaternion_part(w[np.ix_([i, j], [i, j])])
+        k = float(np.real(np.sqrt(np.abs(np.linalg.det(w_q)))))
+        if k < 1e-14:
+            continue
+        v = w_q / k
+        r = _dagger(v) @ _dagger(v)
+        u_new = _cm_embed(n, (i, j), r) @ u_new if n > 2 else r @ u_new
+    return u_new
+
+
 def overrelaxation_sweep(
     links: np.ndarray,
     rng: np.random.Generator,
@@ -292,29 +365,23 @@ def overrelaxation_sweep(
     n_sweeps: int = 1,
     omega: float = 1.0,
 ) -> tuple[np.ndarray, float]:
-    """Overrelaxation sweep — energy-conserving link updates."""
+    """Overrelaxation sweep — energy-conserving link updates.
+
+    ``omega`` is retained for API compatibility; the standard full
+    reflection (omega = 1) is always applied, as partial reflections are
+    not microcanonical after re-unitarisation.
+    """
     ndim = links.shape[0]
     spatial = links.shape[1:-2]
-    n = links.shape[-1]
     links_new = links.copy()
 
     for _ in range(n_sweeps):
         for mu in range(ndim):
             for site in np.ndindex(*spatial):
                 a = _staple_sum(links_new, mu, site)
-                a_dag = _dagger(a)
-                u_old = links_new[(mu,) + site]
-                u_ref = a_dag @ (u_old @ a_dag).conj().swapaxes(-1, -2)
-                if omega != 1.0:
-                    disp = u_ref - u_old
-                    u_new = u_old + omega * disp
-                    q, r = np.linalg.qr(u_new)
-                    if n > 1:
-                        d = np.linalg.det(q)
-                        q[..., -1] /= d
-                    links_new[(mu,) + site] = q
-                else:
-                    links_new[(mu,) + site] = u_ref
+                links_new[(mu,) + site] = _overrelax_link(
+                    links_new[(mu,) + site], a
+                )
 
     return links_new, 1.0
 

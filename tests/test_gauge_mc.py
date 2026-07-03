@@ -6,21 +6,25 @@ The Wilson action in gauge_mc.py is::
 
     S_W = Σ_{x,μ<ν} Re Tr(1 − P_{μν}(x))
 
-The Metropolis weight is ``exp(−β_g · ΔS)`` where ΔS is computed directly
-from the staple sum.  The SU(2) heat-bath kernel internally uses
-``alpha = β_g · k / 2`` (Kennedy–Pendleton), but this ``/2`` is absorbed into
-the sampling distribution and does **not** halve the effective coupling seen
-by ensemble-averaged observables.  The correct single-plaquette SU(2)
-benchmark for this convention is therefore::
+with the *unnormalised* trace, and the Boltzmann weight is
+``exp(−β_g · S_W)``, so a single plaquette carries weight
+``exp(β_g · Re Tr U) = exp(2·β_g·a0)`` where ``Tr U = 2·a0`` for SU(2).
+With the SU(2) Haar marginal ``(2/π)·√(1 − a0²) da0`` this gives::
 
-    <W(1,1)> = I₁(β_g) / I₀(β_g)           [NOT I₁(β_g/2)/I₀(β_g/2)]
+    Z(β_g)      = ∫ dU exp(β_g Re Tr U) = 2·I₁(2β_g)/(2β_g)
+    <Re Tr U/2> = <a0> = d/dc log(I₁(c)/c) |_{c=2β_g} = I₂(2β_g) / I₁(2β_g)
 
-This is derived from the partition function of a single SU(2) plaquette:
+so the correct single-plaquette SU(2) benchmark for this convention is::
 
-    Z = ∫ dU exp(β_g Re Tr U) = 2π I₀(β_g)  (up to irrelevant constant)
-    <Re Tr U / 2> = I₁(β_g) / I₀(β_g)
+    <W(1,1)> = I₂(2β_g) / I₁(2β_g)
 
-All Bessel-based tests in this file use this convention explicitly.
+(In 2D the plaquettes decouple, so this is exact for W(1,1) on the torus up
+to exponentially small finite-volume corrections.)  Beware the U(1) formula
+``I₁(β_g)/I₀(β_g)``: it is numerically close to the SU(2) result at small
+β_g — close enough to have masked a convention error in an earlier version
+of this file — but it is the answer to a different integral.
+
+All Bessel-based tests in this file use the SU(2) convention explicitly.
 
 URP alignment
 -------------
@@ -56,7 +60,7 @@ import math
 import unittest
 
 import numpy as np
-from scipy.special import i0, i1  # Bessel I₀, I₁
+from scipy.special import i0, i1, iv  # modified Bessel functions
 
 from project_genesis.gauge import (
     identity_links,
@@ -83,16 +87,23 @@ from project_genesis.gauge_mc import (
 # ---------------------------------------------------------------------------
 
 def _bessel_plaquette_exact(beta_g: float) -> float:
-    """Exact single-plaquette <W(1,1)> = I₁(β_g)/I₀(β_g) for SU(2).
+    """Exact single-plaquette <W(1,1)> = I₂(2β_g)/I₁(2β_g) for SU(2).
 
-    Derived from the partition function::
+    Derived from the partition function with the SU(2) Haar marginal
+    (2/π)·√(1 − a0²) da0 (see the module docstring)::
 
-        Z = ∫_{SU(2)} dU exp(β_g Re Tr U)
+        Z = ∫_{SU(2)} dU exp(β_g Re Tr U) ∝ I₁(2β_g)/(2β_g)
 
-    The normalised Wilson loop (Re Tr U / 2) averages to I₁(β_g)/I₀(β_g).
-    This matches the gauge_mc.py Metropolis convention where the full β_g
-    appears in the Boltzmann weight (the /2 inside the SU(2) heat-bath kernel
-    is internal and does not modify the observable expectation value).
+    so <Re Tr U / 2> = <a0> = I₂(2β_g)/I₁(2β_g).
+    """
+    return float(iv(2, 2.0 * beta_g) / i1(2.0 * beta_g))
+
+
+def _bessel_plaquette_u1(beta_g: float) -> float:
+    """Candidate (WRONG for SU(2)): the U(1) formula I₁(β_g)/I₀(β_g).
+
+    Numerically close to the SU(2) result at small β_g, which is exactly why
+    it is kept here as an explicitly labelled decoy.
     """
     return float(i1(beta_g) / i0(beta_g))
 
@@ -137,9 +148,9 @@ class TestBesselConventionAudit(unittest.TestCase):
     candidate formulae so that any future convention drift is immediately
     visible in the failure message:
 
-        Formula A (correct): I₁(β_g)   / I₀(β_g)
-        Formula B (wrong):   I₁(β_g/2) / I₀(β_g/2)
-        Formula C (wrong):   I₂(β_g)   / I₁(β_g)   (higher-moment variant)
+        Formula A (correct): I₂(2β_g)  / I₁(2β_g)   (SU(2) Haar measure)
+        Formula B (wrong):   I₁(β_g)   / I₀(β_g)    (the U(1) formula)
+        Formula C (wrong):   I₁(β_g/2) / I₀(β_g/2)
 
     A clean failure here means the action convention in gauge_mc.py has
     changed and all downstream physics benchmarks need re-derivation.
@@ -165,12 +176,11 @@ class TestBesselConventionAudit(unittest.TestCase):
 
     def _convention_report(self, beta_g: float, measured: float) -> str:
         a = _bessel_plaquette_exact(beta_g)
-        b = _bessel_plaquette_halfbeta(beta_g)
-        from scipy.special import iv
-        c = float(iv(2, beta_g) / i1(beta_g))
+        b = _bessel_plaquette_u1(beta_g)
+        c = _bessel_plaquette_halfbeta(beta_g)
         return (
             f"β_g={beta_g}  measured={measured:.5f}  "
-            f"I1/I0(β)={a:.5f}  I1/I0(β/2)={b:.5f}  I2/I1(β)={c:.5f}"
+            f"I2/I1(2β)={a:.5f}  I1/I0(β)={b:.5f}  I1/I0(β/2)={c:.5f}"
         )
 
     def test_w11_beta_0p5(self):
@@ -204,7 +214,11 @@ class TestBesselConventionAudit(unittest.TestCase):
         """Confirm that the wrong (β/2) formula gives a different value at β=1.
 
         This ensures the audit test has discriminating power — if both formulae
-        gave the same value the audit would be vacuous.
+        gave the same value the audit would be vacuous.  (The U(1) decoy is
+        deliberately *not* tested here: it sits within ~0.04 of the SU(2)
+        result at these couplings, which is why the ensemble tolerance below
+        cannot rule it out alone — the analytic derivation in the module
+        docstring is the arbiter for that one.)
         """
         beta_g = 1.0
         correct = _bessel_plaquette_exact(beta_g)
@@ -263,7 +277,7 @@ class TestMetropolis(unittest.TestCase):
         u_prop = u_old @ v
         a = _staple_sum(links, mu, site)
         delta_s_local = float(np.real(
-            np.trace((u_old - u_prop) @ a.conj().swapaxes(-1, -2))
+            np.trace((u_old - u_prop) @ a)
         ))
         links_prop = links.copy()
         links_prop[(mu,) + site] = u_prop
@@ -335,9 +349,9 @@ class TestOverrelaxation(unittest.TestCase):
     def test_overrelax_preserves_action(self):
         """Overrelaxation is microcanonical: single-sweep action change ≤ 5 %.
 
-        Tolerance is 5 % (not exact) because the re-projection to SU(N) via
-        QR introduces a small numerical error; the update is only exactly
-        energy-preserving in exact arithmetic.
+        The subgroup reflection is exactly energy-preserving, so the actual
+        change should be at machine-precision level; the loose 5 % bound is
+        kept so the test stays meaningful if the update scheme changes.
         """
         rng = np.random.default_rng(4)
         # equilibrate first so action is non-trivial
@@ -573,18 +587,32 @@ class TestURPConfinementSignals(unittest.TestCase):
         )
 
     def test_creutz_ratio_positive(self):
-        """χ(2,2) > 0 at strong coupling — confirms σ > 0 without perimeter contamination."""
-        chi = self._fit["creutz_ratios"].get("chi_2_2", float("nan"))
+        """χ(2,2) > 0 — confirms σ > 0 without perimeter contamination.
+
+        Measured at β_g = 1.0 rather than the class's β_g = 0.5 anchor:
+        χ(2,2) requires resolving W(2,2) ≈ w⁴, which at β_g = 0.5 is
+        ≈ 3·10⁻³ — *below* the ensemble noise floor at CI-scale statistics,
+        so a χ estimate there is a coin flip, not a measurement.  At
+        β_g = 1.0, W(2,2) ≈ 0.035 is a >10σ signal and 2D SU(2) is still
+        exactly confining (χ_exact = −ln I₂(2)/I₁(2) ≈ 0.84).
+        """
+        rng = np.random.default_rng(2027)
+        summary, _ = thermalize_and_measure_pure_gauge(
+            size=self.SIZE, n=2, beta_g=1.0, rng=rng, ndim=2,
+            n_therm=50, n_meas=200, n_skip=2,
+            updater="heatbath", loop_sizes=[(1, 1), (2, 2)],
+        )
+        chi = summary["area_law_fit"]["creutz_ratios"].get("chi_2_2", float("nan"))
         self.assertFalse(math.isnan(chi), "Creutz ratio chi_2_2 is NaN")
         self.assertGreater(
             chi, 0.0,
-            f"Creutz ratio χ(2,2)={chi:.5f} should be positive at β_g={self.BETA_G}"
+            f"Creutz ratio χ(2,2)={chi:.5f} should be positive at β_g=1.0"
         )
 
     def test_w11_in_expected_range(self):
         """W(1,1) at β_g=0.5 should be consistent with Bessel benchmark.
 
-        Expected: I₁(0.5)/I₀(0.5) ≈ 0.240.  We allow ±0.08 for the small
+        Expected: I₂(1)/I₁(1) ≈ 0.240.  We allow ±0.08 for the small
         ensemble (6×6, 80 measurements).  This ties the physics test back to
         the convention audit.
         """
@@ -651,11 +679,16 @@ class TestDeconfinementScan(unittest.TestCase):
         It is the lattice version of asymptotic freedom: at larger β_g
         (weaker coupling / finer lattice) the string tension measured in
         lattice units decreases.
+
+        Loops are restricted to R,T ≤ 2: at β_g = 0.5 the true W(3,3) is
+        ≈ 6·10⁻⁶, far below the ensemble noise at this budget, and feeding
+        pure noise into the log-fit randomises the fitted σ.
         """
         rng = np.random.default_rng(7)
         results = deconfinement_scan(
             size=5, n=2, beta_values=[0.5, 2.5], rng=rng,
-            ndim=2, n_therm=30, n_meas=30, n_skip=3, updater="heatbath"
+            ndim=2, n_therm=30, n_meas=60, n_skip=3, updater="heatbath",
+            loop_sizes=[(1, 1), (2, 2)],
         )
         sigma_strong = results[0]["area_law_fit"]["sigma"]
         sigma_weak = results[1]["area_law_fit"]["sigma"]

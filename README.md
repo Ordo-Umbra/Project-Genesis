@@ -64,7 +64,7 @@ project_genesis/
   visualize.py         Matplotlib-based 3-D voxel and S-functional visualization
 Docs/
   The Universal Recursion Principle (URP) _260312_170343.txt
-tests/                 145 checks across the engine, instruments, and physics
+tests/                 253 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_corpus_kappa.py
   test_dynamic_kappa.py
