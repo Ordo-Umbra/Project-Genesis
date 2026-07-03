@@ -87,6 +87,20 @@ def _run_ensemble(
 
 
 class TestSU3Confinement(unittest.TestCase):
+    """SU(3) confinement signals on a 4×4×4 3D lattice.
+
+    Two ensembles are used, because not every observable is statistically
+    resolvable at the same coupling with a CI-scale budget:
+
+    - **Strong coupling (β_g = 0.5)** — W(1,1) ≈ 0.08, so W(3,3) ≈ 10⁻⁵ is
+      pure noise here.  This ensemble supports the qualitative signals:
+      area-law ordering, confined Polyakov loop, W(1,1) range.
+    - **Moderate coupling (β_g = 2.0)** — 3D SU(3) is still confining, and
+      W(2,2) is a strong signal, so the *quantitative* estimators (fitted
+      σ > 0, Creutz ratio χ(2,2) > 0) are measured here, with loops
+      restricted to R,T ≤ 2 to keep noise out of the log-fit.
+    """
+
     @classmethod
     def setUpClass(cls):
         summary, cls._links = _run_ensemble(
@@ -96,7 +110,14 @@ class TestSU3Confinement(unittest.TestCase):
         )
         cls._summary = summary
         cls._loops = summary["loop_averages"]
-        cls._fit = summary["area_law_fit"]
+
+        moderate, _ = _run_ensemble(
+            n=3, beta_g=2.0, size=4, ndim=3,
+            n_therm=40, n_meas=60, n_skip=2,
+            seed=30032,
+            loop_sizes=[(1, 1), (2, 2)],
+        )
+        cls._fit = moderate["area_law_fit"]
 
     def test_su3_area_law_ordering(self):
         w11 = self._loops["W_1_1"]
@@ -304,6 +325,9 @@ class TestPolyakovOrderParameterScan(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         rng = np.random.default_rng(88001)
+        # Loops restricted to R,T ≤ 2: at β_g = 0.5 the true W(3,3) is
+        # ≈ 6·10⁻⁶ — pure noise at this measurement budget — and feeding
+        # noise into the log-fit randomises the fitted σ.
         results = deconfinement_scan(
             size=cls.SIZE,
             n=2,
@@ -314,7 +338,7 @@ class TestPolyakovOrderParameterScan(unittest.TestCase):
             n_meas=cls.N_MEAS,
             n_skip=cls.N_SKIP,
             updater="heatbath",
-            loop_sizes=[(1, 1), (2, 2), (3, 3)],
+            loop_sizes=[(1, 1), (2, 2)],
         )
         cls._results = results
         cls._poly = [abs(r["polyakov_mean"]) for r in results]
