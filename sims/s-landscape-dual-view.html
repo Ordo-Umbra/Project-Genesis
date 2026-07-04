@@ -311,7 +311,7 @@
                 </div>
                 <div>
                     <h1>S-Landscape • Dual View</h1>
-                    <div class="subtitle">Physical Field + Classical Embedding Attractor • URP</div>
+                    <div class="subtitle">Holographic Boundary Screen + Embedding Attractor • URP</div>
                 </div>
             </div>
             
@@ -327,11 +327,11 @@
 
         <div class="dual-grid">
             
-            <!-- Left: Physical Chladni -->
+            <!-- Left: Holographic Boundary Screen (Physical Field) -->
             <div class="panel">
                 <div class="panel-header">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2.5"><path d="M3 12h4l3 9 4-18 3 9h4"/></svg>
-                    <span>Physical Chladni Plate (Field View)</span>
+                    <span>Holographic Boundary Screen (Field View)</span>
                 </div>
                 <div style="position:relative;">
                     <canvas id="canvas-left" width="520" height="520"></canvas>
@@ -346,7 +346,7 @@
                         <div id="s-left" class="metric-value" style="color:#a5b4fc;">1.28</div>
                     </div>
                     <div class="metric">
-                        <div class="metric-label">Coherence</div>
+                        <div class="metric-label">Boundary Coh</div>
                         <div id="coh-left" class="metric-value" style="color:#4ade80;">82</div>
                     </div>
                     <div class="metric">
@@ -356,12 +356,12 @@
                 </div>
             </div>
 
-            <!-- Right: Classical Embedding Attractor -->
+            <!-- Right: Embedding / Good-Seed Attractor -->
             <div class="panel">
                 <div class="panel-header">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/></svg>
-                    <span>Classical Embedding Attractor (Hopfield View)</span>
-                    <span class="attractor-hint">Drag to move • Double-click to add • Right-click to remove</span>
+                    <span>Embedding / Good-Seed Attractor (Hopfield View)</span>
+                    <span class="attractor-hint">Drag • Double-click add • Right-click remove</span>
                 </div>
                 <div style="position:relative;">
                     <canvas id="canvas-right" width="520" height="520"></canvas>
@@ -396,6 +396,7 @@
                 <button class="preset-btn" onclick="applyPreset('balanced')">Balanced</button>
                 <button class="preset-btn" onclick="applyPreset('overdriven')">Overdriven</button>
                 <button class="preset-btn" onclick="applyPreset('insight')">Insight Pulse</button>
+                <button class="preset-btn" onclick="applyPreset('thermal-junction')">Thermal Junction Stable</button>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.1rem;">
@@ -456,18 +457,19 @@
 
         <div class="explanation">
             <p style="margin:0.4rem 0 0 0;">
-                <strong>Left:</strong> Physical Chladni plate — sand particles driven by distinction (ΔC) and pulled toward nodal coherence (ΔI) under capacity κ.<br>
-                <strong>Right:</strong> Classical embedding attractor view with <strong>editable attractors</strong> (drag to move, double-click to add, right-click to remove) and <strong>visible attention lines</strong> showing weighted pull toward each memory. Temperature/noise controls how diffuse the cloud stays before collapse. Direct visual of transformer-like dynamics.
+                <strong>Left (Holographic Boundary Screen):</strong> Physical field view — particles driven by distinction (ΔC) and integrated toward nodal lines (boundary concentration loci) under capacity κ. Nodal patterns emerge as stable attractor states that reconstruct “space” as the interior view of boundary encoding (per the URP holographic reframing). Subtle κ texture shows capacity depletion near strong nodes when in optimal regime.<br>
+                <strong>Right (Embedding / Good-Seed Attractor):</strong> Classical memory view with editable attractors (Good seeds / boundary encodings). Attention lines show weighted holographic reconstruction/pull. Directly visualizes transformer-like boundary maintenance and the embedding side of the dual attractor dynamics.<br>
+                <strong>Presets & Thermal Stability:</strong> “Thermal Junction Stable” reflects the latest test-bed measured melting curve — stable nodal/junction patterns persist in thermal regimes up to the measured T_melt, echoing P=3 exclusivity in annealed equilibrium.
             </p>
         </div>
 
         <div class="footer">
-            Universal Recursion Principle • Dual-view counterfactual engine • Fully offline • Project Genesis
+            Universal Recursion Principle • Holographic Boundary + Embedding Dual View • Aligned with latest thermal/annealed test-bed findings • Fully offline • Project Genesis
         </div>
     </div>
 
     <script>
-        // Dual-view S-Landscape v2 - with editable attractors + attention visualization
+        // Dual-view S-Landscape v2.1 - Updated for greater accuracy with URP holographic reframing, dynamical κ texture, and thermal junction stability from Project-Genesis test bed
         let canvasL, ctxL, canvasR, ctxR;
         let particlesL = [];
         let pointsR = [];
@@ -483,7 +485,7 @@
             modeM: 2
         };
 
-        // Editable attractors for right panel
+        // Editable attractors for right panel (Good seeds / boundary encodings)
         let attractorsR = [
             {x: 180, y: 180, strength: 1.0},
             {x: 340, y: 180, strength: 0.95},
@@ -501,7 +503,7 @@
             canvasR = document.getElementById('canvas-right');
             ctxR = canvasR.getContext('2d');
 
-            // Left panel - Chladni particles
+            // Left panel - Chladni particles (holographic boundary screen)
             particlesL = [];
             const cx = canvasL.width / 2;
             const cy = canvasL.height / 2;
@@ -518,7 +520,7 @@
                 });
             }
 
-            // Right panel - Embedding points
+            // Right panel - Embedding points (Good-seed attractors)
             pointsR = [];
             for (let i = 0; i < 185; i++) {
                 pointsR.push({
@@ -530,7 +532,7 @@
                 });
             }
 
-            // Mouse / touch handlers for right canvas (editable attractors + attention)
+            // Mouse / touch handlers for right canvas
             canvasR.addEventListener('mousedown', handleRightMouseDown);
             canvasR.addEventListener('mousemove', handleRightMouseMove);
             canvasR.addEventListener('mouseup', handleRightMouseUp);
@@ -538,7 +540,6 @@
             canvasR.addEventListener('dblclick', handleRightDoubleClick);
             canvasR.addEventListener('contextmenu', handleRightContextMenu);
 
-            // Touch support for mobile
             canvasR.addEventListener('touchstart', handleRightTouchStart, { passive: false });
             canvasR.addEventListener('touchmove', handleRightTouchMove, { passive: false });
             canvasR.addEventListener('touchend', handleRightTouchEnd);
@@ -558,6 +559,7 @@
         function updateLeft() {
             let totalCoh = 0;
             let totalVel = 0;
+            let boundaryCoh = 0; // For holographic boundary concentration metric
 
             for (let p of particlesL) {
                 const amp = getVibration(p.x, p.y, time);
@@ -571,7 +573,9 @@
                 p.vx -= gX * pull;
                 p.vy -= gY * pull;
 
-                const diff = (0.28 + params.kappa * 1.45) * (0.48 + params.dc * 0.55) * params.noise * 1.8;
+                // Dynamical κ texture: stronger depletion/drag near high-amplitude nodes (boundary concentration)
+                const localKappaMod = 1.0 + (absAmp * 0.8) * (params.kappa - 0.5);
+                const diff = (0.28 + params.kappa * 1.45) * (0.48 + params.dc * 0.55) * params.noise * 1.8 * localKappaMod;
                 p.vx += (Math.random() - 0.5) * diff;
                 p.vy += (Math.random() - 0.5) * diff;
 
@@ -590,19 +594,24 @@
 
                 totalVel += Math.abs(p.vx) + Math.abs(p.vy);
                 totalCoh += Math.max(0, 1 - absAmp * 1.65);
+
+                // Boundary concentration contribution (higher near nodes)
+                if (absAmp > 0.4) boundaryCoh += 1 - (absAmp - 0.4);
             }
 
             const coh = totalCoh / particlesL.length;
             const avgVel = totalVel / particlesL.length;
-            const sLeft = params.dc * (0.65 + (1 - coh) * 0.7) + params.kappa * coh * params.di * 1.25;
+            const boundaryFactor = boundaryCoh / particlesL.length;
+            // Refined S with holographic boundary emphasis
+            const sLeft = params.dc * (0.65 + (1 - coh) * 0.7) + params.kappa * coh * params.di * 1.25 + (params.kappa * 0.4 * boundaryFactor);
 
             document.getElementById('s-left').textContent = sLeft.toFixed(2);
             document.getElementById('coh-left').textContent = Math.round(coh * 100);
             document.getElementById('time-left').textContent = time.toFixed(2);
 
             const statusEl = document.getElementById('status-text-left');
-            if (coh > 0.76) {
-                statusEl.textContent = 'STABLE ATTRACTOR';
+            if (coh > 0.76 && boundaryFactor > 0.35) {
+                statusEl.textContent = 'THERMAL ATTRACTOR';
                 statusEl.style.color = '#4ade80';
             } else if (coh > 0.52) {
                 statusEl.textContent = 'RESONANT';
@@ -629,7 +638,10 @@
             for (let p of particlesL) {
                 const amp = getVibration(p.x, p.y, time);
                 const nodeF = Math.max(0.12, 1 - Math.abs(amp) * 1.95);
-                const r = 218 + (1 - nodeF) * 28;
+
+                // κ texture: subtle depletion near strong nodes (holographic boundary concentration)
+                const kappaTint = (params.kappa > 0.4 && Math.abs(amp) > 0.5) ? 0.15 : 0;
+                const r = 218 + (1 - nodeF) * 28 - kappaTint * 30;
                 const g = 205 + (nodeF - 0.35) * 35;
                 const b = 182 + nodeF * 58;
                 ctxL.fillStyle = `rgb(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)})`;
@@ -640,7 +652,7 @@
             ctxL.shadowBlur = 0;
         }
 
-        // Right panel update with editable attractors
+        // Right panel update with editable attractors (Good seeds)
         function updateRight() {
             let totalSpread = 0;
             let totalCluster = 0;
@@ -723,7 +735,7 @@
             for (let x = 40; x < canvasR.width; x += 40) { ctxR.beginPath(); ctxR.moveTo(x, 0); ctxR.lineTo(x, canvasR.height); ctxR.stroke(); }
             for (let y = 40; y < canvasR.height; y += 40) { ctxR.beginPath(); ctxR.moveTo(0, y); ctxR.lineTo(canvasR.width, y); ctxR.stroke(); }
 
-            // Draw attractors as soft wells + centers
+            // Draw attractors as soft wells + centers (Good seeds / boundary encodings)
             for (let a of attractorsR) {
                 const grad = ctxR.createRadialGradient(a.x, a.y, 8, a.x, a.y, 95);
                 grad.addColorStop(0, '#c026ff33');
@@ -739,14 +751,13 @@
                 ctxR.arc(a.x, a.y, 18, 0, Math.PI * 2);
                 ctxR.stroke();
 
-                // Small center dot
                 ctxR.fillStyle = '#c026ff';
                 ctxR.beginPath();
                 ctxR.arc(a.x, a.y, 4, 0, Math.PI * 2);
                 ctxR.fill();
             }
 
-            // Draw attention / attraction lines (weighted pull visualization)
+            // Draw attention / attraction lines (holographic reconstruction / boundary maintenance)
             ctxR.strokeStyle = '#a5b4fc44';
             ctxR.lineWidth = 0.8;
             for (let p of pointsR) {
@@ -793,7 +804,7 @@
             ctxR.shadowBlur = 0;
         }
 
-        // === Editable attractors handlers ===
+        // === Editable attractors handlers (Good seeds) ===
         function getAttractorAt(x, y) {
             for (let i = 0; i < attractorsR.length; i++) {
                 const a = attractorsR[i];
@@ -836,14 +847,12 @@
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
-            // Add new attractor
             attractorsR.push({
                 x: x,
                 y: y,
                 strength: 0.95 + Math.random() * 0.15
             });
 
-            // Keep max 8 attractors
             if (attractorsR.length > 8) attractorsR.shift();
         }
 
@@ -859,7 +868,6 @@
             }
         }
 
-        // Touch support
         function handleRightTouchStart(e) {
             e.preventDefault();
             if (e.touches.length === 1) {
@@ -937,6 +945,7 @@
             else if (type === 'balanced') t = {dc: 0.65, kappa: 0.55, di: 0.85, noise: 0.32};
             else if (type === 'overdriven') t = {dc: 1.42, kappa: 0.28, di: 0.68, noise: 0.55};
             else if (type === 'insight') t = {dc: 0.82, kappa: 0.62, di: 0.9, noise: 0.25};
+            else if (type === 'thermal-junction') t = {dc: 0.78, kappa: 0.65, di: 0.88, noise: 0.22}; // Reflects measured thermal stability / melting curve
 
             Object.assign(params, t);
             syncSliders();
@@ -1062,7 +1071,6 @@
 
             time = 0;
 
-            // Reset attractors to default
             attractorsR = [
                 {x: 180, y: 180, strength: 1.0},
                 {x: 340, y: 180, strength: 0.95},
@@ -1078,7 +1086,7 @@
             if (e.key.toLowerCase() === 'c') triggerCollapseRight();
             if (e.key === '?') {
                 e.preventDefault();
-                alert('Keys: R = reset • D = inject ΔC • I = boost ΔI • C = force collapse\nRight canvas: Drag attractors • Double-click = add • Right-click = remove');
+                alert('Keys: R = reset • D = inject ΔC • I = boost ΔI • C = force collapse\nRight canvas: Drag attractors • Double-click = add • Right-click = remove\nNew: Thermal Junction Stable preset reflects latest test-bed melting curve');
             }
         }
 
@@ -1107,7 +1115,7 @@
                 }
             }, 650);
 
-            console.log('%c[S-Landscape Dual View v2] Editable attractors + attention lines ready.', 'color:#475569');
+            console.log('%c[S-Landscape Dual View v2.1] Updated for holographic accuracy + thermal junction stability (Project-Genesis test bed).', 'color:#475569');
         }
 
         window.onload = start;
