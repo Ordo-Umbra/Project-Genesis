@@ -68,7 +68,7 @@ project_genesis/
   visualize.py         Matplotlib-based 3-D voxel and S-functional visualization
 Docs/
   The Universal Recursion Principle (URP) _260312_170343.txt
-tests/                 305 checks across the engine, instruments, and physics
+tests/                 311 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -85,6 +85,7 @@ tests/                 305 checks across the engine, instruments, and physics
   test_n3_thermal_selection.py
   test_new_subsystems.py
   test_sectorisation.py
+  test_potts_transition.py
   test_scaling_ladder.py
   test_sigma_scan.py
   test_topological_selection.py
@@ -103,6 +104,7 @@ experiments/
   n3_annealed_matter.py     Junction-network melting in the joint (ψ, U) ensemble (2-D and 3-D)
   n3_phase_boundary.py      T_melt(g_m) boundary map with susceptibility crossover check
   n3_scaling_ladder.py      Finite-size-scaling ladder: chi_max(L) exponent fit
+  n3_potts_transition.py    Unpinned S_P order-disorder transition vs 3-state Potts
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -132,6 +134,7 @@ A running tally of what the instruments have actually measured — the verdicts,
 | The Yang–Mills equations are the S-stationarity conditions (§3.2) | **Demonstrated** — gradient ascent on `S = coupling·coherence − stress` monotonically raises S and drives the lattice YM residual → 0 (SU(2)/SU(3)); curvature is enriched ~2.6× on the sector walls ("gluons as boundary modes") | [Yang–Mills dynamics](#yangmills-dynamics--gradient-ascent-on-s) |
 | Confinement: Wilson loops obey an area law with σ > 0 (§4.A) | **Measured** — Monte-Carlo ensembles of exp(−β_g·S_W): the SU(2) 2-D instrument reproduces the *exact* analytic σ(β_g) within errors at every scanned coupling (calibration), and SU(3) in 3-D shows σ > 0 with sub-percent errors across β_g ∈ [1, 5], decreasing with β_g, with confined Polyakov loops throughout. Small lattices, no continuum limit — lattice-units signatures, not physical σ | [Monte-Carlo confinement](#monte-carlo-confinement--the-measured-area-law) |
 | The three-sector junction network exists and survives as a *thermal* state — matter and gauge co-fluctuating | **Measured melting curve, in 2-D and 3-D** — in the joint annealed (ψ, U) ensemble, a colour-neutral junction network exists in equilibrium *only* for P=3 (P=2 structurally cannot form one; P≥4 cannot fit its palette on 3-fold junctions even when thermal — exactly zero in the annealed state in both dimensions), survives with slight thermal roughening up to a measured melting temperature T ≈ 0.2, and melts above it. In 3-D the network is junction *lines* and an order of magnitude denser (neutrality ≈ 0.55 vs ≈ 0.06), yet melts at the same T — the dimensional argument survives thermodynamics. Integration retention with full back-reaction is rank-ordered in P; curvature localization remains absent | [Annealed matter](#annealed-matter--the-junction-network-as-a-thermal-state) |
+| With the sector basis dynamical (fractions unpinned), the S_P symmetry breaks in the 3-state Potts class | **Measured — a genuine transition with the exact Potts exponent** — removing the fraction pin lets the system *choose* its sector spontaneously; the order–disorder point at T_c ≈ 0.11 is a real transition: χ_max(L) ∝ L^b with **b = 1.60 ± 0.22** across L ∈ {16…48} — 7.2σ from the pinned model's flat crossover and 0.6σ from the exact 2-D 3-state Potts γ/ν = 26/15. The dichotomy is now fully explained: pinned fractions (coexistence) ⇒ smooth network dissolution; free fractions ⇒ spontaneous S_P breaking in the universality class the three-sector symmetry dictates | [Unpinned S_P transition](#the-unpinned-s_p-transition--sector-choice-in-the-potts-class) |
 | The melting boundary in the (g_m, T) plane: crossover or transition? | **Mapped — and the crossover is confirmed by finite-size scaling** — T_melt(g_m) rises monotonically with the matter–gauge coupling (0.093 → 0.132 for g_m = 1 → 8: the coupling *stabilises* the junction network). The four-size ladder L ∈ {24, 32, 48, 64} gives χ_max(L) ∝ L^b with **b = −0.09 ± 0.30** — consistent with zero at 0.3σ and **6.0σ away** from 2-D-Ising-like transition scaling (b = 1.75). Nothing diverges: the junction network dissolves smoothly, as expected where the sector basis is explicitly (not spontaneously) selected | [Melting boundary](#the-melting-boundary--tg_m-map-and-the-crossover-verdict) |
 | The N⋆=3 selection survives a *fluctuating* (thermodynamic) gauge sector | **Measured crossover** — with the converged P-sector networks quench-coupled to SU(P) Wilson ensembles, the integration retention R(g_m) is rank-ordered (bigger palettes pay a higher gauge tax) and selection at three survives exactly where κ·w·neutrality·R exceeds the ΔC gap — washing out to P=4 below a sharp (w, g_m) threshold. **Negative sub-verdict**: curvature does *not* localize on walls or junctions in equilibrium (quenched sector matter never frustrates the gauge field — the per-link constraints are integrable); the deterministic 2.6× wall enrichment is a relaxation-dynamics effect, not a thermodynamic one | [Thermal N⋆=3 selection](#thermal-n3-selection--the-sector-field-in-a-fluctuating-gauge-ensemble) |
 | The S-functional rewards an interior sector optimum | **Achieved in 2-D and 3-D** — with volume-conserving dynamics (persistent junctions) and a *topological* neutrality term (full-palette junctions, non-collinear with ΔC), `S = ΔC + κ·neutrality` is maximized at **exactly three sectors**, robust across seeds/weights. In 3-D three wins ~10× over four (triple *lines* vs sparse quadruple *points*) | [Topological selection](#topological-selection--an-interior-optimum-at-three) |
@@ -396,6 +399,7 @@ The URP picture is gradient ascent on `S = coupling·(covariant coherence) − (
 
 - **Calibration against an exact result.** 2-D SU(2) is exactly solvable — plaquettes decouple and `σ_exact(β_g) = −ln[I₂(2β_g)/I₁(2β_g)]`. On a 16² lattice (1600 measurements/point, 1 heat-bath + 2 overrelaxation sweeps per compound update) the measured Creutz ratio χ(2,2) tracks the exact curve at all seven couplings β_g ∈ [0.75, 4], worst pull 2.2σ. The instrument measures what it claims to measure.
 - **SU(3) confinement in 3-D.** On an 8³ lattice, χ(2,2) = σ runs from 1.73(16) at β_g = 1 to 0.1290(3) at β_g = 5 — positive at >10σ at every coupling, monotonically decreasing (the lattice-units echo of asymptotic freedom), with `|⟨P⟩| ≲ 0.003` (confined, Z₃ unbroken) across the whole scan. This is the expected behaviour of 2+1-D Yang–Mills, which confines at all couplings — and it is now measured here, not quoted.
+- **At 4× the volume the picture holds and sharpens** (`--size-su2 32 --size-su3 16 --r-max 4`): the 32² SU(2) calibration still tracks the exact curve (worst pull 2.7σ over 7 couplings), and the 2-D Creutz *plateau* — χ(3,3) and χ(4,4) agreeing with χ(2,2), as the exact pure-area law demands — is now resolved (e.g. β_g = 3: χ22 = 0.2711(15), χ33 = 0.2672(57); β_g = 4: χ22 = 0.2004(11), χ33 = 0.1992(33), χ44 = 0.209(14)). In 3-D SU(3), σ is finite-size stable between 8³ and 16³ at every coupling, and the larger loops now expose what 8³ could not: χ(3,3) sits systematically *below* χ(2,2) (β_g = 5: 0.0956(6) vs 0.1298(3)), the standard perimeter/short-distance contamination of small Creutz ratios — so the asymptotic string tension is somewhat below χ(2,2), approached from above as the loops grow.
 - Reproduce with `python experiments/confinement_sigma_scan.py` (≈ 10 minutes; `--quick` for a smoke run). Artifacts: per-point Wilson loops, Creutz ratios with jackknife errors, Polyakov loops, a σ(β_g) figure, and a summary with explicit verdict lines.
 
 **Honest scope:** these are lattice-units signatures on small lattices — no continuum limit, no scale setting, no physical σ in MeV/fm, and 2-D/3-D rather than 3+1-D. What the instrument establishes is that the URP-side gauge sector, sampled as a proper thermodynamic ensemble, exhibits the area law and confined order parameter the theory's §4.A points to — with a calibration line showing the estimator is trustworthy.
@@ -439,6 +443,19 @@ Reproduce with `python experiments/n3_annealed_matter.py` (≈ 10 minutes; `--qu
 Reproduce with `python experiments/n3_phase_boundary.py` and `python experiments/n3_scaling_ladder.py` (≈ 10 minutes each; `--quick` for smoke runs).
 
 **Honest scope:** the ladder is one coupling point (g_m = 4) and one exponent channel (the order-parameter susceptibility); T_half is measured on the thermal junction density, whose absolute normalisation is measure-specific — the *shape* and monotonicity of the boundary are the robust content. Two of the four χ-maximum locations sit at the scan edge (the high-T tail drifts mildly upward from disorder fluctuations); the height-scaling verdict is insensitive to this, since the heights stay flat everywhere.
+
+### The unpinned S_P transition — sector choice in the Potts class
+
+The crossover result begged its own follow-up: the fraction pinning that stabilises the junction network also *forbids* the S_P permutation symmetry from breaking — all P sectors are always present by construction, so the melt can only be interface dissolution. `experiments/n3_potts_transition.py` removes the pin (`frac_penalty = 0`). Nothing in the model now prefers any sector — the corner potential is exactly S_P-symmetric — so at low temperature the system must **choose** one spontaneously: the sector basis has become dynamical in the meaningful sense, and the order–disorder point can be a genuine transition. For P = 3 in 2-D the natural universality class is the 3-state Potts model (γ/ν = 26/15 ≈ 1.733).
+
+Measured on a cold-started ladder L ∈ {16, 24, 32, 48} with the gauge sector kept as in the melting studies (β_g = 3, g_m = 4), the Potts magnetisation `m = (P·n_max − 1)/(P − 1)`, its susceptibility, and the Binder cumulant, all with binned-jackknife errors:
+
+- **Spontaneous sector order appears and melts at T_c ≈ 0.11**: m runs from ≈ 0.98 (cold) through a sharpening drop to the disorder plateau, and the susceptibility peaks are fully bracketed and interior (T_peak = 0.107–0.113 across all sizes), growing 3.6 → 4.7 → 8.5 → 20.0 from L = 16 to 48.
+- **The scaling exponent lands on Potts**: χ_max(L) ∝ L^b with **b = 1.60 ± 0.22** — 7.2σ away from the pinned model's flat crossover and 0.6σ from the exact 3-state Potts value. Same model, one constraint removed, and the melt changes character exactly as the symmetry analysis predicts.
+
+Reproduce with `python experiments/n3_potts_transition.py` (≈ 25 minutes; `--quick` for a smoke run).
+
+**Honest scope:** the exponent is a four-size fit at one (β_g, g_m) point — consistency with Potts, not a universality proof (that would want larger L, a ν extraction from Binder slopes, and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision (the disordered-phase U₄ is noisy); the peak positions give the quoted T_c. First-order contamination (2-D q = 3 Potts is barely second order) is not excluded by these sizes.
 
 ## Setup
 
