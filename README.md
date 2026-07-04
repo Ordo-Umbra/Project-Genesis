@@ -55,6 +55,7 @@ project_genesis/
   gauge.py             Lattice gauge connection on the Ψ∈ℂ³ sectors (U(1)/SU(2)/SU(3))
   gauge_mc.py          Monte-Carlo sampling of exp(−β_g·S_W + g_m·Re[ψ†Uψ]): SU(N) heat-bath, overrelaxation, Wilson/Polyakov loops
   gauge_mc_kernels.py  Numba JIT kernels for the MC layer (~50–100× the reference path)
+  annealed_matter.py   Joint (ψ, U) ensemble: thermal sector matter with gauge back-reaction
   io.py                Snapshot serialization helpers
   metrics.py           URP terrain summary metrics and S-functional computation
   memory_corpus.py     Stable-object corpus, composition, serialization, lineage
@@ -67,8 +68,9 @@ project_genesis/
   visualize.py         Matplotlib-based 3-D voxel and S-functional visualization
 Docs/
   The Universal Recursion Principle (URP) _260312_170343.txt
-tests/                 285 checks across the engine, instruments, and physics
+tests/                 294 checks across the engine, instruments, and physics
   test_genesis_engine.py
+  test_annealed_matter.py
   test_corpus_kappa.py
   test_dynamic_kappa.py
   test_gauge.py
@@ -96,6 +98,7 @@ experiments/
   yang_mills_flow.py    Gradient ascent on S: YM residual → 0, gluons on walls
   confinement_sigma_scan.py σ(β_g) area-law scan: Creutz ratios with jackknife errors
   n3_thermal_selection.py   N⋆=3 selection under a fluctuating SU(P) gauge ensemble
+  n3_annealed_matter.py     Junction-network melting in the joint (ψ, U) ensemble
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -124,6 +127,7 @@ A running tally of what the instruments have actually measured — the verdicts,
 | A gauge connection is the minimal structure restoring coherence under local rotations (§2–3) | **Demonstrated** (U(1)/SU(2)/SU(3)) — covariant coherence is gauge-invariant to machine precision while naive coherence is scrambled; a pure-gauge connection has zero curvature; runs on the real Ψ∈ℂ³ sectors | [Gauge connection](#gauge-connection--coherence-under-local-rotations) |
 | The Yang–Mills equations are the S-stationarity conditions (§3.2) | **Demonstrated** — gradient ascent on `S = coupling·coherence − stress` monotonically raises S and drives the lattice YM residual → 0 (SU(2)/SU(3)); curvature is enriched ~2.6× on the sector walls ("gluons as boundary modes") | [Yang–Mills dynamics](#yangmills-dynamics--gradient-ascent-on-s) |
 | Confinement: Wilson loops obey an area law with σ > 0 (§4.A) | **Measured** — Monte-Carlo ensembles of exp(−β_g·S_W): the SU(2) 2-D instrument reproduces the *exact* analytic σ(β_g) within errors at every scanned coupling (calibration), and SU(3) in 3-D shows σ > 0 with sub-percent errors across β_g ∈ [1, 5], decreasing with β_g, with confined Polyakov loops throughout. Small lattices, no continuum limit — lattice-units signatures, not physical σ | [Monte-Carlo confinement](#monte-carlo-confinement--the-measured-area-law) |
+| The three-sector junction network exists and survives as a *thermal* state — matter and gauge co-fluctuating | **Measured melting curve** — in the joint annealed (ψ, U) ensemble, a colour-neutral junction network exists in equilibrium *only* for P=3 (P=2 structurally cannot form one; P≥4 cannot fit its palette on 3-fold junctions even when thermal), survives with slight thermal roughening up to a measured melting temperature T ≈ 0.2, and melts above it. Integration retention with full back-reaction is again rank-ordered in P. Curvature localization remains absent even with annealed matter (max deviation 0.3%) | [Annealed matter](#annealed-matter--the-junction-network-as-a-thermal-state) |
 | The N⋆=3 selection survives a *fluctuating* (thermodynamic) gauge sector | **Measured crossover** — with the converged P-sector networks quench-coupled to SU(P) Wilson ensembles, the integration retention R(g_m) is rank-ordered (bigger palettes pay a higher gauge tax) and selection at three survives exactly where κ·w·neutrality·R exceeds the ΔC gap — washing out to P=4 below a sharp (w, g_m) threshold. **Negative sub-verdict**: curvature does *not* localize on walls or junctions in equilibrium (quenched sector matter never frustrates the gauge field — the per-link constraints are integrable); the deterministic 2.6× wall enrichment is a relaxation-dynamics effect, not a thermodynamic one | [Thermal N⋆=3 selection](#thermal-n3-selection--the-sector-field-in-a-fluctuating-gauge-ensemble) |
 | The S-functional rewards an interior sector optimum | **Achieved in 2-D and 3-D** — with volume-conserving dynamics (persistent junctions) and a *topological* neutrality term (full-palette junctions, non-collinear with ΔC), `S = ΔC + κ·neutrality` is maximized at **exactly three sectors**, robust across seeds/weights. In 3-D three wins ~10× over four (triple *lines* vs sparse quadruple *points*) | [Topological selection](#topological-selection--an-interior-optimum-at-three) |
 
@@ -401,7 +405,22 @@ The topological-selection optimum at three was a *deterministic* result. `experi
 
 Reproduce with `python experiments/n3_thermal_selection.py` (≈ 15 minutes; `--quick` for a smoke run). Artifacts: per-cell retention and curvature decompositions with errors, the full selection table, a three-panel figure, and a summary with explicit verdict lines.
 
-**Honest scope:** the matter field is quenched — the gauge ensemble does not back-react on the sector network, so this isolates one direction of the coupling. Gauge groups of different rank are compared at equal (β_g, g_m) with the per-group mean plaquette reported rather than equalised. 2-D, one matter configuration per palette size, and the same structural caveats as the deterministic topological-selection result it extends. The natural next step is *annealed* matter — letting the sector field and the gauge ensemble co-evolve.
+**Honest scope:** the matter field is quenched — the gauge ensemble does not back-react on the sector network, so this isolates one direction of the coupling. Gauge groups of different rank are compared at equal (β_g, g_m) with the per-group mean plaquette reported rather than equalised. 2-D, one matter configuration per palette size, and the same structural caveats as the deterministic topological-selection result it extends. The annealed-matter experiment below closes the loop.
+
+### Annealed matter — the junction network as a thermal state
+
+`project_genesis.annealed_matter` + `experiments/n3_annealed_matter.py` remove the quench: the sector field ψ(x) ∈ ℂ^P and the SU(P) links co-evolve in **one joint Gibbs measure** — `exp(−β_g·S_W + (1/T)·[g_m·Σ Re(ψ†Uψ′) + u·Σ|ψ_a|⁴ − λ_c·N·Σ_a(f_a − f⁰_a)²])` — with single-site Metropolis matter updates (Numba-JIT, held equal to a pure-Python reference at the bit level) interleaved with the exact matter-coupled heat-bath. The corner potential u makes sectors form; the soft fraction pinning λ_c is the thermodynamic analogue of the volume-conserving dynamics (without it the system trivially freezes into one sector); T is the matter temperature. Junction observables use a noise-robust measure (smoothed amplitudes, ordered-cell labels, wide junction neighbourhoods) calibrated so a converged cold network scores clearly nonzero while pure label noise scores exactly zero.
+
+What the melting scan (P ∈ {2,3,4,5}, T ∈ [0.02, 1.6], each point an independent fresh-start ensemble, binned-jackknife errors) measures:
+
+- **The colour-neutral junction network exists in equilibrium only for P = 3.** Across every temperature, the full-palette junction density is nonzero solely for the three-colour palette — P = 2 structurally cannot form junctions, and P ≥ 4 cannot fit its whole palette on generically 3-fold 2-D junctions even when the field is free to fluctuate. The deterministic structural selection is a property of the *thermal state*, not just of a particular relaxation path.
+- **The network has a measured melting temperature.** Neutrality holds (with slight thermal roughening — it *rises* a little from T = 0.02 to 0.05) and then collapses: 0.063 → 0.068 → 0.038 → 0 across T = 0.02/0.05/0.1/0.2, giving T_melt ≈ 0.2 at these couplings (β_g = 3, g_m = 4, u = 1, λ_c = 20, 48²). Below melting, the annealed selection functional S = ΔC + κ·w·neutrality·R is maximised at P = 3 through the junction channel; above melting that channel is empty for *every* palette, so the P-comparison there rides on ΔC alone and says nothing about junctions — the meaningful selection statement is the sub-melting one.
+- **Integration retention with full back-reaction is again rank-ordered.** R (measured against the cold network's coherence) falls smoothly with T and with P at every temperature (at T = 1.6: 0.64/0.43/0.32/0.25 for P = 2/3/4/5) — the group-rank tax persists when the matter fluctuates too.
+- **Curvature localization stays absent** (max |ratio − 1| = 0.3% across all cells) — even annealed junction cores do not pin gauge curvature, extending the quenched-matter negative verdict.
+
+Reproduce with `python experiments/n3_annealed_matter.py` (≈ 10 minutes; `--quick` for a smoke run).
+
+**Honest scope:** the corner potential and pinned fractions explicitly break local SU(P) — deliberately, since in the URP picture the sectors define preferred frames and the gauge freedom is the local relabelling the connection repairs. 2-D, one seed network per palette, groups compared at equal (β_g, g_m, T), and T_melt is quoted at one coupling point, not mapped as a phase boundary — that map (and the 3-D version, where junction *lines* change the geometry) is the stated next step.
 
 ## Setup
 
