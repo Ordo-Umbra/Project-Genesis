@@ -274,6 +274,13 @@ def write_summary(all_results: dict[str, list[dict]], path: str) -> None:
                        if chi["error"] else float("nan"))
                 line += (f"  exact={r['sigma_exact_2d']:7.4f}"
                          f"  pull={dev:+.1f}σ")
+            # Creutz plateau: larger-loop ratios agree with chi(2,2) once
+            # perimeter/discretisation contamination is subdominant
+            for rr in (3, 4):
+                c = r["creutz"].get(f"chi_{rr}_{rr}")
+                if c and not math.isnan(c["value"]):
+                    line += (f"  chi{rr}{rr}={c['value']:+.4f}"
+                             f"+-{c['error']:.4f}")
             line += f"  |P|={r['polyakov_abs']:.4f}"
             lines.append(line)
         # verdict per group
