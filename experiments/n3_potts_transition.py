@@ -83,21 +83,28 @@ def run_point(
     bin_size: int,
     seed: int,
     step_scale: float,
+    dim: int = 2,
+    start: str = "cold",
 ) -> dict:
-    """One (L, T) point of the unpinned ensemble, cold-started.
+    """One (L, T) point of the unpinned ensemble.
 
-    Cold (ordered) starts are the efficient choice for an order–disorder
+    Cold (ordered) starts are the efficient default for an order–disorder
     scan: melting is downhill and fast, while ordering from a hot start
-    is a coarsening process needing O(L²) sweeps.  In the ordered phase
-    the start is already near equilibrium; in the disordered phase it
-    disorders within the thermalisation budget.
+    is a coarsening process needing O(L²) sweeps.  ``start="hot"`` is
+    provided for hysteresis checks (hot/cold disagreement windows are a
+    first-order signature).  ``dim`` selects 2-D or 3-D.
     """
     rng = np.random.default_rng(seed)
-    spatial = (size, size)
-    psi = random_psi(rng, n_palette, spatial) * 0.15
-    psi[..., 0] += 1.0
-    psi = psi / np.linalg.norm(psi, axis=-1, keepdims=True)
-    links = random_unitary(rng, n_palette, (2, *spatial),
+    spatial = (size,) * dim
+    if start == "cold":
+        psi = random_psi(rng, n_palette, spatial) * 0.15
+        psi[..., 0] += 1.0
+        psi = psi / np.linalg.norm(psi, axis=-1, keepdims=True)
+    elif start == "hot":
+        psi = random_psi(rng, n_palette, spatial)
+    else:
+        raise ValueError(f"unknown start: {start!r}")
+    links = random_unitary(rng, n_palette, (dim, *spatial),
                            special=True, scale=0.7)
 
     kw = dict(temperature=temperature, beta_g=beta_g,
@@ -134,7 +141,7 @@ def run_point(
     def jk(cols, est):
         return jackknife(samples[:, cols], est, bin_size=bin_size)
 
-    n_sites = size * size
+    n_sites = size ** dim
     m_mean, m_err = jk([0], lambda v: float(v[0]))
     chi, chi_err = jk([0, 1], lambda v: float(n_sites * (v[1] - v[0] ** 2)))
     binder, binder_err = jk(
@@ -142,6 +149,8 @@ def run_point(
         if v[0] > 1e-12 else float("nan"))
     return {
         "size": size,
+        "dim": dim,
+        "start": start,
         "temperature": temperature,
         "magnetisation": m_mean,
         "magnetisation_err": m_err,
