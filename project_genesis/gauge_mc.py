@@ -25,7 +25,9 @@ Three update algorithms are provided:
 2. **SU(2) heat-bath** — exact for SU(2), using Kennedy–Pendleton sampling
    at strong effective coupling and Creutz sampling at weak effective
    coupling so link updates never stall; wrapped into Cabibbo–Marinari
-   subgroup updates for SU(3).
+   subgroup updates for any SU(N ≥ 3).  A quenched matter field ψ may be
+   coupled through ``exp(g_m·Σ Re[ψ†Uψ])`` — the matter term enters each
+   link's weight exactly, as a staple addition.
 3. **Overrelaxation** (microcanonical) — energy-preserving; decorrelates the
    field faster than Metropolis at moderate β_g.
 
@@ -67,8 +69,26 @@ except Exception:  # pragma: no cover - numba is a declared dependency
 def _use_numba_default(n: int, use_numba: bool | None) -> bool:
     """Resolve the ``use_numba`` tri-state: None = auto (if available)."""
     if use_numba is None:
-        return _HAVE_NUMBA and n in (2, 3)
+        return _HAVE_NUMBA and n >= 2
     return bool(use_numba) and _HAVE_NUMBA
+
+
+def _matter_outer(
+    matter: np.ndarray,
+    mu: int,
+    site: tuple[int, ...],
+    spatial: tuple[int, ...],
+) -> np.ndarray:
+    """The link's matter source ``M = ψ(x+μ̂)·ψ†(x)`` as an n×n matrix.
+
+    ``Re[ψ†(x)·U·ψ(x+μ̂)] = Re Tr(U·M)``, so a quenched matter field enters
+    the link update as an addition to the staple sum.
+    """
+    fwd = list(site)
+    fwd[mu] = (site[mu] + 1) % spatial[mu]
+    psi_here = matter[tuple(site)]
+    psi_fwd = matter[tuple(fwd)]
+    return np.outer(psi_fwd, np.conjugate(psi_here))
 
 
 # ---------------------------------------------------------------------------
@@ -132,8 +152,15 @@ def metropolis_sweep(
     *,
     n_sweeps: int = 1,
     step_scale: float = 0.18,
+    matter: np.ndarray | None = None,
+    matter_coupling: float = 1.0,
 ) -> tuple[np.ndarray, float]:
-    """Single-link Metropolis sweep over all links."""
+    """Single-link Metropolis sweep over all links.
+
+    With a quenched ``matter`` field (shape ``(*spatial, n)``), samples the
+    same matter-coupled ensemble as :func:`heatbath_sweep` — kept as an
+    algorithm-independent cross-check of the exact heat-bath.
+    """
     ndim = links.shape[0]
     spatial = links.shape[1:-2]
     n = links.shape[-1]
@@ -151,8 +178,14 @@ def metropolis_sweep(
                 # plaquette containing U_μ(x) factorises as Tr(U_μ(x)·staple).
                 a = _staple_sum(links_new, mu, site)
                 delta_s = float(np.real(np.trace((u_old - u_prop) @ a)))
+                delta_exponent = -beta_g * delta_s
+                if matter is not None:
+                    m = _matter_outer(matter, mu, site, spatial)
+                    delta_exponent += matter_coupling * float(
+                        np.real(np.trace((u_prop - u_old) @ m))
+                    )
 
-                if delta_s <= 0.0 or rng.random() < math.exp(-beta_g * delta_s):
+                if delta_exponent >= 0.0 or rng.random() < math.exp(delta_exponent):
                     links_new[(mu,) + site] = u_prop
                     n_acc += 1
                 n_tot += 1
@@ -280,25 +313,32 @@ def _cm_embed(size: int, indices: tuple[int, int], r: np.ndarray) -> np.ndarray:
     return out
 
 
-def _cabibbo_marinari_su3_update(
+def _su2_subgroup_pairs(n: int) -> tuple[tuple[int, int], ...]:
+    """All (i, j) SU(2) subgroup index pairs of SU(n)."""
+    return tuple((i, j) for i in range(n) for j in range(i + 1, n))
+
+
+def _cabibbo_marinari_update(
     u: np.ndarray,
     staple: np.ndarray,
     beta_g: float,
     rng: np.random.Generator,
 ) -> np.ndarray:
-    """One Cabibbo–Marinari pseudo-heat-bath step for a single SU(3) link.
+    """One Cabibbo–Marinari pseudo-heat-bath step for a single SU(N) link.
 
     The link update U → R_emb·U changes the weight through
     Re Tr(R_emb·U·A) = Re Tr₂(R·(U·A)_block) + const, so each SU(2)
     subgroup rotation R is drawn by the exact SU(2) heat-bath against the
-    quaternionic part of the corresponding 2×2 block of W = U·A.
+    quaternionic part of the corresponding 2×2 block of W = U·A.  Sweeping
+    all N(N−1)/2 subgroups makes the update ergodic on SU(N) for any N ≥ 2.
     """
+    n = u.shape[-1]
     u_new = u.copy()
-    for (i, j) in ((0, 1), (0, 2), (1, 2)):
+    for (i, j) in _su2_subgroup_pairs(n):
         w = u_new @ staple
         w_q = _su2_quaternion_part(w[np.ix_([i, j], [i, j])])
         r = _heatbath_su2_from_staple(w_q, beta_g, rng)
-        u_new = _cm_embed(3, (i, j), r) @ u_new
+        u_new = _cm_embed(n, (i, j), r) @ u_new
     return u_new
 
 
@@ -312,21 +352,45 @@ def heatbath_sweep(
     rng: np.random.Generator,
     *,
     n_sweeps: int = 1,
+    matter: np.ndarray | None = None,
+    matter_coupling: float = 1.0,
     use_numba: bool | None = None,
 ) -> tuple[np.ndarray, float]:
-    """Heat-bath sweep over all links.
+    """Heat-bath sweep over all links of the (optionally matter-coupled) ensemble.
 
-    ``use_numba=None`` (default) uses the JIT kernels when available for
-    SU(2)/SU(3); ``False`` forces the pure-Python reference path.  Both
-    paths implement the same update with the same random-draw order.
+    Samples ``exp(−β_g·S_W + g_m·Σ_{x,μ} Re[ψ†(x)·U_μ(x)·ψ(x+μ̂)])``.  A
+    quenched matter field ``matter`` (shape ``(*spatial, n)``, e.g. the
+    sector-membership ψ from :func:`project_genesis.gauge.sector_field_to_psi`)
+    enters each link's Boltzmann weight exactly, as the staple addition
+    ``(g_m/β_g)·ψ(x+μ̂)ψ†(x)`` — the quaternionic projection inside the SU(2)
+    kernel extracts precisely the part of that matrix the weight depends on,
+    so the update remains an *exact* heat-bath.  Requires ``β_g > 0`` when
+    matter is supplied.
+
+    SU(2) uses the direct heat-bath; every N ≥ 3 uses Cabibbo–Marinari over
+    all N(N−1)/2 SU(2) subgroups.  ``use_numba=None`` (default) uses the JIT
+    kernels when available; ``False`` forces the pure-Python reference path.
+    Both paths implement the same update with the same random-draw order.
     """
     ndim = links.shape[0]
     spatial = links.shape[1:-2]
     n = links.shape[-1]
+    if matter is not None and not beta_g > 0.0:
+        raise ValueError("matter coupling requires beta_g > 0")
 
     if _use_numba_default(n, use_numba):
         flat, fwd, bwd, spatial = _nbk.flatten_links(links)
-        _nbk.heatbath_sweep_flat(flat, fwd, bwd, float(beta_g), rng, n_sweeps)
+        if matter is None:
+            psi_flat = np.zeros((1, n), dtype=np.complex128)
+            cob = 0.0
+        else:
+            psi_flat = np.ascontiguousarray(
+                matter.reshape(-1, n).astype(np.complex128)
+            )
+            cob = float(matter_coupling) / float(beta_g)
+        _nbk.heatbath_sweep_flat(
+            flat, fwd, bwd, float(beta_g), rng, n_sweeps, psi_flat, cob
+        )
         return _nbk.unflatten_links(flat, spatial), 1.0
 
     links_new = links.copy()
@@ -335,20 +399,16 @@ def heatbath_sweep(
         for mu in range(ndim):
             for site in np.ndindex(*spatial):
                 a = _staple_sum(links_new, mu, site)
+                if matter is not None:
+                    a = a + (matter_coupling / beta_g) * _matter_outer(
+                        matter, mu, site, spatial
+                    )
                 if n == 2:
                     links_new[(mu,) + site] = _heatbath_su2_from_staple(a, beta_g, rng)
-                elif n == 3:
-                    links_new[(mu,) + site] = _cabibbo_marinari_su3_update(
+                else:
+                    links_new[(mu,) + site] = _cabibbo_marinari_update(
                         links_new[(mu,) + site], a, beta_g, rng
                     )
-                else:
-                    v = random_unitary(rng, n, special=(n > 1), scale=0.05)
-                    u_prop = links_new[(mu,) + site] @ v
-                    ds = float(np.real(np.trace(
-                        (links_new[(mu,) + site] - u_prop) @ a
-                    )))
-                    if ds <= 0.0 or rng.random() < math.exp(-beta_g * ds):
-                        links_new[(mu,) + site] = u_prop
 
     return links_new, 1.0
 
@@ -358,19 +418,19 @@ def heatbath_sweep(
 # ---------------------------------------------------------------------------
 
 def _overrelax_link(u: np.ndarray, staple: np.ndarray) -> np.ndarray:
-    """Microcanonical reflection of one link about its staple.
+    """Microcanonical reflection of one link about its (effective) staple.
 
     For each SU(2) subgroup, the weight-relevant quaternionic part of the
     2×2 block of W = U·A is k·Ṽ with Ṽ ∈ SU(2); the reflection R = (Ṽ†)²
-    exactly preserves Re Tr₂(R·k·Ṽ) — and hence the Wilson action — while
-    moving the link as far as possible.  For SU(2) the single "subgroup" is
-    the whole group, so the update is the exact classic reflection; for
-    SU(3) it is applied per Cabibbo–Marinari subgroup.  The previous
-    implementation used A†·A·U†, which is neither unitary nor
-    action-preserving.
+    exactly preserves Re Tr₂(R·k·Ṽ) — and hence the Wilson action (plus any
+    matter term folded into ``staple``) — while moving the link as far as
+    possible.  For SU(2) the single "subgroup" is the whole group, so the
+    update is the exact classic reflection; for SU(N ≥ 3) it is applied per
+    Cabibbo–Marinari subgroup.  The previous implementation used A†·A·U†,
+    which is neither unitary nor action-preserving.
     """
     n = u.shape[-1]
-    subgroups = [(0, 1)] if n == 2 else [(0, 1), (0, 2), (1, 2)]
+    subgroups = [(0, 1)] if n == 2 else list(_su2_subgroup_pairs(n))
     u_new = u.copy()
     for (i, j) in subgroups:
         w = u_new @ staple
@@ -390,9 +450,17 @@ def overrelaxation_sweep(
     *,
     n_sweeps: int = 1,
     omega: float = 1.0,
+    matter: np.ndarray | None = None,
+    matter_coupling: float = 1.0,
+    beta_g: float = 1.0,
     use_numba: bool | None = None,
 ) -> tuple[np.ndarray, float]:
     """Overrelaxation sweep — energy-conserving link updates.
+
+    With a quenched ``matter`` field the reflection is taken about the
+    *effective* staple ``A + (g_m/β_g)·ψ(x+μ̂)ψ†(x)``, so the full exponent
+    ``−β_g·S_W + g_m·Σ Re[ψ†Uψ]`` is conserved exactly (``beta_g`` is only
+    used for that scaling; the microcanonical move itself has no coupling).
 
     ``omega`` is retained for API compatibility; the standard full
     reflection (omega = 1) is always applied, as partial reflections are
@@ -401,10 +469,20 @@ def overrelaxation_sweep(
     ndim = links.shape[0]
     spatial = links.shape[1:-2]
     n = links.shape[-1]
+    if matter is not None and not beta_g > 0.0:
+        raise ValueError("matter coupling requires beta_g > 0")
 
     if _use_numba_default(n, use_numba):
         flat, fwd, bwd, spatial = _nbk.flatten_links(links)
-        _nbk.overrelaxation_sweep_flat(flat, fwd, bwd, n_sweeps)
+        if matter is None:
+            psi_flat = np.zeros((1, n), dtype=np.complex128)
+            cob = 0.0
+        else:
+            psi_flat = np.ascontiguousarray(
+                matter.reshape(-1, n).astype(np.complex128)
+            )
+            cob = float(matter_coupling) / float(beta_g)
+        _nbk.overrelaxation_sweep_flat(flat, fwd, bwd, n_sweeps, psi_flat, cob)
         return _nbk.unflatten_links(flat, spatial), 1.0
 
     links_new = links.copy()
@@ -413,6 +491,10 @@ def overrelaxation_sweep(
         for mu in range(ndim):
             for site in np.ndindex(*spatial):
                 a = _staple_sum(links_new, mu, site)
+                if matter is not None:
+                    a = a + (matter_coupling / beta_g) * _matter_outer(
+                        matter, mu, site, spatial
+                    )
                 links_new[(mu,) + site] = _overrelax_link(
                     links_new[(mu,) + site], a
                 )

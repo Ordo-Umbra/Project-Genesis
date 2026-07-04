@@ -224,27 +224,35 @@ def _su2_left_apply(r, u, i, j):
 
 
 @njit(cache=True)
-def _cm_su3_update_nb(u, staple, beta_g, rng, w, blk, aq, x, r):
-    """Cabibbo–Marinari pseudo-heat-bath on a single SU(3) link, in place.
+def _cm_update_nb(u, staple, beta_g, rng, w, blk, aq, x, r):
+    """Cabibbo–Marinari pseudo-heat-bath on a single SU(N) link, in place.
 
-    ``w`` is (3, 3) scratch; ``blk``/``aq``/``x``/``r`` are (2, 2) scratch.
+    Sweeps all N(N−1)/2 SU(2) subgroups in (i < j) lexicographic order —
+    the same order as the pure-Python reference.  ``w`` is (n, n) scratch;
+    ``blk``/``aq``/``x``/``r`` are (2, 2) scratch.
     """
-    for step in range(3):
-        if step == 0:
-            i, j = 0, 1
-        elif step == 1:
-            i, j = 0, 2
-        else:
-            i, j = 1, 2
-        _mat_mul(u, staple, w)
-        blk[0, 0] = w[i, i]
-        blk[0, 1] = w[i, j]
-        blk[1, 0] = w[j, i]
-        blk[1, 1] = w[j, j]
-        _quat_part(blk, aq)
-        # aq is already quaternionic; _heatbath_su2_nb re-projects (no-op)
-        _heatbath_su2_nb(aq, beta_g, rng, r, blk, x)
-        _su2_left_apply(r, u, i, j)
+    n = u.shape[0]
+    for i in range(n):
+        for j in range(i + 1, n):
+            _mat_mul(u, staple, w)
+            blk[0, 0] = w[i, i]
+            blk[0, 1] = w[i, j]
+            blk[1, 0] = w[j, i]
+            blk[1, 1] = w[j, j]
+            _quat_part(blk, aq)
+            # aq is already quaternionic; _heatbath_su2_nb re-projects (no-op)
+            _heatbath_su2_nb(aq, beta_g, rng, r, blk, x)
+            _su2_left_apply(r, u, i, j)
+
+
+@njit(cache=True)
+def _add_matter(staple, psi, fwd, mu, s, cob):
+    """Add the matter source ``cob·ψ(s+μ̂)·ψ†(s)`` to the staple, in place."""
+    n = staple.shape[0]
+    sf = fwd[mu, s]
+    for i in range(n):
+        for j in range(n):
+            staple[i, j] += cob * psi[sf, i] * np.conj(psi[s, j])
 
 
 # ---------------------------------------------------------------------------
@@ -252,33 +260,45 @@ def _cm_su3_update_nb(u, staple, beta_g, rng, w, blk, aq, x, r):
 # ---------------------------------------------------------------------------
 
 @njit(cache=True)
-def heatbath_sweep_flat(links, fwd, bwd, beta_g, rng, n_sweeps):
-    """Heat-bath sweep(s) over flattened links, in place.  n ∈ {2, 3}."""
+def heatbath_sweep_flat(links, fwd, bwd, beta_g, rng, n_sweeps, psi, cob):
+    """Heat-bath sweep(s) over flattened links, in place, for any SU(n ≥ 2).
+
+    ``psi`` (nsites, n) is a quenched matter field added to each staple as
+    ``cob·ψ(s+μ̂)ψ†(s)`` with ``cob = matter_coupling/β_g``; pass ``cob = 0``
+    (with a dummy 1×n ``psi``) for the pure-gauge ensemble.
+    """
     ndim = links.shape[0]
     nsites = links.shape[1]
     n = links.shape[-1]
     staple = np.empty((n, n), dtype=np.complex128)
     t1 = np.empty((n, n), dtype=np.complex128)
     t2 = np.empty((n, n), dtype=np.complex128)
-    w = np.empty((3, 3), dtype=np.complex128)
+    w = np.empty((n, n), dtype=np.complex128)
     blk = np.empty((2, 2), dtype=np.complex128)
     aq = np.empty((2, 2), dtype=np.complex128)
     x = np.empty((2, 2), dtype=np.complex128)
     r = np.empty((2, 2), dtype=np.complex128)
+    has_matter = cob != 0.0
     for _ in range(n_sweeps):
         for mu in range(ndim):
             for s in range(nsites):
                 _staple_sum_flat(links, fwd, bwd, mu, s, staple, t1, t2)
+                if has_matter:
+                    _add_matter(staple, psi, fwd, mu, s, cob)
                 if n == 2:
                     _heatbath_su2_nb(staple, beta_g, rng, links[mu, s], aq, x)
                 else:
-                    _cm_su3_update_nb(links[mu, s], staple, beta_g, rng,
-                                      w, blk, aq, x, r)
+                    _cm_update_nb(links[mu, s], staple, beta_g, rng,
+                                  w, blk, aq, x, r)
 
 
 @njit(cache=True)
-def overrelaxation_sweep_flat(links, fwd, bwd, n_sweeps):
-    """Microcanonical overrelaxation sweep(s) over flattened links, in place."""
+def overrelaxation_sweep_flat(links, fwd, bwd, n_sweeps, psi, cob):
+    """Microcanonical overrelaxation sweep(s) over flattened links, in place.
+
+    Reflections are taken about the effective staple (gauge + matter), so
+    the full exponent is conserved; ``cob = 0`` gives the pure-gauge case.
+    """
     ndim = links.shape[0]
     nsites = links.shape[1]
     n = links.shape[-1]
@@ -289,35 +309,32 @@ def overrelaxation_sweep_flat(links, fwd, bwd, n_sweeps):
     blk = np.empty((2, 2), dtype=np.complex128)
     aq = np.empty((2, 2), dtype=np.complex128)
     r = np.empty((2, 2), dtype=np.complex128)
-    n_sub = 1 if n == 2 else 3
+    has_matter = cob != 0.0
     for _ in range(n_sweeps):
         for mu in range(ndim):
             for s in range(nsites):
                 _staple_sum_flat(links, fwd, bwd, mu, s, staple, t1, t2)
+                if has_matter:
+                    _add_matter(staple, psi, fwd, mu, s, cob)
                 u = links[mu, s]
-                for step in range(n_sub):
-                    if n == 2:
-                        i, j = 0, 1
-                    elif step == 0:
-                        i, j = 0, 1
-                    elif step == 1:
-                        i, j = 0, 2
-                    else:
-                        i, j = 1, 2
-                    _mat_mul(u, staple, w)
-                    blk[0, 0] = w[i, i]
-                    blk[0, 1] = w[i, j]
-                    blk[1, 0] = w[j, i]
-                    blk[1, 1] = w[j, j]
-                    k = _quat_part(blk, aq)
-                    if k < 1e-14:
-                        continue
-                    for a in range(2):
-                        for b in range(2):
-                            aq[a, b] = aq[a, b] / k
-                    # r = (V†)² — the exact energy-preserving reflection
-                    _mat_dag_mul_bdag(aq, aq, r)
-                    _su2_left_apply(r, u, i, j)
+                for i in range(n - 1):
+                    for j in range(i + 1, n):
+                        if n == 2 and (i, j) != (0, 1):
+                            continue
+                        _mat_mul(u, staple, w)
+                        blk[0, 0] = w[i, i]
+                        blk[0, 1] = w[i, j]
+                        blk[1, 0] = w[j, i]
+                        blk[1, 1] = w[j, j]
+                        k = _quat_part(blk, aq)
+                        if k < 1e-14:
+                            continue
+                        for a in range(2):
+                            for b in range(2):
+                                aq[a, b] = aq[a, b] / k
+                        # r = (V†)² — the exact energy-preserving reflection
+                        _mat_dag_mul_bdag(aq, aq, r)
+                        _su2_left_apply(r, u, i, j)
 
 
 # ---------------------------------------------------------------------------

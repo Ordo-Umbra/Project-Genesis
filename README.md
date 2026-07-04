@@ -36,7 +36,7 @@ The simulation laboratory currently provides:
 - **β-sectorisation / boundary-formation analysis** — domain-wall detection, periodic connected-component sector counting, per-sector distinction/integration statistics, and triple-junction counting, for empirically testing the URP `N⋆=3` (SU(3)) prediction,
 - **dynamical capacity field κ(x,t)** — capacity consumed by distinction load, regenerating with slack, diffusing between regions, and gating the integration term in the dynamics, with multi-scale and per-sector capacity reporting,
 - **κ-as-soil corpus coupling** — recalled "seeds" only take root where local capacity is sufficient (fertile soil) and consume it when they do, so structure can only re-grow where the field can support it,
-- **Monte-Carlo lattice gauge sampling** — exact SU(2) heat-bath / Cabibbo–Marinari SU(3) / overrelaxation updates of the Wilson ensemble with Numba-JIT kernels, plus Wilson-loop, Creutz-ratio, and Polyakov-loop instruments for measuring confinement (σ > 0) with jackknife errors,
+- **Monte-Carlo lattice gauge sampling** — exact SU(2) heat-bath / Cabibbo–Marinari SU(N ≥ 3) / overrelaxation updates of the Wilson ensemble with Numba-JIT kernels, optional exact coupling to a quenched sector-matter field ψ, plus Wilson-loop, Creutz-ratio, and Polyakov-loop instruments for measuring confinement (σ > 0) and coherence retention with jackknife errors,
 - **two zero-dependency browser toys** and a Numba-accelerated 3-D engine, sharing the same dynamics so the visual intuition and the measured physics stay in step,
 - saved snapshots for resuming or analyzing a run,
 - exported metrics, run summaries, agent timelines, corpus summaries, and text slices for inspecting intermediate and final terrain states,
@@ -53,7 +53,7 @@ project_genesis/
   config.py            Engine configuration and defaults
   engine.py            Field evolution, voxel quantization, agent orchestration, save/load
   gauge.py             Lattice gauge connection on the Ψ∈ℂ³ sectors (U(1)/SU(2)/SU(3))
-  gauge_mc.py          Monte-Carlo sampling of exp(−β_g·S_W): heat-bath, overrelaxation, Wilson/Polyakov loops
+  gauge_mc.py          Monte-Carlo sampling of exp(−β_g·S_W + g_m·Re[ψ†Uψ]): SU(N) heat-bath, overrelaxation, Wilson/Polyakov loops
   gauge_mc_kernels.py  Numba JIT kernels for the MC layer (~50–100× the reference path)
   io.py                Snapshot serialization helpers
   metrics.py           URP terrain summary metrics and S-functional computation
@@ -67,17 +67,19 @@ project_genesis/
   visualize.py         Matplotlib-based 3-D voxel and S-functional visualization
 Docs/
   The Universal Recursion Principle (URP) _260312_170343.txt
-tests/                 272 checks across the engine, instruments, and physics
+tests/                 285 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_corpus_kappa.py
   test_dynamic_kappa.py
   test_gauge.py
   test_gauge_mc.py
   test_gauge_mc_confinement.py
+  test_gauge_mc_matter.py
   test_gauge_mc_numba.py
   test_memory_corpus.py
   test_multiphase.py
   test_multiphase_kappa.py
+  test_n3_thermal_selection.py
   test_new_subsystems.py
   test_sectorisation.py
   test_sigma_scan.py
@@ -93,6 +95,7 @@ experiments/
   gauge_coherence.py    Gauge connection as coherence restoration (U(1)/SU(2)/SU(3))
   yang_mills_flow.py    Gradient ascent on S: YM residual → 0, gluons on walls
   confinement_sigma_scan.py σ(β_g) area-law scan: Creutz ratios with jackknife errors
+  n3_thermal_selection.py   N⋆=3 selection under a fluctuating SU(P) gauge ensemble
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -121,6 +124,7 @@ A running tally of what the instruments have actually measured — the verdicts,
 | A gauge connection is the minimal structure restoring coherence under local rotations (§2–3) | **Demonstrated** (U(1)/SU(2)/SU(3)) — covariant coherence is gauge-invariant to machine precision while naive coherence is scrambled; a pure-gauge connection has zero curvature; runs on the real Ψ∈ℂ³ sectors | [Gauge connection](#gauge-connection--coherence-under-local-rotations) |
 | The Yang–Mills equations are the S-stationarity conditions (§3.2) | **Demonstrated** — gradient ascent on `S = coupling·coherence − stress` monotonically raises S and drives the lattice YM residual → 0 (SU(2)/SU(3)); curvature is enriched ~2.6× on the sector walls ("gluons as boundary modes") | [Yang–Mills dynamics](#yangmills-dynamics--gradient-ascent-on-s) |
 | Confinement: Wilson loops obey an area law with σ > 0 (§4.A) | **Measured** — Monte-Carlo ensembles of exp(−β_g·S_W): the SU(2) 2-D instrument reproduces the *exact* analytic σ(β_g) within errors at every scanned coupling (calibration), and SU(3) in 3-D shows σ > 0 with sub-percent errors across β_g ∈ [1, 5], decreasing with β_g, with confined Polyakov loops throughout. Small lattices, no continuum limit — lattice-units signatures, not physical σ | [Monte-Carlo confinement](#monte-carlo-confinement--the-measured-area-law) |
+| The N⋆=3 selection survives a *fluctuating* (thermodynamic) gauge sector | **Measured crossover** — with the converged P-sector networks quench-coupled to SU(P) Wilson ensembles, the integration retention R(g_m) is rank-ordered (bigger palettes pay a higher gauge tax) and selection at three survives exactly where κ·w·neutrality·R exceeds the ΔC gap — washing out to P=4 below a sharp (w, g_m) threshold. **Negative sub-verdict**: curvature does *not* localize on walls or junctions in equilibrium (quenched sector matter never frustrates the gauge field — the per-link constraints are integrable); the deterministic 2.6× wall enrichment is a relaxation-dynamics effect, not a thermodynamic one | [Thermal N⋆=3 selection](#thermal-n3-selection--the-sector-field-in-a-fluctuating-gauge-ensemble) |
 | The S-functional rewards an interior sector optimum | **Achieved in 2-D and 3-D** — with volume-conserving dynamics (persistent junctions) and a *topological* neutrality term (full-palette junctions, non-collinear with ΔC), `S = ΔC + κ·neutrality` is maximized at **exactly three sectors**, robust across seeds/weights. In 3-D three wins ~10× over four (triple *lines* vs sparse quadruple *points*) | [Topological selection](#topological-selection--an-interior-optimum-at-three) |
 
 The honest through-line: the *machinery* of URP sectorisation is reproducible, the boundary-cost half of its free-energy argument is measured, and — after localizing why naive selection failed (ΔI vanishes at equilibrium; coherence magnitude is collinear with ΔC) — a junction-resolving dynamics plus a topological neutrality term reproduces an interior optimum at **three in both 2-D and 3-D**, echoing the gauge paper's §6. The count is no longer a free parameter; it falls out of the junction geometry.
@@ -386,6 +390,18 @@ The URP picture is gradient ascent on `S = coupling·(covariant coherence) − (
 - Reproduce with `python experiments/confinement_sigma_scan.py` (≈ 10 minutes; `--quick` for a smoke run). Artifacts: per-point Wilson loops, Creutz ratios with jackknife errors, Polyakov loops, a σ(β_g) figure, and a summary with explicit verdict lines.
 
 **Honest scope:** these are lattice-units signatures on small lattices — no continuum limit, no scale setting, no physical σ in MeV/fm, and 2-D/3-D rather than 3+1-D. What the instrument establishes is that the URP-side gauge sector, sampled as a proper thermodynamic ensemble, exhibits the area law and confined order parameter the theory's §4.A points to — with a calibration line showing the estimator is trustworthy.
+
+### Thermal N⋆=3 selection — the sector field in a fluctuating gauge ensemble
+
+The topological-selection optimum at three was a *deterministic* result. `experiments/n3_thermal_selection.py` asks whether it survives when the gauge sector actually fluctuates: each converged P-sector network is embedded as a quenched matter field `ψ ∈ ℂ^P` and coupled to an SU(P) Wilson ensemble, `weight ∝ exp(−β_g·S_W + g_m·Σ Re[ψ†Uψ])`. The matter term enters each link's heat-bath weight *exactly* (as a staple addition, handled by the same quaternionic projection the sampler already uses; Cabibbo–Marinari now covers every SU(N ≥ 3), so all palette sizes get exact updates). Three measurements, with binned-jackknife errors:
+
+- **Integration retention is coupling-controlled and rank-ordered.** `R = ⟨covariant coherence⟩/naive coherence` — the fraction of the deterministic integration the fluctuating connection actually delivers — depends almost entirely on g_m (β_g moves it by only a few percent) and *falls with the palette size at every coupling* (at g_m = 8, β_g = 3: R ≈ 0.90 / 0.80 / 0.71 / 0.62 for P = 2/3/4/5). Larger groups have more directions to wander, so bigger palettes pay a higher gauge tax on integration — a group-rank effect the deterministic picture cannot see.
+- **The selection has a measured washout threshold.** Dressing the selection functional with the retention, `S = ΔC + κ·w·neutrality·R`, selection at P=3 holds in 28/48 (w, β_g, g_m) cells and fails in a coherent wedge: exactly where `κ·w·neutrality·R` falls below the ΔC gap to P=4, the argmax slips to four. The boundary tracks a level set of `w·R` (w=0.05 needs g_m ≥ 4; w=0.1 needs g_m ≥ 2; w=0.2 needs g_m ≥ 1; w=0.5 needs g_m ≥ 0.5). So three is not unconditional: it is selected whenever the matter–gauge coupling preserves enough integration to pay for the junctions — and the crossover is now a measured curve, not a hypothesis.
+- **Negative verdict: no curvature localization in equilibrium.** Across every (P, β_g, g_m) cell the junction/bulk and wall/bulk curvature ratios are 1.00 within errors (max deviation 2.8%). The reason is structural: the per-link matter constraint is rank-1 (`U·ψ(x+μ̂) = ψ(x)` plus a free orthogonal completion), and composing those transports around any plaquette returns ψ to itself — the constraints are *integrable*, so a zero-curvature connection satisfies all of them simultaneously and quenched sector matter never frustrates the gauge field. The deterministic "curvature enriched ~2.6× on walls" is therefore a statement about *transient relaxation dynamics*, not about the equilibrium ensemble.
+
+Reproduce with `python experiments/n3_thermal_selection.py` (≈ 15 minutes; `--quick` for a smoke run). Artifacts: per-cell retention and curvature decompositions with errors, the full selection table, a three-panel figure, and a summary with explicit verdict lines.
+
+**Honest scope:** the matter field is quenched — the gauge ensemble does not back-react on the sector network, so this isolates one direction of the coupling. Gauge groups of different rank are compared at equal (β_g, g_m) with the per-group mean plaquette reported rather than equalised. 2-D, one matter configuration per palette size, and the same structural caveats as the deterministic topological-selection result it extends. The natural next step is *annealed* matter — letting the sector field and the gauge ensemble co-evolve.
 
 ## Setup
 
