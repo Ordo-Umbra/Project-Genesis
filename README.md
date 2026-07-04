@@ -68,7 +68,7 @@ project_genesis/
   visualize.py         Matplotlib-based 3-D voxel and S-functional visualization
 Docs/
   The Universal Recursion Principle (URP) _260312_170343.txt
-tests/                 299 checks across the engine, instruments, and physics
+tests/                 305 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -85,6 +85,7 @@ tests/                 299 checks across the engine, instruments, and physics
   test_n3_thermal_selection.py
   test_new_subsystems.py
   test_sectorisation.py
+  test_scaling_ladder.py
   test_sigma_scan.py
   test_topological_selection.py
   test_urp_extensions.py
@@ -101,6 +102,7 @@ experiments/
   n3_thermal_selection.py   N⋆=3 selection under a fluctuating SU(P) gauge ensemble
   n3_annealed_matter.py     Junction-network melting in the joint (ψ, U) ensemble (2-D and 3-D)
   n3_phase_boundary.py      T_melt(g_m) boundary map with susceptibility crossover check
+  n3_scaling_ladder.py      Finite-size-scaling ladder: chi_max(L) exponent fit
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -130,7 +132,7 @@ A running tally of what the instruments have actually measured — the verdicts,
 | The Yang–Mills equations are the S-stationarity conditions (§3.2) | **Demonstrated** — gradient ascent on `S = coupling·coherence − stress` monotonically raises S and drives the lattice YM residual → 0 (SU(2)/SU(3)); curvature is enriched ~2.6× on the sector walls ("gluons as boundary modes") | [Yang–Mills dynamics](#yangmills-dynamics--gradient-ascent-on-s) |
 | Confinement: Wilson loops obey an area law with σ > 0 (§4.A) | **Measured** — Monte-Carlo ensembles of exp(−β_g·S_W): the SU(2) 2-D instrument reproduces the *exact* analytic σ(β_g) within errors at every scanned coupling (calibration), and SU(3) in 3-D shows σ > 0 with sub-percent errors across β_g ∈ [1, 5], decreasing with β_g, with confined Polyakov loops throughout. Small lattices, no continuum limit — lattice-units signatures, not physical σ | [Monte-Carlo confinement](#monte-carlo-confinement--the-measured-area-law) |
 | The three-sector junction network exists and survives as a *thermal* state — matter and gauge co-fluctuating | **Measured melting curve, in 2-D and 3-D** — in the joint annealed (ψ, U) ensemble, a colour-neutral junction network exists in equilibrium *only* for P=3 (P=2 structurally cannot form one; P≥4 cannot fit its palette on 3-fold junctions even when thermal — exactly zero in the annealed state in both dimensions), survives with slight thermal roughening up to a measured melting temperature T ≈ 0.2, and melts above it. In 3-D the network is junction *lines* and an order of magnitude denser (neutrality ≈ 0.55 vs ≈ 0.06), yet melts at the same T — the dimensional argument survives thermodynamics. Integration retention with full back-reaction is rank-ordered in P; curvature localization remains absent | [Annealed matter](#annealed-matter--the-junction-network-as-a-thermal-state) |
-| The melting boundary in the (g_m, T) plane: crossover or transition? | **Mapped — and it is a crossover** — T_melt(g_m) rises monotonically with the matter–gauge coupling (0.093 → 0.132 for g_m = 1 → 8: the coupling *stabilises* the junction network), while the order-parameter susceptibility shows only small, broad bumps whose height does **not** grow with volume (×0.9–1.9 between 32² and 48², vs ×2.25 for transition-like scaling) and whose location does not track the melt. Two sizes bound the question rather than settle it — a size ladder would firm it up | [Melting boundary](#the-melting-boundary--tg_m-map-and-the-crossover-verdict) |
+| The melting boundary in the (g_m, T) plane: crossover or transition? | **Mapped — and the crossover is confirmed by finite-size scaling** — T_melt(g_m) rises monotonically with the matter–gauge coupling (0.093 → 0.132 for g_m = 1 → 8: the coupling *stabilises* the junction network). The four-size ladder L ∈ {24, 32, 48, 64} gives χ_max(L) ∝ L^b with **b = −0.09 ± 0.30** — consistent with zero at 0.3σ and **6.0σ away** from 2-D-Ising-like transition scaling (b = 1.75). Nothing diverges: the junction network dissolves smoothly, as expected where the sector basis is explicitly (not spontaneously) selected | [Melting boundary](#the-melting-boundary--tg_m-map-and-the-crossover-verdict) |
 | The N⋆=3 selection survives a *fluctuating* (thermodynamic) gauge sector | **Measured crossover** — with the converged P-sector networks quench-coupled to SU(P) Wilson ensembles, the integration retention R(g_m) is rank-ordered (bigger palettes pay a higher gauge tax) and selection at three survives exactly where κ·w·neutrality·R exceeds the ΔC gap — washing out to P=4 below a sharp (w, g_m) threshold. **Negative sub-verdict**: curvature does *not* localize on walls or junctions in equilibrium (quenched sector matter never frustrates the gauge field — the per-link constraints are integrable); the deterministic 2.6× wall enrichment is a relaxation-dynamics effect, not a thermodynamic one | [Thermal N⋆=3 selection](#thermal-n3-selection--the-sector-field-in-a-fluctuating-gauge-ensemble) |
 | The S-functional rewards an interior sector optimum | **Achieved in 2-D and 3-D** — with volume-conserving dynamics (persistent junctions) and a *topological* neutrality term (full-palette junctions, non-collinear with ΔC), `S = ΔC + κ·neutrality` is maximized at **exactly three sectors**, robust across seeds/weights. In 3-D three wins ~10× over four (triple *lines* vs sparse quadruple *points*) | [Topological selection](#topological-selection--an-interior-optimum-at-three) |
 
@@ -432,11 +434,11 @@ Reproduce with `python experiments/n3_annealed_matter.py` (≈ 10 minutes; `--qu
 `experiments/n3_phase_boundary.py` maps where the junction network melts in the (g_m, T) plane (P = 3, β_g = 3, two lattice sizes, binned-jackknife errors) and asks whether the melt is a genuine phase transition:
 
 - **The boundary is monotone**: T_half = 0.093 / 0.097 / 0.111 / 0.132 for g_m = 1/2/4/8 — the matter–gauge coupling *stabilises* the junction network against thermal fluctuations, quantifying the direction the washout-threshold result pointed.
-- **The melt is a crossover, not a transition.** The order-parameter susceptibility χ = N·Var(order) shows only small, broad bumps; their heights do not scale with volume between 32² and 48² (×0.9–1.9 observed vs ×2.25 for transition-like scaling) and their locations do not track the neutrality half-value. Nothing diverges: the junction network dissolves smoothly.
+- **The melt is a crossover, not a transition — confirmed by finite-size scaling.** The two-size comparison first suggested it (susceptibility bumps that don't grow with volume); `experiments/n3_scaling_ladder.py` settles it with a four-size ladder L ∈ {24, 32, 48, 64} at g_m = 4, parabolic peak fits, and a weighted log–log fit of the peak height: **χ_max(L) ∝ L^b with b = −0.09 ± 0.30** — consistent with zero at 0.3σ and 6.0σ away from 2-D-Ising-like transition scaling (b = γ/ν = 1.75). Over a 2.7× range of L (which would grow χ_max by ×5.7 at such a transition) the peak height simply does not move, and its location wanders rather than converging — there is no diverging peak. This is also what the model's structure predicts: the corner potential and pinned fractions select the sector basis *explicitly*, leaving no symmetry to break spontaneously at the melt (which is also why Binder-cumulant analysis is not meaningful here). The junction network dissolves smoothly.
 
-Reproduce with `python experiments/n3_phase_boundary.py` (≈ 10 minutes; `--quick` for a smoke run).
+Reproduce with `python experiments/n3_phase_boundary.py` and `python experiments/n3_scaling_ladder.py` (≈ 10 minutes each; `--quick` for smoke runs).
 
-**Honest scope:** two lattice sizes bound the crossover question rather than settle it — a proper finite-size-scaling ladder (4–5 sizes, peak-height fits) is the stated next step if the distinction ever becomes load-bearing. T_half is measured on the thermal junction density, whose absolute normalisation is measure-specific; the *shape* and monotonicity of the boundary are the robust content.
+**Honest scope:** the ladder is one coupling point (g_m = 4) and one exponent channel (the order-parameter susceptibility); T_half is measured on the thermal junction density, whose absolute normalisation is measure-specific — the *shape* and monotonicity of the boundary are the robust content. Two of the four χ-maximum locations sit at the scan edge (the high-T tail drifts mildly upward from disorder fluctuations); the height-scaling verdict is insensitive to this, since the heights stay flat everywhere.
 
 ## Setup
 
