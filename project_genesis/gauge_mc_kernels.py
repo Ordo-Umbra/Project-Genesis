@@ -342,6 +342,78 @@ def overrelaxation_sweep_flat(links, fwd, bwd, n_sweeps, psi, cob):
 # ---------------------------------------------------------------------------
 
 @njit(cache=True)
+def matter_metropolis_sweep_flat(
+    psi, links, fwd, bwd, rng,
+    temperature, matter_coupling, quartic_u,
+    frac_penalty, frac_targets, fracs, step_scale,
+):
+    """Metropolis sweep over flattened matter sites, in place.
+
+    Same update and random-draw order as the reference implementation in
+    :mod:`project_genesis.annealed_matter` (per site: 2P standard normals
+    for the proposal, then one uniform for the accept).  ``fracs`` is the
+    running phase-fraction vector, updated in place on accepts.  Returns
+    the acceptance fraction.
+    """
+    nsites = psi.shape[0]
+    n = psi.shape[1]
+    ndim = links.shape[0]
+    inv_t = 1.0 / temperature
+    p_prop = np.empty(n, dtype=np.complex128)
+    delta_f = np.empty(n, dtype=np.float64)
+    n_acc = 0
+
+    for s in range(nsites):
+        norm_sq = 0.0
+        for a in range(n):
+            zr = rng.standard_normal()
+            zi = rng.standard_normal()
+            p_prop[a] = psi[s, a] + step_scale * (zr + 1j * zi)
+            norm_sq += abs(p_prop[a]) ** 2
+        inv_norm = 1.0 / np.sqrt(norm_sq)
+        for a in range(n):
+            p_prop[a] *= inv_norm
+
+        de_coh = 0.0
+        for mu in range(ndim):
+            sf = fwd[mu, s]
+            sb = bwd[mu, s]
+            for i in range(n):
+                diff_i = np.conj(p_prop[i] - psi[s, i])
+                acc_fwd = 0.0 + 0.0j
+                for j in range(n):
+                    acc_fwd += links[mu, s, i, j] * psi[sf, j]
+                de_coh += (diff_i * acc_fwd).real
+            for i in range(n):
+                acc_bwd = 0.0 + 0.0j
+                for j in range(n):
+                    acc_bwd += links[mu, sb, i, j] * (p_prop[j] - psi[s, j])
+                de_coh += (np.conj(psi[sb, i]) * acc_bwd).real
+
+        de_quart = 0.0
+        for a in range(n):
+            de_quart += abs(p_prop[a]) ** 4 - abs(psi[s, a]) ** 4
+
+        de_frac = 0.0
+        for a in range(n):
+            delta_f[a] = (abs(p_prop[a]) ** 2 - abs(psi[s, a]) ** 2) / nsites
+            de_frac += (2.0 * (fracs[a] - frac_targets[a]) * delta_f[a]
+                        + delta_f[a] ** 2)
+        de_frac *= nsites
+
+        gain = inv_t * (matter_coupling * de_coh
+                        + quartic_u * de_quart
+                        - frac_penalty * de_frac)
+        if gain >= 0.0 or rng.random() < np.exp(gain):
+            for a in range(n):
+                psi[s, a] = p_prop[a]
+                fracs[a] += delta_f[a]
+            n_acc += 1
+
+    return n_acc / nsites
+
+
+@njit(cache=True)
 def wilson_loop_flat(links, fwd, bwd, r_ext, t_ext, mu, nu):
     """⟨Re Tr W(R,T)⟩/n averaged over all starting sites, plane (mu, nu)."""
     nsites = links.shape[1]
