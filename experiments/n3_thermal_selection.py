@@ -116,15 +116,17 @@ def build_sector_network(
     dt: float,
     seed: int,
     beta: float,
+    dim: int = 2,
 ) -> dict:
     """Evolve a conserved P-phase field to a stable junction network.
 
     Returns the field, its ψ embedding, and the deterministic S ingredients
     (ΔC, κ, neutrality) exactly as the topological-selection experiment
-    defines them.
+    defines them.  ``dim`` selects the spatial dimensionality (2-D point
+    junctions or 3-D junction lines).
     """
     rng = np.random.default_rng(seed)
-    fields = rng.random((n_phases, size, size)) * 0.1
+    fields = rng.random((n_phases, *([size] * dim))) * 0.1
     for _ in range(steps):
         fields, _ = step_multiphase_conserved(
             fields, diffusion=diffusion, gamma=gamma, dt=dt

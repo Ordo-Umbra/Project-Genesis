@@ -148,8 +148,8 @@ def run_point(
             step = min(0.8, step * 1.3)
 
     # per-meas: neutrality, order, ordered frac, coh/link,
-    #           junc curv, wall curv, bulk curv, dC
-    samples = np.empty((n_meas, 8))
+    #           junc curv, wall curv, bulk curv, dC, neut², order²
+    samples = np.empty((n_meas, 10))
     for m in range(n_meas):
         for _ in range(n_skip):
             psi, links, acc = joint_sweep(psi, links, rng, **kw(step))
@@ -159,15 +159,19 @@ def run_point(
         walls = interface_mask(amps) & ~junc
         bulk = ~interface_mask(amps) & ~junc
         curv = curvature_density(links)
+        neut = tj["neutrality"]
+        order = float(np.max(amps, axis=0).mean())
         samples[m] = (
-            tj["neutrality"],
-            float(np.max(amps, axis=0).mean()),
+            neut,
+            order,
             tj["ordered_fraction"],
             covariant_coherence(psi, links) / n_links,
             float(curv[junc].mean()) if junc.any() else float("nan"),
             float(curv[walls].mean()) if walls.any() else float("nan"),
             float(curv[bulk].mean()) if bulk.any() else float("nan"),
             float(beta * _total_gradient_energy(amps).mean()),
+            neut ** 2,
+            order ** 2,
         )
 
     def jk(cols, est):
@@ -183,11 +187,25 @@ def run_point(
         [5, 6], lambda v: float(v[0] / v[1]) if v[1] > 1e-12
         else float("nan"))
 
+    n_sites = int(np.prod(spatial))
+
+    def susceptibility(col, col_sq):
+        # χ = N·(⟨O²⟩ − ⟨O⟩²); jackknife handles the nonlinearity
+        return jk([col, col_sq],
+                  lambda v: float(n_sites * (v[1] - v[0] ** 2)))
+
+    order_chi, order_chi_err = susceptibility(1, 9)
+    neut_chi, neut_chi_err = susceptibility(0, 8)
+
     mean_load = float(samples[:, 7].mean()) / beta
     return {
         "temperature": temperature,
         "neutrality": neut,
         "neutrality_err": neut_err,
+        "order_susceptibility": order_chi,
+        "order_susceptibility_err": order_chi_err,
+        "neutrality_susceptibility": neut_chi,
+        "neutrality_susceptibility_err": neut_chi_err,
         "order_parameter": float(samples[:, 1].mean()),
         "ordered_fraction": float(samples[:, 2].mean()),
         "retention": retention,
@@ -269,7 +287,10 @@ def make_figure(results, weights, w_ref, path):
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--phases", type=str, default="2,3,4,5")
-    p.add_argument("--size", type=int, default=48)
+    p.add_argument("--dim", type=int, default=2, choices=(2, 3),
+                   help="2-D point junctions or 3-D junction lines")
+    p.add_argument("--size", type=int, default=0,
+                   help="edge length (0 = 48 in 2-D, 16 in 3-D)")
     p.add_argument("--steps", type=int, default=600)
     p.add_argument("--gamma", type=float, default=1.5)
     p.add_argument("--diffusion", type=float, default=1.0)
@@ -292,8 +313,11 @@ def main() -> None:
     p.add_argument("--quick", action="store_true")
     args = p.parse_args()
 
+    if not args.size:
+        args.size = 48 if args.dim == 2 else 16
     if args.quick:
-        args.size, args.steps = 24, 200
+        args.size = 24 if args.dim == 2 else 8
+        args.steps = 200
         args.temperatures = "0.05,0.8"
         args.n_therm, args.n_meas = 60, 30
         args.phases = "3,4"
@@ -304,14 +328,14 @@ def main() -> None:
     w_ref = weights[len(weights) // 2]
     os.makedirs(args.output_dir, exist_ok=True)
 
-    print(f"Stage 1: deterministic P-sector networks ({args.size}^2)",
-          flush=True)
+    print(f"Stage 1: deterministic P-sector networks "
+          f"({args.size}^{args.dim})", flush=True)
     networks = {}
     for P in phases:
         networks[P] = build_sector_network(
             P, size=args.size, steps=args.steps, gamma=args.gamma,
             diffusion=args.diffusion, dt=args.dt, seed=args.seed,
-            beta=args.beta)
+            beta=args.beta, dim=args.dim)
         print(f"  P={P}: neutrality(cold)={networks[P]['neutrality']:.5f}",
               flush=True)
 

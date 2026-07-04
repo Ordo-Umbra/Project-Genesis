@@ -68,7 +68,7 @@ project_genesis/
   visualize.py         Matplotlib-based 3-D voxel and S-functional visualization
 Docs/
   The Universal Recursion Principle (URP) _260312_170343.txt
-tests/                 294 checks across the engine, instruments, and physics
+tests/                 299 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -81,6 +81,7 @@ tests/                 294 checks across the engine, instruments, and physics
   test_memory_corpus.py
   test_multiphase.py
   test_multiphase_kappa.py
+  test_n3_phase_boundary.py
   test_n3_thermal_selection.py
   test_new_subsystems.py
   test_sectorisation.py
@@ -98,7 +99,8 @@ experiments/
   yang_mills_flow.py    Gradient ascent on S: YM residual → 0, gluons on walls
   confinement_sigma_scan.py σ(β_g) area-law scan: Creutz ratios with jackknife errors
   n3_thermal_selection.py   N⋆=3 selection under a fluctuating SU(P) gauge ensemble
-  n3_annealed_matter.py     Junction-network melting in the joint (ψ, U) ensemble
+  n3_annealed_matter.py     Junction-network melting in the joint (ψ, U) ensemble (2-D and 3-D)
+  n3_phase_boundary.py      T_melt(g_m) boundary map with susceptibility crossover check
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -127,7 +129,8 @@ A running tally of what the instruments have actually measured — the verdicts,
 | A gauge connection is the minimal structure restoring coherence under local rotations (§2–3) | **Demonstrated** (U(1)/SU(2)/SU(3)) — covariant coherence is gauge-invariant to machine precision while naive coherence is scrambled; a pure-gauge connection has zero curvature; runs on the real Ψ∈ℂ³ sectors | [Gauge connection](#gauge-connection--coherence-under-local-rotations) |
 | The Yang–Mills equations are the S-stationarity conditions (§3.2) | **Demonstrated** — gradient ascent on `S = coupling·coherence − stress` monotonically raises S and drives the lattice YM residual → 0 (SU(2)/SU(3)); curvature is enriched ~2.6× on the sector walls ("gluons as boundary modes") | [Yang–Mills dynamics](#yangmills-dynamics--gradient-ascent-on-s) |
 | Confinement: Wilson loops obey an area law with σ > 0 (§4.A) | **Measured** — Monte-Carlo ensembles of exp(−β_g·S_W): the SU(2) 2-D instrument reproduces the *exact* analytic σ(β_g) within errors at every scanned coupling (calibration), and SU(3) in 3-D shows σ > 0 with sub-percent errors across β_g ∈ [1, 5], decreasing with β_g, with confined Polyakov loops throughout. Small lattices, no continuum limit — lattice-units signatures, not physical σ | [Monte-Carlo confinement](#monte-carlo-confinement--the-measured-area-law) |
-| The three-sector junction network exists and survives as a *thermal* state — matter and gauge co-fluctuating | **Measured melting curve** — in the joint annealed (ψ, U) ensemble, a colour-neutral junction network exists in equilibrium *only* for P=3 (P=2 structurally cannot form one; P≥4 cannot fit its palette on 3-fold junctions even when thermal), survives with slight thermal roughening up to a measured melting temperature T ≈ 0.2, and melts above it. Integration retention with full back-reaction is again rank-ordered in P. Curvature localization remains absent even with annealed matter (max deviation 0.3%) | [Annealed matter](#annealed-matter--the-junction-network-as-a-thermal-state) |
+| The three-sector junction network exists and survives as a *thermal* state — matter and gauge co-fluctuating | **Measured melting curve, in 2-D and 3-D** — in the joint annealed (ψ, U) ensemble, a colour-neutral junction network exists in equilibrium *only* for P=3 (P=2 structurally cannot form one; P≥4 cannot fit its palette on 3-fold junctions even when thermal — exactly zero in the annealed state in both dimensions), survives with slight thermal roughening up to a measured melting temperature T ≈ 0.2, and melts above it. In 3-D the network is junction *lines* and an order of magnitude denser (neutrality ≈ 0.55 vs ≈ 0.06), yet melts at the same T — the dimensional argument survives thermodynamics. Integration retention with full back-reaction is rank-ordered in P; curvature localization remains absent | [Annealed matter](#annealed-matter--the-junction-network-as-a-thermal-state) |
+| The melting boundary in the (g_m, T) plane: crossover or transition? | **Mapped — and it is a crossover** — T_melt(g_m) rises monotonically with the matter–gauge coupling (0.093 → 0.132 for g_m = 1 → 8: the coupling *stabilises* the junction network), while the order-parameter susceptibility shows only small, broad bumps whose height does **not** grow with volume (×0.9–1.9 between 32² and 48², vs ×2.25 for transition-like scaling) and whose location does not track the melt. Two sizes bound the question rather than settle it — a size ladder would firm it up | [Melting boundary](#the-melting-boundary--tg_m-map-and-the-crossover-verdict) |
 | The N⋆=3 selection survives a *fluctuating* (thermodynamic) gauge sector | **Measured crossover** — with the converged P-sector networks quench-coupled to SU(P) Wilson ensembles, the integration retention R(g_m) is rank-ordered (bigger palettes pay a higher gauge tax) and selection at three survives exactly where κ·w·neutrality·R exceeds the ΔC gap — washing out to P=4 below a sharp (w, g_m) threshold. **Negative sub-verdict**: curvature does *not* localize on walls or junctions in equilibrium (quenched sector matter never frustrates the gauge field — the per-link constraints are integrable); the deterministic 2.6× wall enrichment is a relaxation-dynamics effect, not a thermodynamic one | [Thermal N⋆=3 selection](#thermal-n3-selection--the-sector-field-in-a-fluctuating-gauge-ensemble) |
 | The S-functional rewards an interior sector optimum | **Achieved in 2-D and 3-D** — with volume-conserving dynamics (persistent junctions) and a *topological* neutrality term (full-palette junctions, non-collinear with ΔC), `S = ΔC + κ·neutrality` is maximized at **exactly three sectors**, robust across seeds/weights. In 3-D three wins ~10× over four (triple *lines* vs sparse quadruple *points*) | [Topological selection](#topological-selection--an-interior-optimum-at-three) |
 
@@ -420,7 +423,20 @@ What the melting scan (P ∈ {2,3,4,5}, T ∈ [0.02, 1.6], each point an indepen
 
 Reproduce with `python experiments/n3_annealed_matter.py` (≈ 10 minutes; `--quick` for a smoke run).
 
-**Honest scope:** the corner potential and pinned fractions explicitly break local SU(P) — deliberately, since in the URP picture the sectors define preferred frames and the gauge freedom is the local relabelling the connection repairs. 2-D, one seed network per palette, groups compared at equal (β_g, g_m, T), and T_melt is quoted at one coupling point, not mapped as a phase boundary — that map (and the 3-D version, where junction *lines* change the geometry) is the stated next step.
+**The 3-D version** (`--dim 3`, 16³): the deterministic dimensional argument — three-way junctions are *lines* in 3-D (abundant), four-way meetings are *points* (sparse) — survives the thermodynamics intact. The annealed P=3 ensemble carries a junction-line network an order of magnitude denser than in 2-D (neutrality ≈ 0.55 vs ≈ 0.06), melting at the same T ≈ 0.2 (0.546 → 0.534 → 0.464 → 0.001 across T = 0.02/0.05/0.1/0.2), while the annealed P=4 state's full-palette density is **exactly zero at every temperature** — even sharper than the deterministic snapshot comparison, where under-converged P=4 networks retain a faint transient signal. Retention stays rank-ordered and curvature localization stays absent (≤ 0.9%) in 3-D too.
+
+**Honest scope:** the corner potential and pinned fractions explicitly break local SU(P) — deliberately, since in the URP picture the sectors define preferred frames and the gauge freedom is the local relabelling the connection repairs. One seed network per palette, groups compared at equal (β_g, g_m, T).
+
+### The melting boundary — T(g_m) map and the crossover verdict
+
+`experiments/n3_phase_boundary.py` maps where the junction network melts in the (g_m, T) plane (P = 3, β_g = 3, two lattice sizes, binned-jackknife errors) and asks whether the melt is a genuine phase transition:
+
+- **The boundary is monotone**: T_half = 0.093 / 0.097 / 0.111 / 0.132 for g_m = 1/2/4/8 — the matter–gauge coupling *stabilises* the junction network against thermal fluctuations, quantifying the direction the washout-threshold result pointed.
+- **The melt is a crossover, not a transition.** The order-parameter susceptibility χ = N·Var(order) shows only small, broad bumps; their heights do not scale with volume between 32² and 48² (×0.9–1.9 observed vs ×2.25 for transition-like scaling) and their locations do not track the neutrality half-value. Nothing diverges: the junction network dissolves smoothly.
+
+Reproduce with `python experiments/n3_phase_boundary.py` (≈ 10 minutes; `--quick` for a smoke run).
+
+**Honest scope:** two lattice sizes bound the crossover question rather than settle it — a proper finite-size-scaling ladder (4–5 sizes, peak-height fits) is the stated next step if the distinction ever becomes load-bearing. T_half is measured on the thermal junction density, whose absolute normalisation is measure-specific; the *shape* and monotonicity of the boundary are the robust content.
 
 ## Setup
 
