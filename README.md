@@ -77,9 +77,9 @@ tests/                 331 checks across the engine, instruments, and physics
   test_gauge.py
   test_gauge_mc.py
   test_gauge_mc_confinement.py
-  test_kappa_annealed.py
   test_gauge_mc_matter.py
   test_gauge_mc_numba.py
+  test_kappa_annealed.py
   test_memory_corpus.py
   test_multiphase.py
   test_multiphase_kappa.py
