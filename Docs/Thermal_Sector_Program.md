@@ -143,6 +143,28 @@ fluctuating regime — rather than deep order or deep disorder. Given the
 URP's framing of S-climbing systems living at the edge between rigidity
 and dissolution, this is the program's most theory-facing verdict.
 
+### 8. Dynamical capacity at criticality (`n3_kappa_criticality.py`)
+
+The proxy κ is then promoted to the real thing: the engine's capacity
+field — consumed by load, regenerating with slack, diffusing — co-evolves
+with (ψ, U) and gates the coherence coupling locally. Four measured
+verdicts close the capacity loop:
+
+- **κ troughs exactly at criticality**, at every consumption strength
+  (⟨κ⟩_min from 0.34 down to 0.02 as c grows): the load that consumes
+  capacity *is* the distinction term, and ΔC peaks at T_c.
+- **The κ-as-soil wall deficit appears in the thermal state**
+  (κ_wall = 0.22 vs κ_bulk = 0.39 in the ordered phase at strong
+  consumption) — the engine's corpus-rooting picture, thermally.
+- **Scarcity destabilises sector order**: the transition shifts down
+  with consumption.
+- **Scarcity relocates the S-optimum to the critical point.** With
+  abundant capacity the optimum rests in deep order; once the budget
+  binds it jumps to the ΔC peak at T_c — scarcity taxes integration but
+  not distinction. The repo's earliest capacity verdict ("selection is a
+  scarcity phenomenon") returns at the level of criticality itself: a
+  capacity-bound S-climbing system is pushed toward the edge.
+
 ## What the program adds up to
 
 The URP claim under test was never "three is a magic number" but that a
