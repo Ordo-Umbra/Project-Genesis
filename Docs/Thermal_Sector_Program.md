@@ -111,17 +111,37 @@ Two independent checks of the Potts identification:
   `tests/test_potts_universality.py`) — but both independent exponents
   now agree with the 2-D 3-state Potts class, and the unimodal
   histograms rule out the weak-first-order alternative in 2-D.
-- **The 3-D prediction.** The 3-state Potts class makes a falsifiable
-  claim: in 3-D the transition is *first order*. On a ladder
-  L ∈ {8, 10, 12, 16}: a hot/cold hysteresis window at T ∈ [0.10, 0.14]
-  **persists at every size** (it should shrink at a continuous
-  transition), and the cold-branch Binder minima **deepen monotonically
-  with L**, touching negative (−0.03 ± 0.15) at L = 16. Verdict as the
-  experiment prints it: *partial first-order signatures, consistent with
-  the weakly-first-order 3-D Potts transition, not conclusive at these
-  sizes* — the honest reading, given that hot-start thermalisation in
-  3-D is slow and mimics hysteresis (600 compound sweeps used; the
-  window survived them).
+- **The 3-D prediction — where the sharper instrument overturned the
+  first reading.** The 3-state Potts class makes a falsifiable claim: in
+  3-D the transition is *first order*. The hysteresis/Binder scan
+  (L ∈ {8…16}) found suggestive signatures — a persistent hot/cold
+  window, Binder minima deepening with L. The decisive observable is the
+  **energy histogram** (`n3_latent_heat.py`): first order means latent
+  heat means a bimodal energy distribution at the transition. It is not
+  there. Every pooled hot+cold histogram is cleanly unimodal at every
+  size, and the branch energy separation Δe ≤ 0.005 *shrinks* with L —
+  even while the magnetisation branches still disagree. Same energy,
+  different order: the "hysteresis" was **kinetic** (slow 3-D
+  coarsening), not phase coexistence. Verdict: no latent heat at
+  Δe ≲ 0.001 resolution; the 3-D transition is continuous or
+  unresolvably weakly first order — a candidate genuine deviation from
+  the discrete-Potts expectation, and a case study in why suggestive
+  metastability evidence must be checked against the energy channel.
+
+### 7. The S-functional at criticality (`n3_s_criticality.py`)
+
+The program's last measurement brings it home to the theory's central
+object. On the unpinned ensembles across T_c: the **distinction term ΔC
+peaks exactly at the transition** (walls and fluctuations are densest at
+criticality) while the standing coherence falls through it
+order-parameter-like. Because the two halves of S pull opposite ways and
+cross at T_c, the S optimum sweeps across the transition as the
+integration weight varies — sitting *at* T_c for w ≈ 0.05. There is a
+window of integration weights in which the theory's own functional
+selects the critical neighbourhood — the ordered-but-maximally-
+fluctuating regime — rather than deep order or deep disorder. Given the
+URP's framing of S-climbing systems living at the edge between rigidity
+and dissolution, this is the program's most theory-facing verdict.
 
 ## What the program adds up to
 
