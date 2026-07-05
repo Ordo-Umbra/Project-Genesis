@@ -180,14 +180,18 @@ def matter_metropolis_sweep(
     frac_penalty: float = 0.0,
     frac_targets: np.ndarray | None = None,
     step_scale: float = 0.3,
+    kappa: np.ndarray | None = None,
     use_numba: bool | None = None,
 ) -> tuple[np.ndarray, float]:
     """One Metropolis sweep over all matter sites; returns (psi, acceptance).
 
     Samples ψ from the joint weight's matter factor at temperature ``T``
-    with the links held at their current values.  ``use_numba=None`` uses
-    the JIT kernel when available; both paths share the same random-draw
-    order (2P normals for the proposal, then one uniform for the accept).
+    with the links held at their current values.  A per-site capacity
+    field ``kappa`` (spatial shape) gates the coherence coupling locally —
+    the link (x → x+μ̂) carries weight κ(x)·g_m — the thermal analogue of
+    the engine's κ-gated integration term.  ``use_numba=None`` uses the
+    JIT kernel when available; both paths share the same random-draw order
+    (2P normals for the proposal, then one uniform for the accept).
     """
     if not temperature > 0.0:
         raise ValueError("temperature must be positive")
@@ -198,6 +202,8 @@ def matter_metropolis_sweep(
     if frac_targets is None:
         frac_targets = np.full(n, 1.0 / n)
     frac_targets = np.asarray(frac_targets, dtype=np.float64)
+    if kappa is not None and kappa.shape != spatial:
+        raise ValueError("kappa must have the spatial shape of psi")
 
     if use_numba is None:
         use_numba = _HAVE_NUMBA
@@ -209,10 +215,14 @@ def matter_metropolis_sweep(
         fracs = np.ascontiguousarray(
             (np.abs(psi_flat) ** 2).mean(axis=0)
         )
+        kappa_flat = (np.ones(n_sites) if kappa is None
+                      else np.ascontiguousarray(
+                          kappa.reshape(n_sites).astype(np.float64)))
         acc = _nbk.matter_metropolis_sweep_flat(
             psi_flat, flat_links, fwd, bwd, rng,
             float(temperature), float(matter_coupling), float(quartic_u),
             float(frac_penalty), frac_targets, fracs, float(step_scale),
+            kappa_flat,
         )
         return psi_flat.reshape(*spatial, n), float(acc)
 
@@ -229,8 +239,10 @@ def matter_metropolis_sweep(
         p_prop = p_old + step_scale * zeta
         p_prop = p_prop / np.linalg.norm(p_prop)
 
-        # coherence with the 2·ndim gauge-transported neighbours
+        # coherence with the 2·ndim gauge-transported neighbours,
+        # capacity-gated per link base site
         de_coh = 0.0
+        k_here = 1.0 if kappa is None else float(kappa[site])
         for mu in range(ndim):
             fwd_site = list(site)
             fwd_site[mu] = (site[mu] + 1) % spatial[mu]
@@ -240,10 +252,11 @@ def matter_metropolis_sweep(
             bwd_site[mu] = (site[mu] - 1) % spatial[mu]
             u_bwd = links[(mu,) + tuple(bwd_site)]
             p_bwd = psi_new[tuple(bwd_site)]
-            de_coh += float(np.real(
+            k_bwd = 1.0 if kappa is None else float(kappa[tuple(bwd_site)])
+            de_coh += k_here * float(np.real(
                 np.conjugate(p_prop - p_old) @ (u_fwd @ p_fwd)
             ))
-            de_coh += float(np.real(
+            de_coh += k_bwd * float(np.real(
                 np.conjugate(p_bwd) @ (u_bwd @ (p_prop - p_old))
             ))
 
@@ -269,6 +282,44 @@ def matter_metropolis_sweep(
     return psi_new, n_acc / n_sites
 
 
+def kappa_step(
+    kappa: np.ndarray,
+    psi: np.ndarray,
+    *,
+    dt: float = 0.1,
+    baseline: float = 1.0,
+    recovery: float = 0.1,
+    consumption: float = 5.0,
+    diffusion: float = 0.5,
+) -> np.ndarray:
+    """One engine-style capacity update driven by the current matter field.
+
+    The same non-equilibrium rule the deterministic engine and multiphase
+    layers use — capacity is consumed by the distinction load, regenerates
+    toward baseline with slack, and diffuses between regions::
+
+        ∂_t κ = D_κ·∇²κ + r·(κ₀ − κ) − c·(Σ_a |∇η_a|²)·κ
+
+    with the load computed from the sector amplitudes |ψ_a|².  Note this
+    makes the joint (ψ, U, κ) system *adaptive* rather than a fixed-
+    Hamiltonian Gibbs ensemble — deliberately: URP capacity is a driven,
+    consumed resource, and the object of study is the steady state.
+    """
+    from project_genesis.multiphase import (
+        _total_gradient_energy,
+        periodic_laplacian,
+    )
+
+    load = _total_gradient_energy(sector_amplitudes(psi))
+    new = kappa + dt * (
+        diffusion * periodic_laplacian(kappa)
+        + recovery * (baseline - kappa)
+        - consumption * load * kappa
+    )
+    np.clip(new, 0.0, baseline, out=new)
+    return new
+
+
 def joint_sweep(
     psi: np.ndarray,
     links: np.ndarray,
@@ -282,13 +333,20 @@ def joint_sweep(
     frac_targets: np.ndarray | None = None,
     step_scale: float = 0.3,
     n_or: int = 1,
-) -> tuple[np.ndarray, np.ndarray, float]:
-    """One compound sweep of the joint ensemble: matter, then gauge.
+    kappa: np.ndarray | None = None,
+    kappa_params: dict | None = None,
+) -> tuple[np.ndarray, np.ndarray, float] | tuple[np.ndarray, np.ndarray, np.ndarray, float]:
+    """One compound sweep of the joint ensemble: matter, gauge, capacity.
 
     The links feel the matter at the effective coupling ``g_m/T`` (the
     coherence term carries 1/T in the joint weight), through the exact
     matter-coupled heat-bath plus ``n_or`` overrelaxation sweeps.
-    Returns ``(psi, links, matter_acceptance)``.
+
+    With a ``kappa`` field, the capacity gates the matter–gauge coherence
+    coupling locally on both the matter and the link updates, and κ itself
+    advances one :func:`kappa_step` per sweep (``kappa_params`` forwards
+    its coefficients).  Returns ``(psi, links, acc)`` without κ, or
+    ``(psi, links, kappa, acc)`` with it.
     """
     from project_genesis.gauge_mc import heatbath_sweep, overrelaxation_sweep
 
@@ -296,14 +354,19 @@ def joint_sweep(
         psi, links, rng,
         temperature=temperature, matter_coupling=matter_coupling,
         quartic_u=quartic_u, frac_penalty=frac_penalty,
-        frac_targets=frac_targets, step_scale=step_scale,
+        frac_targets=frac_targets, step_scale=step_scale, kappa=kappa,
     )
     eff_coupling = matter_coupling / temperature
     links, _ = heatbath_sweep(links, beta_g, rng,
-                              matter=psi, matter_coupling=eff_coupling)
+                              matter=psi, matter_coupling=eff_coupling,
+                              matter_kappa=kappa)
     if n_or:
         links, _ = overrelaxation_sweep(links, rng, n_sweeps=n_or,
                                         matter=psi,
                                         matter_coupling=eff_coupling,
+                                        matter_kappa=kappa,
                                         beta_g=beta_g)
-    return psi, links, acc
+    if kappa is None:
+        return psi, links, acc
+    kappa = kappa_step(kappa, psi, **(kappa_params or {}))
+    return psi, links, kappa, acc

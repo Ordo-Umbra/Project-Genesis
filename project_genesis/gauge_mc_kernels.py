@@ -246,13 +246,18 @@ def _cm_update_nb(u, staple, beta_g, rng, w, blk, aq, x, r):
 
 
 @njit(cache=True)
-def _add_matter(staple, psi, fwd, mu, s, cob):
-    """Add the matter source ``cob·ψ(s+μ̂)·ψ†(s)`` to the staple, in place."""
+def _add_matter(staple, psi, fwd, mu, s, cob, kappa):
+    """Add the matter source ``κ(s)·cob·ψ(s+μ̂)·ψ†(s)`` to the staple, in place.
+
+    ``kappa`` is the per-site capacity weight gating the matter–gauge
+    coupling on links based at each site (all-ones for the ungated case).
+    """
     n = staple.shape[0]
     sf = fwd[mu, s]
+    w = cob * kappa[s]
     for i in range(n):
         for j in range(n):
-            staple[i, j] += cob * psi[sf, i] * np.conj(psi[s, j])
+            staple[i, j] += w * psi[sf, i] * np.conj(psi[s, j])
 
 
 # ---------------------------------------------------------------------------
@@ -260,12 +265,14 @@ def _add_matter(staple, psi, fwd, mu, s, cob):
 # ---------------------------------------------------------------------------
 
 @njit(cache=True)
-def heatbath_sweep_flat(links, fwd, bwd, beta_g, rng, n_sweeps, psi, cob):
+def heatbath_sweep_flat(links, fwd, bwd, beta_g, rng, n_sweeps, psi, cob,
+                        kappa):
     """Heat-bath sweep(s) over flattened links, in place, for any SU(n ≥ 2).
 
     ``psi`` (nsites, n) is a quenched matter field added to each staple as
-    ``cob·ψ(s+μ̂)ψ†(s)`` with ``cob = matter_coupling/β_g``; pass ``cob = 0``
-    (with a dummy 1×n ``psi``) for the pure-gauge ensemble.
+    ``κ(s)·cob·ψ(s+μ̂)ψ†(s)`` with ``cob = matter_coupling/β_g`` and
+    ``kappa`` the per-site capacity gate (all-ones when ungated); pass
+    ``cob = 0`` (with dummy 1-site ``psi``/``kappa``) for pure gauge.
     """
     ndim = links.shape[0]
     nsites = links.shape[1]
@@ -284,7 +291,7 @@ def heatbath_sweep_flat(links, fwd, bwd, beta_g, rng, n_sweeps, psi, cob):
             for s in range(nsites):
                 _staple_sum_flat(links, fwd, bwd, mu, s, staple, t1, t2)
                 if has_matter:
-                    _add_matter(staple, psi, fwd, mu, s, cob)
+                    _add_matter(staple, psi, fwd, mu, s, cob, kappa)
                 if n == 2:
                     _heatbath_su2_nb(staple, beta_g, rng, links[mu, s], aq, x)
                 else:
@@ -293,11 +300,12 @@ def heatbath_sweep_flat(links, fwd, bwd, beta_g, rng, n_sweeps, psi, cob):
 
 
 @njit(cache=True)
-def overrelaxation_sweep_flat(links, fwd, bwd, n_sweeps, psi, cob):
+def overrelaxation_sweep_flat(links, fwd, bwd, n_sweeps, psi, cob, kappa):
     """Microcanonical overrelaxation sweep(s) over flattened links, in place.
 
-    Reflections are taken about the effective staple (gauge + matter), so
-    the full exponent is conserved; ``cob = 0`` gives the pure-gauge case.
+    Reflections are taken about the effective staple (gauge + κ-gated
+    matter), so the full exponent is conserved; ``cob = 0`` gives the
+    pure-gauge case.
     """
     ndim = links.shape[0]
     nsites = links.shape[1]
@@ -315,7 +323,7 @@ def overrelaxation_sweep_flat(links, fwd, bwd, n_sweeps, psi, cob):
             for s in range(nsites):
                 _staple_sum_flat(links, fwd, bwd, mu, s, staple, t1, t2)
                 if has_matter:
-                    _add_matter(staple, psi, fwd, mu, s, cob)
+                    _add_matter(staple, psi, fwd, mu, s, cob, kappa)
                 u = links[mu, s]
                 for i in range(n - 1):
                     for j in range(i + 1, n):
@@ -346,14 +354,17 @@ def matter_metropolis_sweep_flat(
     psi, links, fwd, bwd, rng,
     temperature, matter_coupling, quartic_u,
     frac_penalty, frac_targets, fracs, step_scale,
+    kappa,
 ):
     """Metropolis sweep over flattened matter sites, in place.
 
     Same update and random-draw order as the reference implementation in
     :mod:`project_genesis.annealed_matter` (per site: 2P standard normals
     for the proposal, then one uniform for the accept).  ``fracs`` is the
-    running phase-fraction vector, updated in place on accepts.  Returns
-    the acceptance fraction.
+    running phase-fraction vector, updated in place on accepts.  ``kappa``
+    is the per-site capacity gate on the coherence coupling: the link
+    (s → s+μ̂) carries weight κ(s) (all-ones when ungated).  Returns the
+    acceptance fraction.
     """
     nsites = psi.shape[0]
     n = psi.shape[1]
@@ -383,12 +394,12 @@ def matter_metropolis_sweep_flat(
                 acc_fwd = 0.0 + 0.0j
                 for j in range(n):
                     acc_fwd += links[mu, s, i, j] * psi[sf, j]
-                de_coh += (diff_i * acc_fwd).real
+                de_coh += kappa[s] * (diff_i * acc_fwd).real
             for i in range(n):
                 acc_bwd = 0.0 + 0.0j
                 for j in range(n):
                     acc_bwd += links[mu, sb, i, j] * (p_prop[j] - psi[s, j])
-                de_coh += (np.conj(psi[sb, i]) * acc_bwd).real
+                de_coh += kappa[sb] * (np.conj(psi[sb, i]) * acc_bwd).real
 
         de_quart = 0.0
         for a in range(n):

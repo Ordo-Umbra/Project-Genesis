@@ -354,9 +354,13 @@ def heatbath_sweep(
     n_sweeps: int = 1,
     matter: np.ndarray | None = None,
     matter_coupling: float = 1.0,
+    matter_kappa: np.ndarray | None = None,
     use_numba: bool | None = None,
 ) -> tuple[np.ndarray, float]:
     """Heat-bath sweep over all links of the (optionally matter-coupled) ensemble.
+
+    ``matter_kappa`` (spatial shape) gates the matter term per link base
+    site: the link (x → x+μ̂) couples with weight κ(x)·g_m.
 
     Samples ``exp(−β_g·S_W + g_m·Σ_{x,μ} Re[ψ†(x)·U_μ(x)·ψ(x+μ̂)])``.  A
     quenched matter field ``matter`` (shape ``(*spatial, n)``, e.g. the
@@ -383,13 +387,18 @@ def heatbath_sweep(
         if matter is None:
             psi_flat = np.zeros((1, n), dtype=np.complex128)
             cob = 0.0
+            kappa_flat = np.ones(1)
         else:
             psi_flat = np.ascontiguousarray(
                 matter.reshape(-1, n).astype(np.complex128)
             )
             cob = float(matter_coupling) / float(beta_g)
+            kappa_flat = (np.ones(psi_flat.shape[0]) if matter_kappa is None
+                          else np.ascontiguousarray(
+                              matter_kappa.reshape(-1).astype(np.float64)))
         _nbk.heatbath_sweep_flat(
-            flat, fwd, bwd, float(beta_g), rng, n_sweeps, psi_flat, cob
+            flat, fwd, bwd, float(beta_g), rng, n_sweeps, psi_flat, cob,
+            kappa_flat
         )
         return _nbk.unflatten_links(flat, spatial), 1.0
 
@@ -400,7 +409,9 @@ def heatbath_sweep(
             for site in np.ndindex(*spatial):
                 a = _staple_sum(links_new, mu, site)
                 if matter is not None:
-                    a = a + (matter_coupling / beta_g) * _matter_outer(
+                    k_w = (1.0 if matter_kappa is None
+                           else float(matter_kappa[site]))
+                    a = a + k_w * (matter_coupling / beta_g) * _matter_outer(
                         matter, mu, site, spatial
                     )
                 if n == 2:
@@ -452,6 +463,7 @@ def overrelaxation_sweep(
     omega: float = 1.0,
     matter: np.ndarray | None = None,
     matter_coupling: float = 1.0,
+    matter_kappa: np.ndarray | None = None,
     beta_g: float = 1.0,
     use_numba: bool | None = None,
 ) -> tuple[np.ndarray, float]:
@@ -477,12 +489,17 @@ def overrelaxation_sweep(
         if matter is None:
             psi_flat = np.zeros((1, n), dtype=np.complex128)
             cob = 0.0
+            kappa_flat = np.ones(1)
         else:
             psi_flat = np.ascontiguousarray(
                 matter.reshape(-1, n).astype(np.complex128)
             )
             cob = float(matter_coupling) / float(beta_g)
-        _nbk.overrelaxation_sweep_flat(flat, fwd, bwd, n_sweeps, psi_flat, cob)
+            kappa_flat = (np.ones(psi_flat.shape[0]) if matter_kappa is None
+                          else np.ascontiguousarray(
+                              matter_kappa.reshape(-1).astype(np.float64)))
+        _nbk.overrelaxation_sweep_flat(flat, fwd, bwd, n_sweeps, psi_flat,
+                                       cob, kappa_flat)
         return _nbk.unflatten_links(flat, spatial), 1.0
 
     links_new = links.copy()
@@ -492,7 +509,9 @@ def overrelaxation_sweep(
             for site in np.ndindex(*spatial):
                 a = _staple_sum(links_new, mu, site)
                 if matter is not None:
-                    a = a + (matter_coupling / beta_g) * _matter_outer(
+                    k_w = (1.0 if matter_kappa is None
+                           else float(matter_kappa[site]))
+                    a = a + k_w * (matter_coupling / beta_g) * _matter_outer(
                         matter, mu, site, spatial
                     )
                 links_new[(mu,) + site] = _overrelax_link(
