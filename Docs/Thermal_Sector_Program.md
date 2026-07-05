@@ -165,6 +165,23 @@ verdicts close the capacity loop:
   scarcity phenomenon") returns at the level of criticality itself: a
   capacity-bound S-climbing system is pushed toward the edge.
 
+### 9. The S-landscape: a level crossing (`n3_s_landscape.py`)
+
+The relocation's *character*, resolved across the (consumption, weight)
+plane. S(T) is not single-peaked — it carries two competing maxima at
+once, an ordered one (coherence-rich, low T) and a critical one (the ΔC
+peak at T_c). The global optimum T\* is a **step function**: it sits at
+the ordered peak, then jumps ~3× to the critical peak with no
+intermediate value, exactly where ΔS = S_ordered − S_critical crosses
+zero. This is a level crossing — two maxima trading global rank — the
+S-landscape analogue of a first-order transition, not a continuous
+drift. The boundary c\*(w) sweeps monotonically (a larger integration
+weight makes the ordered phase more valuable, so more scarcity is needed
+to abandon it), and because the weight is pure post-processing the whole
+(c, w) map is extracted from one Monte Carlo scan. The verdict is about
+the optimum-location observable, not a thermodynamic transition of the
+ensemble — the underlying melt remains the continuous Potts crossover.
+
 ## What the program adds up to
 
 The URP claim under test was never "three is a magic number" but that a
