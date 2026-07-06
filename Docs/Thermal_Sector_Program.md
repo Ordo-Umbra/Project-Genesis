@@ -182,6 +182,27 @@ to abandon it), and because the weight is pure post-processing the whole
 the optimum-location observable, not a thermodynamic transition of the
 ensemble — the underlying melt remains the continuous Potts crossover.
 
+### 10. Memory recall at criticality (`n3_seed_rooting.py`)
+
+The program's final measurement reaches back across the whole repository:
+the **memory corpus** — the scalar engine's mechanism for storing stable
+structure and re-seeding it to prevent collapse — had never met the
+thermal capacity field. The corpus roots seeds under a κ-as-soil rule (a
+seed unfolds only where local κ ≥ 0.3, and rooting consumes κ);
+``project_genesis.sector_seeds`` ports that exact rule to the thermal
+ψ∈ℂ³ ensemble. Since capacity troughs at criticality, the prediction is
+that **recall fails there** — and it does, with a twist worth stating:
+the recall capacity (fertile-soil fraction) collapses to zero *before*
+the order parameter does (recall ≈ 0 at T where m ≈ 0.44). A
+capacity-bound system can hold the structure it already carries but can
+no longer regenerate what it loses — memory dies before order. Recall is
+possible only in a cold, low-consumption corner (heat and scarcity each
+starve it), and is self-limiting: rooting consumes soil, so recall
+spreads into fresh ground rather than piling onto exhausted spots. The
+two halves of the codebase, built for different purposes, turn out to
+tell one story — capacity governs not just what structure forms, but what
+structure can be *remembered*.
+
 ## What the program adds up to
 
 The URP claim under test was never "three is a magic number" but that a
