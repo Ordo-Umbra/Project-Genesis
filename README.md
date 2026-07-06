@@ -70,7 +70,7 @@ project_genesis/
 Docs/
   The Universal Recursion Principle (URP) _260312_170343.txt
   Thermal_Sector_Program.md  Synthesis: the full thermodynamic N⋆=3 program and its verdicts
-tests/                 355 checks across the engine, instruments, and physics
+tests/                 368 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -84,6 +84,7 @@ tests/                 355 checks across the engine, instruments, and physics
   test_s_landscape.py
   test_sector_seeds.py
   test_recall_recovery.py
+  test_recall_finite_size.py
   test_memory_corpus.py
   test_multiphase.py
   test_multiphase_kappa.py
@@ -121,6 +122,7 @@ experiments/
   n3_s_landscape.py         S-landscape (c, w) phase diagram: the optimum-relocation level crossing
   n3_seed_rooting.py        Memory recall at criticality: κ-as-soil seed rooting across the melt
   n3_recall_recovery.py     Does capacity regeneration rescue recall? recovery-rate rescue scan
+  n3_recall_finite_size.py  Does "recall outlives order" survive L→∞? finite-size ladder + extrapolation
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -155,6 +157,7 @@ A running tally of what the instruments have actually measured — the verdicts,
 | The scarcity-driven relocation of the S-optimum: a drift or a level crossing? | **Level crossing — first-order-like in the optimum** — mapping the (consumption, weight) plane, S(T) carries *two* competing local maxima at once (a deep-ordered one where coherence is highest, a critical one at the ΔC peak). The global optimum T\*(c) is a **step function**: it sits at T = 0.03 then jumps ~3× to T ≈ 0.08 with no intermediate value, exactly where the order parameter ΔS = S_ordered − S_critical crosses zero. The boundary c\*(w) sweeps monotonically (0.59 → 14.7 across w = 0.045 → 0.06): more integration weight makes the ordered phase more valuable, so more scarcity is needed to abandon it. Two S-maxima trading global rank, not a continuous drift | [S-landscape](#the-s-landscape--a-level-crossing-not-a-drift) |
 | Memory recall (κ-as-soil corpus rooting) survives the melt — or fails at criticality | **Recall fails first, before order** — porting the scalar engine's exact κ-as-soil rooting rule (a seed roots only where local κ ≥ 0.3, and rooting consumes κ) to the thermal ψ∈ℂ³ ensemble: the recall capacity (fertile-soil fraction) collapses across the melt (0.98 → 0.00) and reaches ≈ 0 at T = 0.08 **while the order parameter is still m = 0.44** — the soil goes barren before the field disorders, so a capacity-bound system can *hold* structure but can no longer *regenerate* what it loses. Recall is nonzero only in a cold, low-consumption corner (heat and scarcity each starve it), and is self-limiting (rooting consumes soil: 0.99 → 0.22 over 140 rootings). The repo's two halves — memory corpus and thermal capacity — meet, and agree | [Memory recall](#memory-recall-at-criticality--where-can-stored-structure-re-root) |
 | Can capacity *regeneration* rescue memory from the critical collapse? | **Yes — recovery is the dial, and recall can outlive order** — scanning the κ recovery rate r (steady state κ = r/(r + c·load)): the recall edge climbs monotonically with r (T = 0.057 → beyond the scan as r = 0.05 → 0.8), so the seed-rooting collapse was a property of the *default* rate, not a barrier. At r = 0.8 the recall capacity never falls below ½ while the field's order dies at T ≈ 0.097 — recall stays 0.6–0.87 out to T = 0.20 where m ≈ 0.03 (fully melted): the prerequisite for memory outlives order. And the recall curve is non-monotonic — it dips at T_c and recovers on both sides — because the distinction load that consumes κ peaks at criticality, making the transition itself the memory bottleneck | [κ-recovery rescue](#can-regeneration-rescue-memory--the-κ-recovery-dial) |
+| Does "recall outlives order" survive the thermodynamic limit, or is it a small-lattice artifact? | **Survives — it is size-independent** — the overtaking claim was measured at one size (28²), so a four-size ladder L ∈ {16, 24, 32, 40} at r = 0.8 tests it. The decisive scalar is the recall capacity *at the melt* — the fertile-soil fraction at the temperature where order has fallen to m = ½. It is **flat at ≈ 0.71 across every size** (margin above ½ = +0.211, +0.199, +0.211, +0.206), and the weighted 1/L → 0 extrapolation gives margin → **+0.208 with a near-zero slope**: at the melt a ~71% majority of soil stays fertile even in the thermodynamic limit. The recall and order curves themselves lie on top of one another across sizes — both are already at their L → ∞ shapes. Recall outliving order is a property of the model, not of the lattice | [Finite-size recall](#does-recall-outlive-order-as-l--) |
 | The S-functional carries a critical signature — and can select criticality | **Measured** — on the unpinned ensembles across T_c: the distinction term **ΔC peaks exactly at the transition** (0.0342 at T = 0.115 vs 0.0288/0.0178 on the flanks, L = 48) while the standing coherence I falls through it order-parameter-like (0.48 → 0.334). The S = ΔC + κ·w·I optimum therefore **sweeps across T_c as the integration weight varies** — sitting just above T_c for w = 0.02, *at* T_c for w ≈ 0.05, and at the ordered end for w ≥ 0.1: there is a weight window in which the theory's own functional selects the critical neighbourhood | [S at criticality](#the-s-functional-at-criticality) |
 | The melting boundary in the (g_m, T) plane: crossover or transition? | **Mapped — and the crossover is confirmed by finite-size scaling** — T_melt(g_m) rises monotonically with the matter–gauge coupling (0.093 → 0.132 for g_m = 1 → 8: the coupling *stabilises* the junction network). The four-size ladder L ∈ {24, 32, 48, 64} gives χ_max(L) ∝ L^b with **b = −0.09 ± 0.30** — consistent with zero at 0.3σ and **6.0σ away** from 2-D-Ising-like transition scaling (b = 1.75). Nothing diverges: the junction network dissolves smoothly, as expected where the sector basis is explicitly (not spontaneously) selected | [Melting boundary](#the-melting-boundary--tg_m-map-and-the-crossover-verdict) |
 | The N⋆=3 selection survives a *fluctuating* (thermodynamic) gauge sector | **Measured crossover** — with the converged P-sector networks quench-coupled to SU(P) Wilson ensembles, the integration retention R(g_m) is rank-ordered (bigger palettes pay a higher gauge tax) and selection at three survives exactly where κ·w·neutrality·R exceeds the ΔC gap — washing out to P=4 below a sharp (w, g_m) threshold. **Negative sub-verdict**: curvature does *not* localize on walls or junctions in equilibrium (quenched sector matter never frustrates the gauge field — the per-link constraints are integrable); the deterministic 2.6× wall enrichment is a relaxation-dynamics effect, not a thermodynamic one | [Thermal N⋆=3 selection](#thermal-n3-selection--the-sector-field-in-a-fluctuating-gauge-ensemble) |
@@ -539,6 +542,20 @@ If capacity scarcity is what kills recall at the melt, then capacity's *recovery
 Reproduce with `python experiments/n3_recall_recovery.py` (≈ 35 minutes; `--quick` for a smoke run).
 
 **Honest scope:** "recall capacity" is the fertile-soil gating predicate (κ ≥ threshold, the engine's own rooting criterion), as in the seed-rooting section — not a separate persistence claim. Recovery raises the order edge as well as the recall edge; the result is that recall *overtakes* order, quantified by the two-edge comparison, at one consumption strength and lattice size.
+
+### Does recall outlive order as L → ∞?
+
+The overtaking above is the program's strongest claim, and it was measured at a single lattice size (28²). Both the recall edge and the order edge are finite-size proxies for sharp thresholds, so the honest worry is that the gap between them closes as the lattice grows — the Potts magnetisation has a fat finite-size tail above T_c, and if the order edge climbs toward the true T_c faster than the recall edge does, the overtaking could be an artifact. `experiments/n3_recall_finite_size.py` settles it with a four-size ladder L ∈ {16, 24, 32, 40} at fixed high recovery (r = 0.8).
+
+In the overtaking regime the recall edge runs *beyond* the scan window (recall never falls below ½), so the raw edge gap is +∞ and cannot be extrapolated. The decisive, always-finite observable is the **recall margin at the melt** — the fertile-soil fraction evaluated at the very temperature where the field has half-disordered (m = ½), minus ½. It is exactly positive when recall outlives order, but as a bounded number it extrapolates to the thermodynamic limit.
+
+- **The overtaking is size-independent.** The recall capacity at the melt is **flat at ≈ 0.71 across every size** — margin = +0.211 (L=16), +0.199 (L=24), +0.211 (L=32), +0.206 (L=40) — with no trend. At the temperature where order has fallen to ½, roughly 71% of the soil is still fertile, on every lattice.
+- **It survives L → ∞.** The weighted least-squares extrapolation in 1/L gives **margin → +0.208 with a near-zero slope** (−0.04 in 1/L): the intercept at the thermodynamic limit is firmly positive. Recall outliving order is a property of the model, not of the lattice size.
+- **Both curves are already at their L → ∞ shapes.** The recall(T) and order(T) curves lie on top of one another across all four sizes (the recall dip at T_c and its recovery on both flanks are size-stable), and the order edge converges quickly to T ≈ 0.090 — so nothing about the crossing is a small-volume accident.
+
+Reproduce with `python experiments/n3_recall_finite_size.py` (≈ 35 minutes; `--quick` for a smoke run).
+
+**Honest scope:** one recovery rate (r = 0.8) and one consumption/coupling point, four sizes up to 40²; the observable is the same fertile-soil gating predicate throughout. The order edge is the crude m = ½ crossing, not a Binder-cumulant T_c (its finite-size drift is small here, ~0.093 → 0.090, and does not change the sign of the margin). The extrapolation is a two-parameter fit to four points — a thermodynamic-limit consistency check, not a proof.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 

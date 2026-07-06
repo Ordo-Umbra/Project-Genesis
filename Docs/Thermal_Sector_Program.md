@@ -221,6 +221,26 @@ regeneration). Whether a capacity-bound system can remember across a
 critical transition is not fixed by the transition — it is set by the
 one dial the theory already contains, the rate at which capacity heals.
 
+### 12. Does recall outlive order as L → ∞? (`n3_recall_finite_size.py`)
+
+Sections 10–11 end on the program's strongest claim — that at fast enough
+recovery the prerequisite for memory *outlives* the field's long-range
+order — and it was measured at a single lattice size. A four-size ladder
+(L ∈ {16, 24, 32, 40}) at fixed high recovery tests whether the overtaking
+survives the thermodynamic limit or is a finite-size illusion. Because the
+recall edge sits beyond the scan window in this regime (recall never falls
+below ½), the finite, extrapolatable observable is the recall capacity *at
+the melt*: the fertile-soil fraction at the temperature where the order
+parameter has fallen to ½. It comes out **flat at ≈ 0.71 on every size**
+(margin above ½ ≈ +0.21 throughout), and the 1/L → 0 extrapolation lands
+at +0.208 with a near-zero slope — the recall and order curves themselves
+lie on top of one another across sizes, both already at their L → ∞
+shapes. Recall outliving order is not a small-lattice accident; at the
+point where the field has half-disordered, a majority of the soil is still
+fertile in the thermodynamic limit. The memory bottleneck is criticality,
+and once regeneration is fast enough the field crosses that bottleneck
+carrying its capacity to re-root through to the other side.
+
 ## What the program adds up to
 
 The URP claim under test was never "three is a magic number" but that a
