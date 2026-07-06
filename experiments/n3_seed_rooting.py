@@ -106,14 +106,20 @@ def equilibrate(
 
 def recall_capacity_point(
     *, temperature: float, consumption: float, args, seed: int,
+    recovery: float | None = None,
 ) -> dict:
-    """Fertile-soil fraction + Potts m over measurement snapshots."""
+    """Fertile-soil fraction + Potts m over measurement snapshots.
+
+    ``recovery`` overrides ``args.kappa_recovery`` (the κ regeneration rate)
+    when given — used by the recovery-rescue scan.
+    """
+    r = args.kappa_recovery if recovery is None else recovery
     psi, links, kappa, rng, step = equilibrate(
         size=args.size, temperature=temperature, beta_g=args.beta_g,
         matter_coupling=args.matter_coupling, quartic_u=args.quartic_u,
-        consumption=consumption, kappa_recovery=args.kappa_recovery,
+        consumption=consumption, kappa_recovery=r,
         n_therm=args.n_therm, seed=seed)
-    kp = dict(consumption=consumption, recovery=args.kappa_recovery)
+    kp = dict(consumption=consumption, recovery=r)
     samples = np.empty((args.n_meas, 3))  # fertile_frac, m, kappa_mean
     for i in range(args.n_meas):
         for _ in range(args.n_skip):
@@ -132,7 +138,7 @@ def recall_capacity_point(
     rc, rc_err = jk(0)
     m, m_err = jk(1)
     return {"temperature": temperature, "consumption": consumption,
-            "recall_capacity": rc, "recall_capacity_err": rc_err,
+            "recovery": r, "recall_capacity": rc, "recall_capacity_err": rc_err,
             "magnetisation": m, "magnetisation_err": m_err,
             "kappa_mean": float(samples[:, 2].mean())}
 

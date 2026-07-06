@@ -203,6 +203,24 @@ two halves of the codebase, built for different purposes, turn out to
 tell one story — capacity governs not just what structure forms, but what
 structure can be *remembered*.
 
+### 11. Can regeneration rescue memory? (`n3_recall_recovery.py`)
+
+The recall collapse is not a fixed barrier — it is a property of how fast
+the soil regenerates. Since steady-state capacity balances consumption
+against recovery (``κ = r/(r + c·load)``), scanning the recovery rate ``r``
+climbs the recall edge to higher temperature, and past a threshold rate
+the recall capacity *outlives order*: at fast recovery it stays high
+(0.6–0.87) deep into the disordered phase where the Potts magnetisation
+has fallen to ≈ 0.03. The prerequisite for memory survives where the
+field's long-range order does not. And the rescued recall curve is
+non-monotonic — it dips at T_c and recovers on both sides — because the
+distinction load that consumes κ peaks at criticality (section 7): the
+transition itself is the memory bottleneck, flanked by an ordered phase
+(low load, high κ) and a disordered phase (low load, κ restored by
+regeneration). Whether a capacity-bound system can remember across a
+critical transition is not fixed by the transition — it is set by the
+one dial the theory already contains, the rate at which capacity heals.
+
 ## What the program adds up to
 
 The URP claim under test was never "three is a magic number" but that a
