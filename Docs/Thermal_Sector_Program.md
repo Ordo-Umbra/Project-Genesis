@@ -182,6 +182,45 @@ to abandon it), and because the weight is pure post-processing the whole
 the optimum-location observable, not a thermodynamic transition of the
 ensemble — the underlying melt remains the continuous Potts crossover.
 
+### 10. Memory recall at criticality (`n3_seed_rooting.py`)
+
+The program's final measurement reaches back across the whole repository:
+the **memory corpus** — the scalar engine's mechanism for storing stable
+structure and re-seeding it to prevent collapse — had never met the
+thermal capacity field. The corpus roots seeds under a κ-as-soil rule (a
+seed unfolds only where local κ ≥ 0.3, and rooting consumes κ);
+``project_genesis.sector_seeds`` ports that exact rule to the thermal
+ψ∈ℂ³ ensemble. Since capacity troughs at criticality, the prediction is
+that **recall fails there** — and it does, with a twist worth stating:
+the recall capacity (fertile-soil fraction) collapses to zero *before*
+the order parameter does (recall ≈ 0 at T where m ≈ 0.44). A
+capacity-bound system can hold the structure it already carries but can
+no longer regenerate what it loses — memory dies before order. Recall is
+possible only in a cold, low-consumption corner (heat and scarcity each
+starve it), and is self-limiting: rooting consumes soil, so recall
+spreads into fresh ground rather than piling onto exhausted spots. The
+two halves of the codebase, built for different purposes, turn out to
+tell one story — capacity governs not just what structure forms, but what
+structure can be *remembered*.
+
+### 11. Can regeneration rescue memory? (`n3_recall_recovery.py`)
+
+The recall collapse is not a fixed barrier — it is a property of how fast
+the soil regenerates. Since steady-state capacity balances consumption
+against recovery (``κ = r/(r + c·load)``), scanning the recovery rate ``r``
+climbs the recall edge to higher temperature, and past a threshold rate
+the recall capacity *outlives order*: at fast recovery it stays high
+(0.6–0.87) deep into the disordered phase where the Potts magnetisation
+has fallen to ≈ 0.03. The prerequisite for memory survives where the
+field's long-range order does not. And the rescued recall curve is
+non-monotonic — it dips at T_c and recovers on both sides — because the
+distinction load that consumes κ peaks at criticality (section 7): the
+transition itself is the memory bottleneck, flanked by an ordered phase
+(low load, high κ) and a disordered phase (low load, κ restored by
+regeneration). Whether a capacity-bound system can remember across a
+critical transition is not fixed by the transition — it is set by the
+one dial the theory already contains, the rate at which capacity heals.
+
 ## What the program adds up to
 
 The URP claim under test was never "three is a magic number" but that a
