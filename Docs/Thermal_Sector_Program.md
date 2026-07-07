@@ -304,6 +304,28 @@ actually de-percolates, and it locates the binding constraint on
 distributed memory in where capacity is *spent*, not in how space is
 shaped.
 
+### 16. Can recovery rescue 3-D connectivity? (`n3_recovery_rescue_3d.py`)
+
+If 3-D memory de-percolates because its capacity trough is deeper
+(section 15), the fix is the dial that has recurred throughout: the
+recovery rate. Since steady-state κ = r/(r + c·load), a high enough r must
+refill the trough and reconnect the soil in any dimension. Scanning r in
+both dimensions and taking the worst case over the critical-temperature
+window, the backbone re-percolates (worst-case spanning ≥ ½) at r\* ≈ 0.67
+in 2-D and r\* ≈ 0.85 in 3-D — recovery rescues 3-D connectivity too, it
+just has to be turned up further. The fertile-fraction curve makes the gap
+plainer than the sharp spanning step: at every intermediate rate the 3-D
+worst-case fertile fraction lags 2-D (0.46 vs 0.86 at r = 1), the whole
+rescue curve shifted right so 3-D reaches even its lower percolation
+threshold later. This closes the loop the memory arc has traced: the
+recovery rate is the single dial behind all of it — it rescues recall at
+the melt, sets the persistence–plasticity crossover for competing memories,
+and reconnects the 3-D backbone. Distributed memory in more dimensions is
+not un-keepable; it demands a proportionately faster capacity refill,
+because the denser critical structure that drains capacity must be
+out-healed. Where capacity is spent sets the problem; how fast it heals
+sets the answer.
+
 ## What the program adds up to
 
 The URP claim under test was never "three is a magic number" but that a
