@@ -261,6 +261,26 @@ memory, and criticality attacks it hardest — but the geometry of where
 capacity is spent keeps the backbone whole by a thread. Memory bends at the
 transition; it does not break.
 
+### 14. Competing memories: persistence vs plasticity (`n3_memory_competition.py`)
+
+Everything through section 13 followed a single memory; this asks what
+happens when two want the same ground. Because rooting *consumes* capacity,
+the first seed to write a region draws the soil down and can lock out a
+rival — unless the capacity heals first, so the outcome is set by the same
+recovery-rate dial that rescued recall. Isolating the capacity-gated write
+(a rival roots only where local κ has healed back above threshold), the
+overwrite probability P(B roots | A rooted) climbs from 0 to 1 across a
+sharp persistence→plasticity crossover at r ≈ 0.36 — exactly where the mean
+local capacity heals back past the 0.3 rooting threshold. A single site
+accepts 0.3 → 5 consecutive memories as recovery quickens, and the
+last-writer territory flips from a first-mover-locked mosaic (a rival claims
+0%) to a fully plastic one (the rival overwrites 100%). The reading is a
+single dial trading permanence against adaptability: slow-healing capacity
+gives durable, write-once memory that resists overwriting; fast-healing
+capacity gives plastic memory that can always learn anew — and the crossover
+between them sits inside the very r window that lets recall outlive order.
+Stability and plasticity are two faces of one parameter.
+
 ## What the program adds up to
 
 The URP claim under test was never "three is a magic number" but that a
