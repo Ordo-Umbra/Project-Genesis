@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from project_genesis.soil_clusters import (  # noqa: E402
     SITE_PERCOLATION_PC,
+    SITE_PERCOLATION_PC_3D,
     cluster_report,
     cluster_sizes,
     cluster_spans,
@@ -58,9 +59,67 @@ class TestLabelPeriodic(unittest.TestCase):
         _, n = label_periodic(m)
         self.assertEqual(n, 2)
 
-    def test_rejects_non_2d(self):
+    def test_rejects_unsupported_dim(self):
         with self.assertRaises(ValueError):
-            label_periodic(np.ones((2, 2, 2), bool))
+            label_periodic(np.ones((2, 2, 2, 2), bool))  # 4-D unsupported
+        with self.assertRaises(ValueError):
+            label_periodic(np.ones(5, bool))  # 1-D unsupported
+
+
+class TestLabelPeriodic3D(unittest.TestCase):
+
+    def test_full_cube_is_one_cluster(self):
+        labels, n = label_periodic(np.ones((3, 3, 3), bool))
+        self.assertEqual(n, 1)
+        self.assertTrue((labels == 1).all())
+
+    def test_two_separate_3d_blocks(self):
+        m = np.zeros((6, 6, 6), bool)
+        m[0:2, 0:2, 0:2] = True
+        m[3:5, 3:5, 3:5] = True
+        labels, n = label_periodic(m)
+        self.assertEqual(n, 2)
+        self.assertEqual(sorted(cluster_sizes(labels, n).tolist()), [8, 8])
+
+    def test_periodic_wrap_in_3d(self):
+        # occupied faces at z=0 and z=W-1 wrap into one cluster
+        m = np.zeros((4, 4, 4), bool)
+        m[:, :, 0] = True
+        m[:, :, 3] = True
+        _, n = label_periodic(m)
+        self.assertEqual(n, 1)
+
+    def test_face_diagonal_not_connected_in_3d(self):
+        # 6-connectivity: cells touching only at an edge/corner stay separate
+        m = np.zeros((5, 5, 5), bool)
+        m[1, 1, 1] = True
+        m[2, 2, 2] = True
+        _, n = label_periodic(m)
+        self.assertEqual(n, 2)
+
+    def test_full_plane_spans_in_3d(self):
+        # a cluster occupying an entire z-plane touches every x and every y
+        m = np.zeros((4, 4, 4), bool)
+        m[:, :, 2] = True
+        labels, n = label_periodic(m)
+        self.assertTrue(system_spans(labels, n))
+
+    def test_small_3d_blob_does_not_span(self):
+        m = np.zeros((5, 5, 5), bool)
+        m[1:3, 1:3, 1:3] = True
+        labels, n = label_periodic(m)
+        self.assertFalse(system_spans(labels, n))
+
+    def test_report_on_3d_mask(self):
+        m = np.zeros((4, 4, 4), bool)
+        m[0:2, 0:2, 0:2] = True  # 8 of 64 sites
+        rep = cluster_report(m)
+        self.assertEqual(rep["n_clusters"], 1)
+        self.assertAlmostEqual(rep["p_inf"], 8 / 64)
+        self.assertFalse(rep["spans"])
+
+    def test_pc_3d_constant_is_simple_cubic_value(self):
+        self.assertAlmostEqual(SITE_PERCOLATION_PC_3D, 0.3116, places=4)
 
 
 class TestSpanning(unittest.TestCase):
