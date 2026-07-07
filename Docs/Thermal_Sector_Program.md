@@ -241,6 +241,26 @@ fertile in the thermodynamic limit. The memory bottleneck is criticality,
 and once regeneration is fast enough the field crosses that bottleneck
 carrying its capacity to re-root through to the other side.
 
+### 13. Is surviving memory connected? (`n3_memory_clusters.py`)
+
+Sections 10–12 measure *how much* memory survives; this asks whether what
+survives is globally *usable*. A recalled seed roots anywhere fertile but
+can only spread across connected fertile soil, so recoverability is a
+percolation question, not a fraction. Labelling the fertile mask
+(κ ≥ threshold) into connected components on the torus at fixed high
+recovery, the percolation strength P∞ collapses from ≈ 1 to 0.41 at the
+melt and the susceptibility χ spikes ~40-fold there — the classic
+near-threshold signature, in the very region where recall dips. Yet a
+system-spanning path survives at every temperature (spanning probability
+≥ 0.97): the fertile fraction dips *below* the random site-percolation
+threshold p_c ≈ 0.593 (which a randomly-occupied lattice needs to stay
+connected) while still spanning, because the thermal field's barren soil is
+confined to thin domain walls and the fertile bulk stays contiguous.
+Connectivity, not fertility, is the tighter constraint on recoverable
+memory, and criticality attacks it hardest — but the geometry of where
+capacity is spent keeps the backbone whole by a thread. Memory bends at the
+transition; it does not break.
+
 ## What the program adds up to
 
 The URP claim under test was never "three is a magic number" but that a
