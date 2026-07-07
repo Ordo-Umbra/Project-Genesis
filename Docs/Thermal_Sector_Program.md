@@ -281,6 +281,29 @@ capacity gives plastic memory that can always learn anew — and the crossover
 between them sits inside the very r window that lets recall outlive order.
 Stability and plasticity are two faces of one parameter.
 
+### 15. Memory connectivity in 3-D: load beats geometry (`n3_memory_clusters_3d.py`)
+
+The memory work has all lived in 2-D, where barren soil pools on *line*
+domain walls. In 3-D those walls become *surfaces*, and geometry predicts
+memory should get more robust: a surface partitions a volume less than a
+line partitions a plane, and the site-percolation threshold is far lower
+(p_c ≈ 0.312 simple-cubic vs 0.593 square). Running the same fertile-soil
+percolation scan in both dimensions overturns the prediction. In 2-D the
+backbone bends but holds (P∞ dips to 0.45, spanning probability ≥ 0.98); in
+3-D it genuinely **de-percolates** — P∞ collapses to 0.02 and the spanning
+probability falls to 0.15 at criticality, the fertile soil shattering into
+disconnected islands. The cause is the capacity dynamics, not the geometry:
+the fertile fraction craters to 0.17 in 3-D against 0.57 in 2-D, plunging
+below even the lower 3-D threshold, because the denser 3-D critical
+structure (surface walls, six neighbours, the order-of-magnitude-denser
+junction network of section 3) consumes far more capacity at the
+transition. The favourable geometry is real but is overwhelmed by a deeper
+capacity trough — adding a dimension makes memory harder to keep, not
+easier. It is the first point in the program where surviving memory
+actually de-percolates, and it locates the binding constraint on
+distributed memory in where capacity is *spent*, not in how space is
+shaped.
+
 ## What the program adds up to
 
 The URP claim under test was never "three is a magic number" but that a
