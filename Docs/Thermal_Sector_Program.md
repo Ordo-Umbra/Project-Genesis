@@ -326,6 +326,28 @@ because the denser critical structure that drains capacity must be
 out-healed. Where capacity is spent sets the problem; how fast it heals
 sets the answer.
 
+### 17. Platonic forms selected by S: capacity decides (`n3_form_selection.py`)
+
+The program's founding result — that `S = ΔC + κ·ΔI` selects the three-fold
+colour-neutral Y-junction — is reframed here as the general picture it is an
+instance of: a corpus of candidate forms (the P-sector networks), of which
+the universe manifests whichever climbs S highest under the conditions.
+Integration (the full-palette neutrality) is a strict P = 3 monopoly while
+distinction ΔC rises with P, so the capacity-gated term κ·w·ΔI selects the
+three-fold form only where capacity and integration-weight are large enough
+to clear the distinction gap to the fragmented form — a clean hyperbolic
+κ·w island in the (capacity, weight) plane, with maximally-distinct
+fragmentation outside it. A thermal spot-check anchors where the field sits
+in κ: sustained ⟨κ⟩ falls with consumption (0.98 → 0.73) and craters toward
+≈ 0.02 at criticality (section 8), so scarcity drives the system out of the
+three-fold island. The synthesis is that N⋆ = 3 is not a bare constant but a
+*conditional* manifestation — the integrated three-fold form is what
+abundant capacity buys; under scarcity the universe can afford only
+distinction, and fragments. Perfection, the neutral unified form, is
+manifestable exactly where conditions permit, which is what S = ΔC + κΔI
+says: integration is the term capacity pays for, and where it cannot, only
+distinction remains.
+
 ## What the program adds up to
 
 The URP claim under test was never "three is a magic number" but that a
