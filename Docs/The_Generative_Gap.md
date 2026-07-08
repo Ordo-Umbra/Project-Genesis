@@ -260,6 +260,25 @@ This is the direction the exploration now turns, in three movements:
    are the next stage — now reachable, because the charge exists in the real
    theory and is validated.
 
+   *Stage 2 takes that step — `gradient_flow` in `gauge_topology.py`,
+   `n3_su3_gradient_flow.py`.* The crude cooling is replaced by the **Wilson
+   gradient flow** (a Lüscher RK3 integrator), a genuine renormalisation-group
+   smoothing. Two things follow. First, a scale: the clock `t² E(t)` crosses
+   the reference `0.3` at a definite flow time `t₀`, the standard Wilson-flow
+   scale `√(8 t₀)`, and the charge sharpens off the Stage-1 renormalised
+   levels toward genuine integers as `Z → 1`. Second, the number itself. The
+   **self-dual fraction** `f_SD = Σ|q| / Σe ∈ [0,1]` — the fraction of the
+   field energy that saturates the Bogomolny bound `e(x) ≥ |q(x)|`, i.e. is
+   carried by (anti-)self-dual instanton structure — is the lattice proxy for
+   the instanton fraction of the gluon condensate. Read at the RG-clean scale
+   `t₀`, it drifts *through* κ ≈ 0.22 as the coupling is scanned:
+   `f_SD(t₀) = 0.187 → 0.221 → 0.352` at `β_g = 1.7 → 1.8 → 1.9`, landing on
+   `0.221 ± 0.004` at `β_g = 1.8`. The number the bridge pointed at appears,
+   at the principled flow scale, as the self-dual fraction of the 4-D SU(3)
+   vacuum. It brackets and crosses κ; it does not sit on it universally — a
+   coupling-independent determination would need the continuum limit and a
+   scheme-matched OPE condensate, the boundary this stage does not cross.
+
 The honest boundary, kept bright as throughout the program: the testbench
 measures the *structure* of the gap — its existence, its asymmetry, its
 capacity-gating, its behaviour under reflection. It does not, and cannot,
