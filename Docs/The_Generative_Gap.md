@@ -185,15 +185,21 @@ confinement geometry.
 
 This is the direction the exploration now turns, in three movements:
 
-1. **Ordinals — the gap itself.** The most immediately testable piece is the
-   left column of §3: measure, across the fields we already have, whether the
-   representational term `ΔC` systematically and strictly exceeds the
-   integrable term `κ·ΔI`, and whether "reflection" (raising capacity, the
-   recovery dial) climbs integration monotonically *without ever closing the
-   gap* — the in-silico Capacity Separation Theorem, with the reflection
-   ladder `F_{n+1} = F_n + Con(F_n)` as its dynamical analogue. This needs no
-   new machinery; it is a re-reading and a targeted measurement of the S
-   components we already compute.
+1. **Ordinals — the gap itself.** *(Measured — `n3_capacity_separation.py`.)*
+   The most immediately testable piece is the left column of §3: the gap
+   between what the field represents and what it integrates. Measured with a
+   commensurable pair — distinction as *all* triple junctions, integration as
+   the *full-palette neutral* ones (so `I ≤ C` exactly) — the result is
+   sharper than the anticipated gradual shortfall. The separation is a
+   **structural cliff at the three-fold threshold**: the integrated fraction
+   φ = I/C is 1 at P = 3 (every represented junction integrated — "complete")
+   and collapses to 0 for P ≥ 4 (junctions represented, none integrable —
+   "incomplete"), the raw gap widening with expressivity. And it is
+   **capacity-invariant**: sweeping κ moves the *density* of distinction by
+   >10× but never the integrated fraction — integration past the threshold
+   cannot be *bought*, only reached by changing structure (dropping to three).
+   That is the field's echo of the expressivity threshold (Theorem 9.1) and
+   of Gödel's own move: not computing longer within F, but extending F.
 
 2. **Functors — the mapping made explicit.** Construct the correspondence as
    an actual structure: a ladder of "reflective" field states (each stage
