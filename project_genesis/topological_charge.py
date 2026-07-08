@@ -88,8 +88,8 @@ def cp_action(psi: np.ndarray) -> float:
     return s
 
 
-def cool_step(psi: np.ndarray) -> np.ndarray:
-    """One cooling sweep: set each ``z(x)`` to the local action-minimiser.
+def cool_step(psi: np.ndarray, rate: float = 1.0) -> np.ndarray:
+    """One cooling sweep: move each ``z(x)`` toward the local action-minimiser.
 
     Minimising the CP action at a site means maximising
     ``Σ_neighbours |z̄(x)·z_nb|²``, whose solution is the leading eigenvector
@@ -97,6 +97,11 @@ def cool_step(psi: np.ndarray) -> np.ndarray:
     (UV) lattice noise — the dislocations that inflate the raw geometric
     charge — while leaving well-separated instantons intact, the standard
     lattice route to *physical* topological content.
+
+    ``rate`` interpolates toward that minimiser: ``rate=1`` snaps to it (a
+    full sweep, the default); ``rate<1`` takes a gentle step ``z ← (1−rate)·z
+    + rate·v``, so a ladder of small reflections integrates the field
+    gradually rather than all at once.
     """
     H, W, N = psi.shape
     M = np.zeros((H, W, N, N), dtype=np.complex128)
@@ -105,13 +110,21 @@ def cool_step(psi: np.ndarray) -> np.ndarray:
             nb = np.roll(psi, shift, axis=axis)
             M += nb[..., :, None] * np.conj(nb[..., None, :])
     _, vecs = np.linalg.eigh(M)          # ascending eigenvalues
-    z = vecs[..., :, -1]                  # leading eigenvector per site
+    v = vecs[..., :, -1]                  # leading eigenvector per site
+    if rate < 1.0:
+        # align v's phase with z before mixing (the CP freedom), then blend
+        phase = np.sum(np.conj(v) * psi, axis=-1)
+        phase = np.where(np.abs(phase) > 0, phase / np.abs(phase), 1.0)
+        v = v * phase[..., None]
+        z = (1.0 - rate) * psi + rate * v
+    else:
+        z = v
     return z / np.linalg.norm(z, axis=-1, keepdims=True)
 
 
-def cool(psi: np.ndarray, n_steps: int) -> np.ndarray:
-    """Apply ``n_steps`` cooling sweeps (returns a fresh array)."""
+def cool(psi: np.ndarray, n_steps: int, rate: float = 1.0) -> np.ndarray:
+    """Apply ``n_steps`` cooling sweeps at the given ``rate`` (fresh array)."""
     z = psi.copy()
     for _ in range(n_steps):
-        z = cool_step(z)
+        z = cool_step(z, rate)
     return z
