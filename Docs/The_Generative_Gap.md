@@ -242,7 +242,23 @@ This is the direction the exploration now turns, in three movements:
    its *role* — coherent topology as the κ ≪ 1 minority that does the
    integrating — is exactly the structural claim the bridge rests on. The
    physical side of the gap now has a measuring stick; matching the *number*
-   0.22 would require the genuine 4-D SU(3) ensemble, a stated next build.
+   0.22 would require the genuine 4-D SU(3) ensemble.
+
+   *Stage 1 of that genuine build is now in — `gauge_topology.py`,
+   `n3_su3_topology.py`.* The dimension-agnostic gauge Monte-Carlo runs a
+   4-D SU(3) Wilson ensemble directly, and the missing piece is added: the
+   **clover** field-theoretic topological charge with gauge cooling. It is
+   validated — pure-gauge configs read Q = 0 exactly, clover and
+   single-plaquette definitions agree, and cooled Q is quantised and
+   Z-renormalised (single-instanton configs read |Q| ≈ 0.84, the standard
+   coarse-lattice suppression; 0 exact). The 4-D vacuum even shows
+   topological freezing — free tunnelling across sectors at strong coupling,
+   sticking in one sector toward weak coupling — the known critical slowing
+   of topology, seen directly. This is the instrument and a first
+   susceptibility, not yet the number: scale-setting, gradient flow (Z → 1),
+   and the instanton/perturbative condensate split for the actual κ ≈ 0.22
+   are the next stage — now reachable, because the charge exists in the real
+   theory and is validated.
 
 The honest boundary, kept bright as throughout the program: the testbench
 measures the *structure* of the gap — its existence, its asymmetry, its
