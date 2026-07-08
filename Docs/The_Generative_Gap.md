@@ -210,16 +210,26 @@ This is the direction the exploration now turns, in three movements:
    bridge; the honest deliverable is a faithful functorial diagram, not a
    proof that reality is its target.
 
-3. **Instantons — the physical integrator.** The deepest and least-built
-   stage. The gauge sector here has Wilson loops, Polyakov loops, string
-   tension and confinement, but **no topological-charge measurement** — no
-   `Q = (1/32π²)∫ F∧F`, no topological susceptibility `χ_top`, no instanton
-   density. Testing the paper's central quantitative claim (that `κ` is the
-   instanton fraction ≈ 0.22) would require building that machinery first:
-   a topological-charge estimator on the SU(N) ensembles, the susceptibility,
-   and the split of the condensate into perturbative and topological parts.
-   That is a well-defined instrument to build, and it is the point where the
-   ordinal gap and the physical gap could be measured in the *same* units.
+3. **Instantons — the physical integrator.** *(Instrument built and
+   measured — `topological_charge.py`, `n3_instanton_content.py`.)* The
+   deepest stage needed a topological-charge measurement the gauge sector
+   lacked. The route turned out to be closer than expected: the normalised
+   sector field ψ∈ℂ³ *is* a CP² field, and the 2-D CP^(N-1) model is the
+   textbook analogue of the QCD vacuum — asymptotically free, confining, with
+   a mass gap, a θ-vacuum, and genuine integer-charge instantons. The
+   geometric (Berg–Lüscher) charge is now implemented and validated (exactly
+   integer, gauge-invariant, Q = +1 on a constructed CP¹ winding); with
+   cooling to remove UV dislocations, the physical topological susceptibility
+   χ_top is ≈ 0 in the cold ordered vacuum and **switches on through the
+   melt** — topological activity is the disordered phase's, organised by the
+   same criticality as everything else. The topological fraction of the
+   action (the CP² analogue of the paper's κ) is a small sub-dominant
+   minority, κ_top ≈ 0.014: its *value* is far below the 4-D QCD κ ≈ 0.22
+   (expected — a different theory and dimension at arbitrary couplings), but
+   its *role* — coherent topology as the κ ≪ 1 minority that does the
+   integrating — is exactly the structural claim the bridge rests on. The
+   physical side of the gap now has a measuring stick; matching the *number*
+   0.22 would require the genuine 4-D SU(3) ensemble, a stated next build.
 
 The honest boundary, kept bright as throughout the program: the testbench
 measures the *structure* of the gap — its existence, its asymmetry, its
