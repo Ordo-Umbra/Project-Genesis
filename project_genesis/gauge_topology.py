@@ -329,3 +329,27 @@ def flow_scale(traj: list[dict], ref: float = 0.3) -> float:
             frac = (ref - a["t2E"]) / (b["t2E"] - a["t2E"])
             return float(a["t"] + frac * (b["t"] - a["t"]))
     return float("nan")
+
+
+def continuum_limit(cutoff, values, weights=None) -> dict:
+    """Linear extrapolation of an observable to the continuum (``cutoff → 0``).
+
+    Lattice artifacts are ``O(a²)``, so a set of measurements at cutoff
+    surrogates ``x_i`` (e.g. ``a² ∝ 1/t₀`` in lattice units) is fit to a line
+    ``y = intercept + slope·x``; the intercept is the ``a → 0`` value.  With
+    ``weights`` (e.g. ``1/σ²``) the fit is weighted.  Returns the intercept,
+    slope, and the fitted line — the honest continuum trend, whatever it is.
+    """
+    x = np.asarray(cutoff, dtype=float)
+    y = np.asarray(values, dtype=float)
+    if x.size < 2:
+        raise ValueError("need at least two points to extrapolate")
+    w = np.ones_like(x) if weights is None else np.asarray(weights, dtype=float)
+    W = w.sum()
+    mx = (w * x).sum() / W
+    my = (w * y).sum() / W
+    sxx = (w * (x - mx) ** 2).sum()
+    sxy = (w * (x - mx) * (y - my)).sum()
+    slope = sxy / sxx
+    intercept = my - slope * mx
+    return {"intercept": float(intercept), "slope": float(slope)}

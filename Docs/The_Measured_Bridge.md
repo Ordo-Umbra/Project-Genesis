@@ -134,13 +134,20 @@ At `β_g = 1.8` the self-dual fraction of the 4-D SU(3) vacuum lands
 essentially **on** `κ = 0.22` — the number the functor was claimed to carry,
 appearing at the principled flow scale, in the real theory.
 
-**Holds in the neighbourhood, not on the nose.** `f_SD` is a *single-scale
-reading of a monotone-rising quantity* — it keeps climbing past `t₀` toward 1
-as the field is smoothed to a few classical lumps — so across the coupling
-window it *brackets and crosses* κ rather than sitting on it universally. On
-this coarse 8⁴ lattice the reading drifts with coupling because `t₀` in
-lattice units grows with `β_g`. That κ appears at the RG scale is genuine and
-untuned; that it is not yet *coupling-independent* is the honest edge.
+**Holds in the neighbourhood, not on the nose — and the continuum push says
+where.** `f_SD` is a *single-scale reading of a monotone-rising quantity*, so
+across the coupling window it *brackets and crosses* κ rather than sitting on
+it. A dedicated continuum trend (`n3_su3_continuum.py`) then localises the
+uncertainty exactly: the reading is **volume-converged** (flat in `L` at fixed
+coupling — 0.218/0.221/0.219 over `L = 6/8/10` at β_g = 1.8) but strongly
+**cutoff-dependent** (0.189 → 0.344 as `a` shrinks across β_g = 1.7 → 1.9),
+and a linear `a²` extrapolation gives `f_SD → 0.44` as `a → 0` — *above* κ. So
+the β_g = 1.8 agreement with 0.22 was a **coarse-lattice coincidence**, not a
+cutoff-stable determination. What survives is real and weaker than the
+headline: the physical side of the gap carries a genuine, validated,
+RG-scaled instanton fraction of `O(0.2–0.4)` — the self-dual fraction is an
+honest instanton-content observable, but not by itself a scheme-free estimator
+of κ.
 
 ---
 
@@ -152,24 +159,32 @@ Read end to end, the arc is a single measured statement:
 > cliff at three). The map from how-much-it-integrates to how-much-topology-it-
 > carries is a genuine functor — path-independent, structure-preserving
 > (**Link 2**). And the exchange rate that functor was claimed to carry — the
-> instanton fraction `κ ≈ 0.22` — appears, at the renormalisation-group scale
-> of the Wilson flow, as the self-dual fraction of the real 4-D SU(3) vacuum
-> (**Link 3**).
+> instanton fraction `κ ≈ 0.22` — has a real, validated, RG-scaled image in
+> the 4-D SU(3) vacuum: the self-dual fraction of the field energy, an
+> `O(0.2–0.4)` number whose coarse-lattice reading *crosses* κ but whose
+> continuum trend sits above it (**Link 3**).
 
-The edge is bright and it is honest. The testbench measures the *structure*
-of the bridge — the gap's existence and sharpness, the map's functoriality,
-the number's neighbourhood — in systems it fully controls. It does not
-establish the metaphysical identity of logical incompleteness with the QCD
-vacuum, and it does not pin κ to the continuum: the last step needs a
-continuum extrapolation (where the flowed reading stabilises) and a
-scheme-matched operator-product-expansion condensate. Those are the two
-frontiers the arc leaves open, having built every instrument they require.
+The edge is bright and it is honest — and the last link's edge is now
+*measured*, not merely flagged. The testbench establishes the *structure* of
+the bridge — the gap's existence and sharpness, the map's functoriality, the
+existence and magnitude of a genuine instanton fraction on the physical side.
+It does not establish the metaphysical identity of logical incompleteness with
+the QCD vacuum, and it does **not** pin κ: the continuum push that was the
+obvious next step was taken, and it corrected rather than confirmed the
+headline — the self-dual fraction is volume-converged but cutoff-dependent,
+extrapolating *above* 0.22, so that observable alone is not a scheme-free
+estimator of κ. Pinning the number would need genuinely finer lattices
+(against topological freezing) and the matched operator-product-expansion
+condensate the self-dual fraction only stands in for. Those are the frontiers
+the arc leaves open, having built — and honestly stress-tested — the
+instruments they require.
 
 What the program has shown is smaller than the metaphysics and larger than a
 demo: that the generative gap — the shortfall that, in failing to close,
-builds structure — is real, is functorial, and carries a number that shows up
-where the papers said it would. The bridge, as far as a measurement can take
-it, is measured.
+builds structure — is real, is functorial, and carries, on the physical side,
+a genuine instanton fraction in the neighbourhood the papers named — measured
+carefully enough to know exactly how far that last claim can, and cannot, yet
+be pushed. The bridge, as far as an honest measurement takes it, is measured.
 
 ---
 
