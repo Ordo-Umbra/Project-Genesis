@@ -310,3 +310,10 @@ proposed image in the QCD vacuum is the reason the next movement is worth
 making. The gap is not the program's limitation. Following the papers'
 reading, it is the program's subject: *the generative gap that, in failing to
 close, builds structure.*
+
+The three movements above are now all measured, including both 4-D SU(3)
+stages — the arc from the ordinal gap to `κ ≈ 0.22` in the real vacuum runs
+end to end. **`The_Measured_Bridge.md`** reports that finished chain as a
+single narrative: where each of the three links holds, and the two frontiers
+(the continuum limit, a scheme-matched condensate) it deliberately leaves
+open.

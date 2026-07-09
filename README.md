@@ -74,6 +74,7 @@ Docs/
   The Universal Recursion Principle (URP) _260312_170343.txt
   Thermal_Sector_Program.md  Synthesis: the full thermodynamic N⋆=3 program and its verdicts
   The_Generative_Gap.md      Capstone: the distinction–integration gap, and the ordinal→functor→instanton bridge
+  The_Measured_Bridge.md     Closing synthesis: ordinals→functors→instantons as one chain, κ≈0.22 in the 4-D vacuum
 tests/                 456 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
