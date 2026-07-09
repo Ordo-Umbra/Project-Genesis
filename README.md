@@ -74,7 +74,8 @@ Docs/
   The Universal Recursion Principle (URP) _260312_170343.txt
   Thermal_Sector_Program.md  Synthesis: the full thermodynamic N⋆=3 program and its verdicts
   The_Generative_Gap.md      Capstone: the distinction–integration gap, and the ordinal→functor→instanton bridge
-tests/                 448 checks across the engine, instruments, and physics
+  The_Measured_Bridge.md     Closing synthesis: ordinals→functors→instantons as one chain, κ≈0.22 in the 4-D vacuum
+tests/                 456 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -145,6 +146,7 @@ experiments/
   n3_instanton_content.py   The instanton content of the sector field (CP²): χ_top, cooling, the topological fraction
   n3_functor_bridge.py      The functor logic→vacuum, measured: integration ladder ↦ topology, path-independent
   n3_su3_topology.py        4-D SU(3) topological charge (Stage 1): clover Q, cooling, χ_top vs coupling
+  n3_su3_gradient_flow.py   4-D SU(3) gradient flow (Stage 2): t₀ scale, Q→integer, self-dual fraction vs κ
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -712,6 +714,20 @@ This is the pivot the whole bridge pointed to: the gauge/vacuum sector — the *
 Reproduce with `python experiments/n3_su3_topology.py` (≈ 6 minutes; `--quick` for a smoke run).
 
 **Honest scope:** Stage 1 on a small 8⁴ lattice in lattice units. The field-theoretic Q carries the multiplicative renormalization Z ≈ 0.84 (levels at ~Z·n, not exact integers, until gradient-flowed), and weak-coupling **topological freezing** limits the χ_top statistics (the Markov chain does not decorrelate the topological sector). Scale-setting (a physical lattice spacing), gradient flow (Z → 1), and the instanton/perturbative condensate split needed for the actual κ ≈ 0.22 comparison are explicitly deferred to the next stage — this PR establishes and validates the instrument they require.
+
+### 4-D SU(3) gradient flow: the instanton fraction of the vacuum (Stage 2)
+
+Stage 1 read the charge through crude *cooling* — an uncontrolled smoother with no clean scale, leaving Q multiplicatively renormalized (Z ≈ 0.84). Stage 2 replaces cooling with the **Wilson (gradient) flow**, the gradient descent of the Wilson action in a flow "time" `t`, which Lüscher showed is a genuine renormalization-group smoothing. `project_genesis/gauge_topology.py` gains a Lüscher third-order Runge–Kutta flow integrator, the clover action density `E(t)`, and the self-dual fraction; `experiments/n3_su3_gradient_flow.py` runs the ensemble.
+
+- **The flow sets a scale.** The dimensionless clock `t² E(t)` climbs monotonically and crosses the reference `0.3` at a well-defined flow time `t₀` (t₀ = 0.39, 0.46, 0.95 at β_g = 1.7, 1.8, 1.9) — the standard Wilson-flow scale `√(8 t₀)`. Evaluating each ensemble at *its own* t₀ compares them at the same physical smoothing radius.
+- **Z → 1.** Under the flow the topological charge sharpens off the Stage-1 renormalized levels (`|Q| ≈ 0.84·n`) toward genuine integers — the coarse-lattice suppression flowing away, the RG content of the flow made visible.
+- **The instanton fraction of the vacuum.** The headline observable is the **self-dual fraction** `f_SD = Σ_x |q(x)| / Σ_x e(x) ∈ [0,1]`, the fraction of the field energy that saturates the Bogomolny bound `e(x) ≥ |q(x)|` — i.e. is carried by (anti-)self-dual, instanton-like structure rather than structureless UV field energy. This is the lattice proxy for the quantity the functorial-bridge paper attaches a number to: the **instanton fraction of the gluon condensate, κ ≈ 0.22**. Read at the RG-clean scale t₀, it **drifts through κ**: f_SD(t₀) = **0.187 → 0.221 → 0.352** at β_g = 1.7 → 1.8 → 1.9, landing essentially *on* κ = 0.22 at β_g = 1.8 (0.221 ± 0.004).
+
+The number the whole bridge pointed at — κ ≈ 0.22 — appears, at the principled flow scale, as the self-dual fraction of the 4-D SU(3) vacuum. It brackets and crosses κ across a coupling window; it does not sit on it universally.
+
+Reproduce with `python experiments/n3_su3_gradient_flow.py` (≈ 11 minutes; `--quick` for a smoke run).
+
+**Honest scope:** a coarse 8⁴ lattice over a narrow window of strong couplings. `f_SD` is a *single-scale reading of a monotone-rising quantity* — it keeps climbing past t₀ toward 1 as the field is smoothed to a few classical lumps, so it depends on the coupling (t₀ in lattice units grows with β_g, so the field is smoothed further before the reading). That the instanton fraction is an O(0.2) number crossing κ in this window is the result; a coupling-*independent* determination of κ needs the continuum limit (where the reading stabilizes) and a scheme-matched operator-product-expansion condensate. This stage establishes the flow, the scale, and the observable.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 

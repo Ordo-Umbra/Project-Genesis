@@ -34,7 +34,12 @@ from __future__ import annotations
 
 import numpy as np
 
-from .gauge import _dagger, plaquette, traceless_antihermitian
+from .gauge import (
+    _dagger,
+    _expm_antihermitian,
+    plaquette,
+    traceless_antihermitian,
+)
 
 _NORM = 1.0 / (32.0 * np.pi ** 2)
 
@@ -181,3 +186,146 @@ def mean_plaquette(links: np.ndarray) -> float:
             tot += float(np.real(np.trace(p, axis1=-2, axis2=-1)).mean()) / n
             cnt += 1
     return tot / cnt
+
+
+# --------------------------------------------------------------------------
+# Stage 2: Wilson gradient flow, scale-setting, and the self-dual fraction
+# --------------------------------------------------------------------------
+#
+# Cooling (above) is a crude smoother — it snaps each link to a local
+# action-minimiser, with no controlled step size, so the amount of smoothing
+# is not a renormalisation-group-clean scale.  The **Wilson (gradient) flow**
+# replaces it with a proper continuous smoothing: the links evolve by the
+# gradient-descent equation of the Wilson action,
+#
+#     dV_t/dt = − { ∂_{x,μ} S_W(V_t) } V_t ,
+#
+# integrated in the flow "time" ``t`` (units of lattice-spacing²).  Lüscher
+# showed the flow is a genuine RG transformation: observables at fixed
+# physical ``√(8t)`` are finite and the field-theoretic topological charge
+# flows to the *integer* value (the coarse-lattice ``Z ≲ 1`` of Stage 1
+# becomes ``Z → 1``).  It also furnishes a scale: the dimensionless
+# ``t² E(t)`` is a smooth, monotone clock, and the flow time ``t₀`` where it
+# reaches the reference ``0.3`` sets the lattice spacing.
+
+
+def _clover_sq_density(links: np.ndarray) -> np.ndarray:
+    """Per-site ``Σ_{μ<ν} (−Re Tr[F_{μν}F_{μν}]) ≥ 0`` from the clover ``F``."""
+    if links.shape[0] != 4:
+        raise ValueError("clover action density is defined here for 4-D links")
+    tot = None
+    for mu in range(4):
+        for nu in range(mu + 1, 4):
+            f = clover_field_strength(links, mu, nu)
+            term = -np.real(np.trace(f @ f, axis1=-2, axis2=-1))
+            tot = term if tot is None else tot + term
+    return tot
+
+
+def flow_energy(links: np.ndarray) -> float:
+    """Clover action density ``E = ⟨Σ_{μ<ν}(−Tr F_{μν}²)⟩`` (Lüscher normalisation).
+
+    The quantity whose dimensionless combination ``t² E(t)`` defines the flow
+    scale ``t₀``.
+    """
+    return float(_clover_sq_density(links).mean())
+
+
+def action_density(links: np.ndarray) -> np.ndarray:
+    """Per-site action density ``e(x) ≥ 0`` in the ``1/32π²`` topological units.
+
+    Normalised (Bogomolny) so that ``e(x) ≥ |q(x)|`` pointwise, with equality
+    iff the field is (anti-)self-dual at ``x`` — the denominator of the
+    self-dual fraction.
+    """
+    return _NORM * 4.0 * _clover_sq_density(links)
+
+
+def self_dual_fraction(links: np.ndarray) -> float:
+    """Fraction of the field energy that is (anti-)self-dual: ``Σ|q| / Σe ∈ [0,1]``.
+
+    The Bogomolny bound ``e(x) ≥ |q(x)|`` saturates on instantons, so this
+    ratio is 1 for a purely self-dual field and small for structureless UV
+    noise (whose local topological density averages away).  It is the
+    lattice proxy for the **instanton fraction of the gluon condensate** —
+    the physical content of the URP integration constant ``κ``.
+    """
+    e = float(action_density(links).sum())
+    if e == 0.0:
+        return 0.0
+    q = float(np.abs(topological_charge_density(links)).sum())
+    return q / e
+
+
+def _flow_drift(links: np.ndarray) -> np.ndarray:
+    """su(N) drift ``Z_μ(x) = −TA[U_μ(x) A_μ(x)]`` for every link (Wilson flow).
+
+    ``A_μ`` is the staple sum, so ``U_μ A_μ`` is the sum of plaquette loops
+    through the link; its traceless anti-Hermitian part is the action
+    gradient.  The sign makes the flow *descend* the Wilson action.
+    """
+    out = np.empty_like(links)
+    for mu in range(links.shape[0]):
+        omega = links[mu] @ staple_field(links, mu)
+        out[mu] = -traceless_antihermitian(omega)
+    return out
+
+
+def _flow_apply(z: np.ndarray, links: np.ndarray) -> np.ndarray:
+    """Apply the group step ``V_μ ← exp(Z_μ) V_μ`` for every link."""
+    out = np.empty_like(links)
+    for mu in range(links.shape[0]):
+        out[mu] = _expm_antihermitian(z[mu]) @ links[mu]
+    return out
+
+
+def flow_step(links: np.ndarray, dt: float) -> np.ndarray:
+    """One Lüscher third-order Runge–Kutta gradient-flow step of size ``dt``.
+
+    The RK3 integrator of Lüscher (2010): three drift evaluations combined so
+    the step is accurate to ``O(dt³)`` while staying exactly on the group.
+    """
+    z0 = dt * _flow_drift(links)
+    w1 = _flow_apply(0.25 * z0, links)
+    z1 = dt * _flow_drift(w1)
+    w2 = _flow_apply((8.0 / 9.0) * z1 - (17.0 / 36.0) * z0, w1)
+    z2 = dt * _flow_drift(w2)
+    return _flow_apply((3.0 / 4.0) * z2 - (8.0 / 9.0) * z1 + (17.0 / 36.0) * z0, w2)
+
+
+def gradient_flow(links: np.ndarray, *, t_max: float, dt: float = 0.02,
+                  measure_every: int = 5) -> tuple[np.ndarray, list[dict]]:
+    """Integrate the Wilson flow to ``t_max``; return flowed links + trajectory.
+
+    The trajectory records, every ``measure_every`` steps, the flow time and
+    the observables that matter: the scale clock ``t² E(t)``, the (now nearly
+    integer) topological charge ``Q(t)``, and the self-dual fraction.
+    """
+    z = links.copy()
+    n_steps = max(1, int(round(t_max / dt)))
+    traj = []
+
+    def record(t):
+        e = flow_energy(z)
+        traj.append({"t": float(t), "E": e, "t2E": float(t * t * e),
+                     "Q": topological_charge(z),
+                     "f_sd": self_dual_fraction(z)})
+
+    record(0.0)
+    for step in range(1, n_steps + 1):
+        z = flow_step(z, dt)
+        if step % measure_every == 0 or step == n_steps:
+            record(step * dt)
+    return z, traj
+
+
+def flow_scale(traj: list[dict], ref: float = 0.3) -> float:
+    """Flow time ``t₀`` where ``t² E(t)`` first reaches ``ref`` (linear interp).
+
+    Returns ``nan`` if the trajectory never reaches the reference value.
+    """
+    for a, b in zip(traj, traj[1:]):
+        if a["t2E"] <= ref <= b["t2E"] and b["t2E"] > a["t2E"]:
+            frac = (ref - a["t2E"]) / (b["t2E"] - a["t2E"])
+            return float(a["t"] + frac * (b["t"] - a["t"]))
+    return float("nan")
