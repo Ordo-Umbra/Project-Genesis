@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from project_genesis.gauge import _dagger, random_unitary  # noqa: E402
 from project_genesis.gauge_topology import (  # noqa: E402
     action_density,
+    continuum_limit,
     cool,
     flow_scale,
     flow_step,
@@ -135,6 +136,26 @@ class TestGradientFlow(unittest.TestCase):
     def test_flow_scale_not_reached(self):
         traj = [{"t": 0.0, "t2E": 0.0}, {"t": 0.5, "t2E": 0.1}]
         self.assertTrue(np.isnan(flow_scale(traj, 0.3)))
+
+    def test_continuum_limit_recovers_line(self):
+        # y = 0.4 - 0.1 x exactly → intercept 0.4, slope -0.1
+        x = [2.5, 2.0, 1.0, 0.5]
+        y = [0.4 - 0.1 * xi for xi in x]
+        fit = continuum_limit(x, y)
+        self.assertAlmostEqual(fit["intercept"], 0.4, places=9)
+        self.assertAlmostEqual(fit["slope"], -0.1, places=9)
+
+    def test_continuum_limit_weighted(self):
+        # a wild outlier with tiny weight must not move the fit
+        x = [2.0, 1.0, 0.0, 1.5]
+        y = [0.2, 0.3, 0.4, 9.9]
+        w = [1.0, 1.0, 1.0, 1e-9]
+        fit = continuum_limit(x, y, w)
+        self.assertAlmostEqual(fit["intercept"], 0.4, places=6)
+
+    def test_continuum_limit_needs_two_points(self):
+        with self.assertRaises(ValueError):
+            continuum_limit([1.0], [0.5])
 
 
 class TestStapleAndSusceptibility(unittest.TestCase):

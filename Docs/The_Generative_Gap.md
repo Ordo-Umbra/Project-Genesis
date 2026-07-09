@@ -279,6 +279,21 @@ This is the direction the exploration now turns, in three movements:
    coupling-independent determination would need the continuum limit and a
    scheme-matched OPE condensate, the boundary this stage does not cross.
 
+   *The continuum push then crosses part of that boundary — and corrects the
+   reading (`n3_su3_continuum.py`, `continuum_limit`).* The Stage-2 drift is
+   shown to be **volume-converged** (varying `L` at fixed `β_g` barely moves
+   `f_SD(t₀)`: 0.218/0.221/0.219 over `L = 6/8/10` at β_g = 1.8) but strongly
+   **cutoff-dependent** (0.189 → 0.344 across β_g = 1.7 → 1.9 at fixed `L = 8`,
+   as `a` shrinks). A linear `O(a²)` extrapolation of `f_SD(t₀)` against
+   `1/t₀ ∝ a²` gives `f_SD → 0.435` as `a → 0` — *above* κ. So the Stage-2
+   agreement with 0.22 was a coarse-lattice coincidence, not a cutoff-stable
+   determination: the self-dual fraction is a valid instanton-content
+   observable but not, alone, a scheme-free estimator of κ. The honest state
+   of the bridge's number is therefore: the physical side carries a genuine,
+   validated, renormalisation-group-scaled instanton fraction of `O(0.2–0.4)`;
+   pinning it to `0.22` needs finer lattices (against topological freezing)
+   and the matched condensate this observable stands in for.
+
 The honest boundary, kept bright as throughout the program: the testbench
 measures the *structure* of the gap — its existence, its asymmetry, its
 capacity-gating, its behaviour under reflection. It does not, and cannot,

@@ -75,7 +75,7 @@ Docs/
   Thermal_Sector_Program.md  Synthesis: the full thermodynamic N⋆=3 program and its verdicts
   The_Generative_Gap.md      Capstone: the distinction–integration gap, and the ordinal→functor→instanton bridge
   The_Measured_Bridge.md     Closing synthesis: ordinals→functors→instantons as one chain, κ≈0.22 in the 4-D vacuum
-tests/                 456 checks across the engine, instruments, and physics
+tests/                 459 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -147,6 +147,7 @@ experiments/
   n3_functor_bridge.py      The functor logic→vacuum, measured: integration ladder ↦ topology, path-independent
   n3_su3_topology.py        4-D SU(3) topological charge (Stage 1): clover Q, cooling, χ_top vs coupling
   n3_su3_gradient_flow.py   4-D SU(3) gradient flow (Stage 2): t₀ scale, Q→integer, self-dual fraction vs κ
+  n3_su3_continuum.py       4-D SU(3) continuum trend: f_SD(t₀) volume-converged but cutoff-dependent
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -727,7 +728,21 @@ The number the whole bridge pointed at — κ ≈ 0.22 — appears, at the princ
 
 Reproduce with `python experiments/n3_su3_gradient_flow.py` (≈ 11 minutes; `--quick` for a smoke run).
 
-**Honest scope:** a coarse 8⁴ lattice over a narrow window of strong couplings. `f_SD` is a *single-scale reading of a monotone-rising quantity* — it keeps climbing past t₀ toward 1 as the field is smoothed to a few classical lumps, so it depends on the coupling (t₀ in lattice units grows with β_g, so the field is smoothed further before the reading). That the instanton fraction is an O(0.2) number crossing κ in this window is the result; a coupling-*independent* determination of κ needs the continuum limit (where the reading stabilizes) and a scheme-matched operator-product-expansion condensate. This stage establishes the flow, the scale, and the observable.
+**Honest scope:** a coarse 8⁴ lattice over a narrow window of strong couplings. `f_SD` is a *single-scale reading of a monotone-rising quantity* — it keeps climbing past t₀ toward 1 as the field is smoothed to a few classical lumps, so it depends on the coupling (t₀ in lattice units grows with β_g, so the field is smoothed further before the reading). That the instanton fraction is an O(0.2) number crossing κ in this window is the result; a coupling-*independent* determination of κ needs the continuum limit (where the reading stabilizes) and a scheme-matched operator-product-expansion condensate. This stage establishes the flow, the scale, and the observable. *(The continuum trend below tests that stabilization — and corrects the picture.)*
+
+### 4-D SU(3) continuum trend: where the Stage-2 uncertainty lives
+
+The Stage-2 caveat was a hypothesis with two names — was the β_g-drift of `f_SD(t₀)` a **finite-size** artifact (the physical box `L/√t₀` shrinks as β_g grows at fixed `L = 8`) or a genuine lattice-**cutoff** (finite spacing) dependence? — and a question: does the reading *stabilize* toward a coupling-independent number as `a → 0`? `experiments/n3_su3_continuum.py` answers all three, with `continuum_limit` added to `gauge_topology.py`.
+
+- **It is volume-converged.** At fixed β_g, varying `L` barely moves `f_SD(t₀)`: **0.218 → 0.221 → 0.219** across `L = 6, 8, 10` at β_g = 1.8 (boxes 9 → 15), and **0.344 → 0.345** across `L = 8, 12` at β_g = 1.9 (boxes 8 → 12). Finite size is *not* the source of the Stage-2 drift.
+- **The drift is a cutoff effect.** Scanning β_g at the volume-converged `L = 8`, `f_SD(t₀)` rises monotonically — **0.189, 0.200, 0.221, 0.264, 0.344** at β_g = 1.7, 1.75, 1.8, 1.85, 1.9 — as the lattice refines (t₀ grows, `a` shrinks). The uncertainty lives entirely in the lattice spacing.
+- **The continuum limit overshoots κ.** A linear `O(a²)` extrapolation of `f_SD(t₀)` against the cutoff surrogate `1/t₀ ∝ a²` gives **f_SD → 0.435 as a → 0** — well *above* κ = 0.22. So the Stage-2 crossing of κ at β_g = 1.8 was a **coarse-lattice coincidence**, not a cutoff-stable determination. The self-dual fraction at the flow scale is a legitimate instanton-content observable, but it carries a real `O(a²)` cutoff dependence and is *not*, by itself, a scheme-free estimator of the framework's κ.
+
+This is the honest correction the continuum push existed to make: it localizes the Stage-2 uncertainty precisely — **volume-converged, cutoff-dominated** — and shows the number `0.22` does not survive the naive `a → 0` limit of this observable. It sharpens, rather than confirms, the earlier reading.
+
+Reproduce with `python experiments/n3_su3_continuum.py` (≈ 30 minutes; `--quick` for a smoke run).
+
+**Honest scope:** a 3–5 point trend over a narrow, coarse strong-coupling window (the coarsest t₀ ≈ 0.39 is barely one lattice spacing, so its scale is the least trustworthy point), fit with a single linear `a²` ansatz. It does *not* deliver the continuum κ — that needs genuinely finer lattices (fighting topological freezing, which throttles the topology sampling exactly where the flow scale is cleanest) and the matched OPE condensate the self-dual fraction only stands in for. What it delivers is the correction: the Stage-2 agreement with 0.22 was cutoff-driven.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
