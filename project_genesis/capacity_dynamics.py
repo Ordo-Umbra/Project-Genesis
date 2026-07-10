@@ -132,6 +132,47 @@ def _mean_separation(positions):
     return float(np.mean(d))
 
 
+def hubble_flow(positions, hubble, center=None):
+    """Hubble-law recession velocities ``v_i = H·(r_i − r_centre)``.
+
+    The initial-condition form of a (coasting, Newtonian) expanding background:
+    every mass recedes from the centre at a rate proportional to its distance.
+    Gravity then competes with this outflow — dense regions decelerate, turn
+    around and collapse; the rest is carried apart.
+    """
+    pos = np.asarray(positions, dtype=float)
+    ctr = pos.mean(axis=0) if center is None else np.asarray(center, float)
+    return hubble * (pos - ctr)
+
+
+def fof_groups(positions, link):
+    """Friends-of-friends grouping (the cosmologist's halo finder).
+
+    Masses within ``link`` of one another are joined (union-find); returns the
+    group sizes, largest first.  A single large group means a bound structure
+    formed; all-singletons means the masses dispersed.
+    """
+    pos = [np.asarray(p, float) for p in positions]
+    n = len(pos)
+    parent = list(range(n))
+
+    def find(a):
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            if np.linalg.norm(pos[i] - pos[j]) <= link:
+                parent[find(i)] = find(j)
+    sizes = {}
+    for i in range(n):
+        r = find(i)
+        sizes[r] = sizes.get(r, 0) + 1
+    return sorted(sizes.values(), reverse=True)
+
+
 # --------------------------------------------------------------------------
 # Inertial dynamics: give the forms momentum, so they orbit and virialise
 # --------------------------------------------------------------------------
@@ -203,4 +244,80 @@ def evolve_inertial(positions, velocities, masses, *, shape, width=2.5,
             break
     hist["kappa"] = kappa
     hist["final_positions"] = pos.copy()
+    return hist
+
+
+# --------------------------------------------------------------------------
+# FLRW-like background: an evolving scale factor a(t), Hubble drag, dark energy
+# --------------------------------------------------------------------------
+#
+# The cosmic-structure model carried the expansion in the initial velocities
+# only (a coasting background).  Here the background is a genuine, evolving
+# **scale factor** ``a(t)`` obeying a Friedmann-like law
+#
+#     (ȧ/a)² = H₀² [ Ω_m a^{-p} + Ω_Λ ] ,
+#
+# with a matter component (density diluting as ``a^{-p}``) and a cosmological-
+# constant / dark-energy component ``Ω_Λ``.  Working in physical coordinates
+# about a fixed comoving origin, each mass obeys
+#
+#     r̈_i = F_i/M + (ä/a)·(r_i − c) ,   ä/a = H₀²[(1 − p/2) Ω_m a^{-p} + Ω_Λ] ,
+#
+# the peculiar κ-force plus the background (de)celeration.  Two FLRW effects
+# follow for free: a peculiar velocity **redshifts as 1/a** (Hubble drag), and
+# a dark-energy-dominated (accelerating) background **freezes structure growth**
+# — a faster, accelerating expansion assembles less.
+
+
+def friedmann_rates(a, hubble0, omega_m, omega_lambda, p=3.0):
+    """``(H, ä/a)`` at scale factor ``a`` for a matter+Λ Friedmann background.
+
+    ``H = H₀√(Ω_m a^{-p} + Ω_Λ)`` and ``ä/a = H₀²[(1 − p/2)Ω_m a^{-p} + Ω_Λ]``
+    (so matter decelerates for ``p > 2`` and Λ accelerates).
+    """
+    matter = omega_m * a ** (-p)
+    H = hubble0 * np.sqrt(matter + omega_lambda)
+    accel = hubble0 ** 2 * ((1.0 - p / 2.0) * matter + omega_lambda)
+    return float(H), float(accel)
+
+
+def evolve_cosmological(positions, masses, *, shape, width=2.5,
+                        hubble0=0.05, omega_m=1.0, omega_lambda=0.0, p=3.0,
+                        dt=0.5, steps=110, center=None, peculiar=None,
+                        **field_kw):
+    """Inertial κ-gravity in an FLRW-like background with scale factor ``a(t)``.
+
+    Masses start in the Hubble flow ``v = H₀·(r − c)`` (plus optional
+    ``peculiar`` velocities), integrated by velocity-Verlet under the peculiar
+    κ-force and the background ``(ä/a)(r − c)``; ``a`` co-evolves via
+    ``ȧ = a·H(a)``.  Returns per-step scale factor ``a``, Hubble rate ``H``,
+    positions, and the mean physical separation.
+    """
+    pos = np.asarray(positions, dtype=float).copy()
+    m = np.asarray(masses, dtype=float)
+    c = pos.mean(axis=0) if center is None else np.asarray(center, float)
+    a = 1.0
+    H, accel = friedmann_rates(a, hubble0, omega_m, omega_lambda, p)
+    vel = hubble0 * (pos - c)
+    if peculiar is not None:
+        vel = vel + np.asarray(peculiar, float)
+    forces, _, _ = _force_and_energy(pos, m, shape, width, field_kw)
+    hist = {k: [] for k in ("a", "H", "positions", "velocities", "separation")}
+    for _ in range(steps):
+        hist["a"].append(a)
+        hist["H"].append(H)
+        hist["positions"].append(pos.copy())
+        hist["velocities"].append(vel.copy())
+        hist["separation"].append(_mean_separation(list(pos)))
+        acc = forces / m[:, None] + accel * (pos - c)
+        vel_half = vel + 0.5 * acc * dt
+        pos = pos + vel_half * dt
+        a = a + a * H * dt                       # ȧ = a·H
+        H, accel = friedmann_rates(a, hubble0, omega_m, omega_lambda, p)
+        forces, _, _ = _force_and_energy(pos, m, shape, width, field_kw)
+        acc = forces / m[:, None] + accel * (pos - c)
+        vel = vel_half + 0.5 * acc * dt
+    hist["final_positions"] = pos.copy()
+    hist["a_final"] = a
+    hist["center"] = c
     return hist

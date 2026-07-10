@@ -169,6 +169,58 @@ emerge from the one screened force whose strength is the forms' own mass — the
 capacity field is not a metaphor for gravity but a working, if screened,
 gravitational dynamics.
 
+## Structure against expansion
+
+The last step toward cosmology (`n3_cosmic_structure.py`, `hubble_flow`,
+`fof_groups`): put that dynamics in an **expanding background** — every mass
+given the Hubble recession ``v = H·(r − r_centre)`` — and ask whether gravity
+still assembles structure against the outflow.
+
+- **Turnaround.**  Two receding masses decelerate, reach a maximum separation
+  (turnaround radius, growing with ``H``: 10 → 23 lattice units here) and
+  recollapse — below a critical expansion rate; above it they escape.  The
+  spherical-collapse picture.
+- **Suppression of structure.**  A cloud in Hubble flow collapses into a
+  single bound halo at low ``H`` (100% of the mass in one group) but fragments
+  and disperses as ``H`` rises (down to ~25%).  A faster-expanding background
+  forms less structure — the defining feature of gravitational structure
+  formation.
+
+So the whole chain runs against a cosmological background too: the generative
+gap makes distinction; capacity crystallises it into stable forms (matter);
+those forms gravitate through the capacity field; and they **assemble into
+bound structure — so long as gravity outpaces the expansion**.  It is a
+*Newtonian, coasting-background* model (expansion as an initial velocity
+field, no FLRW metric or dark energy), so it captures the competition and the
+critical rate, not a quantitative cosmology — but the essential ingredient of
+a universe that grows structure is there.
+
+### An evolving universe: scale factor, Hubble drag, dark energy
+
+The final rung (`n3_expanding_universe.py`, `friedmann_rates`,
+`evolve_cosmological`) replaces the coasting background with a genuine,
+evolving **scale factor** ``a(t)`` obeying a Friedmann-like law
+``(ȧ/a)² = H₀²[Ω_m a^{−p} + Ω_Λ]`` — matter plus a dark-energy component.
+Three FLRW mechanisms then appear:
+
+- **Expansion histories** — ``a(t)`` decelerates under matter and accelerates
+  under Λ (the two fates of a universe).
+- **Hubble drag** — a peculiar velocity redshifts as ``1/a`` (``a·|v_pec|``
+  constant to fractions of a percent): momentum redshift, which the coasting
+  model could not produce.
+- **Dark-energy freeze-out** — the *same* cloud collapses into one bound halo
+  in a matter universe but is progressively suppressed as ``Ω_Λ`` rises and
+  the expansion accelerates (largest bound fraction falling to ~40% at pure de
+  Sitter). A faster-expanding, dark-energy universe assembles less — the
+  defining signature of Λ in structure growth.
+
+It is a Newtonian FLRW-*analogue* (the Friedmann law is imposed, not derived
+from the κ-field's stress-energy; no metric or horizon), so it reproduces the
+mechanisms, not a quantitative ΛCDM.  But with it the arc reaches its
+cosmological end: from the generative gap, through matter and gravity, to
+structure that assembles itself in an expanding universe — and freezes out
+when that expansion runs away.
+
 ---
 
 *See `The_Generative_Gap.md` for the `S = ΔC + κ·ΔI` program κ lives in, and
