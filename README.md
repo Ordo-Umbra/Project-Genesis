@@ -75,7 +75,8 @@ Docs/
   Thermal_Sector_Program.md  Synthesis: the full thermodynamic N⋆=3 program and its verdicts
   The_Generative_Gap.md      Capstone: the distinction–integration gap, and the ordinal→functor→instanton bridge
   The_Measured_Bridge.md     Closing synthesis: ordinals→functors→instantons as one chain, κ≈0.22 in the 4-D vacuum
-tests/                 459 checks across the engine, instruments, and physics
+  Capacity_As_Gravity.md     κ as the framework's gravity: a universal, mass-sourced, √(D/r)-screened attraction
+tests/                 468 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -148,6 +149,7 @@ experiments/
   n3_su3_topology.py        4-D SU(3) topological charge (Stage 1): clover Q, cooling, χ_top vs coupling
   n3_su3_gradient_flow.py   4-D SU(3) gradient flow (Stage 2): t₀ scale, Q→integer, self-dual fraction vs κ
   n3_su3_continuum.py       4-D SU(3) continuum trend: f_SD(t₀) volume-converged but cutoff-dependent
+  n3_kappa_gravity.py       Capacity as gravity: κ mediates a √(D/r)-screened, mass-sourced attraction
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -743,6 +745,20 @@ This is the honest correction the continuum push existed to make: it localizes t
 Reproduce with `python experiments/n3_su3_continuum.py` (≈ 30 minutes; `--quick` for a smoke run).
 
 **Honest scope:** a 3–5 point trend over a narrow, coarse strong-coupling window (the coarsest t₀ ≈ 0.39 is barely one lattice spacing, so its scale is the least trustworthy point), fit with a single linear `a²` ansatz. It does *not* deliver the continuum κ — that needs genuinely finer lattices (fighting topological freezing, which throttles the topology sampling exactly where the flow scale is cleanest) and the matched OPE condensate the self-dual fraction only stands in for. What it delivers is the correction: the Stage-2 agreement with 0.22 was cutoff-driven.
+
+### Capacity as gravity: the attraction κ mediates
+
+A different question about κ — not its *value* but its *character*. The capacity field obeys `∂_t κ = D∇²κ + r(κ₀−κ) − c·load·κ`, which is the gradient flow of the **capacity free energy** `F[κ] = ∫[(D/2)|∇κ|² + (r/2)(κ−κ₀)² + (c/2)·load·κ²]`. That one fact makes κ behave like gravity *in the general sense*: a concentration of `load` (distinction — the field's "mass") digs a well in κ, and because F is a genuine energy, two such masses lower it by drawing together. `project_genesis/capacity_gravity.py` + `experiments/n3_kappa_gravity.py` measure it, on the real κ dynamics.
+
+- **κ mediates a screened attraction.** Two rigid Gaussian masses at separation r, relaxed to steady-state κ, lower the free energy — `V(r) < 0` throughout (−2.6 at r=4 deepening as they approach) — and the potential is **Yukawa-shaped**: a fit `V ∝ −e^{−r/ξ}/r` gives ξ ≈ 4.8. An attractive, short-ranged, mass-mediated force.
+- **The range is √(D/r) — the recovery rate is the graviton mass.** Linearizing, the κ-well is screened with length `ξ_κ = √(D/r)`. Measured across **independently varied** D and r (so the test is √(D/r), not just 1/√r), the screening length tracks the prediction as **ξ_meas = 1.02·√(D/r), R² = 1.000** — including a three-way degeneracy where (D,r) = (0.5, 0.02), (1, 0.04), (2, 0.08) all give ξ ≈ 5.1. Fast recovery screens the force to short range; slow recovery lets it reach. The persistence↔plasticity dial from the memory work is secretly the massive↔massless-graviton dial.
+- **It obeys an equivalence principle.** The interaction strength scales with the **product of the masses**, `V ∝ m₁·m₂` (linear in m² with R² = 0.97). κ-gravity couples to *how much* distinction is present, universally — not to what kind it is.
+
+So κ is not just a coupling constant whose number we chase — it is, structurally, **the framework's gravity**: the weak, universal, mass-sourced binding field, sourced by structure and back-reacting on it, with a screened range set by the capacity recovery length.
+
+Reproduce with `python experiments/n3_kappa_gravity.py` (≈ 4 minutes; `--quick` for a smoke run).
+
+**Honest scope:** a classical, static, scalar mediation — κ is the binding *coupling*, not the metric tensor of general relativity, and the screened `√(D/r)` range is a genuine difference from Newtonian `1/r²` (κ-gravity is a *massive*-graviton analogue). Rigid load "masses" stand in for self-consistent structure; the measured range carries a small (~2%) lattice/finite-width offset absorbed into the constant α. What is established is the gravitational *role* — a universal attraction whose strength is κ and whose range is the recovery length — not an identification with GR.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
