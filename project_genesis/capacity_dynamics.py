@@ -132,6 +132,47 @@ def _mean_separation(positions):
     return float(np.mean(d))
 
 
+def hubble_flow(positions, hubble, center=None):
+    """Hubble-law recession velocities ``v_i = H·(r_i − r_centre)``.
+
+    The initial-condition form of a (coasting, Newtonian) expanding background:
+    every mass recedes from the centre at a rate proportional to its distance.
+    Gravity then competes with this outflow — dense regions decelerate, turn
+    around and collapse; the rest is carried apart.
+    """
+    pos = np.asarray(positions, dtype=float)
+    ctr = pos.mean(axis=0) if center is None else np.asarray(center, float)
+    return hubble * (pos - ctr)
+
+
+def fof_groups(positions, link):
+    """Friends-of-friends grouping (the cosmologist's halo finder).
+
+    Masses within ``link`` of one another are joined (union-find); returns the
+    group sizes, largest first.  A single large group means a bound structure
+    formed; all-singletons means the masses dispersed.
+    """
+    pos = [np.asarray(p, float) for p in positions]
+    n = len(pos)
+    parent = list(range(n))
+
+    def find(a):
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            if np.linalg.norm(pos[i] - pos[j]) <= link:
+                parent[find(i)] = find(j)
+    sizes = {}
+    for i in range(n):
+        r = find(i)
+        sizes[r] = sizes.get(r, 0) + 1
+    return sorted(sizes.values(), reverse=True)
+
+
 # --------------------------------------------------------------------------
 # Inertial dynamics: give the forms momentum, so they orbit and virialise
 # --------------------------------------------------------------------------

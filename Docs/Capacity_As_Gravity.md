@@ -169,6 +169,32 @@ emerge from the one screened force whose strength is the forms' own mass — the
 capacity field is not a metaphor for gravity but a working, if screened,
 gravitational dynamics.
 
+## Structure against expansion
+
+The last step toward cosmology (`n3_cosmic_structure.py`, `hubble_flow`,
+`fof_groups`): put that dynamics in an **expanding background** — every mass
+given the Hubble recession ``v = H·(r − r_centre)`` — and ask whether gravity
+still assembles structure against the outflow.
+
+- **Turnaround.**  Two receding masses decelerate, reach a maximum separation
+  (turnaround radius, growing with ``H``: 10 → 23 lattice units here) and
+  recollapse — below a critical expansion rate; above it they escape.  The
+  spherical-collapse picture.
+- **Suppression of structure.**  A cloud in Hubble flow collapses into a
+  single bound halo at low ``H`` (100% of the mass in one group) but fragments
+  and disperses as ``H`` rises (down to ~25%).  A faster-expanding background
+  forms less structure — the defining feature of gravitational structure
+  formation.
+
+So the whole chain runs against a cosmological background too: the generative
+gap makes distinction; capacity crystallises it into stable forms (matter);
+those forms gravitate through the capacity field; and they **assemble into
+bound structure — so long as gravity outpaces the expansion**.  It is a
+*Newtonian, coasting-background* model (expansion as an initial velocity
+field, no FLRW metric or dark energy), so it captures the competition and the
+critical rate, not a quantitative cosmology — but the essential ingredient of
+a universe that grows structure is there.
+
 ---
 
 *See `The_Generative_Gap.md` for the `S = ΔC + κ·ΔI` program κ lives in, and

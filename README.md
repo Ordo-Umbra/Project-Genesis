@@ -76,7 +76,7 @@ Docs/
   The_Generative_Gap.md      Capstone: the distinction–integration gap, and the ordinal→functor→instanton bridge
   The_Measured_Bridge.md     Closing synthesis: ordinals→functors→instantons as one chain, κ≈0.22 in the 4-D vacuum
   Capacity_As_Gravity.md     κ as the framework's gravity: a universal, mass-sourced, √(D/r)-screened attraction
-tests/                 491 checks across the engine, instruments, and physics
+tests/                 498 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -153,6 +153,7 @@ experiments/
   n3_stable_forms.py        The corpus of stable forms: discrete mass spectrum, m_inertial = m_gravitational
   n3_self_gravity.py        Self-gravitating forms: two-body infall + N-body accretion under κ-gravity
   n3_orbital_gravity.py     Inertial κ-gravity: Kepler-like orbits, conserved energy, precession, virialization
+  n3_cosmic_structure.py    κ-gravity vs Hubble expansion: turnaround, and structure suppressed by expansion
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -805,7 +806,20 @@ So κ-gravity is a *complete* gravitational dynamics, not just infall: bound orb
 
 Reproduce with `python experiments/n3_orbital_gravity.py` (≈ 4 minutes; `--quick` for a smoke run).
 
-**Honest scope:** point masses (rigid load blobs standing in for the stable forms) under the adiabatic κ-force on a 2-D periodic lattice — a Newtonian-in-spirit dynamics of a *screened* force, not a relativistic or cosmological calculation. The precession is the Yukawa (finite-range) effect, distinct from GR's relativistic advance; the virial ratio settles to O(1) with the residual above 1 reflecting the finite dissipation/run length.
+**Honest scope:** point masses (rigid load blobs standing in for the stable forms) under the adiabatic κ-force on a 2-D periodic lattice — a Newtonian-in-spirit dynamics of a *screened* force, not a relativistic or cosmological calculation. The precession is the Yukawa (finite-range) effect, distinct from GR's relativistic advance; the virial ratio settles to O(1) with the residual above 1 reflecting the finite dissipation/run length. *(The cosmological version below adds an expanding background.)*
+
+### Cosmic structure: κ-gravity against an expanding background
+
+The last step toward cosmology: put the inertial κ-gravity in an **expanding background** — every mass given the Hubble-law recession `v = H·(r − r_centre)` — and ask the question structure formation turns on: does gravity still assemble bound structure against the expansion? `project_genesis/capacity_dynamics.py` (`hubble_flow`, `fof_groups`) + `experiments/n3_cosmic_structure.py`.
+
+- **Turnaround.** Two receding masses decelerate under gravity, reach a **maximum separation** (the turnaround radius), and **recollapse** into a bound pair — for expansion below a critical rate. The turnaround radius grows with `H` (**10.0 → 12.5 → 15.5 → 22.9** at H = 0, 0.10, 0.14, 0.18) and then gives way to **escape** (H = 0.26, the pair runs to the box edge). This is the spherical-collapse picture: a critical expansion rate separates recollapse from escape.
+- **Structure vs expansion.** A cloud of 12 masses in Hubble flow **collapses into a single bound halo at low expansion** (100% of the mass in one friends-of-friends group at H = 0) but is progressively **dispersed to fragments as expansion rises** — largest bound fraction **100% → 75% → 33% → 25%** across H = 0, 0.08, 0.16, 0.26. Expansion suppresses structure, exactly as a faster-expanding universe forms less.
+
+So κ-gravity builds structure against expansion up to a threshold and loses beyond it — the same **gap → matter → gravity** chain, now competing with a cosmological background. The essential ingredient of structure formation is present: a critical rate above which the universe expands faster than it can assemble.
+
+Reproduce with `python experiments/n3_cosmic_structure.py` (≈ 6 minutes; `--quick` for a smoke run).
+
+**Honest scope:** a **Newtonian, coasting-background** model — the expansion enters as the initial Hubble peculiar-velocity field and gravity is the screened κ-force; there is **no FLRW metric, no dark-energy term, no relativistic horizon**, and the "background" is carried by initial velocities rather than an evolving scale factor with its own Friedmann equation. It captures the essential competition (self-gravity vs expansion, turnaround, suppression of structure by expansion), not a quantitative cosmology.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
