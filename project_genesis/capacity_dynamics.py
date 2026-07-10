@@ -321,3 +321,74 @@ def evolve_cosmological(positions, masses, *, shape, width=2.5,
     hist["a_final"] = a
     hist["center"] = c
     return hist
+
+
+# --------------------------------------------------------------------------
+# Closing the loop: the expansion driven by the κ-field's own energy content
+# --------------------------------------------------------------------------
+#
+# In the FLRW model above, ``Ω_Λ`` was dialled by hand.  But the capacity
+# field supplies a dark-energy component for free: the recovery term
+# ``r·(κ₀ − κ)`` continually heals the field back to baseline, an energy the
+# field spends **maintaining itself** that does *not* dilute as the universe
+# expands — exactly a cosmological constant.  So the dark-energy density is not
+# an input but a property of the capacity field,
+#
+#     ρ_Λ = coeff · r · κ₀² ,
+#
+# while matter dilutes as ``ρ_m(a) = ρ_m0 · a^{-dim}``.  The Friedmann equation
+# ``H² = ρ_m + ρ_Λ`` (units ``8πG/3 = 1``) and ``ä/a = −½ρ_m + ρ_Λ`` then make
+# the whole expansion history — matter-dominated deceleration giving way to
+# Λ-dominated acceleration — a *prediction* of the field content: the same κ
+# that is gravity also drives the cosmos.
+
+
+def capacity_vacuum_density(kappa_recovery, kappa_baseline=1.0, coeff=0.5):
+    """Emergent dark-energy density ``ρ_Λ = coeff · r · κ₀²``.
+
+    The energy the capacity field spends maintaining itself against dilution
+    (the recovery term) — a constant, non-diluting density that acts as a
+    cosmological constant.  Set by the field parameters, not dialled.
+    """
+    return float(coeff * kappa_recovery * kappa_baseline ** 2)
+
+
+def deceleration_parameter(a, rho_m0, rho_lambda, dim=3):
+    """The deceleration parameter ``q = −ä a / ȧ²`` of the emergent background.
+
+    ``q > 0`` decelerating (matter), ``q < 0`` accelerating (Λ); it crosses
+    zero at the acceleration onset.
+    """
+    rho_m = rho_m0 * a ** (-dim)
+    accel = -0.5 * rho_m + rho_lambda            # ä/a
+    return float(-accel / (rho_m + rho_lambda))
+
+
+def acceleration_onset(rho_m0, rho_lambda, dim=3):
+    """Scale factor ``a_acc`` where the expansion turns from decel to accel.
+
+    ``ä/a = 0`` at ``ρ_m(a) = 2 ρ_Λ`` → ``a_acc = (ρ_m0 / 2ρ_Λ)^{1/dim}`` —
+    derived from the matter/vacuum balance, not an input.
+    """
+    if rho_lambda <= 0:
+        return float("inf")
+    return float((rho_m0 / (2.0 * rho_lambda)) ** (1.0 / dim))
+
+
+def integrate_scale_factor(rho_m0, rho_lambda, *, dim=3, dt=0.5, steps=300):
+    """Integrate the emergent Friedmann equation; return ``a, t, H, q`` histories.
+
+    ``H = √(ρ_m0 a^{-dim} + ρ_Λ)`` (units ``8πG/3 = 1``), ``ȧ = aH``.
+    """
+    a, t = 1.0, 0.0
+    hist = {"a": [], "t": [], "H": [], "q": []}
+    for _ in range(steps):
+        rho_m = rho_m0 * a ** (-dim)
+        H = np.sqrt(rho_m + rho_lambda)
+        hist["a"].append(a)
+        hist["t"].append(t)
+        hist["H"].append(float(H))
+        hist["q"].append(deceleration_parameter(a, rho_m0, rho_lambda, dim))
+        a = a + a * H * dt
+        t += dt
+    return hist

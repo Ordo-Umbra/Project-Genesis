@@ -77,7 +77,7 @@ Docs/
   The_Measured_Bridge.md     Closing synthesis: ordinals→functors→instantons as one chain, κ≈0.22 in the 4-D vacuum
   Capacity_As_Gravity.md     κ as the framework's gravity: a universal, mass-sourced, √(D/r)-screened attraction
   The_Emergent_Cosmos.md     Capstone (Act II): κ→gravity→matter→structure→cosmos, with toolkit map and frontiers
-tests/                 504 checks across the engine, instruments, and physics
+tests/                 509 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -156,6 +156,7 @@ experiments/
   n3_orbital_gravity.py     Inertial κ-gravity: Kepler-like orbits, conserved energy, precession, virialization
   n3_cosmic_structure.py    κ-gravity vs Hubble expansion: turnaround, and structure suppressed by expansion
   n3_expanding_universe.py  FLRW background: scale factor a(t), Hubble drag, dark-energy freeze-out of structure
+  n3_self_contained_cosmos.py  Closed loop: dark energy from κ's self-maintenance drives the emergent expansion
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -835,7 +836,21 @@ So the **gap → matter → gravity → structure** chain now runs in a genuine 
 
 Reproduce with `python experiments/n3_expanding_universe.py` (≈ 10 minutes; `--quick` for a smoke run).
 
-**Honest scope:** a **Newtonian FLRW-analogue** — a real evolving scale factor and genuine Hubble drag, but the Friedmann law is **imposed** (`p = 3` matter dilution applied to the 2-D screened dynamics), not derived from the κ-field's own stress-energy, and there is no metric, horizon, or relativistic growth factor. It reproduces the *mechanisms* — Hubble drag and the dark-energy suppression of growth — not a quantitative ΛCDM. The κ screening length is a fixed physical scale (it does not itself redshift with the background).
+**Honest scope:** a **Newtonian FLRW-analogue** — a real evolving scale factor and genuine Hubble drag, but the Friedmann law is **imposed** (`p = 3` matter dilution applied to the 2-D screened dynamics), not derived from the κ-field's own stress-energy, and there is no metric, horizon, or relativistic growth factor. It reproduces the *mechanisms* — Hubble drag and the dark-energy suppression of growth — not a quantitative ΛCDM. The κ screening length is a fixed physical scale (it does not itself redshift with the background). *(The next section closes the loop — deriving the dark energy from the κ-field itself.)*
+
+### A self-contained cosmos: the expansion driven by the κ-field itself
+
+The FLRW section still *dialled* Ω_Λ by hand. This closes the loop: the capacity field supplies the dark energy for free. Its recovery term `r·(κ₀ − κ)` continually heals the field back to baseline — an energy spent **maintaining itself** that does *not* dilute as space expands, exactly a cosmological constant. So `ρ_Λ = coeff·r·κ₀²` is a **property of the field, not an input**, while matter dilutes as `ρ_m(a) = ρ_m0·a^{−dim}`; the Friedmann equation `H² = ρ_m + ρ_Λ` makes the whole expansion history a prediction. `project_genesis/capacity_dynamics.py` (`capacity_vacuum_density`, `deceleration_parameter`, `acceleration_onset`, `integrate_scale_factor`) + `experiments/n3_self_contained_cosmos.py`.
+
+- **An emergent cosmic history.** `a(t)` starts matter-dominated and **decelerating**, then — as matter dilutes below the capacity vacuum — turns over into **Λ-dominated acceleration**. The deceleration parameter `q` crosses zero and runs to the de Sitter limit `q → −1`: the same decel→accel history our universe has, out of one field.
+- **Dark energy is the capacity field maintaining itself.** The acceleration onset `a_acc = (ρ_m0/2ρ_Λ)^{1/dim}` is **derived**, not dialled — and turning up the recovery rate `r` (more self-maintenance) raises ρ_Λ and brings the acceleration earlier, exactly on the predicted curve: `a_acc = 1.71, 1.36, 1.19, 1.00` at `r = 0.01, 0.02, 0.03, 0.05` (predicted = measured to the interpolation precision).
+- **The energy budget hands over.** Matter dilutes as `a^{−3}` while the capacity vacuum stays constant, so the universe passes matter → dark-energy dominated (equality at `a_eq`, acceleration following at `a_acc`) — the standard cosmic energy-budget handoff, here a consequence of the field.
+
+**This closes the cosmological loop.** The same capacity field `κ` is now *gravity* (its free energy), *matter* (stable forms of distinction), **and** *dark energy* (its self-maintenance). A cosmos — matter, gravity, expansion, and its late-time acceleration — out of one field.
+
+Reproduce with `python experiments/n3_self_contained_cosmos.py` (≈ 20 seconds; background integration only). `--quick` for a smaller scan.
+
+**Honest scope:** a Newtonian `8πG/3 = 1` Friedmann closure. The dark-energy density is genuinely *derived* from the recovery term (not dialled), but the identification `ρ_Λ = coeff·r·κ₀²` carries a modelling coefficient, the matter dilution law `a^{−dim}` is imposed, and there is still no metric, horizon, or relativistic stress-energy tensor. It establishes the *mechanism* — capacity self-maintenance as an emergent cosmological constant — not a first-principles ΛCDM.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
