@@ -76,7 +76,7 @@ Docs/
   The_Generative_Gap.md      Capstone: the distinction–integration gap, and the ordinal→functor→instanton bridge
   The_Measured_Bridge.md     Closing synthesis: ordinals→functors→instantons as one chain, κ≈0.22 in the 4-D vacuum
   Capacity_As_Gravity.md     κ as the framework's gravity: a universal, mass-sourced, √(D/r)-screened attraction
-tests/                 468 checks across the engine, instruments, and physics
+tests/                 478 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -150,6 +150,7 @@ experiments/
   n3_su3_gradient_flow.py   4-D SU(3) gradient flow (Stage 2): t₀ scale, Q→integer, self-dual fraction vs κ
   n3_su3_continuum.py       4-D SU(3) continuum trend: f_SD(t₀) volume-converged but cutoff-dependent
   n3_kappa_gravity.py       Capacity as gravity: κ mediates a √(D/r)-screened, mass-sourced attraction
+  n3_stable_forms.py        The corpus of stable forms: discrete mass spectrum, m_inertial = m_gravitational
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -759,6 +760,21 @@ So κ is not just a coupling constant whose number we chase — it is, structura
 Reproduce with `python experiments/n3_kappa_gravity.py` (≈ 4 minutes; `--quick` for a smoke run).
 
 **Honest scope:** a classical, static, scalar mediation — κ is the binding *coupling*, not the metric tensor of general relativity, and the screened `√(D/r)` range is a genuine difference from Newtonian `1/r²` (κ-gravity is a *massive*-graviton analogue). Rigid load "masses" stand in for self-consistent structure; the measured range carries a small (~2%) lattice/finite-width offset absorbed into the constant α. What is established is the gravitational *role* — a universal attraction whose strength is κ and whose range is the recovery length — not an identification with GR.
+
+### The spectrum of stable forms: mass is stable structure made manifest
+
+Where the last section asked what κ *does* to masses, this asks what a *mass* is. The framework's answer: a particle is a **stable structure made manifest** — a localized configuration the dynamics cannot smoothly undo — and in the CP² sector field that is a **topological soliton** of integer charge `Q ∈ π₂(CP²) = ℤ`. `project_genesis/stable_forms.py` + `experiments/n3_stable_forms.py` build that corpus and weigh each form two ways.
+
+- **A discrete corpus.** The admissible forms carry integer charge (Q = +1, +2, +3, +4) and their structural (inertial) masses — CP-action energies — lie on a **discrete ladder** `E = 6.84, 12.47, 18.68, 24.90`, rising by a near-constant 6.0 per unit charge: the Bogomolny spectrum `E ∝ |Q|`. Matter comes in quanta because topology does.
+- **They are stable.** Under cooling a charge-Q form **holds its charge** (Q = 3 stays +3.0 → +3.0) and settles to an **energy floor** it cannot decay below (18.7 → 18.7), while a topologically trivial bump relaxes toward the vacuum (1.55 → 0.93). Only the protected forms persist — they are the *stable* forms.
+- **Structural mass = gravitational mass.** Feeding each form's distinction density `d(x) = Σ_μ(1 − |ψ̄·ψ'|²)` into the capacity-gravity dynamics, the κ-well it sources — its **gravitational mass** — is **proportional to its structural mass** across the whole spectrum: `M_grav = 3.67·E, R² = 1.000`. The equivalence principle, *emergent*: inertial and gravitational mass coincide because both are the same underlying quantity — the form's distinction content. The framework **explains** `m_inertial = m_gravitational` rather than imposing it.
+- **A measured nonlinearity.** At strong capacity coupling the κ-well **saturates** (bottoms out at 0), and gravitational mass grows *sub-linearly* — the strong/weak ratio falls 8.40 → 7.22 from lightest to heaviest form. So `M_grav` is a genuine field response, not a relabelling of the energy: the equivalence holds in the weak-well regime and bends where capacity runs out.
+
+This closes a loop the whole program has been circling: the generative gap drives structure → where capacity permits it crystallizes into **stable, discrete forms** (matter) → those forms *are* concentrations of distinction (**mass**) → and that same distinction sources **κ-gravity**, with gravitational mass equal to inertial mass. Stable structure, made manifest, that gravitates in proportion to itself.
+
+Reproduce with `python experiments/n3_stable_forms.py` (≈ 3 minutes; `--quick` for a smoke run).
+
+**Honest scope:** 2-D CP² solitons on a periodic lattice, masses in lattice-action units; the constructed forms are lightly cooled to a common smoothness (the raw `w^Q` winding profile is Q-dependent), and the equivalence is measured in the weak-well regime. The structural=gravitational proportionality is *explained* by the shared distinction root, not an independent coincidence — but that shared root is precisely the framework's account of why the two masses are equal. This is the structural claim (matter as stable topological forms with `m_i = m_g`), not a derivation of the Standard-Model spectrum.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
