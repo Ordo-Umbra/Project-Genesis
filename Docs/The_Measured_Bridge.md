@@ -190,4 +190,7 @@ be pushed. The bridge, as far as an honest measurement takes it, is measured.
 
 *See `The_Generative_Gap.md` for the full `S = ΔC + κ·ΔI` program the three
 links sit inside, and `Thermal_Sector_Program.md` for the individual
-experiment records.*
+experiment records.  This is **Act I** of the program — the generative gap and
+its instanton number `κ ≈ 0.22`.  **Act II** takes the same capacity field `κ`
+and shows that, because it carries a free energy, it is **gravity** — driving
+matter, structure, and an expanding universe: see `The_Emergent_Cosmos.md`.*

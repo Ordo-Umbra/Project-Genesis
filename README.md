@@ -76,6 +76,7 @@ Docs/
   The_Generative_Gap.md      Capstone: the distinction–integration gap, and the ordinal→functor→instanton bridge
   The_Measured_Bridge.md     Closing synthesis: ordinals→functors→instantons as one chain, κ≈0.22 in the 4-D vacuum
   Capacity_As_Gravity.md     κ as the framework's gravity: a universal, mass-sourced, √(D/r)-screened attraction
+  The_Emergent_Cosmos.md     Capstone (Act II): κ→gravity→matter→structure→cosmos, with toolkit map and frontiers
 tests/                 504 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
