@@ -2,9 +2,10 @@
 
 ### κ as the framework's universal, mass-sourced binding field
 
-*A short synthesis of the claim that the URP capacity field κ plays the role
-of gravity — and the measurement (`capacity_gravity.py`,
-`n3_kappa_gravity.py`) that puts numbers under it.*
+*The running derivation of the claim that the URP capacity field κ plays the
+role of gravity — built up experiment by experiment.  For the designed
+capstone of the whole arc (thesis, toolkit map, boundaries, and open
+frontiers), see **`The_Emergent_Cosmos.md`**.*
 
 ---
 
@@ -90,8 +91,6 @@ back-reacting on structure, whose strength is κ and whose range is the
 capacity recovery length. In the general sense — the thing that binds,
 weakly and universally, wherever there is mass — κ *is* the framework's
 gravity.
-
----
 
 ---
 
