@@ -195,6 +195,32 @@ field, no FLRW metric or dark energy), so it captures the competition and the
 critical rate, not a quantitative cosmology — but the essential ingredient of
 a universe that grows structure is there.
 
+### An evolving universe: scale factor, Hubble drag, dark energy
+
+The final rung (`n3_expanding_universe.py`, `friedmann_rates`,
+`evolve_cosmological`) replaces the coasting background with a genuine,
+evolving **scale factor** ``a(t)`` obeying a Friedmann-like law
+``(ȧ/a)² = H₀²[Ω_m a^{−p} + Ω_Λ]`` — matter plus a dark-energy component.
+Three FLRW mechanisms then appear:
+
+- **Expansion histories** — ``a(t)`` decelerates under matter and accelerates
+  under Λ (the two fates of a universe).
+- **Hubble drag** — a peculiar velocity redshifts as ``1/a`` (``a·|v_pec|``
+  constant to fractions of a percent): momentum redshift, which the coasting
+  model could not produce.
+- **Dark-energy freeze-out** — the *same* cloud collapses into one bound halo
+  in a matter universe but is progressively suppressed as ``Ω_Λ`` rises and
+  the expansion accelerates (largest bound fraction falling to ~40% at pure de
+  Sitter). A faster-expanding, dark-energy universe assembles less — the
+  defining signature of Λ in structure growth.
+
+It is a Newtonian FLRW-*analogue* (the Friedmann law is imposed, not derived
+from the κ-field's stress-energy; no metric or horizon), so it reproduces the
+mechanisms, not a quantitative ΛCDM.  But with it the arc reaches its
+cosmological end: from the generative gap, through matter and gravity, to
+structure that assembles itself in an expanding universe — and freezes out
+when that expansion runs away.
+
 ---
 
 *See `The_Generative_Gap.md` for the `S = ΔC + κ·ΔI` program κ lives in, and

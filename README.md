@@ -76,7 +76,7 @@ Docs/
   The_Generative_Gap.md      Capstone: the distinction–integration gap, and the ordinal→functor→instanton bridge
   The_Measured_Bridge.md     Closing synthesis: ordinals→functors→instantons as one chain, κ≈0.22 in the 4-D vacuum
   Capacity_As_Gravity.md     κ as the framework's gravity: a universal, mass-sourced, √(D/r)-screened attraction
-tests/                 498 checks across the engine, instruments, and physics
+tests/                 504 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -154,6 +154,7 @@ experiments/
   n3_self_gravity.py        Self-gravitating forms: two-body infall + N-body accretion under κ-gravity
   n3_orbital_gravity.py     Inertial κ-gravity: Kepler-like orbits, conserved energy, precession, virialization
   n3_cosmic_structure.py    κ-gravity vs Hubble expansion: turnaround, and structure suppressed by expansion
+  n3_expanding_universe.py  FLRW background: scale factor a(t), Hubble drag, dark-energy freeze-out of structure
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -819,7 +820,21 @@ So κ-gravity builds structure against expansion up to a threshold and loses bey
 
 Reproduce with `python experiments/n3_cosmic_structure.py` (≈ 6 minutes; `--quick` for a smoke run).
 
-**Honest scope:** a **Newtonian, coasting-background** model — the expansion enters as the initial Hubble peculiar-velocity field and gravity is the screened κ-force; there is **no FLRW metric, no dark-energy term, no relativistic horizon**, and the "background" is carried by initial velocities rather than an evolving scale factor with its own Friedmann equation. It captures the essential competition (self-gravity vs expansion, turnaround, suppression of structure by expansion), not a quantitative cosmology.
+**Honest scope:** a **Newtonian, coasting-background** model — the expansion enters as the initial Hubble peculiar-velocity field and gravity is the screened κ-force; there is **no FLRW metric, no dark-energy term, no relativistic horizon**, and the "background" is carried by initial velocities rather than an evolving scale factor with its own Friedmann equation. It captures the essential competition (self-gravity vs expansion, turnaround, suppression of structure by expansion), not a quantitative cosmology. *(The FLRW version below adds the evolving scale factor and dark energy.)*
+
+### An expanding universe: FLRW scale factor, Hubble drag, and dark energy
+
+The coasting model carried the expansion in the initial velocities only. Here the background is a genuine, **evolving scale factor** `a(t)` obeying a Friedmann-like law with a matter component and a cosmological-constant / dark-energy component, `(ȧ/a)² = H₀²[Ω_m a^{−p} + Ω_Λ]`. Masses feel the peculiar κ-force plus the background `(ä/a)(r − c)` and start in the Hubble flow. `project_genesis/capacity_dynamics.py` (`friedmann_rates`, `evolve_cosmological`) + `experiments/n3_expanding_universe.py`.
+
+- **Expansion histories.** `a(t)` **decelerates** when matter dominates and **accelerates** when Λ dominates — over the run `a` grows to 3.0, 5.6, 7.8, 10.4, 15.1 as Ω_Λ = 0 → 1, the qualitatively different fates of a matter vs a dark-energy universe.
+- **Hubble drag.** A peculiar velocity **redshifts as 1/a** — the product `a·|v_pec|` holds constant to **0.2%** across the expansion. This momentum-redshift is the genuinely new FLRW effect the coasting model could not show.
+- **Dark energy suppresses structure.** The *same* initial cloud collapses into a single bound halo in a matter universe (**100%** of the mass in one group at Ω_Λ = 0) but is progressively **frozen out** as the expansion accelerates — largest bound fraction **100% → 92% → 92% → 92% → 42%** across Ω_Λ = 0, 0.3, 0.5, 0.7, 1.0, with a sharp freeze-out at pure de Sitter. A faster-expanding, dark-energy universe assembles less structure — the defining signature of Λ in growth.
+
+So the **gap → matter → gravity → structure** chain now runs in a genuine FLRW-like background: an evolving scale factor, momentum redshift, and the dark-energy freeze-out of structure growth. The mechanisms of cosmology are present.
+
+Reproduce with `python experiments/n3_expanding_universe.py` (≈ 10 minutes; `--quick` for a smoke run).
+
+**Honest scope:** a **Newtonian FLRW-analogue** — a real evolving scale factor and genuine Hubble drag, but the Friedmann law is **imposed** (`p = 3` matter dilution applied to the 2-D screened dynamics), not derived from the κ-field's own stress-energy, and there is no metric, horizon, or relativistic growth factor. It reproduces the *mechanisms* — Hubble drag and the dark-energy suppression of growth — not a quantitative ΛCDM. The κ screening length is a fixed physical scale (it does not itself redshift with the background).
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
