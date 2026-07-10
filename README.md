@@ -76,7 +76,7 @@ Docs/
   The_Generative_Gap.md      Capstone: the distinction–integration gap, and the ordinal→functor→instanton bridge
   The_Measured_Bridge.md     Closing synthesis: ordinals→functors→instantons as one chain, κ≈0.22 in the 4-D vacuum
   Capacity_As_Gravity.md     κ as the framework's gravity: a universal, mass-sourced, √(D/r)-screened attraction
-tests/                 478 checks across the engine, instruments, and physics
+tests/                 485 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -151,6 +151,7 @@ experiments/
   n3_su3_continuum.py       4-D SU(3) continuum trend: f_SD(t₀) volume-converged but cutoff-dependent
   n3_kappa_gravity.py       Capacity as gravity: κ mediates a √(D/r)-screened, mass-sourced attraction
   n3_stable_forms.py        The corpus of stable forms: discrete mass spectrum, m_inertial = m_gravitational
+  n3_self_gravity.py        Self-gravitating forms: two-body infall + N-body accretion under κ-gravity
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -775,6 +776,20 @@ This closes a loop the whole program has been circling: the generative gap drive
 Reproduce with `python experiments/n3_stable_forms.py` (≈ 3 minutes; `--quick` for a smoke run).
 
 **Honest scope:** 2-D CP² solitons on a periodic lattice, masses in lattice-action units; the constructed forms are lightly cooled to a common smoothness (the raw `w^Q` winding profile is Q-dependent), and the equivalence is measured in the weak-well regime. The structural=gravitational proportionality is *explained* by the shared distinction root, not an independent coincidence — but that shared root is precisely the framework's account of why the two masses are equal. This is the structural claim (matter as stable topological forms with `m_i = m_g`), not a derivation of the Standard-Model spectrum.
+
+### Self-gravitating forms: infall and accretion
+
+The masses of the last two sections were pinned. Unpin them — let each move in the κ-field they mutually source — and the framework grows its own bound structure. `project_genesis/capacity_dynamics.py` + `experiments/n3_self_gravity.py` run the adiabatic (Born–Oppenheimer) dynamics: κ relaxes to steady state for the instantaneous mass positions, and each mass drifts down the gradient of the capacity free energy. By the envelope theorem (at the relaxed κ, `δF/δκ = 0`) the force is the direct coupling gradient, `F_i = −c·Σ_x load_i·κ·∇κ` — each mass feeling the κ-gradient of the well the ensemble digs — integrated overdamped, `dR_i/dt = μ·F_i`.
+
+- **Infall.** Two masses fall together and merge (separation 14 → contact in ~19 steps), and the fall **accelerates** — the closing rate grows from 0.49 to 0.68 per step as the screened force steepens near contact. Exactly as gravity should.
+- **It is gravity, not drift.** With the capacity coupling switched off (`c = 0`) the same pair sources no κ-well and **stays put** (separation 14 → 14). The infall is the field, not a numerical bias.
+- **Accretion.** Nine masses scattered at random, left to their own κ-gravity, **clump** — pairs merge, clumps merge, the count of bound objects falls monotonically to a **single bound object** (mass 9) while the total mass is exactly conserved. Structure forming out of the capacity field, from first principles.
+
+This is the dynamical capstone of the gravity thread: the generative gap builds distinction → capacity crystallizes it into stable, discrete **forms** (matter, with `m_i = m_g`) → and those forms, moving in the κ-field they source, **fall together and accrete into bound structure**. Gap → matter → gravity → structure, each step measured.
+
+Reproduce with `python experiments/n3_self_gravity.py` (≈ 3 minutes; `--quick` for a smoke run).
+
+**Honest scope:** overdamped adiabatic dynamics — κ relaxed each step, rigid Gaussian masses (standing in for the stable forms, whose `m_g = m_i` was established separately) moved down the energy gradient — a *screened* force on a periodic lattice. It demonstrates the emergence of bound structure under κ-gravity; it is not a cosmological N-body simulation (no inertia/orbits — the regime is dissipative, so masses fall rather than orbit — and no expanding background).
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 

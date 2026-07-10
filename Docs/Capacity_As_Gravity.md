@@ -122,6 +122,30 @@ structure; where capacity permits it sets into stable, discrete **forms**
 **κ-gravity**, pulling the forms together with a strength equal to their own
 mass.
 
+## Structure that grows itself
+
+The forms above were held still.  Released — allowed to move in the κ-field
+they mutually source — they complete the loop dynamically
+(`capacity_dynamics.py`, `n3_self_gravity.py`).  In the adiabatic
+(Born–Oppenheimer) regime κ relaxes to steady state for the instantaneous
+positions and each mass drifts down the resulting energy gradient; by the
+envelope theorem the force is the direct coupling term
+``F_i = −c·Σ_x load_i·κ·∇κ``, integrated overdamped ``dR_i/dt = μ·F_i``.
+
+- **Two masses fall together and merge**, the fall *accelerating* as the
+  screened force steepens — and with the coupling off (``c = 0``) they stay
+  put, so the infall is the field, not drift.
+- **Many masses accrete**: a random scatter clumps, pairs then clumps merging,
+  the count of bound objects falling to one while total mass is conserved —
+  bound structure forming out of the capacity field from first principles.
+
+So the whole arc is dynamical, not just static: the generative gap makes
+distinction; capacity crystallises it into stable, discrete forms (matter,
+with ``m_i = m_g``); and those forms, gravitating through the very field whose
+depletion is gravity, **fall together and grow into structure**.  The universe
+the framework describes does not merely *contain* mass and gravity — it
+*assembles* itself out of them.
+
 ---
 
 *See `The_Generative_Gap.md` for the `S = ΔC + κ·ΔI` program κ lives in, and
