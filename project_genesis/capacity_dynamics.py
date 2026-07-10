@@ -28,7 +28,11 @@ from __future__ import annotations
 
 import numpy as np
 
-from .capacity_gravity import gaussian_load, relax_capacity
+from .capacity_gravity import (
+    capacity_free_energy,
+    gaussian_load,
+    relax_capacity,
+)
 
 # capacity-field relaxation params forwarded to relax_capacity. NB: the
 # relaxation's own internal step is left at relax_capacity's default — it is
@@ -126,3 +130,77 @@ def _mean_separation(positions):
     d = [np.linalg.norm(positions[i] - positions[j])
          for i in range(len(positions)) for j in range(i + 1, len(positions))]
     return float(np.mean(d))
+
+
+# --------------------------------------------------------------------------
+# Inertial dynamics: give the forms momentum, so they orbit and virialise
+# --------------------------------------------------------------------------
+#
+# The overdamped ``evolve`` makes masses *fall* (dissipative, first order).
+# Give them inertia — ``M·d²R/dt² = F`` — and they *orbit*: the same envelope
+# κ-force now competes with angular momentum.  Because the mediator is
+# screened, the potential is Yukawa rather than 1/r, so bound orbits do not
+# close — they **precess** (a massive-graviton signature).  A symplectic
+# velocity-Verlet integrator conserves the total energy ``T + F[κ]`` (with κ
+# relaxed each step); a small velocity damping lets an N-body cloud shed
+# energy and **virialise** into a bound cluster.
+
+
+def _force_and_energy(positions, masses, shape, width, field_kw):
+    """Envelope force on each mass, the relaxed κ, and the potential energy F[κ]."""
+    c = field_kw.get("kappa_consumption", 0.2)
+    loads, kappa = _relax(positions, masses, shape, width, field_kw)
+    grad = [0.5 * (np.roll(kappa, -1, ax) - np.roll(kappa, 1, ax))
+            for ax in range(kappa.ndim)]
+    forces = np.array([[-c * float(np.sum(li * kappa * g)) for g in grad]
+                       for li in loads])
+    total = np.sum(loads, axis=0) if loads else np.zeros(shape)
+    ekw = {k: v for k, v in field_kw.items()
+           if k in ("kappa_diffusion", "kappa_recovery", "kappa_consumption",
+                    "kappa_baseline")}
+    return forces, kappa, capacity_free_energy(kappa, total, **ekw)
+
+
+def evolve_inertial(positions, velocities, masses, *, shape, width=2.5,
+                    dt=0.5, steps=140, damping=0.0, escape_radius=None,
+                    **field_kw):
+    """Symplectic (velocity-Verlet) inertial evolution under κ-gravity.
+
+    ``M·d²R/dt² = F`` with the envelope κ-force, integrated by velocity
+    Verlet so the total energy ``T + F[κ]`` is conserved when ``damping = 0``.
+    A nonzero ``damping`` multiplies velocities by ``(1 − damping)`` each step
+    (dissipation → virialisation).  Returns per-step positions, velocities,
+    kinetic / potential / total energy, mean separation, and the Clausius
+    virial ``W = Σ_i (R_i − R_cm)·F_i`` (so ``2⟨T⟩ + ⟨W⟩ → 0`` at equilibrium).
+    """
+    pos = np.asarray(positions, dtype=float).copy()
+    vel = np.asarray(velocities, dtype=float).copy()
+    m = np.asarray(masses, dtype=float)
+    forces, kappa, pe = _force_and_energy(pos, m, shape, width, field_kw)
+    hist = {k: [] for k in ("positions", "velocities", "kinetic", "potential",
+                            "energy", "separation", "virial")}
+    for _ in range(steps):
+        ke = 0.5 * float(np.sum(m[:, None] * vel ** 2))
+        com = np.average(pos, axis=0, weights=m)
+        virial = float(np.sum([(pos[i] - com) @ forces[i] for i in range(len(m))]))
+        hist["positions"].append(pos.copy())
+        hist["velocities"].append(vel.copy())
+        hist["kinetic"].append(ke)
+        hist["potential"].append(float(pe))
+        hist["energy"].append(ke + float(pe))
+        hist["separation"].append(_mean_separation(list(pos)))
+        hist["virial"].append(virial)
+
+        acc = forces / m[:, None]
+        vel_half = vel + 0.5 * acc * dt
+        pos = pos + vel_half * dt
+        forces, kappa, pe = _force_and_energy(pos, m, shape, width, field_kw)
+        acc = forces / m[:, None]
+        vel = vel_half + 0.5 * acc * dt
+        if damping:
+            vel *= (1.0 - damping)
+        if escape_radius is not None and _mean_separation(list(pos)) > escape_radius:
+            break
+    hist["kappa"] = kappa
+    hist["final_positions"] = pos.copy()
+    return hist

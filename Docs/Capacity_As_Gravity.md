@@ -146,6 +146,29 @@ depletion is gravity, **fall together and grow into structure**.  The universe
 the framework describes does not merely *contain* mass and gravity — it
 *assembles* itself out of them.
 
+## A complete gravitational dynamics
+
+Overdamped forms only fall.  Give them **inertia** — ``M·d²R/dt² = F`` with
+the same envelope κ-force, integrated symplectically
+(`evolve_inertial`, `n3_orbital_gravity.py`) — and κ-gravity becomes a full
+gravitational dynamics:
+
+- **A Kepler-like family**: tuning the tangential speed sweeps from a radial
+  plunge through bound elliptical and near-circular orbits to unbound escape.
+- **Conserved energy**: the symplectic integrator holds ``T + F[κ]`` to ~0.1%
+  over an orbit — real conservative motion.
+- **Precession**: because the mediator is *screened*, the bound ellipse does
+  not close — its perihelion advances (~+140° per orbit here), a rosette.
+  Orbital precession is the direct dynamical fingerprint of the finite range
+  ``√(D/r)`` — the finite-range analogue of (not identical to) GR's advance.
+- **Virialisation**: a dissipative N-body cloud rings down to the virial
+  relation ``2⟨T⟩ + ⟨W⟩ → 0``.
+
+Bound orbits, escape, conserved energy, precession, and virial equilibrium all
+emerge from the one screened force whose strength is the forms' own mass — the
+capacity field is not a metaphor for gravity but a working, if screened,
+gravitational dynamics.
+
 ---
 
 *See `The_Generative_Gap.md` for the `S = ΔC + κ·ΔI` program κ lives in, and

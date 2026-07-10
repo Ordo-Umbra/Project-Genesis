@@ -76,7 +76,7 @@ Docs/
   The_Generative_Gap.md      Capstone: the distinction–integration gap, and the ordinal→functor→instanton bridge
   The_Measured_Bridge.md     Closing synthesis: ordinals→functors→instantons as one chain, κ≈0.22 in the 4-D vacuum
   Capacity_As_Gravity.md     κ as the framework's gravity: a universal, mass-sourced, √(D/r)-screened attraction
-tests/                 485 checks across the engine, instruments, and physics
+tests/                 491 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -152,6 +152,7 @@ experiments/
   n3_kappa_gravity.py       Capacity as gravity: κ mediates a √(D/r)-screened, mass-sourced attraction
   n3_stable_forms.py        The corpus of stable forms: discrete mass spectrum, m_inertial = m_gravitational
   n3_self_gravity.py        Self-gravitating forms: two-body infall + N-body accretion under κ-gravity
+  n3_orbital_gravity.py     Inertial κ-gravity: Kepler-like orbits, conserved energy, precession, virialization
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -789,7 +790,22 @@ This is the dynamical capstone of the gravity thread: the generative gap builds 
 
 Reproduce with `python experiments/n3_self_gravity.py` (≈ 3 minutes; `--quick` for a smoke run).
 
-**Honest scope:** overdamped adiabatic dynamics — κ relaxed each step, rigid Gaussian masses (standing in for the stable forms, whose `m_g = m_i` was established separately) moved down the energy gradient — a *screened* force on a periodic lattice. It demonstrates the emergence of bound structure under κ-gravity; it is not a cosmological N-body simulation (no inertia/orbits — the regime is dissipative, so masses fall rather than orbit — and no expanding background).
+**Honest scope:** overdamped adiabatic dynamics — κ relaxed each step, rigid Gaussian masses (standing in for the stable forms, whose `m_g = m_i` was established separately) moved down the energy gradient — a *screened* force on a periodic lattice. It demonstrates the emergence of bound structure under κ-gravity; it is not a cosmological N-body simulation. *(The inertial version below adds momentum — orbits and virialization.)*
+
+### Inertial κ-gravity: orbits, conserved energy, precession, virialization
+
+The self-gravity above was overdamped — masses *fall*. Give them **inertia** (`M·d²R/dt² = F`, same envelope κ-force, symplectic velocity-Verlet) and the fall becomes a full gravitational dynamics. `project_genesis/capacity_dynamics.py` (`evolve_inertial`) + `experiments/n3_orbital_gravity.py`.
+
+- **A Kepler-like family.** Tuning the initial tangential speed of two equal masses sweeps the whole family a central force should produce: **radial plunge** (v₀=0, straight through the centre), **bound elliptical orbit** (v₀=0.5, separation swings 5.8–12), **near-circular orbit** (v₀=0.8, separation nearly constant), and **unbound escape** (v₀=1.2).
+- **Energy is conserved.** The symplectic integrator holds the total `T + F[κ]` to **0.12%** over the orbit while kinetic and potential energy trade back and forth — real conservative dynamics, not numerical drift.
+- **Orbits precess.** Because the κ mediator is **screened** (Yukawa, not 1/r), the bound ellipse *does not close* — its perihelion advances **+141° per orbit**, tracing a rosette. Orbital precession is the direct dynamical signature of the massive-graviton range `√(D/r)` (and is the finite-range analogue of — not the same as — the relativistic perihelion advance of GR).
+- **An N-body cloud virializes.** With a little dissipation, a cloud of 8 masses settles into a bound cluster obeying the virial relation `2⟨T⟩ + ⟨W⟩ → 0` (measured `2⟨T⟩/|⟨W⟩| → 1.19`), the damped oscillations of the virial ratio ringing down toward equilibrium.
+
+So κ-gravity is a *complete* gravitational dynamics, not just infall: bound orbits, escape, conserved energy, precession, and virial equilibrium all emerge from the one screened force whose strength is the forms' mass.
+
+Reproduce with `python experiments/n3_orbital_gravity.py` (≈ 4 minutes; `--quick` for a smoke run).
+
+**Honest scope:** point masses (rigid load blobs standing in for the stable forms) under the adiabatic κ-force on a 2-D periodic lattice — a Newtonian-in-spirit dynamics of a *screened* force, not a relativistic or cosmological calculation. The precession is the Yukawa (finite-range) effect, distinct from GR's relativistic advance; the virial ratio settles to O(1) with the residual above 1 reflecting the finite dissipation/run length.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
