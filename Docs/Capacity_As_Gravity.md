@@ -93,5 +93,37 @@ gravity.
 
 ---
 
+---
+
+## What gravitates: the stable forms
+
+The masses above were rigid, imposed blobs. The companion experiment
+(`stable_forms.py`, `n3_stable_forms.py`) asks what a mass actually *is* in
+the framework and lets the answer source the κ-well itself. A particle is a
+**topological soliton** of the CP² sector field — a winding of integer charge
+`Q`, a *stable structure made manifest*. Three results tie it back to gravity:
+
+- The admissible forms make a **discrete corpus**: integer Q, with structural
+  (inertial) masses on a Bogomolny ladder `E ∝ |Q|`. Matter is quantised
+  because topology is.
+- They are **stable**: a charge-Q form preserves Q and holds an energy floor;
+  a topologically trivial bump decays to the vacuum.
+- Their **gravitational mass equals their structural mass**: each form's
+  distinction density, fed into the κ dynamics above, sources a well with
+  `M_grav ∝ E` (R² = 1.000). Inertial and gravitational mass coincide because
+  both are the form's distinction content — the equivalence principle,
+  *explained* by the shared root rather than imposed. (At strong coupling the
+  well saturates and `M_grav` bends sub-linear — a real field response, so the
+  gravitational mass is not merely a relabelling of the energy.)
+
+Together the two experiments close the loop: the generative gap builds
+structure; where capacity permits it sets into stable, discrete **forms**
+(matter = mass = concentrated distinction); and that same distinction sources
+**κ-gravity**, pulling the forms together with a strength equal to their own
+mass.
+
+---
+
 *See `The_Generative_Gap.md` for the `S = ΔC + κ·ΔI` program κ lives in, and
-the README "Capacity as gravity" section for the figure and reproduction.*
+the README "Capacity as gravity" / "spectrum of stable forms" sections for the
+figures and reproduction.*
