@@ -157,6 +157,30 @@ Friedmann-like law `(ȧ/a)² = H₀²[Ω_m a^{−p} + Ω_Λ]`:
   92% → 42%`), sharply at pure de Sitter — the defining signature of Λ in
   structure growth.
 
+### Link 7 — the loop closes: the κ-field drives its own expansion
+*`capacity_dynamics.py` (`capacity_vacuum_density`, `deceleration_parameter`, `acceleration_onset`, `integrate_scale_factor`) · `n3_self_contained_cosmos.py`*
+
+Link 6 still *dialled* Ω_Λ.  But the capacity field supplies the dark energy
+itself: the recovery term `r·(κ₀ − κ)` heals the field back to baseline — an
+energy spent **maintaining itself** that does not dilute as space expands,
+exactly a cosmological constant.  So `ρ_Λ = coeff·r·κ₀²` is a *property of the
+field*, and with matter diluting as `ρ_m0 a^{−dim}` the Friedmann equation
+`H² = ρ_m + ρ_Λ` makes the history a **prediction**:
+- **Emergent decel→accel.**  `a(t)` decelerates under matter, then turns over
+  into Λ-dominated acceleration (`q` crosses zero and runs to the de Sitter
+  limit `q → −1`).
+- **Dark energy = self-maintenance.**  The acceleration onset
+  `a_acc = (ρ_m0/2ρ_Λ)^{1/dim}` is *derived*; more recovery `r` (more
+  self-maintenance) brings acceleration earlier (`a_acc = 1.71, 1.36, 1.19,
+  1.00` at `r = 0.01, 0.02, 0.03, 0.05`, predicted = measured).
+- **Energy-budget handoff.**  Matter dilutes while the capacity vacuum stays
+  constant → the universe passes matter- to Λ-dominated, acceleration
+  following.
+
+The same `κ` is now **gravity** (its free energy), **matter** (stable forms),
+*and* **dark energy** (its self-maintenance).  The cosmological loop is closed:
+a cosmos out of one field.
+
 ---
 
 ## 4. The toolkit
@@ -170,7 +194,7 @@ For building on the arc, the modules and experiments that make it up:
 | `topological_charge.py` | CP² geometric (Berg–Lüscher) charge, cooling, action |
 | `capacity_gravity.py` | `screening_length`, `gaussian_load`, `relax_capacity`, `capacity_free_energy`, `interaction_potential`, `fit_yukawa_range`, `well_range` |
 | `stable_forms.py` | `winding_form`, `trivial_bump`, `distinction_density`, `structural_mass`, `gravitational_mass`, `form_charge` |
-| `capacity_dynamics.py` | `capacity_force`, `evolve` (overdamped), `evolve_inertial`, `hubble_flow`, `fof_groups`, `friedmann_rates`, `evolve_cosmological` |
+| `capacity_dynamics.py` | `capacity_force`, `evolve` (overdamped), `evolve_inertial`, `hubble_flow`, `fof_groups`, `friedmann_rates`, `evolve_cosmological`, `capacity_vacuum_density`, `deceleration_parameter`, `acceleration_onset`, `integrate_scale_factor` |
 
 **Experiments** (`experiments/`) — each writes a figure + verdict to `artifacts/`
 | file | the link |
@@ -181,6 +205,7 @@ For building on the arc, the modules and experiments that make it up:
 | `n3_orbital_gravity.py` | orbits, energy, precession, virial |
 | `n3_cosmic_structure.py` | turnaround, structure vs expansion |
 | `n3_expanding_universe.py` | FLRW: scale factor, Hubble drag, dark energy |
+| `n3_self_contained_cosmos.py` | the closed loop: dark energy from κ's self-maintenance drives the expansion |
 
 **Tests**: `test_capacity_gravity.py`, `test_stable_forms.py`,
 `test_capacity_dynamics.py`, `test_capacity_inertial.py`,
@@ -201,10 +226,12 @@ The arc is real and its boundaries are bright.  What it is **not**:
   step (Born–Oppenheimer), and the dynamics runs in 2-D lattice units; masses
   are rigid Gaussian blobs standing in for the stable forms (whose `m_g = m_i`
   is established separately).
-- **The Friedmann law is imposed, not derived.** The background `a(t)` follows a
-  chosen matter+Λ law (`p = 3` dilution applied to the 2-D screened dynamics) —
-  it is not obtained from the κ-field's own stress-energy.  The κ screening
-  length is a fixed physical scale (it does not redshift with the background).
+- **The Friedmann closure is partial.** The **dark-energy density is now
+  derived** — it is the capacity field's self-maintenance, `ρ_Λ = coeff·r·κ₀²`
+  (Link 7) — but the *matter* dilution law `a^{−dim}` is still imposed, the
+  identification carries a modelling coefficient, and there is no metric or
+  relativistic stress-energy tensor.  The κ screening length is a fixed
+  physical scale (it does not redshift with the background).
 
 The arc reproduces the **mechanisms** — a screened universal attraction, an
 emergent equivalence principle, orbits and precession, spherical collapse, and
@@ -214,13 +241,15 @@ the dark-energy suppression of growth — not a quantitative ΛCDM.
 
 ## 6. Open frontiers
 
-Ranked by how much they would deepen the arc:
+Ranked by how much they would deepen the arc.  *(Frontier 1 — closing the
+cosmological loop — is now partly done: Link 7 derives the dark energy from
+the κ-field's self-maintenance.  What remains is to derive the **matter**
+sector's dilution and the full stress-energy from the field too.)*
 
-1. **Close the cosmological loop.** Derive the background expansion `a(t)` from
-   the κ-field's *own* stress-energy, so the field that supplies gravity also
-   drives the expansion — one field, not a gravity term plus an imposed
-   Friedmann law.  This is the single step that turns the FLRW-analogue into a
-   self-contained cosmology.
+1. **Complete the stress-energy closure.** Link 7 derives `ρ_Λ` from the
+   capacity recovery; the next step is to derive the *matter* density and its
+   `a^{−dim}` dilution from the stable forms' own energy, so the entire
+   Friedmann source — not just its vacuum piece — comes from the κ-field.
 2. **The unscreened regime.** Is there a limit (`r → 0`, or a different
    coupling) in which κ-gravity becomes genuinely long-range `1/r²`?  The whole
    massive/massless-graviton question lives here.

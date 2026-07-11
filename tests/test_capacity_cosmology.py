@@ -11,9 +11,13 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from project_genesis.capacity_dynamics import (  # noqa: E402
+    acceleration_onset,
+    capacity_vacuum_density,
+    deceleration_parameter,
     evolve_cosmological,
     fof_groups,
     friedmann_rates,
+    integrate_scale_factor,
 )
 
 FK = dict(kappa_diffusion=1.0, kappa_recovery=0.02, kappa_consumption=0.8,
@@ -85,6 +89,45 @@ class TestExpansionDynamics(unittest.TestCase):
             return fof_groups([p for p in h["final_positions"]], 6.0)[0]
 
         self.assertGreaterEqual(largest(0.0), largest(1.0))
+
+
+class TestSelfContainedCosmos(unittest.TestCase):
+
+    def test_vacuum_density_from_recovery(self):
+        # ρ_Λ = coeff · r · κ₀²  — dark energy from the capacity recovery term
+        self.assertAlmostEqual(capacity_vacuum_density(0.02, 1.0, 0.5), 0.01,
+                               places=12)
+        self.assertAlmostEqual(capacity_vacuum_density(0.04, 2.0, 0.5),
+                               0.5 * 0.04 * 4.0, places=12)
+
+    def test_deceleration_sign(self):
+        # matter-dominated (a=1, tiny Λ) decelerates; Λ-dominated accelerates
+        self.assertGreater(deceleration_parameter(1.0, 0.05, 0.001, 3), 0.0)
+        self.assertLess(deceleration_parameter(5.0, 0.05, 0.02, 3), 0.0)
+
+    def test_acceleration_onset_formula_and_q_zero(self):
+        # a_acc = (ρ_m0 / 2ρ_Λ)^(1/dim), and q(a_acc) = 0
+        rho_m0, rho_L, dim = 0.05, 0.01, 3
+        a_acc = acceleration_onset(rho_m0, rho_L, dim)
+        self.assertAlmostEqual(a_acc, (rho_m0 / (2 * rho_L)) ** (1 / dim),
+                               places=9)
+        self.assertAlmostEqual(
+            deceleration_parameter(a_acc, rho_m0, rho_L, dim), 0.0, places=9)
+
+    def test_integrate_scale_factor_transitions_to_acceleration(self):
+        # a grows; q starts positive (matter) and ends negative → -1 (de Sitter)
+        h = integrate_scale_factor(0.05, 0.01, dim=3, dt=0.5, steps=200)
+        a = np.array(h["a"]); q = np.array(h["q"])
+        self.assertGreater(a[-1], a[0])
+        self.assertGreater(q[0], 0.0)
+        self.assertLess(q[-1], 0.0)
+        self.assertAlmostEqual(q[-1], -1.0, delta=0.05)   # Λ-dominated limit
+
+    def test_more_recovery_earlier_acceleration(self):
+        # more self-maintenance (larger r) → more dark energy → smaller a_acc
+        a1 = acceleration_onset(0.05, capacity_vacuum_density(0.01), 3)
+        a2 = acceleration_onset(0.05, capacity_vacuum_density(0.04), 3)
+        self.assertLess(a2, a1)
 
 
 if __name__ == "__main__":
