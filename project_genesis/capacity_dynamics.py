@@ -674,3 +674,104 @@ def integrate_friedmann_action(densities0, eos, *, dt=0.1, steps=700,
         state = state + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
         t += dt
     return hist
+
+
+# --------------------------------------------------------------------------
+# Gravity from the capacity field: the gravitational action as capacity free energy
+# --------------------------------------------------------------------------
+#
+# Link 11 still *posited* the gravitational kinetic term ``−a ȧ²`` (the reduced
+# Einstein–Hilbert form).  It is, exactly, the capacity field's own kinetic free
+# energy.  Identify the scale factor with the exponential of the homogeneous
+# capacity scalar — the zero-mode ``κ_s`` whose global value sets the overall
+# integration scale — ``a = e^{κ_s}`` (so ``κ_s = ln a`` and ``H = κ̇_s``).  Its
+# kinetic free energy on the FLRW volume measure ``a³`` is ``a³ κ̇_s² = a ȧ²``, so
+#
+#     −a ȧ²  =  −a³ κ̇_s²   —   the gravitational kinetic term *is* the capacity
+#                              scalar's kinetic free energy (wrong-sign conformal
+#                              mode).
+#
+# Rewriting the action ``S = ∫dt[−a³ κ̇_s²/N − N a³ ρ]`` in ``κ_s``, the lapse
+# constraint reads ``κ̇_s² = ρ`` — Friedmann as an *energy balance*: the mean
+# capacity's kinetic free-energy density equals the content — and the ``κ_s``
+# Euler–Lagrange (scalar field) equation is
+#
+#     κ̈_s = −(3/2)(κ̇_s² + p) ,
+#
+# the capacity scalar rolling.  So the cosmological expansion is the homogeneous
+# capacity field rolling under its own free energy, and the gravitational action
+# is that free energy — not an independently posited Einstein–Hilbert term.
+
+
+def scale_capacity(a):
+    """The homogeneous capacity scalar ``κ_s = ln a`` (its exp is the scale factor)."""
+    return float(np.log(a))
+
+
+def capacity_kinetic_energy(a, adot):
+    """The capacity scalar's kinetic free energy on the FLRW measure, ``a³ κ̇_s² = a ȧ²``.
+
+    With ``κ_s = ln a`` (so ``κ̇_s = ȧ/a``) this equals ``a ȧ²`` — the quantity
+    whose negative is the minisuperspace gravitational kinetic term ``−a ȧ²``.
+    The gravitational action term is thus *minus* the capacity field's kinetic
+    free energy (the wrong-sign conformal mode).
+    """
+    return float(a ** 3 * (adot / a) ** 2)
+
+
+def capacity_scalar_acceleration(kappa_dot, pressure):
+    """The capacity scalar's field equation ``κ̈_s = −(3/2)(κ̇_s² + p)``.
+
+    The ``κ_s`` Euler–Lagrange equation of the action written in the capacity
+    scalar; on the Friedmann constraint ``κ̇_s² = ρ`` it becomes the familiar
+    ``κ̈_s = −(3/2)(ρ + p)`` (the mean capacity decelerating with the content).
+    """
+    return float(-1.5 * (kappa_dot ** 2 + pressure))
+
+
+def integrate_capacity_scale(densities0, eos, *, dt=0.1, steps=700,
+                             kappadot0=None):
+    """Evolve the cosmology as the capacity scalar ``κ_s = ln a`` rolling.
+
+    Integrates the capacity scalar's field equation ``κ̈_s = −(3/2)(κ̇_s² + p)``
+    with covariant conservation ``ρ̇_i = −3 κ̇_s (ρ_i + p_i)`` (``H = κ̇_s``) — the
+    Friedmann relation is **never** imposed.  With the balance-satisfying initial
+    rate ``κ̇_s(0) = √ρ₀`` (default) the constraint ``κ̇_s² − ρ`` stays ~0; a
+    violating ``kappadot0`` relaxes onto it (``Ċ = −3 κ̇_s C``).  Returns the
+    scale factor ``a = e^{κ_s}`` and the capacity histories.
+    """
+    rho = np.asarray(densities0, dtype=float).copy()
+    w = np.asarray(eos, dtype=float)
+    ks = 0.0
+    kdot = float(np.sqrt(rho.sum())) if kappadot0 is None else float(kappadot0)
+
+    def deriv(state):
+        kdot = state[1]; r = state[2:]
+        p = float((w * r).sum())
+        kddot = -1.5 * (kdot ** 2 + p)                 # capacity scalar EOM
+        drho = -3.0 * kdot * (r + w * r)               # conservation, H = κ̇_s
+        return np.concatenate([[kdot], [kddot], drho])
+
+    state = np.concatenate([[ks], [kdot], rho])
+    t = 0.0
+    hist = {k: [] for k in ("a", "t", "kappa_s", "kappa_dot", "kappa_ddot",
+                            "q", "constraint", "rho_tot")}
+    for _ in range(steps):
+        ks = state[0]; kdot = state[1]; r = state[2:]
+        rho_tot = float(r.sum()); p_tot = float((w * r).sum())
+        kddot = capacity_scalar_acceleration(kdot, p_tot)
+        hist["a"].append(float(np.exp(ks))); hist["t"].append(t)
+        hist["kappa_s"].append(float(ks)); hist["kappa_dot"].append(float(kdot))
+        hist["kappa_ddot"].append(float(kddot))
+        # q = -ä a/ȧ² with ä/a = κ̇_s² + κ̈_s
+        hist["q"].append(float(-(kdot ** 2 + kddot) / kdot ** 2)
+                         if kdot != 0 else float("nan"))
+        hist["constraint"].append(float(kdot ** 2 - rho_tot))
+        hist["rho_tot"].append(rho_tot)
+        k1 = deriv(state)
+        k2 = deriv(state + 0.5 * dt * k1)
+        k3 = deriv(state + 0.5 * dt * k2)
+        k4 = deriv(state + dt * k3)
+        state = state + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+        t += dt
+    return hist

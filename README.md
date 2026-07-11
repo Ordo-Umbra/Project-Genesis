@@ -161,6 +161,7 @@ experiments/
   n3_form_equation_of_state.py  Equation of state of the matter: cold forms are dust (w=0), the capacity vacuum is Λ (w=−1)
   n3_stress_energy_closure.py  Relativistic closure: T^μ_ν from the field, expansion as a consequence of ∇·T=0
   n3_friedmann_from_action.py  Variational closure: Friedmann H²=ρ as the Hamiltonian constraint / a first integral of an action
+  n3_gravity_from_capacity.py  Gravity from the field: −a ȧ² as the capacity scalar's kinetic free energy, expansion as κ_s=ln a rolling
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -915,7 +916,22 @@ The relativistic closure still *put in by hand* the Einstein/Friedmann relations
 
 Reproduce with `python experiments/n3_friedmann_from_action.py` (≈ 5 seconds; background integration only). `--quick` for a smaller scan.
 
-**Honest scope:** a *minisuperspace* variational principle — homogeneous flat FLRW with the single degree of freedom `a(t)`. The Friedmann equation is genuinely the Hamiltonian constraint and `H² = ρ` a preserved, attracting first integral, but the gravitational kinetic term `−a ȧ²` is the reduced Einstein–Hilbert form **posited** (read as the geometry's free energy), not derived from the κ-action microscopically, and there are no inhomogeneous field equations or a solved metric. It removes the last hand-input at the Friedmann level; it is not a derivation of general relativity.
+**Honest scope:** a *minisuperspace* variational principle — homogeneous flat FLRW with the single degree of freedom `a(t)`. The Friedmann equation is genuinely the Hamiltonian constraint and `H² = ρ` a preserved, attracting first integral, but the gravitational kinetic term `−a ȧ²` is the reduced Einstein–Hilbert form **posited** (read as the geometry's free energy), not derived from the κ-action microscopically, and there are no inhomogeneous field equations or a solved metric. It removes the last hand-input at the Friedmann level; it is not a derivation of general relativity. *(The next section shows that posited term **is** the capacity field's own kinetic free energy.)*
+
+### Gravity from the capacity field: the gravitational action as capacity free energy
+
+The variational closure still *posited* the gravitational kinetic term `−a ȧ²` (the reduced Einstein–Hilbert form). It **is** the capacity field's own kinetic free energy. Identify the scale factor with the exponential of the homogeneous capacity scalar — the zero-mode `κ_s` whose global value sets the overall integration scale — `a = e^{κ_s}` (so `κ_s = ln a`, `H = κ̇_s`). Its kinetic free energy on the FLRW volume measure `a³` is `a³ κ̇_s² = a ȧ²`, so `−a ȧ² = −a³ κ̇_s²`. `project_genesis/capacity_dynamics.py` (`scale_capacity`, `capacity_kinetic_energy`, `capacity_scalar_acceleration`, `integrate_capacity_scale`) + `experiments/n3_gravity_from_capacity.py`.
+
+- **The gravitational term is capacity free energy.** Along the cosmic history the posited `−a ȧ²` and the capacity scalar's kinetic free energy `−a³ κ̇_s²` coincide identically (`~10⁻¹⁶`) — the geometry's kinetic energy *is* the field's.
+- **Friedmann is an energy balance `κ̇_s² = ρ`.** The lapse constraint of the capacity action says the mean capacity's kinetic free-energy density equals the content; along the trajectory `|κ̇_s² − ρ|` stays below `~10⁻⁹`. Expansion is the capacity field rolling; Friedmann balances its kinetic free energy against matter + vacuum.
+- **Expansion is the capacity scalar rolling.** Its field equation `κ̈_s = −(3/2)(κ̇_s² + p)` drives the roll — `κ̈_s → 0` in the vacuum limit (constant roll → de Sitter), `κ̈_s < 0` under dust. The balance is never imposed yet holds, and a wrong initial roll-rate relaxes onto it (`Ċ = −3 κ̇_s C`).
+- **It reproduces the whole history.** The scale factor `a = e^{κ_s}` from the capacity-scalar dynamics coincides with the stress-energy (`~10⁻⁸`) and imposed-law (`~5×10⁻³`) cosmologies — gravity's expansion re-derived as the capacity field rolling.
+
+**The last posit is gone.** The gravitational action's kinetic term is not an independent Einstein–Hilbert input but the capacity field's own kinetic free energy, and the cosmic expansion is that field — the mean capacity — rolling under it. Gravity, and not just its cosmology, is read off the URP field.
+
+Reproduce with `python experiments/n3_gravity_from_capacity.py` (≈ 5 seconds; background integration only). `--quick` for a smaller scan.
+
+**Honest scope:** the identification `a = e^{κ_s}` (the scale factor as the exp of the homogeneous capacity scalar / e-folding number) is a *reading* within the URP framework, and the kinetic free energy carries gravity's wrong-sign conformal mode, taken as given. It is still minisuperspace (homogeneous, one degree of freedom), with no inhomogeneous field equations or a solved metric. It traces the last hand-input at the Friedmann level to the field; it is **not** a derivation of general relativity.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
