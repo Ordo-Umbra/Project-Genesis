@@ -407,3 +407,61 @@ def matter_energy_density(masses, comoving_volume):
     if volume <= 0:
         raise ValueError("comoving_volume must be positive")
     return float(np.sum(np.asarray(masses, dtype=float)) / volume)
+
+
+# --------------------------------------------------------------------------
+# The equation of state of the matter: what kind of stuff the forms are
+# --------------------------------------------------------------------------
+#
+# The Friedmann source now comes entirely from the field, but with an *assumed*
+# character: matter as pressureless dust (``ρ_m ∝ a^{-dim}``) and the capacity
+# vacuum as a cosmological constant (``ρ_Λ = const``).  Those characters are
+# equations of state ``p = w·ρ``.  In ``dim`` spatial dimensions the continuity
+# equation ``dρ/dt = −dim·H·(ρ + p)`` integrates to ``ρ ∝ a^{-dim(1+w)}``, so the
+# dilution exponent *is* the equation of state:
+#
+#     ρ ∝ a^{-n}  ⇒  w = n/dim − 1 .
+#
+# Dust (``n = dim``) ⇒ ``w = 0``; a cosmological constant (``n = 0``) ⇒
+# ``w = −1``; radiation (``n = dim + 1``) ⇒ ``w = 1/dim``.  And a *gas of forms*
+# with peculiar velocities has a directly computable ``w = p/ρ``: at rest it is
+# dust (``w → 0``), ultra-relativistic it is radiation (``w → 1/dim``).  These
+# are the pieces a relativistic stress-energy tensor ``T_{μν}`` will need.
+
+
+def equation_of_state_from_dilution(dilution_exponent, dim=3):
+    """The equation of state ``w`` implied by a dilution law ``ρ ∝ a^{-n}``.
+
+    From ``ρ ∝ a^{-dim(1+w)}``: ``w = n/dim − 1``.  So the ``a^{-dim}`` matter
+    law means ``w = 0`` (dust), a constant vacuum (``n = 0``) means ``w = −1``,
+    and radiation (``n = dim + 1``) means ``w = 1/dim``.
+    """
+    return float(dilution_exponent) / dim - 1.0
+
+
+def gas_equation_of_state(masses, velocities, *, volume=1.0):
+    """Energy density, pressure and ``w = p/ρ`` of a relativistic gas of forms.
+
+    Point forms of rest energy ``m_i`` moving at velocity ``v_i`` (units
+    ``c = 1``) have energy density ``ρ = Σ γ_i m_i / V`` and isotropic pressure
+    ``p = Σ γ_i m_i |v_i|² / (dim·V)`` with ``γ = 1/√(1 − v²)``.  At rest the
+    gas is pressureless dust (``w → 0``); ultra-relativistic it is radiation
+    (``w → 1/dim``).  ``velocities`` is ``(N,)`` or ``(N, dim)``; speeds must be
+    ``< 1``.
+    """
+    m = np.asarray(masses, dtype=float)
+    v = np.asarray(velocities, dtype=float)
+    if v.ndim == 1:
+        v = v[:, None]
+    dim = v.shape[1]
+    speed2 = np.sum(v ** 2, axis=1)
+    if np.any(speed2 >= 1.0):
+        raise ValueError("form speeds must be < 1 (units c = 1)")
+    gamma = 1.0 / np.sqrt(1.0 - speed2)
+    vol = float(volume)
+    if vol <= 0:
+        raise ValueError("volume must be positive")
+    rho = float(np.sum(gamma * m) / vol)
+    pressure = float(np.sum(gamma * m * speed2) / (dim * vol))
+    w = pressure / rho if rho > 0 else 0.0
+    return {"rho": rho, "pressure": pressure, "w": w}

@@ -158,6 +158,7 @@ experiments/
   n3_expanding_universe.py  FLRW background: scale factor a(t), Hubble drag, dark-energy freeze-out of structure
   n3_self_contained_cosmos.py  Closed loop: dark energy from κ's self-maintenance drives the emergent expansion
   n3_matter_from_forms.py   Matter source from the form spectrum: ρ_m0 ∝ Σ|Q| (Bogomolny) + a^(−dim) from topology
+  n3_form_equation_of_state.py  Equation of state of the matter: cold forms are dust (w=0), the capacity vacuum is Λ (w=−1)
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -866,7 +867,21 @@ The self-contained cosmos still *dialled* the matter density `ρ_m0` and *impose
 
 Reproduce with `python experiments/n3_matter_from_forms.py` (≈ 40 seconds; the cooling sweeps of the protection scan dominate). `--quick` for a smaller scan.
 
-**Honest scope:** a Newtonian `8πG/3 = 1` closure. The forms are 2-D CP² solitons whose Bogomolny energies set the rest masses; they are then treated as point masses populating a `dim`-dimensional comoving volume, which is what gives the `a^{−dim}` dilution. The dark-energy identification still carries a modelling coefficient and there is no metric or relativistic stress-energy tensor. It fixes the matter *source* from topology — not a first-principles ΛCDM.
+**Honest scope:** a Newtonian `8πG/3 = 1` closure. The forms are 2-D CP² solitons whose Bogomolny energies set the rest masses; they are then treated as point masses populating a `dim`-dimensional comoving volume, which is what gives the `a^{−dim}` dilution. The dark-energy identification still carries a modelling coefficient and there is no metric or relativistic stress-energy tensor. It fixes the matter *source* from topology — not a first-principles ΛCDM. *(The next section measures the **equation of state** of that source — the character a relativistic stress-energy tensor will need.)*
+
+### The equation of state of the matter: what kind of stuff the forms are
+
+The cosmology's Friedmann source is now field-sourced, but with an *assumed* character: matter as pressureless **dust** (`ρ_m ∝ a^{−dim}`) and the capacity vacuum as a **cosmological constant** (`ρ_Λ = const`). Those characters are equations of state `p = w·ρ`. This measures `w` for the forms — the last qualitative input, and the piece a relativistic stress-energy tensor `T_{μν}` will need. `project_genesis/capacity_dynamics.py` (`equation_of_state_from_dilution`, `gas_equation_of_state`) + `experiments/n3_form_equation_of_state.py`. Three independent readings agree:
+
+- **Kinetic (the measurement).** A gas of forms with velocity dispersion `σ_v` has a directly computable `w = p/ρ = Σγm v²/dim ÷ Σγm`. At rest it is pressureless dust (`w → 0`); heated toward `c` it becomes radiation (`w → 1/dim`). The measured `w(σ_v)` rises smoothly from `0.002` (cold) toward `0.315` (`σ_v = 0.9`), heading for `1/3` — the **cold form gas the cosmology assumes really is dust**.
+- **Mechanical (`p = −∂E/∂V`).** A form is a *localized* lump: its rest energy is independent of the comoving box (`∂E/∂V ≈ −7×10⁻⁵ → 0`), so its pressure vanishes — `w ≈ 0`, dust, with no reference to velocities. The capacity vacuum instead has `E_Λ = ρ_Λ·V`, so `∂E/∂V = ρ_Λ` and `p = −ρ_Λ` — `w = −1`, a cosmological constant.
+- **Kinematic (from the dilution exponent).** Since `ρ ∝ a^{−dim(1+w)}`, the exponent *is* the equation of state: the `a^{−dim}` matter law (Link 8) reads back `w = 0`, the constant vacuum `w = −1`, and radiation (`a^{−(dim+1)}`) `w = 1/dim`.
+
+The two components a covariant `T_{μν}` must carry are now fixed and mutually consistent: a pressureless dust of forms (`w = 0`) and a `w = −1` capacity vacuum, with the warm form gas bridging dust and radiation. The cosmology's "dust + Λ" assumption is **measured, not assumed**.
+
+Reproduce with `python experiments/n3_form_equation_of_state.py` (≈ 10 seconds). `--quick` for a smaller scan.
+
+**Honest scope:** still a Newtonian `8πG/3 = 1` background. This measures the *equation of state* the eventual `T_{μν}` needs — it does not yet build the tensor or a covariant field equation. The forms are point masses of the measured Bogomolny rest energies; `w` is intensive (box-independent), and the mechanical `∂E/∂V → 0` is read off the localized CP² lump.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
