@@ -319,7 +319,7 @@ For building on the arc, the modules and experiments that make it up:
 | file | provides |
 |---|---|
 | `multiphase.py` | the κ dynamics `∂_t κ = D∇²κ + r(κ₀−κ) − c·load·κ` (its origin) |
-| `topological_charge.py` | CP² geometric (Berg–Lüscher) charge, cooling, action; `coherent_fraction`, `cp_action_density`, `cp_coherent_fraction`, `cp_metropolis_sweep` (the one-κ operator + thermal CP sampler) |
+| `topological_charge.py` | CP² geometric (Berg–Lüscher) charge, cooling, action; `coherent_fraction`, `cp_action_density`, `cp_coherent_fraction`, `cp_metropolis_sweep`, `charge_variance_per_action` (the one-κ operator + thermal CP sampler + dimensionless susceptibility) |
 | `capacity_gravity.py` | `screening_length`, `gaussian_load`, `relax_capacity`, `capacity_free_energy`, `interaction_potential`, `fit_yukawa_range`, `well_range` |
 | `stable_forms.py` | `winding_form`, `trivial_bump`, `distinction_density`, `structural_mass`, `gravitational_mass`, `form_charge` |
 | `capacity_dynamics.py` | `capacity_force`, `evolve` (overdamped), `evolve_inertial`, `hubble_flow`, `fof_groups`, `friedmann_rates`, `evolve_cosmological`, `capacity_vacuum_density`, `deceleration_parameter`, `acceleration_onset`, `integrate_scale_factor`, `matter_energy_density`, `equation_of_state_from_dilution`, `gas_equation_of_state`, `stress_energy_tensor`, `covariant_conservation_rate`, `friedmann_acceleration`, `integrate_stress_energy`, `minisuperspace_lagrangian`, `hamiltonian_constraint`, `integrate_friedmann_action`, `scale_capacity`, `capacity_kinetic_energy`, `capacity_scalar_acceleration`, `integrate_capacity_scale` |
@@ -340,13 +340,15 @@ For building on the arc, the modules and experiments that make it up:
 | `n3_friedmann_from_action.py` | the variational closure: `H²=ρ` as the Hamiltonian constraint / a first integral of an action |
 | `n3_gravity_from_capacity.py` | gravity from the field: `−a ȧ²` as the capacity scalar's kinetic free energy, expansion as `κ_s=ln a` rolling |
 | `n3_one_kappa_frontier.py` | the one-κ frontier: `κ̂=Σ\|q\|/Σe` as one operator across SU(3) (Act I) and CP² (Act II) — same concept, not (yet) one number |
+| `n3_kappa_obstruction.py` | the one-κ obstruction: the sharper invariant `⟨Q²⟩/⟨S⟩` fails too — mechanism is the instantons' different RG fate |
 
 **Tests**: `test_capacity_gravity.py`, `test_stable_forms.py`,
 `test_capacity_dynamics.py`, `test_capacity_inertial.py`,
 `test_cosmic_structure.py`, `test_capacity_cosmology.py`,
 `test_matter_from_forms.py`, `test_form_equation_of_state.py`,
 `test_stress_energy_closure.py`, `test_friedmann_from_action.py`,
-`test_gravity_from_capacity.py`, `test_one_kappa_frontier.py`.
+`test_gravity_from_capacity.py`, `test_one_kappa_frontier.py`,
+`test_kappa_obstruction.py`.
 
 ---
 
@@ -429,7 +431,16 @@ inhomogeneous field theory.)*
    (the integration fraction) but not the same measured number in this estimator.
    A genuine identity would need a matched RG condition across the 4-D and 2-D
    flows, or a different invariant (a `χ_top` ratio, or the instanton-size
-   distribution).  Mapped, not forced — the frontier is now precise.
+   distribution).  `n3_kappa_obstruction.py` then tested the sharper `χ_top`
+   invariant `⟨Q²⟩/⟨S⟩` — it *also* diverges (`~10⁻⁴` gauge vs `~10⁻²` CP) — and
+   diagnosed the **mechanism**: under the flow 4-D SU(3) instantons are
+   scale-invariant and *survive* (the coherent fraction rises), while 2-D CP
+   instantons are scale-relevant and *annihilate* (the instanton density
+   collapses).  Same flow, opposite fate — so the two sectors' topology lives at
+   different, moving scales, and no `q(x),e(x)` estimator can coincide.  A real
+   bridge must match the physical instanton scales first (a renormalisation
+   condition) or be a framework-level definition.  The frontier is now a
+   *precise obstruction* with a stated mechanism, not a hand-waved hope.
 6. **A metric formulation.** Recast κ-gravity so the well acts as an effective
    metric / index of refraction, the bridge from "binding coupling" toward a
    geometric theory.
