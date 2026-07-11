@@ -574,3 +574,103 @@ def integrate_stress_energy(densities0, eos, *, dt=0.5, steps=300):
         state = state + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
         t += dt
     return hist
+
+
+# --------------------------------------------------------------------------
+# The variational closure: the Friedmann relations from an action, not by hand
+# --------------------------------------------------------------------------
+#
+# Link 10 still *put in by hand* the Einstein/Friedmann relations that turn the
+# stress-energy tensor into expansion.  Those relations are the content of a
+# minisuperspace variational principle.  For a flat FLRW background with lapse
+# ``N`` and scale factor ``a`` (units ``8πG/3 = 1``, comoving volume dropped),
+#
+#     S = ∫ dt [ −a ȧ²/N − N a³ ρ(a) ] ,
+#
+# the gravitational kinetic term ``−a ȧ²`` is the dynamical geometry's own
+# energy (the capacity field's free energy setting the global scale) and
+# ``ρ(a)`` is the matter/vacuum content of the stress-energy tensor.  Two
+# variations give the two laws:
+#
+#   • ``∂S/∂N = 0`` (the lapse / Hamiltonian constraint) ⇒  H² = ρ   — Friedmann.
+#   • the ``a`` Euler–Lagrange equation, with conservation, ⇒
+#         ä/a = −½(ρ + 3p)   — the acceleration equation.
+#
+# Crucially the Friedmann equation is not an independent input: along the
+# acceleration equation the quantity ``C = H² − ρ`` obeys ``Ċ = −2 H C`` — it is
+# a **first integral** (``C = 0`` is preserved) and, since ``H > 0``, an
+# **attractor** (a wrong initial expansion rate relaxes onto it).  So ``H² = ρ``
+# is a *consequence* of the variational dynamics, not a postulate.
+
+
+def minisuperspace_lagrangian(a, adot, rho, lapse=1.0):
+    """The flat-FLRW minisuperspace Lagrangian ``L = −a ȧ²/N − N a³ ρ``.
+
+    The gravitational kinetic term ``−a ȧ²`` (the geometry's own free energy)
+    plus the matter/vacuum content ``a³ ρ``, whose lapse variation gives the
+    Friedmann constraint and whose ``a``-variation gives the acceleration
+    equation.  Units ``8πG/3 = 1``.
+    """
+    return float(-a * adot ** 2 / lapse - lapse * a ** 3 * rho)
+
+
+def hamiltonian_constraint(a, adot, rho):
+    """The Friedmann/Hamiltonian constraint value ``C = (ȧ/a)² − ρ = H² − ρ``.
+
+    The lapse variation of the minisuperspace action requires this to vanish
+    (equivalently the minisuperspace Hamiltonian ``H_ham = −a³·C`` is zero — the
+    "zero total energy" of a reparametrization-invariant system).  Along the
+    acceleration equation it obeys ``Ċ = −2 H C``, so ``C = 0`` is preserved and
+    attracting: the Friedmann equation as a first integral, not an input.
+    """
+    H = adot / a
+    return float(H * H - rho)
+
+
+def integrate_friedmann_action(densities0, eos, *, dt=0.1, steps=700,
+                               adot0=None):
+    """Evolve the minisuperspace ``a``-Euler–Lagrange equation — ``H²=ρ`` not imposed.
+
+    Integrates the second-order acceleration equation ``ä = −½ a (ρ + 3p)`` (the
+    ``a``-variation of the action) together with covariant conservation
+    ``ρ̇_i = −3 (ȧ/a)(ρ_i + p_i)``, using the *kinematic* Hubble rate ``H = ȧ/a``
+    — the Friedmann relation ``H² = ρ`` is **never** substituted.  With the
+    constraint-satisfying initial rate ``ȧ₀ = √ρ₀`` (the default) the constraint
+    ``C = H² − ρ`` stays ~0; a violating ``adot0`` relaxes onto it.  Returns
+    ``a, t, adot, H, q`` and the constraint history ``constraint``.
+    """
+    rho = np.asarray(densities0, dtype=float).copy()
+    w = np.asarray(eos, dtype=float)
+    a = 1.0
+    adot = float(np.sqrt(rho.sum())) if adot0 is None else float(adot0)
+
+    def deriv(state):
+        a = state[0]; adot = state[1]; r = state[2:]
+        rho_tot = float(r.sum()); p_tot = float((w * r).sum())
+        H = adot / a
+        addot = -0.5 * a * (rho_tot + 3.0 * p_tot)     # a-Euler–Lagrange
+        drho = -3.0 * H * (r + w * r)                  # conservation, H = ȧ/a
+        return np.concatenate([[adot], [addot], drho])
+
+    state = np.concatenate([[a], [adot], rho])
+    t = 0.0
+    hist = {k: [] for k in ("a", "t", "adot", "H", "q", "constraint",
+                            "rho_tot")}
+    for _ in range(steps):
+        a = state[0]; adot = state[1]; r = state[2:]
+        rho_tot = float(r.sum()); p_tot = float((w * r).sum())
+        H = adot / a
+        addot = -0.5 * a * (rho_tot + 3.0 * p_tot)
+        hist["a"].append(float(a)); hist["t"].append(t)
+        hist["adot"].append(float(adot)); hist["H"].append(float(H))
+        hist["q"].append(float(-addot * a / adot ** 2) if adot != 0
+                         else float("nan"))
+        hist["constraint"].append(float(H * H - rho_tot))
+        hist["rho_tot"].append(rho_tot)
+        k1 = deriv(state)
+        k2 = deriv(state + 0.5 * dt * k1)
+        k3 = deriv(state + 0.5 * dt * k2)
+        k4 = deriv(state + dt * k3)
+        state = state + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+        t += dt
+    return hist

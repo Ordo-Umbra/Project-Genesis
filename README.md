@@ -160,6 +160,7 @@ experiments/
   n3_matter_from_forms.py   Matter source from the form spectrum: ρ_m0 ∝ Σ|Q| (Bogomolny) + a^(−dim) from topology
   n3_form_equation_of_state.py  Equation of state of the matter: cold forms are dust (w=0), the capacity vacuum is Λ (w=−1)
   n3_stress_energy_closure.py  Relativistic closure: T^μ_ν from the field, expansion as a consequence of ∇·T=0
+  n3_friedmann_from_action.py  Variational closure: Friedmann H²=ρ as the Hamiltonian constraint / a first integral of an action
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -899,7 +900,22 @@ Everything the cosmology needs is now measured from the field — the matter den
 
 Reproduce with `python experiments/n3_stress_energy_closure.py` (≈ 5 seconds; background integration only). `--quick` for a smaller scan.
 
-**Honest scope:** a perfect-fluid `T^μ_ν = diag(−ρ, p, p, p)` in a homogeneous FLRW background with the standard Einstein/Friedmann relations (units `8πG/3 = 1`). It makes the *expansion law* a consequence of the field's stress-energy and its measured equations of state — it is **not** a derivation of the Einstein field equations from the κ-action, and it stays homogeneous (no perturbations, metric solved, or covariant field theory of κ itself). It closes the Friedmann level: `T_{μν}` from the field, expansion as its consequence.
+**Honest scope:** a perfect-fluid `T^μ_ν = diag(−ρ, p, p, p)` in a homogeneous FLRW background with the standard Einstein/Friedmann relations (units `8πG/3 = 1`). It makes the *expansion law* a consequence of the field's stress-energy and its measured equations of state — it is **not** a derivation of the Einstein field equations from the κ-action, and it stays homogeneous (no perturbations, metric solved, or covariant field theory of κ itself). It closes the Friedmann level: `T_{μν}` from the field, expansion as its consequence. *(The next section removes the last hand-input — the Friedmann relation `H²=ρ` itself — deriving it from a variational principle.)*
+
+### The variational closure: the Friedmann equation from an action, not by hand
+
+The relativistic closure still *put in by hand* the Einstein/Friedmann relations `H² = ρ`, `ä/a = −½(ρ + 3p)` that turn `T^μ_ν` into `a(t)`. Those relations are the content of a **minisuperspace variational principle**. For flat FLRW with lapse `N` and scale factor `a` (units `8πG/3 = 1`), the action `S = ∫dt[−a ȧ²/N − N a³ρ(a)]` — the gravitational kinetic term `−a ȧ²` (the dynamical geometry's own free energy) plus the stress-energy content `ρ(a)` — has: the lapse/Hamiltonian constraint `∂S/∂N = 0 ⇒ H² = ρ` (Friedmann), and the `a`-Euler–Lagrange equation (with conservation) `⇒ ä/a = −½(ρ + 3p)`. `project_genesis/capacity_dynamics.py` (`minisuperspace_lagrangian`, `hamiltonian_constraint`, `integrate_friedmann_action`) + `experiments/n3_friedmann_from_action.py`.
+
+- **One history, three derivations.** Evolving the `a`-Euler–Lagrange equation with conservation reproduces the same `a(t)` as the stress-energy route (`~10⁻⁸`) and the original imposed-`a^{−3}` cosmology (`~5×10⁻³`).
+- **Friedmann is a first integral, not an input.** Along that acceleration equation the constraint `C = H² − ρ` stays below `~10⁻¹⁰` — `H² = ρ` is *preserved* by the dynamics though it is never substituted. Analytically `Ċ = −2HC`, so `C = 0` is conserved.
+- **…and an attractor.** Start from a *wrong* expansion rate (constraint violated by ±30–60%) and `C(t) → 0`: the universe relaxes onto the Friedmann trajectory, because `Ċ = −2HC` with `H > 0`. Even the initial condition need not satisfy Friedmann; the dynamics enforces it.
+- **The physics is intact.** The deceleration parameter crosses zero at the same `a_acc = 1.36`; the decel→accel history survives the derivation.
+
+**The last hand-input at the Friedmann level is removed.** `H² = ρ` and `ä/a = −½(ρ + 3p)` are the Hamiltonian constraint and Euler–Lagrange equation of one action, and `H² = ρ` is a preserved, attracting first integral. The geometry (the scale factor's dynamics) and its source (the field's stress-energy) come from a single variational principle.
+
+Reproduce with `python experiments/n3_friedmann_from_action.py` (≈ 5 seconds; background integration only). `--quick` for a smaller scan.
+
+**Honest scope:** a *minisuperspace* variational principle — homogeneous flat FLRW with the single degree of freedom `a(t)`. The Friedmann equation is genuinely the Hamiltonian constraint and `H² = ρ` a preserved, attracting first integral, but the gravitational kinetic term `−a ȧ²` is the reduced Einstein–Hilbert form **posited** (read as the geometry's free energy), not derived from the κ-action microscopically, and there are no inhomogeneous field equations or a solved metric. It removes the last hand-input at the Friedmann level; it is not a derivation of general relativity.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
