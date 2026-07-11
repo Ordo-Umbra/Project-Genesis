@@ -163,6 +163,7 @@ experiments/
   n3_friedmann_from_action.py  Variational closure: Friedmann H²=ρ as the Hamiltonian constraint / a first integral of an action
   n3_gravity_from_capacity.py  Gravity from the field: −a ȧ² as the capacity scalar's kinetic free energy, expansion as κ_s=ln a rolling
   n3_one_kappa_frontier.py  The one-κ frontier: κ̂=Σ|q|/Σe as one operator across Act I (SU3) and Act II (CP²) — same concept, not (yet) one number
+  n3_kappa_obstruction.py   The one-κ obstruction: the sharper invariant ⟨Q²⟩/⟨S⟩ fails too — mechanism is the instantons' different RG fate
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -947,7 +948,21 @@ Act I measured `κ` as the self-dual fraction of the SU(3) vacuum (`f_SD(t₀) �
 
 Reproduce with `python experiments/n3_one_kappa_frontier.py` (≈ 1 minute; the SU(3) ensemble dominates). `--quick` for a smaller scan.
 
-**Honest scope:** a deliberately honest **boundary** result. The operator is genuinely one function and Act I's 0.22 is solid; what is *not* established is a matched numerical identity `κ_I = κ_II`. The value is the clean map — what holds, what does not, and what a real bridge would need — kept in the record so the theory is built on what is true, not what is hoped.
+**Honest scope:** a deliberately honest **boundary** result. The operator is genuinely one function and Act I's 0.22 is solid; what is *not* established is a matched numerical identity `κ_I = κ_II`. The value is the clean map — what holds, what does not, and what a real bridge would need — kept in the record so the theory is built on what is true, not what is hoped. *(The next section tests the sharper invariant the frontier named — and finds the mechanism behind the whole obstruction.)*
+
+### The one-κ obstruction: why the sharper invariant fails too, and the mechanism
+
+The frontier named a sharper candidate — the dimensionless topological invariant `⟨Q²⟩/⟨S⟩` (χ_top / action density, dimensionless in *any* dimension). This tests it, and diagnoses **why** no lattice-topology estimator bridges the two acts — a *mechanism*, not another bare non-match. `project_genesis/topological_charge.py` (`charge_variance_per_action`) + `experiments/n3_kappa_obstruction.py`.
+
+- **The sharper invariant also diverges.** `⟨Q²⟩/⟨S⟩ = 1.4×10⁻⁴` in the SU(3) vacuum vs `1.6×10⁻²` in the CP² sector — ~100× apart, and strongly coupling/cooling-dependent. A second natural dimensionless invariant, a second non-match.
+- **The mechanism: topology renormalises differently in the two theories.** Under the flow the SU(3) coherent fraction *rises* (`0.16 → 0.34`) — 4-D instantons are (near) scale-invariant, they survive the smoothing and emerge from the UV noise. In the CP² vacuum the instanton density *collapses* under the same cooling flow (`0.16 → 0.01`) — 2-D CP instantons are scale-*relevant*, they shrink through the lattice and annihilate. **Same flow, opposite fate.**
+- **So the sectors' topological content lives at different, moving scales.** Any estimator built from `q(x)` and `e(x)` reads a scale-tied number, and the two scales flow apart — exactly why neither the coherent fraction nor the susceptibility ratio can coincide.
+
+**What a bridge would need** (now precise, not hand-waved): the identity `κ_I = κ_II`, if it holds, is *not* recoverable from a single lattice topological estimator across these two models, because their topological sectors renormalise differently. A genuine bridge must either **match the physical instanton scales first** (a renormalisation condition, not a raw ratio) or be a **framework-level definition** that both are one abstract integration-exchange rate. The open frontier is now a precise obstruction.
+
+Reproduce with `python experiments/n3_kappa_obstruction.py` (≈ 1.5 minutes; the SU(3) ensemble dominates). `--quick` for a smaller scan.
+
+**Honest scope:** a mechanism-of-a-boundary result. It does not establish `κ_I = κ_II` (it explains why the obvious lattice routes cannot), and the SU(3) susceptibility is a small-ensemble estimate (χ_top is noisy at this size — the point is the order-of-magnitude gap and the flow behaviour, not a precise number). It closes the lattice-topology line of attack with a *reason*.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 

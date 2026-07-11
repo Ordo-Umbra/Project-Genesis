@@ -125,6 +125,24 @@ def cp_coherent_fraction(psi: np.ndarray) -> float:
     return coherent_fraction(cp_action_density(psi), topological_charge_density(psi))
 
 
+def charge_variance_per_action(charges, actions) -> float:
+    """Dimensionless topological invariant ``⟨Q²⟩ / ⟨S⟩`` (χ_top / action density).
+
+    Both ``⟨Q²⟩/V`` (the topological susceptibility) and ``⟨S⟩/V`` (the action
+    density) carry dimension ``L^{-d}``, so their ratio is dimensionless in *any*
+    dimension — a scale-robust candidate for a sector-independent ``κ``.  Takes
+    per-configuration total charges ``Q`` and total actions ``S`` over an
+    ensemble.  (The one-κ obstruction experiment finds this also does not
+    coincide between the SU(3) and CP sectors — see ``n3_kappa_obstruction``.)
+    """
+    q = np.asarray(charges, dtype=float)
+    s = np.asarray(actions, dtype=float)
+    denom = float(s.mean())
+    if denom == 0.0:
+        return 0.0
+    return float(np.mean(q ** 2) / denom)
+
+
 def cp_metropolis_sweep(psi: np.ndarray, beta: float, rng: np.random.Generator,
                         epsilon: float = 0.5) -> np.ndarray:
     """One checkerboard Metropolis sweep of the CP^(N-1) field at coupling ``beta``.
