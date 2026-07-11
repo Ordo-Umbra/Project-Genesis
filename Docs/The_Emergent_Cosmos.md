@@ -258,6 +258,34 @@ The Friedmann level is closed: a stress-energy tensor built from the field's own
 content, made to conserve covariantly, produces the expansion history as a
 consequence.  The Friedmann equation is now an output.
 
+### Link 11 — the variational closure: the Friedmann equation from an action
+*`capacity_dynamics.py` (`minisuperspace_lagrangian`, `hamiltonian_constraint`, `integrate_friedmann_action`) · `n3_friedmann_from_action.py`*
+
+Link 10 still *put in by hand* the Einstein/Friedmann relations that turn the
+stress-energy tensor into expansion.  Those relations are the content of a
+minisuperspace variational principle.  For flat FLRW with lapse `N` and scale
+factor `a` (units `8πG/3 = 1`), the action
+
+    S = ∫ dt [ −a ȧ²/N − N a³ ρ(a) ]
+
+— gravitational kinetic term `−a ȧ²` (the geometry's own free energy) plus the
+stress-energy content `ρ(a)` — has the lapse/Hamiltonian constraint
+`∂S/∂N = 0 ⇒ H² = ρ` (Friedmann) and the `a`-Euler–Lagrange equation (with
+conservation) `⇒ ä/a = −½(ρ + 3p)`:
+- **One history, three derivations.**  The `a`-Euler–Lagrange evolution
+  reproduces the stress-energy route (`~10⁻⁸`) and the imposed-`a^{−3}`
+  cosmology (`~5×10⁻³`).
+- **Friedmann is a first integral, not an input.**  Along that acceleration
+  equation the constraint `C = H² − ρ` stays `~10⁻¹⁰` though it is never
+  substituted; analytically `Ċ = −2HC`, so `C = 0` is preserved — and, since
+  `H > 0`, an **attractor**: a wrong initial expansion rate relaxes onto `H²=ρ`.
+- **The physics is intact.**  `q` still crosses zero at `a_acc = 1.36`.
+
+The last hand-input at the Friedmann level is gone: `H² = ρ` and `ä/a =
+−½(ρ + 3p)` are the Hamiltonian constraint and Euler–Lagrange equation of one
+action, and `H² = ρ` a preserved, attracting first integral.  The scale factor's
+dynamics and its stress-energy source come from a single variational principle.
+
 ---
 
 ## 4. The toolkit
@@ -271,7 +299,7 @@ For building on the arc, the modules and experiments that make it up:
 | `topological_charge.py` | CP² geometric (Berg–Lüscher) charge, cooling, action |
 | `capacity_gravity.py` | `screening_length`, `gaussian_load`, `relax_capacity`, `capacity_free_energy`, `interaction_potential`, `fit_yukawa_range`, `well_range` |
 | `stable_forms.py` | `winding_form`, `trivial_bump`, `distinction_density`, `structural_mass`, `gravitational_mass`, `form_charge` |
-| `capacity_dynamics.py` | `capacity_force`, `evolve` (overdamped), `evolve_inertial`, `hubble_flow`, `fof_groups`, `friedmann_rates`, `evolve_cosmological`, `capacity_vacuum_density`, `deceleration_parameter`, `acceleration_onset`, `integrate_scale_factor`, `matter_energy_density`, `equation_of_state_from_dilution`, `gas_equation_of_state`, `stress_energy_tensor`, `covariant_conservation_rate`, `friedmann_acceleration`, `integrate_stress_energy` |
+| `capacity_dynamics.py` | `capacity_force`, `evolve` (overdamped), `evolve_inertial`, `hubble_flow`, `fof_groups`, `friedmann_rates`, `evolve_cosmological`, `capacity_vacuum_density`, `deceleration_parameter`, `acceleration_onset`, `integrate_scale_factor`, `matter_energy_density`, `equation_of_state_from_dilution`, `gas_equation_of_state`, `stress_energy_tensor`, `covariant_conservation_rate`, `friedmann_acceleration`, `integrate_stress_energy`, `minisuperspace_lagrangian`, `hamiltonian_constraint`, `integrate_friedmann_action` |
 
 **Experiments** (`experiments/`) — each writes a figure + verdict to `artifacts/`
 | file | the link |
@@ -286,12 +314,13 @@ For building on the arc, the modules and experiments that make it up:
 | `n3_matter_from_forms.py` | the matter source from the form spectrum: `ρ_m0 ∝ Σ|Q|`, `a^{−dim}` from topology |
 | `n3_form_equation_of_state.py` | the equation of state: cold forms are dust (`w=0`), the capacity vacuum is Λ (`w=−1`) |
 | `n3_stress_energy_closure.py` | the relativistic closure: `T^μ_ν` from the field, expansion as a consequence of `∇·T=0` |
+| `n3_friedmann_from_action.py` | the variational closure: `H²=ρ` as the Hamiltonian constraint / a first integral of an action |
 
 **Tests**: `test_capacity_gravity.py`, `test_stable_forms.py`,
 `test_capacity_dynamics.py`, `test_capacity_inertial.py`,
 `test_cosmic_structure.py`, `test_capacity_cosmology.py`,
 `test_matter_from_forms.py`, `test_form_equation_of_state.py`,
-`test_stress_energy_closure.py`.
+`test_stress_energy_closure.py`, `test_friedmann_from_action.py`.
 
 ---
 
@@ -320,10 +349,13 @@ The arc is real and its boundaries are bright.  What it is **not**:
   *equation of state* of both components is measured (Link 9: forms are dust
   `w = 0`, vacuum is `w = −1`) and assembled into a perfect-fluid stress-energy
   tensor whose covariant conservation *derives* the dilution and makes the
-  expansion an output (Link 10) — but that `T^μ_ν` lives in a homogeneous FLRW
-  background with the Einstein/Friedmann relations put in by hand; the field
-  equations themselves are not derived from the κ-action, and there are no
-  perturbations or a solved metric.
+  expansion an output (Link 10).  Even the Friedmann relations are no longer
+  hand-inputs: they are the Hamiltonian constraint and Euler–Lagrange equation
+  of a minisuperspace action, with `H² = ρ` a preserved, attracting first
+  integral (Link 11).  What remains: that action is *minisuperspace* — its
+  gravitational term `−a ȧ²` is the reduced Einstein–Hilbert form posited (not
+  derived from the κ-action microscopically), the background is homogeneous, and
+  there are no inhomogeneous field equations or a solved metric.
 
 The arc reproduces the **mechanisms** — a screened universal attraction, an
 emergent equivalence principle, orbits and precession, spherical collapse, and
@@ -334,20 +366,23 @@ the dark-energy suppression of growth — not a quantitative ΛCDM.
 ## 6. Open frontiers
 
 Ranked by how much they would deepen the arc.  *(Frontier 1 — sourcing the
-Friedmann level from the field — is now done: Links 7–8 derive the dark energy
-and the matter density/dilution, Link 9 measures the equations of state, and
-Link 10 assembles the perfect-fluid `T^μ_ν` whose covariant conservation makes
-the expansion an output.  What remains is the field-equation step: deriving the
-Einstein/Friedmann relations themselves from the κ-action, and going beyond the
-homogeneous background.)*
+Friedmann level from the field — is now done end to end: Links 7–8 derive the
+dark energy and the matter density/dilution, Link 9 measures the equations of
+state, Link 10 assembles the conserved `T^μ_ν`, and Link 11 derives the Friedmann
+relations themselves as the constraint + Euler–Lagrange equation of a
+minisuperspace action.  What remains is to go beyond minisuperspace: the
+gravitational term from the κ-action itself, inhomogeneity, and a solved
+metric.)*
 
-1. **The field equations from the κ-action.** The stress-energy tensor is now
-   assembled and conserved (Link 10), but the Einstein/Friedmann relations
-   `H² = ρ`, `ä/a = −½(ρ + 3p)` that turn it into expansion are still put in by
-   hand.  The next step is to *derive* those relations — a variational principle
-   in which `κ` (or a metric built from it) is the dynamical geometry sourced by
-   `T^μ_ν` — and to go beyond the homogeneous FLRW background (perturbations, a
-   solved metric, growth of structure with a real growth factor).
+1. **Beyond minisuperspace.** The Friedmann relations are now the constraint and
+   Euler–Lagrange equation of an action (Link 11), but that action is
+   *minisuperspace* — one degree of freedom `a(t)`, with the gravitational term
+   `−a ȧ²` posited as the reduced Einstein–Hilbert form.  The next steps: derive
+   that gravitational term from the κ-action itself (the geometry's kinetic
+   energy as the capacity field's free energy, from first principles), and lift
+   to an inhomogeneous background — cosmological perturbations, a real growth
+   factor `D(a)`, and a solved metric — connecting back to the N-body structure
+   work on a relativistic footing.
 2. **The unscreened regime.** Is there a limit (`r → 0`, or a different
    coupling) in which κ-gravity becomes genuinely long-range `1/r²`?  The whole
    massive/massless-graviton question lives here.
