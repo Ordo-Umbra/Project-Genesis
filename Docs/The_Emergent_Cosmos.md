@@ -210,6 +210,30 @@ The last dialled density is gone.  The whole Friedmann source — matter *and*
 dark energy — is now the field's own content: `ρ_m0` from the Bogomolny
 spectrum, `a^{−dim}` from charge conservation, `ρ_Λ` from self-maintenance.
 
+### Link 9 — the equation of state: what kind of stuff the forms are
+*`capacity_dynamics.py` (`equation_of_state_from_dilution`, `gas_equation_of_state`) · `n3_form_equation_of_state.py`*
+
+The Friedmann source is now field-sourced, but with an *assumed character*:
+matter as pressureless **dust**, the vacuum as a **cosmological constant**.
+Those characters are equations of state `p = w·ρ` — the last qualitative input,
+and exactly the piece a relativistic `T_{μν}` will need.  Link 9 measures `w`,
+three independent ways that all agree:
+- **Kinetic (the measurement).**  A gas of forms with dispersion `σ_v` has
+  `w = p/ρ = Σγm v²/dim ÷ Σγm`, rising from `w ≈ 0` (cold — dust) toward
+  `w = 1/dim` (hot — radiation).  The *cold* form gas the cosmology assumes
+  really is dust.
+- **Mechanical (`p = −∂E/∂V`).**  A form is a localized lump: its rest energy is
+  independent of the box (`∂E/∂V → 0`), so `p = 0`, `w = 0` — dust with no
+  reference to velocity.  The vacuum has `E_Λ = ρ_Λ·V`, so `p = −ρ_Λ`, `w = −1`.
+- **Kinematic (from the dilution exponent).**  Since `ρ ∝ a^{−dim(1+w)}`, the
+  `a^{−dim}` matter law of Link 8 reads back `w = 0`, the constant vacuum
+  `w = −1`, radiation `w = 1/dim`.
+
+So the two components a covariant `T_{μν}` must carry are fixed and mutually
+consistent: a pressureless dust of forms (`w = 0`) and a `w = −1` capacity
+vacuum — the "dust + Λ" of the cosmology *measured, not assumed*, with the warm
+form gas bridging dust and radiation.
+
 ---
 
 ## 4. The toolkit
@@ -223,7 +247,7 @@ For building on the arc, the modules and experiments that make it up:
 | `topological_charge.py` | CP² geometric (Berg–Lüscher) charge, cooling, action |
 | `capacity_gravity.py` | `screening_length`, `gaussian_load`, `relax_capacity`, `capacity_free_energy`, `interaction_potential`, `fit_yukawa_range`, `well_range` |
 | `stable_forms.py` | `winding_form`, `trivial_bump`, `distinction_density`, `structural_mass`, `gravitational_mass`, `form_charge` |
-| `capacity_dynamics.py` | `capacity_force`, `evolve` (overdamped), `evolve_inertial`, `hubble_flow`, `fof_groups`, `friedmann_rates`, `evolve_cosmological`, `capacity_vacuum_density`, `deceleration_parameter`, `acceleration_onset`, `integrate_scale_factor`, `matter_energy_density` |
+| `capacity_dynamics.py` | `capacity_force`, `evolve` (overdamped), `evolve_inertial`, `hubble_flow`, `fof_groups`, `friedmann_rates`, `evolve_cosmological`, `capacity_vacuum_density`, `deceleration_parameter`, `acceleration_onset`, `integrate_scale_factor`, `matter_energy_density`, `equation_of_state_from_dilution`, `gas_equation_of_state` |
 
 **Experiments** (`experiments/`) — each writes a figure + verdict to `artifacts/`
 | file | the link |
@@ -236,11 +260,12 @@ For building on the arc, the modules and experiments that make it up:
 | `n3_expanding_universe.py` | FLRW: scale factor, Hubble drag, dark energy |
 | `n3_self_contained_cosmos.py` | the closed loop: dark energy from κ's self-maintenance drives the expansion |
 | `n3_matter_from_forms.py` | the matter source from the form spectrum: `ρ_m0 ∝ Σ|Q|`, `a^{−dim}` from topology |
+| `n3_form_equation_of_state.py` | the equation of state: cold forms are dust (`w=0`), the capacity vacuum is Λ (`w=−1`) |
 
 **Tests**: `test_capacity_gravity.py`, `test_stable_forms.py`,
 `test_capacity_dynamics.py`, `test_capacity_inertial.py`,
 `test_cosmic_structure.py`, `test_capacity_cosmology.py`,
-`test_matter_from_forms.py`.
+`test_matter_from_forms.py`, `test_form_equation_of_state.py`.
 
 ---
 
@@ -265,7 +290,9 @@ The arc is real and its boundaries are bright.  What it is **not**:
   vacuum identification carries a modelling coefficient, the forms are treated
   as point masses in a `dim`-volume (which is what supplies `a^{−dim}`), and
   there is still no metric or relativistic stress-energy tensor.  The κ
-  screening length is a fixed physical scale (it does not redshift).
+  screening length is a fixed physical scale (it does not redshift).  The
+  *equation of state* of both components is now measured (Link 9: forms are dust
+  `w = 0`, vacuum is `w = −1`), but a covariant `T_{μν}` is not yet assembled.
 
 The arc reproduces the **mechanisms** — a screened universal attraction, an
 emergent equivalence principle, orbits and precession, spherical collapse, and
@@ -276,16 +303,18 @@ the dark-energy suppression of growth — not a quantitative ΛCDM.
 ## 6. Open frontiers
 
 Ranked by how much they would deepen the arc.  *(Frontier 1 — sourcing the
-Friedmann equation from the field — is now largely done: Link 7 derives the dark
-energy from κ's self-maintenance and Link 8 derives the matter density and its
-`a^{−dim}` dilution from the form spectrum.  What remains is the relativistic
-step: a genuine stress-energy tensor and metric.)*
+Friedmann equation from the field — is now largely done: Links 7–8 derive the
+dark energy and the matter density/dilution from the field, and Link 9 measures
+the equation of state of both (dust `w = 0`, vacuum `w = −1`).  What remains is
+to assemble those pieces into a covariant `T_{μν}` and a metric.)*
 
 1. **A relativistic stress-energy tensor.** Both Friedmann densities are now
-   sourced by the field (Links 7–8), but within a Newtonian `8πG/3 = 1` closure.
-   The next step is a genuine `T_{μν}` — pressure as well as density, the forms
-   as its matter part and the capacity vacuum as its Λ part — so the expansion
-   follows from a covariant law rather than an imposed Friedmann equation.
+   sourced by the field (Links 7–8) and their equations of state measured
+   (Link 9), but within a Newtonian `8πG/3 = 1` closure.  The next step is to
+   assemble a genuine `T_{μν} = diag(ρ, p, p, p)` — the forms as its dust part
+   (`w = 0`), the capacity vacuum as its Λ part (`w = −1`) — and couple it to a
+   metric, so the expansion follows from a covariant law rather than an imposed
+   Friedmann equation.
 2. **The unscreened regime.** Is there a limit (`r → 0`, or a different
    coupling) in which κ-gravity becomes genuinely long-range `1/r²`?  The whole
    massive/massless-graviton question lives here.
