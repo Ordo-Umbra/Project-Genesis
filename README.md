@@ -157,6 +157,7 @@ experiments/
   n3_cosmic_structure.py    κ-gravity vs Hubble expansion: turnaround, and structure suppressed by expansion
   n3_expanding_universe.py  FLRW background: scale factor a(t), Hubble drag, dark-energy freeze-out of structure
   n3_self_contained_cosmos.py  Closed loop: dark energy from κ's self-maintenance drives the emergent expansion
+  n3_matter_from_forms.py   Matter source from the form spectrum: ρ_m0 ∝ Σ|Q| (Bogomolny) + a^(−dim) from topology
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -850,7 +851,22 @@ The FLRW section still *dialled* Ω_Λ by hand. This closes the loop: the capaci
 
 Reproduce with `python experiments/n3_self_contained_cosmos.py` (≈ 20 seconds; background integration only). `--quick` for a smaller scan.
 
-**Honest scope:** a Newtonian `8πG/3 = 1` Friedmann closure. The dark-energy density is genuinely *derived* from the recovery term (not dialled), but the identification `ρ_Λ = coeff·r·κ₀²` carries a modelling coefficient, the matter dilution law `a^{−dim}` is imposed, and there is still no metric, horizon, or relativistic stress-energy tensor. It establishes the *mechanism* — capacity self-maintenance as an emergent cosmological constant — not a first-principles ΛCDM.
+**Honest scope:** a Newtonian `8πG/3 = 1` Friedmann closure. The dark-energy density is genuinely *derived* from the recovery term (not dialled), but the identification `ρ_Λ = coeff·r·κ₀²` carries a modelling coefficient, the matter dilution law `a^{−dim}` is imposed, and there is still no metric, horizon, or relativistic stress-energy tensor. It establishes the *mechanism* — capacity self-maintenance as an emergent cosmological constant — not a first-principles ΛCDM. *(The next section removes the last dialled input — the matter density — deriving it from the form spectrum.)*
+
+### Matter from forms: the Friedmann source read off the topological spectrum
+
+The self-contained cosmos still *dialled* the matter density `ρ_m0` and *imposed* its `a^{−dim}` dilution. This traces the matter source all the way back to **Link 2** — matter as the stable topological forms of the sector field ψ∈ℂ³ — so the whole Friedmann source becomes the field's own content. `project_genesis/capacity_dynamics.py` (`matter_energy_density`) + `experiments/n3_matter_from_forms.py`.
+
+- **The Bogomolny mass ladder.** The charge `Q = 1..4` forms have structural (rest) energies on a straight line `E ≈ 5.38·|Q| + 2.87` (R² = 0.986) — a Bogomolny energy floor per unit charge. So the matter density `ρ_m0 = ΣE/V ∝ Σ|Q|` is **read off the topological content** of the field, not chosen.
+- **Topological protection.** Deforming a charge-2 form and cooling recovers **exactly Q = 2** for every realisation up to noise ≈ 0.3, while the raw geometric charge has already blown up on UV dislocations (⟨|Q|⟩ → 10). Only past a threshold (noise ≈ 0.4) does a kick comparable to the field itself carry it into a neighbouring sector — the rest-energy floor is genuinely protected.
+- **The dilution law is topological.** Because that total rest energy is conserved, spreading it through a growing comoving volume `V₀·a^{dim}` gives `ρ_m(a)` with a log–log slope of exactly **−dim** — the `a^{−dim}` law derived from charge conservation + volume, not imposed.
+- **The cosmos from its form content.** Feeding `ρ_m0` (from the forms) and `ρ_Λ` (from the recovery term) into the Friedmann integrator makes the acceleration onset `a_acc = (ρ_m0/2ρ_Λ)^{1/dim}` a function of **how many stable forms the universe holds** — `a_acc = 1.14 → 1.95` as `Σ|Q| = 10 → 50`, on the predicted curve. More matter, later acceleration.
+
+**The last dialled density is gone.** The matter term of the cosmology is now fixed by the topological content of the field — `ρ_m0` from the Bogomolny spectrum, `a^{−dim}` from charge conservation — and combined with dark energy from κ's self-maintenance, the entire Friedmann source is the field's own content. Matter is stable form (Link 2), and the cosmos runs on it.
+
+Reproduce with `python experiments/n3_matter_from_forms.py` (≈ 40 seconds; the cooling sweeps of the protection scan dominate). `--quick` for a smaller scan.
+
+**Honest scope:** a Newtonian `8πG/3 = 1` closure. The forms are 2-D CP² solitons whose Bogomolny energies set the rest masses; they are then treated as point masses populating a `dim`-dimensional comoving volume, which is what gives the `a^{−dim}` dilution. The dark-energy identification still carries a modelling coefficient and there is no metric or relativistic stress-energy tensor. It fixes the matter *source* from topology — not a first-principles ΛCDM.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 

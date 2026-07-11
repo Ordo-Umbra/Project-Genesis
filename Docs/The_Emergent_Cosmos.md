@@ -181,6 +181,35 @@ The same `κ` is now **gravity** (its free energy), **matter** (stable forms),
 *and* **dark energy** (its self-maintenance).  The cosmological loop is closed:
 a cosmos out of one field.
 
+### Link 8 — the matter source read off the form spectrum
+*`capacity_dynamics.py` (`matter_energy_density`) · `n3_matter_from_forms.py`*
+
+Link 7 closed the loop but still *dialled* the matter density `ρ_m0` and
+*imposed* its `a^{−dim}` dilution.  Link 8 removes them, tracing the matter
+source back to Link 2 (matter = stable form).  Two facts about the forms do all
+the work — their rest energies are quantised by charge, and that charge is
+topologically protected:
+- **The Bogomolny mass ladder.**  The `Q = 1..4` forms sit on a straight line
+  `E ≈ 5.38·|Q| + 2.87` (R² = 0.986) — an energy floor per unit charge.  So
+  `ρ_m0 = ΣE/V ∝ Σ|Q|` is *read off the topological content*, not chosen.
+- **Topological protection.**  Deform a charge-2 form and cool: the charge
+  returns to **exactly 2** for every realisation up to noise ≈ 0.3 (the raw
+  geometric charge has already blown up on UV dislocations, `⟨|Q|⟩ → 10`);
+  only past a threshold does a kick comparable to the field itself tunnel it to
+  a neighbouring sector.  The rest-energy floor rides with the protected charge.
+- **The dilution law is topological.**  Because that total rest energy is
+  *conserved*, spreading it through a growing comoving volume `V₀·a^{dim}` gives
+  `ρ_m(a)` with a log–log slope of exactly `−dim` — the `a^{−dim}` law derived,
+  not assumed.
+- **The cosmos from its form content.**  Feeding `ρ_m0` (forms) and `ρ_Λ`
+  (recovery) into the Friedmann integrator makes the acceleration onset a
+  function of *how many forms the universe holds*: `a_acc = 1.14 → 1.95` as
+  `Σ|Q| = 10 → 50`, on the predicted curve.
+
+The last dialled density is gone.  The whole Friedmann source — matter *and*
+dark energy — is now the field's own content: `ρ_m0` from the Bogomolny
+spectrum, `a^{−dim}` from charge conservation, `ρ_Λ` from self-maintenance.
+
 ---
 
 ## 4. The toolkit
@@ -194,7 +223,7 @@ For building on the arc, the modules and experiments that make it up:
 | `topological_charge.py` | CP² geometric (Berg–Lüscher) charge, cooling, action |
 | `capacity_gravity.py` | `screening_length`, `gaussian_load`, `relax_capacity`, `capacity_free_energy`, `interaction_potential`, `fit_yukawa_range`, `well_range` |
 | `stable_forms.py` | `winding_form`, `trivial_bump`, `distinction_density`, `structural_mass`, `gravitational_mass`, `form_charge` |
-| `capacity_dynamics.py` | `capacity_force`, `evolve` (overdamped), `evolve_inertial`, `hubble_flow`, `fof_groups`, `friedmann_rates`, `evolve_cosmological`, `capacity_vacuum_density`, `deceleration_parameter`, `acceleration_onset`, `integrate_scale_factor` |
+| `capacity_dynamics.py` | `capacity_force`, `evolve` (overdamped), `evolve_inertial`, `hubble_flow`, `fof_groups`, `friedmann_rates`, `evolve_cosmological`, `capacity_vacuum_density`, `deceleration_parameter`, `acceleration_onset`, `integrate_scale_factor`, `matter_energy_density` |
 
 **Experiments** (`experiments/`) — each writes a figure + verdict to `artifacts/`
 | file | the link |
@@ -206,10 +235,12 @@ For building on the arc, the modules and experiments that make it up:
 | `n3_cosmic_structure.py` | turnaround, structure vs expansion |
 | `n3_expanding_universe.py` | FLRW: scale factor, Hubble drag, dark energy |
 | `n3_self_contained_cosmos.py` | the closed loop: dark energy from κ's self-maintenance drives the expansion |
+| `n3_matter_from_forms.py` | the matter source from the form spectrum: `ρ_m0 ∝ Σ|Q|`, `a^{−dim}` from topology |
 
 **Tests**: `test_capacity_gravity.py`, `test_stable_forms.py`,
 `test_capacity_dynamics.py`, `test_capacity_inertial.py`,
-`test_cosmic_structure.py`, `test_capacity_cosmology.py`.
+`test_cosmic_structure.py`, `test_capacity_cosmology.py`,
+`test_matter_from_forms.py`.
 
 ---
 
@@ -226,12 +257,15 @@ The arc is real and its boundaries are bright.  What it is **not**:
   step (Born–Oppenheimer), and the dynamics runs in 2-D lattice units; masses
   are rigid Gaussian blobs standing in for the stable forms (whose `m_g = m_i`
   is established separately).
-- **The Friedmann closure is partial.** The **dark-energy density is now
-  derived** — it is the capacity field's self-maintenance, `ρ_Λ = coeff·r·κ₀²`
-  (Link 7) — but the *matter* dilution law `a^{−dim}` is still imposed, the
-  identification carries a modelling coefficient, and there is no metric or
-  relativistic stress-energy tensor.  The κ screening length is a fixed
-  physical scale (it does not redshift with the background).
+- **The Friedmann closure is now sourced by the field, but stays Newtonian.**
+  Both densities are derived: the **dark energy** is the capacity field's
+  self-maintenance `ρ_Λ = coeff·r·κ₀²` (Link 7), and the **matter** density
+  `ρ_m0 ∝ Σ|Q|` with its `a^{−dim}` dilution comes from the Bogomolny form
+  spectrum and topological charge conservation (Link 8).  What remains: the
+  vacuum identification carries a modelling coefficient, the forms are treated
+  as point masses in a `dim`-volume (which is what supplies `a^{−dim}`), and
+  there is still no metric or relativistic stress-energy tensor.  The κ
+  screening length is a fixed physical scale (it does not redshift).
 
 The arc reproduces the **mechanisms** — a screened universal attraction, an
 emergent equivalence principle, orbits and precession, spherical collapse, and
@@ -241,15 +275,17 @@ the dark-energy suppression of growth — not a quantitative ΛCDM.
 
 ## 6. Open frontiers
 
-Ranked by how much they would deepen the arc.  *(Frontier 1 — closing the
-cosmological loop — is now partly done: Link 7 derives the dark energy from
-the κ-field's self-maintenance.  What remains is to derive the **matter**
-sector's dilution and the full stress-energy from the field too.)*
+Ranked by how much they would deepen the arc.  *(Frontier 1 — sourcing the
+Friedmann equation from the field — is now largely done: Link 7 derives the dark
+energy from κ's self-maintenance and Link 8 derives the matter density and its
+`a^{−dim}` dilution from the form spectrum.  What remains is the relativistic
+step: a genuine stress-energy tensor and metric.)*
 
-1. **Complete the stress-energy closure.** Link 7 derives `ρ_Λ` from the
-   capacity recovery; the next step is to derive the *matter* density and its
-   `a^{−dim}` dilution from the stable forms' own energy, so the entire
-   Friedmann source — not just its vacuum piece — comes from the κ-field.
+1. **A relativistic stress-energy tensor.** Both Friedmann densities are now
+   sourced by the field (Links 7–8), but within a Newtonian `8πG/3 = 1` closure.
+   The next step is a genuine `T_{μν}` — pressure as well as density, the forms
+   as its matter part and the capacity vacuum as its Λ part — so the expansion
+   follows from a covariant law rather than an imposed Friedmann equation.
 2. **The unscreened regime.** Is there a limit (`r → 0`, or a different
    coupling) in which κ-gravity becomes genuinely long-range `1/r²`?  The whole
    massive/massless-graviton question lives here.

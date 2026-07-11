@@ -392,3 +392,18 @@ def integrate_scale_factor(rho_m0, rho_lambda, *, dim=3, dt=0.5, steps=300):
         a = a + a * H * dt
         t += dt
     return hist
+
+
+def matter_energy_density(masses, comoving_volume):
+    """Present-day matter density ``ρ_m0 = Σ E_i / V`` from a corpus of forms.
+
+    Closes the Friedmann source back onto the stable-form spectrum: each form
+    contributes its structural (rest) energy ``E_i`` — which the Bogomolny
+    bound fixes to ``E_i ∝ |Q_i|`` — and the sum over the comoving volume is
+    the matter density that seeds ``ρ_m(a) = ρ_m0·a^{-dim}``.  So ``ρ_m0`` is
+    read off the topological content of the field, not dialled.
+    """
+    volume = float(comoving_volume)
+    if volume <= 0:
+        raise ValueError("comoving_volume must be positive")
+    return float(np.sum(np.asarray(masses, dtype=float)) / volume)
