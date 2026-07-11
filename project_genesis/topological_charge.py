@@ -88,6 +88,79 @@ def cp_action(psi: np.ndarray) -> float:
     return s
 
 
+def cp_action_density(psi: np.ndarray) -> np.ndarray:
+    """Per-site CP action density ``e(x) = Σ_μ (1 − |z̄(x)·z(x+μ)|²)`` (forward links).
+
+    Sums the two forward links at each site, so ``e.sum()`` equals
+    :func:`cp_action`.  The energy density against which the topological charge
+    density is compared in the Bogomolny coherent fraction.
+    """
+    e = np.zeros(psi.shape[:-1])
+    for axis in (0, 1):
+        nb = np.roll(psi, -1, axis=axis)
+        e += 1.0 - np.abs(np.sum(np.conj(psi) * nb, axis=-1)) ** 2
+    return e
+
+
+def coherent_fraction(action_density: np.ndarray, charge_density: np.ndarray) -> float:
+    """The Bogomolny coherent fraction ``Σ|q(x)| / Σ e(x)`` of a field.
+
+    One dimensionless operator, applicable to any sector with a topological
+    charge density ``q`` and an action density ``e`` obeying the Bogomolny bound
+    ``Σe ≥ Σ|q|`` (so the fraction is in ``[0, 1]``): the share of the action
+    carried by topologically coherent (self-dual) structure — the URP
+    integration/exchange fraction ``κ``.  It is the same operator that
+    ``gauge_topology.self_dual_fraction`` computes for the 4-D SU(N) field and
+    that :func:`cp_coherent_fraction` computes for the 2-D CP sector.
+    """
+    e = float(np.asarray(action_density).sum())
+    if e == 0.0:
+        return 0.0
+    q = float(np.abs(np.asarray(charge_density)).sum())
+    return q / e
+
+
+def cp_coherent_fraction(psi: np.ndarray) -> float:
+    """The Bogomolny coherent fraction of a CP field — :func:`coherent_fraction`."""
+    return coherent_fraction(cp_action_density(psi), topological_charge_density(psi))
+
+
+def cp_metropolis_sweep(psi: np.ndarray, beta: float, rng: np.random.Generator,
+                        epsilon: float = 0.5) -> np.ndarray:
+    """One checkerboard Metropolis sweep of the CP^(N-1) field at coupling ``beta``.
+
+    Proposes ``z' ∝ z + ε·(complex Gaussian)`` at every site of one colour at
+    once (their neighbours are the other colour, held fixed, so the parallel
+    update satisfies detailed balance) and accepts by the local action change
+    ``exp(−β ΔS)``.  Generates a *thermal* CP vacuum — the sector analogue of a
+    heat-bath gauge ensemble — as opposed to a cooled or hot-random field.
+    """
+    z = psi.copy()
+    L0, L1 = z.shape[:2]
+    yy, xx = np.meshgrid(np.arange(L0), np.arange(L1), indexing="ij")
+
+    def site_action(field):
+        s = np.zeros(field.shape[:-1])
+        for axis in (0, 1):
+            for shift in (-1, 1):
+                nb = np.roll(field, shift, axis=axis)
+                s += 1.0 - np.abs(np.sum(np.conj(nb) * field, axis=-1)) ** 2
+        return s
+
+    for colour in (0, 1):
+        mask = ((yy + xx) % 2) == colour
+        prop = z + epsilon * (rng.standard_normal(z.shape)
+                              + 1j * rng.standard_normal(z.shape))
+        prop = prop / np.linalg.norm(prop, axis=-1, keepdims=True)
+        s_old = site_action(z)
+        trial = z.copy()
+        trial[mask] = prop[mask]
+        s_new = site_action(trial)
+        accept = (rng.random((L0, L1)) < np.exp(-beta * (s_new - s_old))) & mask
+        z[accept] = prop[accept]
+    return z
+
+
 def cool_step(psi: np.ndarray, rate: float = 1.0) -> np.ndarray:
     """One cooling sweep: move each ``z(x)`` toward the local action-minimiser.
 

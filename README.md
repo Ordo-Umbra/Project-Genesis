@@ -162,6 +162,7 @@ experiments/
   n3_stress_energy_closure.py  Relativistic closure: T^μ_ν from the field, expansion as a consequence of ∇·T=0
   n3_friedmann_from_action.py  Variational closure: Friedmann H²=ρ as the Hamiltonian constraint / a first integral of an action
   n3_gravity_from_capacity.py  Gravity from the field: −a ȧ² as the capacity scalar's kinetic free energy, expansion as κ_s=ln a rolling
+  n3_one_kappa_frontier.py  The one-κ frontier: κ̂=Σ|q|/Σe as one operator across Act I (SU3) and Act II (CP²) — same concept, not (yet) one number
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -932,6 +933,21 @@ The variational closure still *posited* the gravitational kinetic term `−a ȧ�
 Reproduce with `python experiments/n3_gravity_from_capacity.py` (≈ 5 seconds; background integration only). `--quick` for a smaller scan.
 
 **Honest scope:** the identification `a = e^{κ_s}` (the scale factor as the exp of the homogeneous capacity scalar / e-folding number) is a *reading* within the URP framework, and the kinetic free energy carries gravity's wrong-sign conformal mode, taken as given. It is still minisuperspace (homogeneous, one degree of freedom), with no inhomogeneous field equations or a solved metric. It traces the last hand-input at the Friedmann level to the field; it is **not** a derivation of general relativity.
+
+### The one-κ frontier: one operator across the two acts, honestly mapped
+
+Act I measured `κ` as the self-dual fraction of the SU(3) vacuum (`f_SD(t₀) ≈ 0.22`, the instanton fraction of the gluon condensate); Act II uses `κ` as the capacity field whose free energy is gravity. Whether these are the *same dimensionless number* is the question that would fuse the two acts. This experiment reports, honestly, what the computation says — a **frontier, not a coincidence**. `project_genesis/topological_charge.py` (`coherent_fraction`, `cp_action_density`, `cp_coherent_fraction`, `cp_metropolis_sweep`) + `experiments/n3_one_kappa_frontier.py`.
+
+- **One operator, two sectors.** The Bogomolny coherent fraction `κ̂ = Σ|q(x)|/Σe(x) ∈ [0,1]` is a single function — literally what `self_dual_fraction` computes for SU(3) and `cp_coherent_fraction` for the CP sector (verified equal), with the bound `Σe ≥ Σ|q|` holding in both. The operator transfers cleanly.
+- **Act I: it rises to 0.22.** Under the Wilson flow the SU(3) coherent fraction rises from the UV-noise floor to `κ̂(t₀) = 0.220 ± 0.005` at the RG-clean scale `t₀` (`t²E = 0.3`) — the established value, reproduced.
+- **Act II substrate: it falls.** In a *thermal* CP² vacuum (a Metropolis ensemble), the same `κ̂` *falls* monotonically under the cooling flow (`0.15 → 0.01`) — the opposite behaviour, no plateau near 0.22.
+- **The frontier.** At the deepest smoothing both flows share, `κ̂ ≈ 0.18` (gauge) vs `0.03` (CP), and they move apart. **The naive coherent fraction does not give a parameter-free `κ_I = κ_II`.** The two κ's are the same *concept* (the integration fraction) but not the same measured number in this estimator.
+
+**What an identity would require** (stated plainly, not forced): a matched renormalisation-group condition relating the 4-D SU(3) and 2-D CP flows (their dimensionful flow clocks `t²E` vs `t·E` are not automatically comparable), or a different invariant — a ratio of topological susceptibilities `χ_top`, or the instanton *size* distribution rather than the action fraction. Those are concrete next tests.
+
+Reproduce with `python experiments/n3_one_kappa_frontier.py` (≈ 1 minute; the SU(3) ensemble dominates). `--quick` for a smaller scan.
+
+**Honest scope:** a deliberately honest **boundary** result. The operator is genuinely one function and Act I's 0.22 is solid; what is *not* established is a matched numerical identity `κ_I = κ_II`. The value is the clean map — what holds, what does not, and what a real bridge would need — kept in the record so the theory is built on what is true, not what is hoped.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
