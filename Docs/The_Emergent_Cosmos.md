@@ -286,6 +286,29 @@ The last hand-input at the Friedmann level is gone: `H² = ρ` and `ä/a =
 action, and `H² = ρ` a preserved, attracting first integral.  The scale factor's
 dynamics and its stress-energy source come from a single variational principle.
 
+### Link 12 — gravity from the capacity field: the action as capacity free energy
+*`capacity_dynamics.py` (`scale_capacity`, `capacity_kinetic_energy`, `capacity_scalar_acceleration`, `integrate_capacity_scale`) · `n3_gravity_from_capacity.py`*
+
+Link 11 still *posited* the gravitational kinetic term `−a ȧ²`.  It **is** the
+capacity field's own kinetic free energy.  Identify the scale factor with the
+exponential of the homogeneous capacity scalar — the zero-mode `κ_s` whose global
+value sets the overall integration scale — `a = e^{κ_s}` (`κ_s = ln a`,
+`H = κ̇_s`).  Its kinetic free energy on the FLRW measure `a³` is `a³ κ̇_s² = a ȧ²`,
+so `−a ȧ² = −a³ κ̇_s²`:
+- **The gravitational term is capacity free energy.**  Along the history the
+  posited `−a ȧ²` and `−a³ κ̇_s²` coincide to `~10⁻¹⁶` — the geometry's kinetic
+  energy is the field's.
+- **Friedmann is an energy balance `κ̇_s² = ρ`.**  The mean capacity's kinetic
+  free-energy density equals the content; `|κ̇_s² − ρ|` stays `~10⁻⁹`.
+- **Expansion is the capacity scalar rolling.**  Its field equation
+  `κ̈_s = −(3/2)(κ̇_s² + p)` gives `κ̈_s → 0` in the vacuum limit (de Sitter) and
+  reproduces the whole `a(t)` (`~10⁻⁸`); the balance is an attractor.
+
+The last posit is gone: the gravitational action's kinetic term is the capacity
+field's own kinetic free energy, and the cosmic expansion is that field — the
+mean capacity — rolling under it.  Gravity, not just its cosmology, is read off
+the URP field.
+
 ---
 
 ## 4. The toolkit
@@ -299,7 +322,7 @@ For building on the arc, the modules and experiments that make it up:
 | `topological_charge.py` | CP² geometric (Berg–Lüscher) charge, cooling, action |
 | `capacity_gravity.py` | `screening_length`, `gaussian_load`, `relax_capacity`, `capacity_free_energy`, `interaction_potential`, `fit_yukawa_range`, `well_range` |
 | `stable_forms.py` | `winding_form`, `trivial_bump`, `distinction_density`, `structural_mass`, `gravitational_mass`, `form_charge` |
-| `capacity_dynamics.py` | `capacity_force`, `evolve` (overdamped), `evolve_inertial`, `hubble_flow`, `fof_groups`, `friedmann_rates`, `evolve_cosmological`, `capacity_vacuum_density`, `deceleration_parameter`, `acceleration_onset`, `integrate_scale_factor`, `matter_energy_density`, `equation_of_state_from_dilution`, `gas_equation_of_state`, `stress_energy_tensor`, `covariant_conservation_rate`, `friedmann_acceleration`, `integrate_stress_energy`, `minisuperspace_lagrangian`, `hamiltonian_constraint`, `integrate_friedmann_action` |
+| `capacity_dynamics.py` | `capacity_force`, `evolve` (overdamped), `evolve_inertial`, `hubble_flow`, `fof_groups`, `friedmann_rates`, `evolve_cosmological`, `capacity_vacuum_density`, `deceleration_parameter`, `acceleration_onset`, `integrate_scale_factor`, `matter_energy_density`, `equation_of_state_from_dilution`, `gas_equation_of_state`, `stress_energy_tensor`, `covariant_conservation_rate`, `friedmann_acceleration`, `integrate_stress_energy`, `minisuperspace_lagrangian`, `hamiltonian_constraint`, `integrate_friedmann_action`, `scale_capacity`, `capacity_kinetic_energy`, `capacity_scalar_acceleration`, `integrate_capacity_scale` |
 
 **Experiments** (`experiments/`) — each writes a figure + verdict to `artifacts/`
 | file | the link |
@@ -315,12 +338,14 @@ For building on the arc, the modules and experiments that make it up:
 | `n3_form_equation_of_state.py` | the equation of state: cold forms are dust (`w=0`), the capacity vacuum is Λ (`w=−1`) |
 | `n3_stress_energy_closure.py` | the relativistic closure: `T^μ_ν` from the field, expansion as a consequence of `∇·T=0` |
 | `n3_friedmann_from_action.py` | the variational closure: `H²=ρ` as the Hamiltonian constraint / a first integral of an action |
+| `n3_gravity_from_capacity.py` | gravity from the field: `−a ȧ²` as the capacity scalar's kinetic free energy, expansion as `κ_s=ln a` rolling |
 
 **Tests**: `test_capacity_gravity.py`, `test_stable_forms.py`,
 `test_capacity_dynamics.py`, `test_capacity_inertial.py`,
 `test_cosmic_structure.py`, `test_capacity_cosmology.py`,
 `test_matter_from_forms.py`, `test_form_equation_of_state.py`,
-`test_stress_energy_closure.py`, `test_friedmann_from_action.py`.
+`test_stress_energy_closure.py`, `test_friedmann_from_action.py`,
+`test_gravity_from_capacity.py`.
 
 ---
 
@@ -352,10 +377,12 @@ The arc is real and its boundaries are bright.  What it is **not**:
   expansion an output (Link 10).  Even the Friedmann relations are no longer
   hand-inputs: they are the Hamiltonian constraint and Euler–Lagrange equation
   of a minisuperspace action, with `H² = ρ` a preserved, attracting first
-  integral (Link 11).  What remains: that action is *minisuperspace* — its
-  gravitational term `−a ȧ²` is the reduced Einstein–Hilbert form posited (not
-  derived from the κ-action microscopically), the background is homogeneous, and
-  there are no inhomogeneous field equations or a solved metric.
+  integral (Link 11), and that gravitational term `−a ȧ²` is identified with the
+  capacity scalar's own kinetic free energy `−a³ κ̇_s²` under `a = e^{κ_s}`
+  (Link 12).  What remains: that identification (`a = e^{κ_s}`, the wrong-sign
+  conformal mode) is a *reading*, the action stays *minisuperspace* (one degree
+  of freedom, homogeneous), and there are no inhomogeneous field equations or a
+  solved metric.
 
 The arc reproduces the **mechanisms** — a screened universal attraction, an
 emergent equivalence principle, orbits and precession, spherical collapse, and
@@ -368,21 +395,19 @@ the dark-energy suppression of growth — not a quantitative ΛCDM.
 Ranked by how much they would deepen the arc.  *(Frontier 1 — sourcing the
 Friedmann level from the field — is now done end to end: Links 7–8 derive the
 dark energy and the matter density/dilution, Link 9 measures the equations of
-state, Link 10 assembles the conserved `T^μ_ν`, and Link 11 derives the Friedmann
-relations themselves as the constraint + Euler–Lagrange equation of a
-minisuperspace action.  What remains is to go beyond minisuperspace: the
-gravitational term from the κ-action itself, inhomogeneity, and a solved
-metric.)*
+state, Link 10 assembles the conserved `T^μ_ν`, Link 11 derives the Friedmann
+relations as the constraint + Euler–Lagrange equation of an action, and Link 12
+identifies that action's gravitational term with the capacity scalar's kinetic
+free energy.  What remains is to lift the homogeneous minisuperspace to a full
+inhomogeneous field theory.)*
 
-1. **Beyond minisuperspace.** The Friedmann relations are now the constraint and
-   Euler–Lagrange equation of an action (Link 11), but that action is
-   *minisuperspace* — one degree of freedom `a(t)`, with the gravitational term
-   `−a ȧ²` posited as the reduced Einstein–Hilbert form.  The next steps: derive
-   that gravitational term from the κ-action itself (the geometry's kinetic
-   energy as the capacity field's free energy, from first principles), and lift
-   to an inhomogeneous background — cosmological perturbations, a real growth
-   factor `D(a)`, and a solved metric — connecting back to the N-body structure
-   work on a relativistic footing.
+1. **Inhomogeneity: perturbations and a growth factor.** The whole gravitational
+   sector is now the capacity scalar `κ_s = ln a` rolling (Links 11–12), but only
+   its homogeneous zero-mode — one degree of freedom.  The next step is to let
+   `κ_s` vary in space: cosmological perturbations `δκ_s(x, t)`, a real growth
+   factor `D(a)`, and a solved (perturbed) metric — connecting back to the N-body
+   structure work on a relativistic footing, and giving the wrong-sign conformal
+   mode a proper field-theoretic treatment.
 2. **The unscreened regime.** Is there a limit (`r → 0`, or a different
    coupling) in which κ-gravity becomes genuinely long-range `1/r²`?  The whole
    massive/massless-graviton question lives here.
