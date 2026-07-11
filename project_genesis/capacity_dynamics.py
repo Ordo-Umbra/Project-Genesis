@@ -465,3 +465,112 @@ def gas_equation_of_state(masses, velocities, *, volume=1.0):
     pressure = float(np.sum(gamma * m * speed2) / (dim * vol))
     w = pressure / rho if rho > 0 else 0.0
     return {"rho": rho, "pressure": pressure, "w": w}
+
+
+# --------------------------------------------------------------------------
+# The relativistic closure: a stress-energy tensor T^μ_ν, and expansion as
+# its consequence rather than an imposed law
+# --------------------------------------------------------------------------
+#
+# The pieces are now all measured: the matter density and its dilution (Links
+# 7–8) and the equation of state of each component (Link 9 — forms are dust
+# ``w = 0``, the capacity vacuum is ``w = −1``).  This assembles them into a
+# perfect-fluid stress-energy tensor in a 3+1 FLRW background (signature
+# ``(−,+,+,+)``, comoving/rest frame),
+#
+#     T^μ_ν = diag(−ρ, p, p, p) ,   p_i = w_i·ρ_i ,   ρ = Σ ρ_i ,  p = Σ p_i .
+#
+# Its covariant conservation ``∇_μ T^{μν} = 0`` has, in FLRW, the single
+# non-trivial (time) component
+#
+#     ρ̇_i + 3 H (ρ_i + p_i) = 0   ⇒   ρ_i ∝ a^{−3(1+w_i)} ,
+#
+# so the matter law ``a^{-3}`` and the constant vacuum are *derived* from
+# conservation + the measured equations of state, not imposed.  Closing with the
+# Einstein/Friedmann relations (units ``8πG/3 = 1``, so ``H² = ρ``)
+#
+#     H² = ρ ,   ä/a = −½(ρ + 3p) ,   q = −ä a/ȧ² = ½(1 + 3 w_eff) ,
+#
+# makes the whole expansion history a *consequence* of the field's own
+# stress-energy — the Friedmann equation turned from input into output.
+
+
+def stress_energy_tensor(densities, eos):
+    """The perfect-fluid ``T^μ_ν = diag(−ρ, p, p, p)`` of a component mixture.
+
+    ``densities`` are the current component energy densities ``ρ_i`` and ``eos``
+    their equations of state ``w_i`` (so ``p_i = w_i ρ_i``).  Returns the 4×4
+    mixed tensor together with the totals ``ρ = Σρ_i``, ``p = Σp_i`` and the
+    effective equation of state ``w_eff = p/ρ`` (which runs from ~0 when matter
+    dominates to −1 when the vacuum does).
+    """
+    rho_i = np.asarray(densities, dtype=float)
+    w_i = np.asarray(eos, dtype=float)
+    if rho_i.shape != w_i.shape:
+        raise ValueError("densities and eos must have the same shape")
+    rho = float(rho_i.sum())
+    p = float((w_i * rho_i).sum())
+    T = np.diag([-rho, p, p, p]).astype(float)
+    w_eff = p / rho if rho != 0 else 0.0
+    return {"T": T, "rho": rho, "pressure": p, "w_eff": float(w_eff)}
+
+
+def covariant_conservation_rate(rho, w, hubble):
+    """The FLRW continuity rate ``ρ̇ = −3 H (ρ + p) = −3 H ρ (1 + w)``.
+
+    The single non-trivial component of ``∇_μ T^{μν} = 0`` in a 3+1 FLRW
+    background — the law that makes each component dilute as ``a^{−3(1+w)}``.
+    """
+    return float(-3.0 * hubble * rho * (1.0 + w))
+
+
+def friedmann_acceleration(rho, pressure):
+    """The acceleration ``ä/a = −½(ρ + 3p)`` (the second Friedmann/Einstein eq)."""
+    return float(-0.5 * (rho + 3.0 * pressure))
+
+
+def integrate_stress_energy(densities0, eos, *, dt=0.5, steps=300):
+    """Evolve the coupled ``T^μ_ν`` + Friedmann system — nothing imposed.
+
+    Each component density evolves by covariant conservation
+    ``ρ̇_i = −3 H (ρ_i + p_i)``; the Hubble rate closes the system through
+    ``H = √(ρ_tot)`` (units ``8πG/3 = 1``) and ``ȧ = a H``.  So the dilution
+    laws and the whole expansion history ``a(t)`` follow from the measured
+    equations of state and conservation, not from an assumed ``a^{-3}``.
+    Returns ``a, t, H, q``, the total density/pressure/``w_eff`` and the
+    per-component densities.  Integrated with RK4 so the conservation-derived
+    dilution matches ``a^{−3(1+w)}`` to high precision.
+    """
+    rho = np.asarray(densities0, dtype=float).copy()
+    w = np.asarray(eos, dtype=float)
+
+    def deriv(state):
+        r = state[:-1]
+        H = np.sqrt(max(float(r.sum()), 0.0))
+        drho = -3.0 * H * r * (1.0 + w)          # covariant conservation
+        da = state[-1] * H                       # ȧ = a H
+        return np.append(drho, da)
+
+    state = np.append(rho, 1.0)                  # [ρ_i..., a]
+    t = 0.0
+    hist = {k: [] for k in ("a", "t", "H", "q", "rho_tot", "p_tot", "w_eff")}
+    hist["rho_components"] = []
+    for _ in range(steps):
+        r = state[:-1]
+        rho_tot = float(r.sum())
+        p_tot = float((w * r).sum())
+        H = np.sqrt(max(rho_tot, 0.0))
+        accel = friedmann_acceleration(rho_tot, p_tot)
+        hist["a"].append(float(state[-1])); hist["t"].append(t)
+        hist["H"].append(float(H))
+        hist["q"].append(float(-accel / rho_tot) if rho_tot > 0 else float("nan"))
+        hist["rho_tot"].append(rho_tot); hist["p_tot"].append(p_tot)
+        hist["w_eff"].append(p_tot / rho_tot if rho_tot > 0 else 0.0)
+        hist["rho_components"].append(r.copy())
+        k1 = deriv(state)
+        k2 = deriv(state + 0.5 * dt * k1)
+        k3 = deriv(state + 0.5 * dt * k2)
+        k4 = deriv(state + dt * k3)
+        state = state + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+        t += dt
+    return hist

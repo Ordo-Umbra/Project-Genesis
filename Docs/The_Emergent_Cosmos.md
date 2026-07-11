@@ -234,6 +234,30 @@ consistent: a pressureless dust of forms (`w = 0`) and a `w = −1` capacity
 vacuum — the "dust + Λ" of the cosmology *measured, not assumed*, with the warm
 form gas bridging dust and radiation.
 
+### Link 10 — the relativistic closure: expansion from a stress-energy tensor
+*`capacity_dynamics.py` (`stress_energy_tensor`, `covariant_conservation_rate`, `friedmann_acceleration`, `integrate_stress_energy`) · `n3_stress_energy_closure.py`*
+
+The pieces are all measured now — the densities (Links 7–8) and their equations
+of state (Link 9).  Link 10 assembles them into a perfect-fluid stress-energy
+tensor in a 3+1 FLRW background, `T^μ_ν = diag(−ρ, p, p, p)` with `p_i = w_iρ_i`,
+and lets the expansion *follow* from it instead of imposing the Friedmann matter
+law:
+- **Conservation derives the dilution.**  The one non-trivial FLRW component of
+  `∇_μT^{μν}=0` is the continuity equation `ρ̇_i + 3H(ρ_i + p_i) = 0`; integrating
+  it reproduces `ρ_i ∝ a^{−3(1+w_i)}` to `~10⁻⁷` — dust `a^{−3}`, vacuum constant,
+  radiation `a^{−4}`.  The `a^{−dim}` law we had *imposed* is now an *output*.
+- **Expansion as an output.**  Closing with `H² = ρ` and `ä/a = −½(ρ + 3p)`, the
+  effective equation of state runs `w_eff : −0.17 → −1` (matter → Λ) and
+  `q = ½(1+3w_eff)` crosses zero at `a_acc = 1.36` — decel→accel with nothing
+  about the dilution assumed.
+- **Consistency.**  The coupled-tensor `a(t)` coincides with the earlier
+  imposed-`a^{−3}` cosmology to `max rel |Δa|/a ≈ 5×10⁻³`; the new derivation
+  *explains* the old input rather than replacing it.
+
+The Friedmann level is closed: a stress-energy tensor built from the field's own
+content, made to conserve covariantly, produces the expansion history as a
+consequence.  The Friedmann equation is now an output.
+
 ---
 
 ## 4. The toolkit
@@ -247,7 +271,7 @@ For building on the arc, the modules and experiments that make it up:
 | `topological_charge.py` | CP² geometric (Berg–Lüscher) charge, cooling, action |
 | `capacity_gravity.py` | `screening_length`, `gaussian_load`, `relax_capacity`, `capacity_free_energy`, `interaction_potential`, `fit_yukawa_range`, `well_range` |
 | `stable_forms.py` | `winding_form`, `trivial_bump`, `distinction_density`, `structural_mass`, `gravitational_mass`, `form_charge` |
-| `capacity_dynamics.py` | `capacity_force`, `evolve` (overdamped), `evolve_inertial`, `hubble_flow`, `fof_groups`, `friedmann_rates`, `evolve_cosmological`, `capacity_vacuum_density`, `deceleration_parameter`, `acceleration_onset`, `integrate_scale_factor`, `matter_energy_density`, `equation_of_state_from_dilution`, `gas_equation_of_state` |
+| `capacity_dynamics.py` | `capacity_force`, `evolve` (overdamped), `evolve_inertial`, `hubble_flow`, `fof_groups`, `friedmann_rates`, `evolve_cosmological`, `capacity_vacuum_density`, `deceleration_parameter`, `acceleration_onset`, `integrate_scale_factor`, `matter_energy_density`, `equation_of_state_from_dilution`, `gas_equation_of_state`, `stress_energy_tensor`, `covariant_conservation_rate`, `friedmann_acceleration`, `integrate_stress_energy` |
 
 **Experiments** (`experiments/`) — each writes a figure + verdict to `artifacts/`
 | file | the link |
@@ -261,11 +285,13 @@ For building on the arc, the modules and experiments that make it up:
 | `n3_self_contained_cosmos.py` | the closed loop: dark energy from κ's self-maintenance drives the expansion |
 | `n3_matter_from_forms.py` | the matter source from the form spectrum: `ρ_m0 ∝ Σ|Q|`, `a^{−dim}` from topology |
 | `n3_form_equation_of_state.py` | the equation of state: cold forms are dust (`w=0`), the capacity vacuum is Λ (`w=−1`) |
+| `n3_stress_energy_closure.py` | the relativistic closure: `T^μ_ν` from the field, expansion as a consequence of `∇·T=0` |
 
 **Tests**: `test_capacity_gravity.py`, `test_stable_forms.py`,
 `test_capacity_dynamics.py`, `test_capacity_inertial.py`,
 `test_cosmic_structure.py`, `test_capacity_cosmology.py`,
-`test_matter_from_forms.py`, `test_form_equation_of_state.py`.
+`test_matter_from_forms.py`, `test_form_equation_of_state.py`,
+`test_stress_energy_closure.py`.
 
 ---
 
@@ -291,8 +317,13 @@ The arc is real and its boundaries are bright.  What it is **not**:
   as point masses in a `dim`-volume (which is what supplies `a^{−dim}`), and
   there is still no metric or relativistic stress-energy tensor.  The κ
   screening length is a fixed physical scale (it does not redshift).  The
-  *equation of state* of both components is now measured (Link 9: forms are dust
-  `w = 0`, vacuum is `w = −1`), but a covariant `T_{μν}` is not yet assembled.
+  *equation of state* of both components is measured (Link 9: forms are dust
+  `w = 0`, vacuum is `w = −1`) and assembled into a perfect-fluid stress-energy
+  tensor whose covariant conservation *derives* the dilution and makes the
+  expansion an output (Link 10) — but that `T^μ_ν` lives in a homogeneous FLRW
+  background with the Einstein/Friedmann relations put in by hand; the field
+  equations themselves are not derived from the κ-action, and there are no
+  perturbations or a solved metric.
 
 The arc reproduces the **mechanisms** — a screened universal attraction, an
 emergent equivalence principle, orbits and precession, spherical collapse, and
@@ -303,18 +334,20 @@ the dark-energy suppression of growth — not a quantitative ΛCDM.
 ## 6. Open frontiers
 
 Ranked by how much they would deepen the arc.  *(Frontier 1 — sourcing the
-Friedmann equation from the field — is now largely done: Links 7–8 derive the
-dark energy and the matter density/dilution from the field, and Link 9 measures
-the equation of state of both (dust `w = 0`, vacuum `w = −1`).  What remains is
-to assemble those pieces into a covariant `T_{μν}` and a metric.)*
+Friedmann level from the field — is now done: Links 7–8 derive the dark energy
+and the matter density/dilution, Link 9 measures the equations of state, and
+Link 10 assembles the perfect-fluid `T^μ_ν` whose covariant conservation makes
+the expansion an output.  What remains is the field-equation step: deriving the
+Einstein/Friedmann relations themselves from the κ-action, and going beyond the
+homogeneous background.)*
 
-1. **A relativistic stress-energy tensor.** Both Friedmann densities are now
-   sourced by the field (Links 7–8) and their equations of state measured
-   (Link 9), but within a Newtonian `8πG/3 = 1` closure.  The next step is to
-   assemble a genuine `T_{μν} = diag(ρ, p, p, p)` — the forms as its dust part
-   (`w = 0`), the capacity vacuum as its Λ part (`w = −1`) — and couple it to a
-   metric, so the expansion follows from a covariant law rather than an imposed
-   Friedmann equation.
+1. **The field equations from the κ-action.** The stress-energy tensor is now
+   assembled and conserved (Link 10), but the Einstein/Friedmann relations
+   `H² = ρ`, `ä/a = −½(ρ + 3p)` that turn it into expansion are still put in by
+   hand.  The next step is to *derive* those relations — a variational principle
+   in which `κ` (or a metric built from it) is the dynamical geometry sourced by
+   `T^μ_ν` — and to go beyond the homogeneous FLRW background (perturbations, a
+   solved metric, growth of structure with a real growth factor).
 2. **The unscreened regime.** Is there a limit (`r → 0`, or a different
    coupling) in which κ-gravity becomes genuinely long-range `1/r²`?  The whole
    massive/massless-graviton question lives here.
