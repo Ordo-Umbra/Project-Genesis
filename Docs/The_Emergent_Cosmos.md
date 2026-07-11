@@ -319,7 +319,7 @@ For building on the arc, the modules and experiments that make it up:
 | file | provides |
 |---|---|
 | `multiphase.py` | the κ dynamics `∂_t κ = D∇²κ + r(κ₀−κ) − c·load·κ` (its origin) |
-| `topological_charge.py` | CP² geometric (Berg–Lüscher) charge, cooling, action |
+| `topological_charge.py` | CP² geometric (Berg–Lüscher) charge, cooling, action; `coherent_fraction`, `cp_action_density`, `cp_coherent_fraction`, `cp_metropolis_sweep` (the one-κ operator + thermal CP sampler) |
 | `capacity_gravity.py` | `screening_length`, `gaussian_load`, `relax_capacity`, `capacity_free_energy`, `interaction_potential`, `fit_yukawa_range`, `well_range` |
 | `stable_forms.py` | `winding_form`, `trivial_bump`, `distinction_density`, `structural_mass`, `gravitational_mass`, `form_charge` |
 | `capacity_dynamics.py` | `capacity_force`, `evolve` (overdamped), `evolve_inertial`, `hubble_flow`, `fof_groups`, `friedmann_rates`, `evolve_cosmological`, `capacity_vacuum_density`, `deceleration_parameter`, `acceleration_onset`, `integrate_scale_factor`, `matter_energy_density`, `equation_of_state_from_dilution`, `gas_equation_of_state`, `stress_energy_tensor`, `covariant_conservation_rate`, `friedmann_acceleration`, `integrate_stress_energy`, `minisuperspace_lagrangian`, `hamiltonian_constraint`, `integrate_friedmann_action`, `scale_capacity`, `capacity_kinetic_energy`, `capacity_scalar_acceleration`, `integrate_capacity_scale` |
@@ -339,13 +339,14 @@ For building on the arc, the modules and experiments that make it up:
 | `n3_stress_energy_closure.py` | the relativistic closure: `T^μ_ν` from the field, expansion as a consequence of `∇·T=0` |
 | `n3_friedmann_from_action.py` | the variational closure: `H²=ρ` as the Hamiltonian constraint / a first integral of an action |
 | `n3_gravity_from_capacity.py` | gravity from the field: `−a ȧ²` as the capacity scalar's kinetic free energy, expansion as `κ_s=ln a` rolling |
+| `n3_one_kappa_frontier.py` | the one-κ frontier: `κ̂=Σ\|q\|/Σe` as one operator across SU(3) (Act I) and CP² (Act II) — same concept, not (yet) one number |
 
 **Tests**: `test_capacity_gravity.py`, `test_stable_forms.py`,
 `test_capacity_dynamics.py`, `test_capacity_inertial.py`,
 `test_cosmic_structure.py`, `test_capacity_cosmology.py`,
 `test_matter_from_forms.py`, `test_form_equation_of_state.py`,
 `test_stress_energy_closure.py`, `test_friedmann_from_action.py`,
-`test_gravity_from_capacity.py`.
+`test_gravity_from_capacity.py`, `test_one_kappa_frontier.py`.
 
 ---
 
@@ -416,11 +417,19 @@ inhomogeneous field theory.)*
    split.
 4. **Three dimensions.** Lift the dynamics from 2-D to 3-D (the κ machinery is
    already dimension-agnostic; the cost is compute).
-5. **The one-κ identity.** The first act's `κ ≈ 0.22` (integration exchange
-   rate) and the second act's `κ` (gravity) are, in the framework, *the same
-   field*.  Making that identity quantitative — showing the gravitational
-   coupling and the integration constant are one number — would fuse the two
-   acts.
+5. **The one-κ identity (probed — an open frontier).** The first act's
+   `κ ≈ 0.22` (integration exchange rate) and the second act's `κ` (gravity)
+   are, in the framework, *the same field*.  `n3_one_kappa_frontier.py`
+   built the shared operator — the Bogomolny coherent fraction
+   `κ̂ = Σ|q|/Σe`, one function that is both `self_dual_fraction` (SU(3)) and
+   `cp_coherent_fraction` (CP) — and measured it in both sectors.  The honest
+   result is a *boundary*: `κ̂` **rises** to 0.22 under the SU(3) Wilson flow but
+   **falls** under the CP² cooling flow, so the naive coherent fraction does not
+   give a parameter-free `κ_I = κ_II`.  The two κ's are the same *concept*
+   (the integration fraction) but not the same measured number in this estimator.
+   A genuine identity would need a matched RG condition across the 4-D and 2-D
+   flows, or a different invariant (a `χ_top` ratio, or the instanton-size
+   distribution).  Mapped, not forced — the frontier is now precise.
 6. **A metric formulation.** Recast κ-gravity so the well acts as an effective
    metric / index of refraction, the bridge from "binding coupling" toward a
    geometric theory.
