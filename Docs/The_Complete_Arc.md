@@ -185,10 +185,17 @@ the frontier turned **precise**, which is what lets it eventually be crossed.
 The arc is real and its edges are bright. Across the whole program, what it is
 **not**:
 
-- **Act I does not pin `κ`.** The self-dual fraction is a validated instanton
-  observable of `O(0.2–0.4)`, volume-converged but cutoff-dependent; 0.22 is a
-  coarse-lattice reading, not a scheme-free determination. It does not prove the
-  metaphysical identity of logical incompleteness with the QCD vacuum.
+- **Act I does not pin `κ` — and the deflation test says why, sharply.** The
+  self-dual fraction is a validated instanton observable, but sweeping the
+  `t²E = c` reading convention slides it by ~0.05 (27σ against ensemble error),
+  the flow curve carries **no plateau** at any scanned scale, and the same
+  convention reads 0.52 at `β_g = 2.2` (`n3_kappa_deflation.py`). "κ ≈ 0.22"
+  is a coordinate on a rising, cutoff-dependent curve `κ̂(c, β_g)` — the honest
+  object is the *function* `κ̂(scale)`: a **dynamical κ**, as the framework
+  itself proposes. A dimensionless constant, if one exists, must be found in
+  convention-free structure (a finer-lattice plateau, a fixed point, or a
+  framework-level definition). It does not prove the metaphysical identity of
+  logical incompleteness with the QCD vacuum.
 - **Act II is not general relativity.** `κ`-gravity is a screened, Newton's-`G`
   analogue, not the spacetime metric; the dynamics is adiabatic and
   low-dimensional; the Friedmann-level closure is minisuperspace (homogeneous,
