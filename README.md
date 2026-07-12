@@ -66,6 +66,7 @@ project_genesis/
   instanton_scales.py  Peak-height instanton sizes (BPST/CP), CP gradient flow with measured D, the matched-scale (s=λ/ρ̄) comparison
   sector_field_4d.py   4-D CP² sector field: composite U(1) f_{μν}, second-Chern charge (c₁∪c₁ exact on fluxes), d-generic Metropolis + gradient flow
   hopfield_substrate.py  Second substrate for the criticality law: thermal Hopfield network, ΔC/ΔI/κ readings, S-compass trajectory taxonomy
+  continual_learning.py  κ-as-soil for weights: numpy MLP, capacity-gated SGD (per-parameter regenerating plasticity), task generators
   multiphase.py        Three-component Ψ∈ℂ³ sector field with 120° Y-junctions
   network_server.py    WebSocket server for remote monitoring and control
   numba_kernels.py     Numba JIT-accelerated field evolution kernels
@@ -81,7 +82,7 @@ Docs/
   Capacity_As_Gravity.md     κ as the framework's gravity: a universal, mass-sourced, √(D/r)-screened attraction
   The_Emergent_Cosmos.md     Capstone (Act II): κ→gravity→matter→structure→cosmos, with toolkit map and frontiers
   The_Complete_Arc.md        Top-level synthesis: the whole program — both acts, the one-κ frontier, the honest boundaries
-tests/                 611 checks across the engine, instruments, and physics
+tests/                 623 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -104,6 +105,7 @@ tests/                 611 checks across the engine, instruments, and physics
   test_capacity_separation.py
   test_topological_charge.py
   test_functor_bridge.py
+  test_continual_learning.py
   test_gauge_topology.py
   test_hopfield_substrate.py
   test_instanton_scales.py
@@ -175,6 +177,7 @@ experiments/
   n3_4d_sector_bridge.py    The like-for-like bridge: a 4-D sector field, so both κ̂'s share operator, dimension, and flow clock — and where they cross
   n3_kappa_deflation.py     The deflation test: sweep the t²E = c reading convention and watch the 0.22 — is Act I's constant a number or a convention?
   n3_criticality_transplant.py  The criticality transplant: "scarcity pushes S to criticality" tested on a Hopfield network — the condition toggled, not assumed
+  n3_continual_learning.py  The capacity law meets external ground truth: the persistence↔plasticity dial on real learning, with controls and a fair baseline
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1038,6 +1041,21 @@ The design toggles the mechanism's condition instead of assuming it. The sector 
 Reproduce with `python experiments/n3_criticality_transplant.py` (≈ 3 minutes). `--quick` for a smaller scan.
 
 **Honest scope:** one loading (P/N), one recovery rate, one drive strength; `T_c` is a finite-size crossing; the structured threshold and weight `w` are stated conventions fixed before the scan. Two substrates make a transplant, not universality — the next substrates (a driven network of coupled maps; a continual-learning system, where the same κ law meets external benchmarks) are where this either becomes a law or finds its edges.
+
+### Continual learning under the capacity law: the dial meets external ground truth
+
+The third substrate — and the first with **external ground truth**: continual learning, where catastrophic forgetting vs intransigence *is* the persistence↔plasticity dilemma. `project_genesis/continual_learning.py` + `experiments/n3_continual_learning.py` transplant κ-as-soil to weights: a small numpy MLP where every parameter carries its own capacity obeying the engine's law (consumed by that parameter's update activity `|g|`, regenerating at rate `r`), and gradients are **gated by capacity** — plasticity as a regenerating resource, the same shape as synaptic-consolidation methods (EWC/SI) but *dynamical* rather than a static penalty. Two interference conditions toggle the mechanism's own requirement (heterogeneous load), and a tuned constant-LR baseline keeps the test honest. Five pre-registered predictions; **4/5 land**:
+
+- **P1 ✓ The dial is monotone.** Across `r ∈ [0, 3.2]`: retention of task A falls `0.74 → 0.53` while acquisition of task B rises `0.53 → 0.94`. The recovery rate is the stability–plasticity dial, as the field measured.
+- **P2 ✓ The crossover is sharp.** The overwrite fraction crosses ½ at `r⋆ ≈ 0.11` with a 25%→75% width of **0.69 decades** — a genuine threshold, the `n3_memory_competition` crossover transplanted from field to weights.
+- **P3 ✓/✗ The honest value-add test, both ways.** The negative control lands: under *dense* interference (permuted features — every parameter carries both tasks) the κ-dial shows no advantage over a tuned constant LR (`+0.014 ± 0.014`), exactly as predicted — uniform load degenerates capacity gating to LR decay. But the value half **fails**: under *split* interference the κ-dial **ties** the tuned LR (`0.865` vs `0.866`) — because naturally-separated gradients mean plain SGD barely forgets there either, leaving selectivity little to buy at this scale.
+- **P4 ✓ The criticality echo.** The best average learner sits at `r_opt = 0.05`, at the crossover's edge — where the transplant says capacity-bound S-climbers live.
+
+**What this establishes, and what it doesn't:** the capacity law's *phenomenology* — the monotone dial, the sharp write-once↔plastic crossover, the optimum at the edge — transfers cleanly to a real learning system, no stand-in constants anywhere. What is **not** yet demonstrated is an engineering advantage over a tuned constant learning rate: on these miniatures the mechanism matches but does not beat it. That failure is the next question, stated precisely: tasks with *overlapping-plus-private* structure (where selectivity must matter), synaptic-consolidation baselines (EWC/SI), longer task sequences, and standard benchmarks. This is the first result in the programme that an external benchmark could falsify at scale.
+
+Reproduce with `python experiments/n3_continual_learning.py` (≈ 3 minutes). `--quick` for a smaller scan.
+
+**Honest scope:** one task pair per condition, one consumption strength, a small numpy MLP, 2-task sequences; the overwrite normalisation and ladders are stated conventions. The P3-value failure is reported exactly as measured — the mechanism's case for *usefulness* (as opposed to correctness of its phenomenology) remains open.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
