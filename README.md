@@ -65,6 +65,7 @@ project_genesis/
   gauge_topology.py    4-D SU(N) clover topological charge, gauge cooling, susceptibility
   instanton_scales.py  Peak-height instanton sizes (BPST/CP), CP gradient flow with measured D, the matched-scale (s=λ/ρ̄) comparison
   sector_field_4d.py   4-D CP² sector field: composite U(1) f_{μν}, second-Chern charge (c₁∪c₁ exact on fluxes), d-generic Metropolis + gradient flow
+  hopfield_substrate.py  Second substrate for the criticality law: thermal Hopfield network, ΔC/ΔI/κ readings, S-compass trajectory taxonomy
   multiphase.py        Three-component Ψ∈ℂ³ sector field with 120° Y-junctions
   network_server.py    WebSocket server for remote monitoring and control
   numba_kernels.py     Numba JIT-accelerated field evolution kernels
@@ -80,7 +81,7 @@ Docs/
   Capacity_As_Gravity.md     κ as the framework's gravity: a universal, mass-sourced, √(D/r)-screened attraction
   The_Emergent_Cosmos.md     Capstone (Act II): κ→gravity→matter→structure→cosmos, with toolkit map and frontiers
   The_Complete_Arc.md        Top-level synthesis: the whole program — both acts, the one-κ frontier, the honest boundaries
-tests/                 596 checks across the engine, instruments, and physics
+tests/                 611 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -104,6 +105,7 @@ tests/                 596 checks across the engine, instruments, and physics
   test_topological_charge.py
   test_functor_bridge.py
   test_gauge_topology.py
+  test_hopfield_substrate.py
   test_instanton_scales.py
   test_sector_field_4d.py
   test_memory_corpus.py
@@ -172,6 +174,7 @@ experiments/
   n3_scale_matched_bridge.py  The scale-matched bridge: κ̂ compared at equal smoothing-per-instanton-size (s = λ/ρ̄) — the obstruction's own condition, imposed
   n3_4d_sector_bridge.py    The like-for-like bridge: a 4-D sector field, so both κ̂'s share operator, dimension, and flow clock — and where they cross
   n3_kappa_deflation.py     The deflation test: sweep the t²E = c reading convention and watch the 0.22 — is Act I's constant a number or a convention?
+  n3_criticality_transplant.py  The criticality transplant: "scarcity pushes S to criticality" tested on a Hopfield network — the condition toggled, not assumed
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1018,6 +1021,23 @@ Act I's headline constant is read at the flow scale `t₀` where `t²E = 0.3` �
 Reproduce with `python experiments/n3_kappa_deflation.py` (≈ 5 minutes; the deeper β = 2.2 flow dominates). `--quick` for a smaller scan.
 
 **Honest scope:** one lattice size per coupling (no continuum limit — the cutoff trend is measured here only as the β-dependence at fixed L); small ensembles; the flow derivative is a finite difference on the record grid. The test deflates the *reading convention* — it does not measure what a continuum `κ̂` is, and it does not exclude a plateau appearing at finer lattices (the β = 2.2 slope is still falling at the deepest flow scanned).
+
+### The criticality transplant: the capacity law leaves the lattice
+
+The programme's deepest emergent result — **capacity-bound S-climbing systems are pushed toward criticality** (`n3_s_landscape`, `n3_kappa_criticality`) — had only ever been measured on one substrate: the lattice sector field. If it is a law of capacity-bound recursion rather than a property of that lattice, it must survive **substrate transplant**. `project_genesis/hopfield_substrate.py` + `experiments/n3_criticality_transplant.py` run the identical functional `S = ΔC + κ·w·ΔI` (κ from the engine's own capacity law `κ = r/(r + c·load)`) on the **thermal Hopfield network** — all-to-all *learned* couplings, no lattice, no sectors, attractors as memories, an independent retrieval transition.
+
+The design toggles the mechanism's condition instead of assuming it. The sector field's cold phase always carries residual load (domain walls); Hopfield's cold phase is *perfectly frozen* — zero activity, zero tax — so the mechanism *predicts no relocation there*. A **query drive** (periodic perturbation of 5% of spins that the network must repair — a memory actually in use) switches the cost of maintaining order back on. Three conditions, predictions stated first, the consumption ladder applied post-hoc to measured curves so the dynamics cannot conspire with the verdict:
+
+- **The anatomy transplants.** The retrieval transition sits at `T_c ≈ 0.8` (ΔI = best overlap falls through ½) and the distinction reading ΔC — structured-attractor **visit entropy** — peaks at `T ≈ 0.9`, in the critical neighbourhood: the ΔC-peak-at-criticality shape the sector field showed, now from attractor hopping among learned memories instead of domain walls.
+- **Undriven (frozen order is free): no relocation ✓.** `T⋆(c)` stays at the cold end for every consumption — a memory nobody queries is scarcity-proof. Same under the ΔC-load falsifier ✓.
+- **Driven (order costs per query): the relocation returns ✓ — as a level crossing.** `T⋆(c)` sits cold through `c = 12`, then jumps `0.10 → 0.90` in a single step at `c ≈ 50` — the two competing S-maxima (deep-retrieval, integration-funded vs critical, distinction-funded) trading global rank exactly as in the sector field's S-landscape.
+- **One taxonomy across substrates.** Reading the S-compass delta-form labels (`trajectory_label`, mirroring `s_engine.py` in the Universal-Recursion-Principle repo) along the heating trajectory: the substrate turns `diverging` (ΔC↑, ΔI↓ — the compass's hallucination trajectory) over `T ≈ [0.5, 0.9]`, and the scarce optimum lands at the edge of that band. What the compass flags as hallucination-onset in an LLM session is, on this substrate, where a capacity-starved S-climber is pushed.
+
+**What this establishes, stated carefully:** the relocation law survives its first transplant with its condition made precise — *scarcity evicts ordered optima exactly when maintaining order costs capacity.* An unused frozen memory is scarcity-proof; a memory in use is pushed to the critical neighbourhood as capacity binds. This is the programme's first substrate-independent statement, and the exploratory stand-in constants of the early phase play no role in it: no 0.22, no β = 0.09 — only the functional form and the capacity law.
+
+Reproduce with `python experiments/n3_criticality_transplant.py` (≈ 3 minutes). `--quick` for a smaller scan.
+
+**Honest scope:** one loading (P/N), one recovery rate, one drive strength; `T_c` is a finite-size crossing; the structured threshold and weight `w` are stated conventions fixed before the scan. Two substrates make a transplant, not universality — the next substrates (a driven network of coupled maps; a continual-learning system, where the same κ law meets external benchmarks) are where this either becomes a law or finds its edges.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
