@@ -64,6 +64,7 @@ project_genesis/
   topological_charge.py Geometric (Berg–Lüscher) topological charge of the ψ∈ℂ^N (CP^(N-1)) field
   gauge_topology.py    4-D SU(N) clover topological charge, gauge cooling, susceptibility
   instanton_scales.py  Peak-height instanton sizes (BPST/CP), CP gradient flow with measured D, the matched-scale (s=λ/ρ̄) comparison
+  sector_field_4d.py   4-D CP² sector field: composite U(1) f_{μν}, second-Chern charge (c₁∪c₁ exact on fluxes), d-generic Metropolis + gradient flow
   multiphase.py        Three-component Ψ∈ℂ³ sector field with 120° Y-junctions
   network_server.py    WebSocket server for remote monitoring and control
   numba_kernels.py     Numba JIT-accelerated field evolution kernels
@@ -79,7 +80,7 @@ Docs/
   Capacity_As_Gravity.md     κ as the framework's gravity: a universal, mass-sourced, √(D/r)-screened attraction
   The_Emergent_Cosmos.md     Capstone (Act II): κ→gravity→matter→structure→cosmos, with toolkit map and frontiers
   The_Complete_Arc.md        Top-level synthesis: the whole program — both acts, the one-κ frontier, the honest boundaries
-tests/                 581 checks across the engine, instruments, and physics
+tests/                 596 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -104,6 +105,7 @@ tests/                 581 checks across the engine, instruments, and physics
   test_functor_bridge.py
   test_gauge_topology.py
   test_instanton_scales.py
+  test_sector_field_4d.py
   test_memory_corpus.py
   test_multiphase.py
   test_multiphase_kappa.py
@@ -168,6 +170,7 @@ experiments/
   n3_one_kappa_frontier.py  The one-κ frontier: κ̂=Σ|q|/Σe as one operator across Act I (SU3) and Act II (CP²) — same concept, not (yet) one number
   n3_kappa_obstruction.py   The one-κ obstruction: the sharper invariant ⟨Q²⟩/⟨S⟩ fails too — mechanism is the instantons' different RG fate
   n3_scale_matched_bridge.py  The scale-matched bridge: κ̂ compared at equal smoothing-per-instanton-size (s = λ/ρ̄) — the obstruction's own condition, imposed
+  n3_4d_sector_bridge.py    The like-for-like bridge: a 4-D sector field, so both κ̂'s share operator, dimension, and flow clock — and where they cross
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -983,7 +986,23 @@ The renormalisation condition is dimensionless and sector-local: observe each th
 
 Reproduce with `python experiments/n3_scale_matched_bridge.py` (≈ 4 minutes; the deeper SU(3) flow dominates). `--quick` for a smaller scan.
 
-**Honest scope:** peak-height sizes assume well-separated classical lumps (early-flow readings are UV-noise-dominated and enter only through the matched coordinate), and the clover/geometric `Z ≲ 1` under-normalisation over-reads sizes on coarse lattices, fading as the flow deepens. `s = λ/ρ̄` is *a* renormalisation condition — the natural dimensionless one — not the unique choice, and the matched window's deep end has smoothing radii approaching `L/2`, where finite-volume contamination grows. Small ensembles, one `β_g` point. The verdict is about *this* condition on *these* lattices; it upgrades the obstruction from "the naive estimators disagree" to "the scale-matched estimator still disagrees, robustly."
+**Honest scope:** peak-height sizes assume well-separated classical lumps (early-flow readings are UV-noise-dominated and enter only through the matched coordinate), and the clover/geometric `Z ≲ 1` under-normalisation over-reads sizes on coarse lattices, fading as the flow deepens. `s = λ/ρ̄` is *a* renormalisation condition — the natural dimensionless one — not the unique choice, and the matched window's deep end has smoothing radii approaching `L/2`, where finite-volume contamination grows. Small ensembles, one `β_g` point. The verdict is about *this* condition on *these* lattices; it upgrades the obstruction from "the naive estimators disagree" to "the scale-matched estimator still disagrees, robustly." *(The next section builds the route this verdict left open: the like-for-like 4-D comparison.)*
+
+### The like-for-like bridge: a 4-D sector field — one operator, one dimension, one clock
+
+The scale-matched verdict left two routes: a framework-level definition, or reading both κ's in **equal dimension**. This is the second — Act II's sector field, rebuilt in four dimensions. `project_genesis/sector_field_4d.py` + `experiments/n3_4d_sector_bridge.py`.
+
+The physics that makes it possible: the normalised sector field ψ∈ℂ³ carries a **composite U(1) gauge field** — the overlap phases `u_μ(x) = phase(ψ̄(x)·ψ(x+μ̂))` — whose plaquette angles `f_{μν} ∈ (−π,π]` are a genuine field strength (invariant under the local CP phase). In 4-D its **second-Chern density** `q = (1/4π²)[f₀₁f₂₃ − f₀₂f₁₃ + f₀₃f₁₂]` is a true lattice topological charge — **exactly** the intersection number `c₁∪c₁ ∈ ℤ` on factorised fluxes (verified to machine precision in the tests), zero on pure-phase fields, with the Bogomolny partner `e = (1/8π²)Σf² ≥ |q|` pointwise. So the comparison is finally fully like-for-like: the same `κ̂ = Σ|q|/Σe` operator, the same dimension, the same heat-kernel smoothing `λ = √(8Dt)` (both flows' `D` measured: 1.009/1.014), the same BPST size convention.
+
+- **One clock, two RG characters.** On the shared 4-D flow the gauge `κ̂` rises (`0.161 → 0.412`) while the sector `κ̂` falls (`0.378 → 0.127`): equalising the dimension does **not** equalise the RG behaviour of the topology. Non-abelian self-dual instantons *emerge* from the UV noise; the composite `f∧f` content *dissolves* into it. Dimension was necessary for a common clock — it is not what makes topology robust.
+- **Therefore they cross — and the crossing is generic; its *location* is the measurement.** One rising and one falling curve over an overlapping range must meet by continuity. The information is *where*, and whether that location is stable.
+- **The number, honestly windowed.** Across sector couplings (β = 1.5, 2.5) and matching coordinates (raw flow time; matched `s = λ/ρ̄`): `κ⋆ = 0.231, 0.180, 0.291` — mean `0.234`, spread `0.111`. The primary crossing (β = 1.5, raw clock) lands at `κ⋆ = 0.231` at `t = 0.53` — essentially *at* the RG-clean scale `t₀ ≈ 0.46` and within a hair of Act I's `κ̂(t₀) ≈ 0.22`. But the spread across couplings/coordinates is too large to call it one number: **a window around 0.22, not yet a value.**
+
+**What this means for the one-κ identity:** for the first time in the programme, the two acts' coherent fractions *meet at a matched point in equal dimension* — and the meeting point sits in the neighbourhood of the number Act I measured. What separates this from a result is stability: the crossing location moves by ~0.11 across couplings and matching conventions. Sharpening it (larger lattices, more couplings, and understanding *why* the primary crossing tracks `t₀`) is now a precisely posed question — as is the alternative reading, that the framework-level definition is the true bridge and the near-0.22 crossing is that definition showing through one estimator.
+
+Reproduce with `python experiments/n3_4d_sector_bridge.py` (≈ 4 minutes; the SU(3) ensemble dominates — the 4-D sector field itself is cheap). `--quick` for a smaller scan.
+
+**Honest scope:** the crossing of a rising and a falling curve is guaranteed wherever ranges overlap — only its location and robustness carry information, and the location is not yet stable (spread 0.111). The sector `κ̂` is read on the composite U(1) plaquette angles — a different microscopic object from the gauge clover `F`; they share the Bogomolny structure, not a microscopic definition. The BPST peak-size convention is applied to non-BPST composite lumps (a stated convention). Small ensembles, coarse lattices, no continuum limit — and the 0.22 reference is itself a coarse-lattice reading that trends higher toward the continuum.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 

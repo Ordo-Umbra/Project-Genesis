@@ -163,6 +163,20 @@ the frontier turned **precise**, which is what lets it eventually be crossed.
   The obstruction's first escape route is now closed by measurement: the
   disagreement is intrinsic to the 4-D-vs-2-D comparison, not a moving-scale
   artifact.
+- **The like-for-like build — and the first meeting point.** The remaining
+  measurable route was a **4-D sector field** (`sector_field_4d.py`): the
+  composite U(1) field strength of ψ∈ℂ³ carries a genuine second-Chern charge
+  (`c₁∪c₁`, exactly integer on factorised fluxes) with the same Bogomolny
+  structure, so both κ̂'s are finally read with one operator, one dimension,
+  one flow clock (`n3_4d_sector_bridge.py`). On that shared clock the gauge
+  κ̂ **rises** and the sector κ̂ still **falls** — dimension does not equalise
+  the RG character of the two topologies — so the curves **cross**, and the
+  crossing's *location* is the measurement: `κ⋆ = 0.231` on the primary
+  clock, essentially at `t₀`, with a coupling/coordinate window of
+  `[0.18, 0.29]` (mean 0.234, spread 0.111). The two acts' coherent fractions
+  meet at a matched point in equal dimension, in the neighbourhood of Act I's
+  0.22 — **a window, not yet a value**: the stability of that location is now
+  the sharp open question.
 
 ---
 
@@ -208,12 +222,15 @@ precisely-characterised frontier.
    field `δκ_s(x,t)` — cosmological perturbations, a real growth factor `D(a)`, a
    solved metric — reconnecting the N-body structure work on a relativistic
    footing.
-2. **The one-κ bridge, like-for-like.** The scale-matching renormalisation
-   condition has now been imposed (`n3_scale_matched_bridge.py`) and the gap
-   survives it, coupling-robustly — so the remaining routes are a
-   **framework-level definition** (one abstract integration-exchange rate,
-   instantiated with a different number per theory) or a **4-D sector field**,
-   so both κ's are read in equal dimension.
+2. **The one-κ crossing, stabilised.** Both routes named by the obstruction
+   have now been walked: the scale-matching condition is imposed and the
+   4-D-vs-2-D gap survives it (`n3_scale_matched_bridge.py`); the like-for-like
+   4-D sector field is built and its κ̂ **crosses** the gauge κ̂ near `t₀` and
+   near 0.22 — but in a window of ±0.06 across couplings and matching
+   coordinates (`n3_4d_sector_bridge.py`). The frontier is now concrete:
+   larger lattices, a denser coupling scan, and an explanation of *why* the
+   primary crossing tracks `t₀` — or the framework-level definition, of which
+   the near-0.22 crossing may be one estimator's shadow.
 3. **Pinning Act I's `κ`.** Genuinely finer SU(3) lattices (against topological
    freezing) and the matched operator-product-expansion condensate the self-dual
    fraction stands in for.
@@ -239,6 +256,8 @@ precisely-characterised frontier.
 operator + thermal sampler), `gauge_topology.py` (4-D SU(3) charge, Wilson flow,
 self-dual fraction), `instanton_scales.py` (peak-height instanton sizes, the CP
 gradient flow with measured diffusion, the matched-scale comparison),
+`sector_field_4d.py` (the 4-D sector field: composite U(1) field strength,
+second-Chern charge, dimension-generic sampler and flow),
 `gauge_mc.py` (the gauge ensemble), `capacity_gravity.py`
 (screened wells), `stable_forms.py` (topological solitons as matter),
 `capacity_dynamics.py` (the whole Act II dynamics: gravity, orbits, cosmology,
@@ -247,8 +266,9 @@ stress-energy, the variational and capacity-scalar closures).
 **Experiments** (`experiments/n3_*.py`): one per link, each writing a figure and
 a verdict to `artifacts/` — from `n3_capacity_separation.py` (the gap) through
 `n3_su3_gradient_flow.py` (the number) to `n3_gravity_from_capacity.py` (gravity
-from the field), `n3_kappa_obstruction.py` (the frontier), and
-`n3_scale_matched_bridge.py` (the frontier's condition, imposed).
+from the field), `n3_kappa_obstruction.py` (the frontier),
+`n3_scale_matched_bridge.py` (the frontier's condition, imposed), and
+`n3_4d_sector_bridge.py` (the like-for-like crossing).
 
 **Tests** (`tests/`): every module helper and every link's central claim, so the
 structure is a standing, checkable record — the memory that lets the arc be built
