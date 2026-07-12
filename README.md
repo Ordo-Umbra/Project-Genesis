@@ -63,6 +63,7 @@ project_genesis/
   soil_clusters.py     Percolation-style connected-component analysis of the fertile-soil mask
   topological_charge.py Geometric (Berg–Lüscher) topological charge of the ψ∈ℂ^N (CP^(N-1)) field
   gauge_topology.py    4-D SU(N) clover topological charge, gauge cooling, susceptibility
+  instanton_scales.py  Peak-height instanton sizes (BPST/CP), CP gradient flow with measured D, the matched-scale (s=λ/ρ̄) comparison
   multiphase.py        Three-component Ψ∈ℂ³ sector field with 120° Y-junctions
   network_server.py    WebSocket server for remote monitoring and control
   numba_kernels.py     Numba JIT-accelerated field evolution kernels
@@ -78,7 +79,7 @@ Docs/
   Capacity_As_Gravity.md     κ as the framework's gravity: a universal, mass-sourced, √(D/r)-screened attraction
   The_Emergent_Cosmos.md     Capstone (Act II): κ→gravity→matter→structure→cosmos, with toolkit map and frontiers
   The_Complete_Arc.md        Top-level synthesis: the whole program — both acts, the one-κ frontier, the honest boundaries
-tests/                 560 checks across the engine, instruments, and physics
+tests/                 581 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -102,6 +103,7 @@ tests/                 560 checks across the engine, instruments, and physics
   test_topological_charge.py
   test_functor_bridge.py
   test_gauge_topology.py
+  test_instanton_scales.py
   test_memory_corpus.py
   test_multiphase.py
   test_multiphase_kappa.py
@@ -165,6 +167,7 @@ experiments/
   n3_gravity_from_capacity.py  Gravity from the field: −a ȧ² as the capacity scalar's kinetic free energy, expansion as κ_s=ln a rolling
   n3_one_kappa_frontier.py  The one-κ frontier: κ̂=Σ|q|/Σe as one operator across Act I (SU3) and Act II (CP²) — same concept, not (yet) one number
   n3_kappa_obstruction.py   The one-κ obstruction: the sharper invariant ⟨Q²⟩/⟨S⟩ fails too — mechanism is the instantons' different RG fate
+  n3_scale_matched_bridge.py  The scale-matched bridge: κ̂ compared at equal smoothing-per-instanton-size (s = λ/ρ̄) — the obstruction's own condition, imposed
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -963,7 +966,24 @@ The frontier named a sharper candidate — the dimensionless topological invaria
 
 Reproduce with `python experiments/n3_kappa_obstruction.py` (≈ 1.5 minutes; the SU(3) ensemble dominates). `--quick` for a smaller scan.
 
-**Honest scope:** a mechanism-of-a-boundary result. It does not establish `κ_I = κ_II` (it explains why the obvious lattice routes cannot), and the SU(3) susceptibility is a small-ensemble estimate (χ_top is noisy at this size — the point is the order-of-magnitude gap and the flow behaviour, not a precise number). It closes the lattice-topology line of attack with a *reason*.
+**Honest scope:** a mechanism-of-a-boundary result. It does not establish `κ_I = κ_II` (it explains why the obvious lattice routes cannot), and the SU(3) susceptibility is a small-ensemble estimate (χ_top is noisy at this size — the point is the order-of-magnitude gap and the flow behaviour, not a precise number). It closes the lattice-topology line of attack with a *reason*. *(The next section imposes the renormalisation condition the mechanism called for — and reports what survives it.)*
+
+### The scale-matched bridge: the obstruction's own condition, imposed — and the gap survives it
+
+The obstruction said a genuine bridge must **match the physical instanton scales first**. This experiment builds that instrument and imposes the condition. `project_genesis/instanton_scales.py` (peak-height instanton sizes from the exact BPST/CP profiles, a genuine CP gradient flow — the 2-D analogue of the Wilson flow, with its diffusion normalisation *measured* at `D = 1.001`, not assumed — and the matched-scale comparison) + `experiments/n3_scale_matched_bridge.py`.
+
+The renormalisation condition is dimensionless and sector-local: observe each theory at the flow depth where the heat-kernel smoothing radius `λ_d(t) = √(2·d·D·t)` (Lüscher's `√(8t)` in 4-D) is the same fraction of that sector's own **mean instanton size**, `s(t) = λ(t)/ρ̄(t)` — equal smoothing per unit of the theory's own topological scale.
+
+- **The scales, measured.** Along the Wilson flow the SU(3) mean instanton size holds essentially still (`ρ̄ = 2.71 → 2.60` lattice units) while the CP² mean size *grows* (`0.89 → 2.24`) — the small instantons annihilate first and the survivors are the large ones. The obstruction's "different, moving scales" is now a measured pair of trajectories, and the matched coordinate absorbs it.
+- **The condition can be imposed.** With a lattice-resolution cut (`λ ≥ 1`; a sub-lattice smoothing radius is not a scale) the two sectors share a genuine matched window, `s ∈ [1.27, 1.54]`.
+- **The gap survives it.** In the matched window the curves do not cross: minimum gap `|κ̂_I − κ̂_II| = 0.211` (SU(3) `κ̂ ≈ 0.35` vs CP² `κ̂ ≈ 0.14` at `s = 1.27`), and it widens with `s`. At equal smoothing-per-instanton-size, the 4-D vacuum simply carries ~3× the coherent fraction of the 2-D one.
+- **And the residue is not a coupling artifact.** The CP² matched curve at `β = 1.7` vs `β = 2.2` agrees to `≤ 0.007` across the shared window — the matched coordinate absorbs the bare coupling, so the surviving gap is a property of the *theories*, not of a parameter choice.
+
+**What this means for the one-κ identity** (sharpened again, honestly): the obstruction's own remedy — a scale-matching renormalisation condition — is *implementable and coupling-robust, and it still does not produce `κ_I = κ_II`*. The mismatch is not the moving-scale artifact; it is intrinsic to comparing a 4-D gauge vacuum against a 2-D sigma-model substrate in this estimator. What remains of the bridge programme is the second route the obstruction named — a **framework-level definition** (both κ's as one abstract integration-exchange rate, each theory instantiating it with its own number) — or a like-for-like comparison in equal dimension (a 4-D sector field), which is now the concrete next build.
+
+Reproduce with `python experiments/n3_scale_matched_bridge.py` (≈ 4 minutes; the deeper SU(3) flow dominates). `--quick` for a smaller scan.
+
+**Honest scope:** peak-height sizes assume well-separated classical lumps (early-flow readings are UV-noise-dominated and enter only through the matched coordinate), and the clover/geometric `Z ≲ 1` under-normalisation over-reads sizes on coarse lattices, fading as the flow deepens. `s = λ/ρ̄` is *a* renormalisation condition — the natural dimensionless one — not the unique choice, and the matched window's deep end has smoothing radii approaching `L/2`, where finite-volume contamination grows. Small ensembles, one `β_g` point. The verdict is about *this* condition on *these* lattices; it upgrades the obstruction from "the naive estimators disagree" to "the scale-matched estimator still disagrees, robustly."
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
