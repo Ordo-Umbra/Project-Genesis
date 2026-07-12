@@ -171,6 +171,7 @@ experiments/
   n3_kappa_obstruction.py   The one-κ obstruction: the sharper invariant ⟨Q²⟩/⟨S⟩ fails too — mechanism is the instantons' different RG fate
   n3_scale_matched_bridge.py  The scale-matched bridge: κ̂ compared at equal smoothing-per-instanton-size (s = λ/ρ̄) — the obstruction's own condition, imposed
   n3_4d_sector_bridge.py    The like-for-like bridge: a 4-D sector field, so both κ̂'s share operator, dimension, and flow clock — and where they cross
+  n3_kappa_deflation.py     The deflation test: sweep the t²E = c reading convention and watch the 0.22 — is Act I's constant a number or a convention?
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1003,6 +1004,20 @@ The physics that makes it possible: the normalised sector field ψ∈ℂ³ carri
 Reproduce with `python experiments/n3_4d_sector_bridge.py` (≈ 4 minutes; the SU(3) ensemble dominates — the 4-D sector field itself is cheap). `--quick` for a smaller scan.
 
 **Honest scope:** the crossing of a rising and a falling curve is guaranteed wherever ranges overlap — only its location and robustness carry information, and the location is not yet stable (spread 0.111). The sector `κ̂` is read on the composite U(1) plaquette angles — a different microscopic object from the gauge clover `F`; they share the Bogomolny structure, not a microscopic definition. The BPST peak-size convention is applied to non-BPST composite lumps (a stated convention). Small ensembles, coarse lattices, no continuum limit — and the 0.22 reference is itself a coarse-lattice reading that trends higher toward the continuum.
+
+### The deflation test: is κ̂(t₀) ≈ 0.22 a number, or a convention?
+
+Act I's headline constant is read at the flow scale `t₀` where `t²E = 0.3` — but 0.3 is a *human convention* (chosen for scale-setting convenience), and 0.22 entered the programme as a preliminary reading that stuck. Before building further on it, this experiment stress-tests it the only honest way: **sweep the convention and watch the number.** `experiments/n3_kappa_deflation.py` (instruments already in `gauge_topology.py`).
+
+- **The convention picks the altitude.** At `β_g = 1.8` (L=8), sweeping the reference `c ∈ [0.15, 0.4]` slides the reading `κ̂ = 0.190 → 0.238` — a swing of `0.048` against an ensemble error of `0.002` (~27σ). The dimensionless sensitivity at the canonical point is `c·dκ̂/dc|₀.₃ = 0.057` per e-fold of convention choice. The convention, not the ensemble, dominates the reading.
+- **There is no plateau.** `|dκ̂/dt|` never falls below `0.09` anywhere on the flow at either coupling — the curve never flattens, so there is *no* flow scale at which `κ̂` reads as a constant of the vacuum.
+- **And the coupling moves it far more.** At `β_g = 2.2` (a finer effective lattice) the *same* canonical convention reads `κ̂(0.3) = 0.520 ± 0.016` — the previously-known cutoff trend, now explicit alongside the convention spread: the reading is a coordinate on a two-parameter surface `κ̂(c, β_g)`, not a constant with an error bar.
+
+**What this means, stated plainly:** `κ ≈ 0.22` should be retired as a constant and restated as *"κ̂ at the (c = 0.3, β_g = 1.8) reading ≈ 0.22, on a rising, plateau-free, cutoff-dependent curve."* This is a **deflation of the reading, and a vindication of the dynamical-κ picture**: the honest object the instruments keep insisting on is the *function* `κ̂(scale)` — exactly what the framework's own author expected of a capacity that is dynamical rather than constant. If a dimensionless constant of the theory exists, it must be sought in convention-free structure — a plateau emerging at finer lattices, a fixed point of the flow curve, or a framework-level definition — not in this slice. Downstream statements in this README that quote "κ ≈ 0.22" should be read with this deflation applied.
+
+Reproduce with `python experiments/n3_kappa_deflation.py` (≈ 5 minutes; the deeper β = 2.2 flow dominates). `--quick` for a smaller scan.
+
+**Honest scope:** one lattice size per coupling (no continuum limit — the cutoff trend is measured here only as the β-dependence at fixed L); small ensembles; the flow derivative is a finite difference on the record grid. The test deflates the *reading convention* — it does not measure what a continuum `κ̂` is, and it does not exclude a plateau appearing at finer lattices (the β = 2.2 slope is still falling at the deepest flow scanned).
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
