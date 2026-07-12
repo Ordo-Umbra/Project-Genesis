@@ -150,6 +150,20 @@ match the *physical instanton scales* first (a renormalisation condition) or be 
 framework-level *definition*. This is not a failure to be papered over — it is
 the frontier turned **precise**, which is what lets it eventually be crossed.
 
+- **The renormalisation condition, imposed — and the gap survives it.** The
+  scale-matched bridge (`n3_scale_matched_bridge.py`, with the
+  `instanton_scales` instrument: peak-height instanton sizes from the exact
+  BPST/CP profiles, and a genuine CP gradient flow whose diffusion
+  normalisation is *measured*, `D = 1.001`) compares the two sectors at equal
+  smoothing-per-instanton-size, `s = λ(t)/ρ̄(t)`. The condition is
+  implementable (a real matched window, `s ∈ [1.27, 1.54]`) and
+  coupling-robust (the CP curve at `β = 1.7` vs `2.2` agrees to `≤ 0.007`),
+  and the mismatch **still stands**: minimum gap `|κ̂_I − κ̂_II| = 0.211`, the
+  4-D vacuum ~3× more coherent than the 2-D one at matched relative scale.
+  The obstruction's first escape route is now closed by measurement: the
+  disagreement is intrinsic to the 4-D-vs-2-D comparison, not a moving-scale
+  artifact.
+
 ---
 
 ## 5. The honest boundaries, collected
@@ -168,8 +182,10 @@ The arc is real and its edges are bright. Across the whole program, what it is
   `a = e^{κ_s}` identification posited, not derived from a covariant `κ`-action.
 - **The two acts are not yet numerically one.** The shared `κ̂` operator is one
   function, but the two sectors do not give a matched number in any lattice
-  topological estimator tested — for a now-understood reason (RG fate of
-  instantons), not an unexamined gap.
+  topological estimator tested — including the scale-matched one, where the
+  obstruction's own renormalisation condition is imposed and a coupling-robust
+  gap of `≈ 0.21` survives. The reason is understood (RG fate of instantons;
+  an intrinsically more coherent 4-D vacuum), not an unexamined gap.
 
 These boundaries are load-bearing: they are what make the parts that *do* hold
 credible.
@@ -192,9 +208,12 @@ precisely-characterised frontier.
    field `δκ_s(x,t)` — cosmological perturbations, a real growth factor `D(a)`, a
    solved metric — reconnecting the N-body structure work on a relativistic
    footing.
-2. **The one-κ bridge, sharpened.** Match the physical instanton scales across
-   the 4-D and 2-D flows (a renormalisation condition), the concrete route the
-   obstruction pointed to.
+2. **The one-κ bridge, like-for-like.** The scale-matching renormalisation
+   condition has now been imposed (`n3_scale_matched_bridge.py`) and the gap
+   survives it, coupling-robustly — so the remaining routes are a
+   **framework-level definition** (one abstract integration-exchange rate,
+   instantiated with a different number per theory) or a **4-D sector field**,
+   so both κ's are read in equal dimension.
 3. **Pinning Act I's `κ`.** Genuinely finer SU(3) lattices (against topological
    freezing) and the matched operator-product-expansion condensate the self-dual
    fraction stands in for.
@@ -218,7 +237,9 @@ precisely-characterised frontier.
 **Modules** (`project_genesis/`): `multiphase.py` (the κ dynamics),
 `topological_charge.py` (CP² charge, cooling, the shared `coherent_fraction`
 operator + thermal sampler), `gauge_topology.py` (4-D SU(3) charge, Wilson flow,
-self-dual fraction), `gauge_mc.py` (the gauge ensemble), `capacity_gravity.py`
+self-dual fraction), `instanton_scales.py` (peak-height instanton sizes, the CP
+gradient flow with measured diffusion, the matched-scale comparison),
+`gauge_mc.py` (the gauge ensemble), `capacity_gravity.py`
 (screened wells), `stable_forms.py` (topological solitons as matter),
 `capacity_dynamics.py` (the whole Act II dynamics: gravity, orbits, cosmology,
 stress-energy, the variational and capacity-scalar closures).
@@ -226,7 +247,8 @@ stress-energy, the variational and capacity-scalar closures).
 **Experiments** (`experiments/n3_*.py`): one per link, each writing a figure and
 a verdict to `artifacts/` — from `n3_capacity_separation.py` (the gap) through
 `n3_su3_gradient_flow.py` (the number) to `n3_gravity_from_capacity.py` (gravity
-from the field) and `n3_kappa_obstruction.py` (the frontier).
+from the field), `n3_kappa_obstruction.py` (the frontier), and
+`n3_scale_matched_bridge.py` (the frontier's condition, imposed).
 
 **Tests** (`tests/`): every module helper and every link's central claim, so the
 structure is a standing, checkable record — the memory that lets the arc be built
