@@ -245,6 +245,19 @@ precisely-characterised frontier.
    coupling from `κ` itself, beyond minisuperspace — the step from "gravity's
    cosmology from the field" to "gravity from the field."
 
+**A third act opens.** The deflation test (`n3_kappa_deflation.py`) retired
+"κ ≈ 0.22" as a constant — the honest object is the function `κ̂(scale)`, a
+*dynamical* κ, as the framework itself proposes — and the criticality
+transplant (`n3_criticality_transplant.py`) made the programme's first
+**substrate-independent** statement: *capacity-bound S-climbers are pushed to
+criticality exactly when maintaining order costs capacity*, verified by
+toggling that condition on a Hopfield network (no lattice, learned couplings),
+with the S-compass trajectory taxonomy reading identically on both substrates.
+The early numerical stand-ins (0.22, β = 0.09) were exploration scaffolding;
+the direction of the programme is the capacity law itself — dynamical,
+self-orienting, substrate-portable — and its meeting point with learning
+systems.
+
 ---
 
 ## 7. The map — where everything lives
