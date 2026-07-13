@@ -82,7 +82,7 @@ Docs/
   Capacity_As_Gravity.md     κ as the framework's gravity: a universal, mass-sourced, √(D/r)-screened attraction
   The_Emergent_Cosmos.md     Capstone (Act II): κ→gravity→matter→structure→cosmos, with toolkit map and frontiers
   The_Complete_Arc.md        Top-level synthesis: the whole program — both acts, the one-κ frontier, the honest boundaries
-tests/                 625 checks across the engine, instruments, and physics
+tests/                 629 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -179,6 +179,7 @@ experiments/
   n3_criticality_transplant.py  The criticality transplant: "scarcity pushes S to criticality" tested on a Hopfield network — the condition toggled, not assumed
   n3_continual_learning.py  The capacity law meets external ground truth: the persistence↔plasticity dial on real learning, with controls and a fair baseline
   n3_curriculum_order.py    Curriculum order under the capacity law: foundations-first vs composite-first on compositional tasks — and the protection↔composability dial
+  n3_constructive_kappa.py  Constructive-load κ: the per-parameter building/breaking distinction, tested — a registered negative with its mechanism (function-space is next)
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1065,13 +1066,28 @@ An observation from the programme's own exploration phase — that the *order* o
 - **P1 ✓ Order matters, decisively.** Final composite accuracy: foundations-first `0.794` vs composite-first `0.627` (`+0.167 ± 0.009`). The old observation, reproduced under instrumentation.
 - **P3 ✓ Transfer is real.** The composite reaches higher accuracy after foundations than from scratch at matched epochs, under *both* optimizers (`+0.071` κ, `+0.077` SGD) — the composition itself carries the foundations' value.
 - **P2 ✗ — inverted, with a mechanism.** At the registered operating point (`c = 4`) capacity dynamics *suppress* the curriculum (interaction `−0.021 ± 0.008`, significantly negative): the protected foundations are **too rigid to compose on**. The capacity law cannot distinguish destructive load (overwriting) from constructive load (building on top) — protection and composability trade off.
-- **The diagnostic (labelled, not registered) maps the trade as a dial, not a wall.** Sweeping consumption: the κ curriculum gain peaks at `c = 1` (`+0.088`, *above* the plain-SGD gain of `+0.045`) with composite learnability intact (`ff C ≈ 0.82`), then collapses toward `c = 4`. Gentle capacity may genuinely amplify curricula — but that is now a hypothesis for a *future pre-registered run at c = 1*, not a claim of this one.
+- **The diagnostic (labelled, not registered) maps the trade as a dial, not a wall.** Sweeping consumption: the κ curriculum gain peaks at `c = 1` (`+0.088`, *above* the plain-SGD gain of `+0.045`) with composite learnability intact (`ff C ≈ 0.82`), then collapses toward `c = 4`.
+- **The re-registered `c = 1` test: 3/3, with fresh seeds.** Run as its own pre-registered experiment (`--consumption 1.0 --seed 7000`, 8 seeds disjoint from the diagnostic's): the interaction is **positive and significant** (`+0.070 ± 0.019`) — at gentle consumption, capacity dynamics genuinely *amplify* the curriculum (κ gain `+0.092` vs plain `+0.021`), and the transfer under κ is striking (`+0.283` vs `+0.062`). P2, inverted at `c = 4`, lands at `c = 1`: **the capacity×curriculum amplification is real, and operating-point-dependent** — the original URP-specific prediction holds in the gentle-capacity regime.
 
 **What this establishes:** curriculum order effects are real and large on compositional tasks; their value is carried by representation transfer; and the capacity law interacts with curricula through a measured protection↔composability dial whose gentle end looks better than plain SGD. The conceptual finding for the theory: *building-upon and overwriting are different kinds of load, and κ as currently defined taxes them identically* — a constructive-load extension (capacity that recognises composition) is now a precisely posed theoretical question.
 
 Reproduce with `python experiments/n3_curriculum_order.py` (≈ 4 minutes). `--quick` for a smaller scan.
 
-**Honest scope:** one compositional family (XOR of two half-space concepts), one budget split, one recovery rate; "foundations" here is structural (the composite is literally a function of the concepts) — natural curricula are messier. Interleaved orders, longer concept chains, consolidation baselines, and the re-registered `c = 1` amplification test are the next rungs.
+**Honest scope:** one compositional family (XOR of two half-space concepts), one budget split, one recovery rate; "foundations" here is structural (the composite is literally a function of the concepts) — natural curricula are messier. Interleaved orders, longer concept chains, and consolidation baselines are the next rungs.
+
+### Constructive-load κ: a registered negative result, with its mechanism
+
+The curriculum experiment posed the theory question — can a capacity that distinguishes *building-upon* from *overwriting* keep protection **and** composability? `continual_learning.ConstructiveKappaSGD` + `experiments/n3_constructive_kappa.py` test the natural per-parameter answer: commitment = learned displacement `d = w − anchor`; updates *against* it (`g·d > 0`, undoing) are destructive — gated by κ and taxed; everything else passes free. Three optimizers (plain SGD, standard κ, constructive κ) on the curriculum and interference suites at the harsh point `c = 4`. Three registered predictions; **1/3 lands**:
+
+- **Q2 ✓ Protection retained.** Interference retention `0.569` vs plain's `0.521`, within noise of standard κ's `0.618` — the free constructive channel does not reopen the door to genuine overwriting.
+- **Q1 ✗ Composability not restored** (curriculum gain `−0.005` vs plain's `+0.045`) and **Q3 ✗ no payoff** (all-task average `0.659`, *below both* baselines).
+- **Two operationalizations failed, and the second failure names the reason.** A v1 anchoring at task boundaries was catastrophic (each task's drift away from old solutions read as "constructive"; retention fell *below* plain SGD — kept in the record as the definition's own falsifier). The init-anchored v2 above fails more informatively: **a prior task's solution is an optimum, so movement in *either* direction destroys it** — overshooting a commitment is as destructive as undoing it, and no per-parameter sign test can see that.
+
+**What this negative result establishes:** the constructive/destructive distinction the theory needs is **functional, not parametric** — destructive load is *what degrades prior function*, which cannot be read from single-weight geometry. The precisely-posed next version: function-space gating, where κ taxes disagreement with prior-task behaviour (connecting the capacity law to the rehearsal/projection family of continual learning). Meanwhile the positive result stands on its own: the base law at gentle consumption (`c = 1`, re-registered, 3/3) already amplifies curricula — the extension is a refinement question, not a rescue.
+
+Reproduce with `python experiments/n3_constructive_kappa.py` (≈ 5 minutes). `--quick` for a smaller scan.
+
+**Honest scope:** one harsh operating point, miniature substrates, task boundaries given, one anchor convention per variant; EWC/SI baselines and the function-space variant are the next test.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 

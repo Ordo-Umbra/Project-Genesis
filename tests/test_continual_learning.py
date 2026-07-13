@@ -11,6 +11,7 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from project_genesis.continual_learning import (  # noqa: E402
+    ConstructiveKappaSGD,
     KappaSGD,
     MLP,
     accuracy,
@@ -179,6 +180,66 @@ class TestKappaSGD(unittest.TestCase):
 
         self.assertGreater(accuracy(warm, xte, y_c[600:]),
                            accuracy(cold, xte, y_c[600:]) - 0.02)
+
+    def test_constructive_first_task_is_plain_sgd(self):
+        # fresh net: d = 0 everywhere → nothing destructive → exact SGD step
+        rng, model, x, y = _setup(seed=15)
+        twin = MLP(16, hidden=24, rng=np.random.default_rng(99))
+        for k in model.params:
+            twin.params[k] = model.params[k].copy()
+        _, grads = model.loss_and_grads(x, y)
+        opt = ConstructiveKappaSGD(model, lr=0.3, recovery=0.1, consumption=4.0)
+        opt.step(grads)
+        for k, g in grads.items():
+            twin.params[k] -= 0.3 * g
+            np.testing.assert_allclose(model.params[k], twin.params[k])
+        self.assertEqual(opt.mean_kappa(), 1.0)   # no destructive load yet
+
+    def test_destructive_updates_are_gated_and_consume(self):
+        rng, model, x, y = _setup(seed=16)
+        opt = ConstructiveKappaSGD(model, lr=0.3, recovery=0.0, consumption=8.0)
+        # commit: displace w1 positively from anchor
+        opt.anchors = {k: v.copy() for k, v in model.params.items()}
+        model.params["w1"] += 1.0
+        # a gradient pushing w1 back toward the anchor is destructive
+        grads = {k: np.zeros_like(v) for k, v in model.params.items()}
+        grads["w1"] = np.ones_like(model.params["w1"])   # g·d > 0
+        before = model.params["w1"].copy()
+        opt.step(grads)
+        first_move = before - model.params["w1"]
+        self.assertTrue(np.all(first_move > 0))          # still moves (κ=1 first)
+        for _ in range(5):
+            opt.step(grads)
+        drained = opt.kappa["w1"].mean()
+        self.assertLess(drained, 0.2)                     # destructive load consumed κ
+        before = model.params["w1"].copy()
+        opt.step(grads)
+        late_move = before - model.params["w1"]
+        self.assertTrue(np.all(late_move < 0.2 * first_move))  # gated hard
+
+    def test_constructive_updates_stay_free_while_committed(self):
+        rng, model, x, y = _setup(seed=17)
+        opt = ConstructiveKappaSGD(model, lr=0.3, recovery=0.0, consumption=8.0)
+        opt.anchors = {k: v.copy() for k, v in model.params.items()}
+        model.params["w1"] += 1.0
+        # a gradient pushing w1 FURTHER from anchor is constructive: g·d < 0
+        grads = {k: np.zeros_like(v) for k, v in model.params.items()}
+        grads["w1"] = -np.ones_like(model.params["w1"])
+        for _ in range(6):
+            opt.step(grads)
+        self.assertAlmostEqual(float(opt.kappa["w1"].mean()), 1.0, places=6)
+
+    def test_task_boundaries_do_not_erase_commitments(self):
+        # the v1 failure mode: new_task() must NOT move the anchor
+        rng, model, x, y = _setup(seed=18)
+        opt = ConstructiveKappaSGD(model, lr=0.5, recovery=0.1, consumption=4.0)
+        init_anchor = opt.anchors["w1"].copy()
+        train_task(model, opt, x, y, epochs=5, batch=32, rng=rng)
+        opt.new_task()
+        np.testing.assert_allclose(opt.anchors["w1"], init_anchor)
+        # explicit reanchor is available for deliberate resets
+        opt.reanchor()
+        np.testing.assert_allclose(opt.anchors["w1"], model.params["w1"])
 
     def test_kappa_stays_in_range(self):
         rng, model, x, y = _setup(seed=9)

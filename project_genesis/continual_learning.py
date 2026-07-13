@@ -53,6 +53,7 @@ __all__ = [
     "MLP",
     "MultiHeadMLP",
     "KappaSGD",
+    "ConstructiveKappaSGD",
     "train_task",
     "accuracy",
 ]
@@ -259,6 +260,9 @@ class KappaSGD:
                        for k, v in model.params.items()}
                       if recovery is not None else None)
 
+    def new_task(self) -> None:
+        """Task-boundary hook (no-op here; see ConstructiveKappaSGD)."""
+
     def mean_kappa(self) -> float:
         """Mean capacity across all parameters (1.0 when disabled)."""
         if self.kappa is None:
@@ -280,6 +284,61 @@ class KappaSGD:
             kap = self.kappa[name]
             self.model.params[name] -= self.lr * kap * g
             load = np.abs(g) / mean_abs
+            rate = self.recovery + self.consumption * load
+            k_ss = self.recovery * self.kappa0 / np.maximum(rate, 1e-12)
+            self.kappa[name] = k_ss + (kap - k_ss) * np.exp(-rate)
+
+
+class ConstructiveKappaSGD(KappaSGD):
+    """The constructive-load extension of the capacity law.
+
+    The curriculum experiment measured the base law's blind spot: κ taxes
+    *building-upon* exactly like *overwriting*, so strongly-protected
+    foundations become too rigid to compose on.  This variant makes the
+    distinction the theory was missing:
+
+    - the **learned displacement** ``d_j = w_j − anchor_j`` records what a
+      parameter has committed to across *all* learning so far — the anchor is
+      the network's **initialization** and is never reset (a v1 that
+      re-anchored at task boundaries erased prior commitments and measured
+      catastrophically worse than plain SGD: each new task's drift away from
+      old solutions read as "constructive" and passed ungated — kept in the
+      record as the definition's own falsifier);
+    - an update is **destructive** where it pushes against that commitment
+      (``g_j·d_j > 0`` — the step ``−ηg`` would *undo* learned displacement)
+      and **constructive** otherwise (extending it, or writing on
+      uncommitted parameters);
+    - **only destructive updates are gated by κ, and only destructive load
+      consumes it.**  Protection against undoing; free passage for building.
+
+    On a fresh network ``d = 0`` everywhere, so all learning is constructive
+    — the first task trains exactly like plain SGD.
+    """
+
+    def __init__(self, model: MLP, lr: float, recovery: float = 0.1,
+                 consumption: float = 1.0, kappa0: float = 1.0):
+        super().__init__(model, lr, recovery=recovery,
+                         consumption=consumption, kappa0=kappa0)
+        self.anchors = {k: v.copy() for k, v in model.params.items()}
+
+    def reanchor(self) -> None:
+        """Explicitly reset commitments to the current weights.
+
+        Not called at task boundaries (that was the failed v1 — see the
+        class docstring); provided for deliberate curriculum resets only.
+        """
+        self.anchors = {k: v.copy() for k, v in self.model.params.items()}
+
+    def step(self, grads: dict) -> None:
+        mean_abs = np.mean([np.abs(g).mean() for g in grads.values()])
+        mean_abs = max(mean_abs, 1e-12)
+        for name, g in grads.items():
+            kap = self.kappa[name]
+            d = self.model.params[name] - self.anchors[name]
+            destructive = (g * d) > 0.0
+            gate = np.where(destructive, kap, 1.0)
+            self.model.params[name] -= self.lr * gate * g
+            load = np.where(destructive, np.abs(g), 0.0) / mean_abs
             rate = self.recovery + self.consumption * load
             k_ss = self.recovery * self.kappa0 / np.maximum(rate, 1e-12)
             self.kappa[name] = k_ss + (kap - k_ss) * np.exp(-rate)
