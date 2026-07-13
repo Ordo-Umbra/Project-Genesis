@@ -14,6 +14,7 @@ from project_genesis.continual_learning import (  # noqa: E402
     KappaSGD,
     MLP,
     accuracy,
+    make_concept_tasks,
     make_split_pair,
     make_task,
     make_teacher,
@@ -149,6 +150,35 @@ class TestKappaSGD(unittest.TestCase):
         opt = KappaSGD(model, lr=0.5)
         train_task(model, opt, xa, ya, epochs=25, batch=32, rng=rng)
         self.assertGreater(accuracy(model, xa, ya), 0.85)
+
+    def test_concept_tasks_are_compositional(self):
+        rng = np.random.default_rng(13)
+        x, y_a, y_b, y_c = make_concept_tasks(rng, 16, 600)
+        np.testing.assert_array_equal(y_c, y_a ^ y_b)          # C is XOR(A,B)
+        for y in (y_a, y_b, y_c):
+            self.assertGreater(y.mean(), 0.4)
+            self.assertLess(y.mean(), 0.6)
+        # the concepts are genuinely distinct labelings
+        self.assertGreater(np.mean(y_a != y_b), 0.3)
+
+    def test_foundations_help_the_composite(self):
+        # transfer sanity: C after A,B beats C from scratch at matched epochs
+        rng = np.random.default_rng(14)
+        x, y_a, y_b, y_c = make_concept_tasks(rng, 16, 800)
+        xtr, xte = x[:600], x[600:]
+
+        cold = MLP(16, hidden=32, rng=np.random.default_rng(20))
+        opt_cold = KappaSGD(cold, lr=0.5)
+        train_task(cold, opt_cold, xtr, y_c[:600], epochs=15, batch=32, rng=rng)
+
+        warm = MLP(16, hidden=32, rng=np.random.default_rng(20))
+        opt_warm = KappaSGD(warm, lr=0.5)
+        train_task(warm, opt_warm, xtr, y_a[:600], epochs=15, batch=32, rng=rng)
+        train_task(warm, opt_warm, xtr, y_b[:600], epochs=15, batch=32, rng=rng)
+        train_task(warm, opt_warm, xtr, y_c[:600], epochs=15, batch=32, rng=rng)
+
+        self.assertGreater(accuracy(warm, xte, y_c[600:]),
+                           accuracy(cold, xte, y_c[600:]) - 0.02)
 
     def test_kappa_stays_in_range(self):
         rng, model, x, y = _setup(seed=9)

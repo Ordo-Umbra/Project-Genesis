@@ -49,7 +49,9 @@ __all__ = [
     "make_task",
     "permute_task",
     "make_split_pair",
+    "make_concept_tasks",
     "MLP",
+    "MultiHeadMLP",
     "KappaSGD",
     "train_task",
     "accuracy",
@@ -109,6 +111,28 @@ def make_split_pair(rng: np.random.Generator, dim: int, n: int,
     return (xa, ya), (xb, yb)
 
 
+def make_concept_tasks(rng: np.random.Generator, dim: int, n: int):
+    """Three tasks with genuine compositional structure, for curriculum runs.
+
+    Concept A is a teacher on the first ``dim//2`` features, concept B a
+    teacher on the second half, and the composite task C is **XOR(A, B)** —
+    learnable only by representing *both* concepts.  All three tasks share
+    the same inputs ``x`` (full-dimensional, unit variance); only the
+    labelling differs, so curriculum order is the only thing an experiment
+    varies.  Returns ``(x, y_a, y_b, y_c)``.
+    """
+    half = dim // 2
+    t_a = make_teacher(rng, half)
+    t_b = make_teacher(rng, half)
+    x = rng.standard_normal((n, dim))
+    score_a = np.tanh(x[:, :half] @ t_a["w1"]) @ t_a["w2"]
+    score_b = np.tanh(x[:, half:] @ t_b["w1"]) @ t_b["w2"]
+    y_a = (score_a[:, 0] > np.median(score_a)).astype(int)
+    y_b = (score_b[:, 0] > np.median(score_b)).astype(int)
+    y_c = (y_a ^ y_b).astype(int)
+    return x, y_a, y_b, y_c
+
+
 # ---------------------------------------------------------------------------
 # Model: a small numpy MLP (input → tanh hidden → 2-way softmax)
 # ---------------------------------------------------------------------------
@@ -155,8 +179,58 @@ class MLP:
         return loss, grads
 
 
-def accuracy(model: MLP, x: np.ndarray, y: np.ndarray) -> float:
-    return float((model.predict(x) == y).mean())
+def accuracy(model: MLP, x: np.ndarray, y: np.ndarray,
+             head: str | None = None) -> float:
+    pred = model.predict(x) if head is None else model.predict(x, head=head)
+    return float((pred == y).mean())
+
+
+class MultiHeadMLP(MLP):
+    """Task-incremental variant: one shared hidden layer, one head per task.
+
+    The standard continual-learning protocol for task sequences with
+    different labelings — a single shared 2-way readout otherwise guarantees
+    near-total interference at the head, swamping any representation-level
+    effect an experiment wants to measure.  Heads are named at construction;
+    ``loss_and_grads`` / ``predict`` take the active head.
+    """
+
+    def __init__(self, dim: int, hidden: int, rng: np.random.Generator,
+                 heads: tuple = ("A", "B", "C")):
+        self.params = {
+            "w1": rng.standard_normal((dim, hidden)) / np.sqrt(dim),
+            "b1": np.zeros(hidden),
+        }
+        for h in heads:
+            self.params[f"w2_{h}"] = (rng.standard_normal((hidden, 2))
+                                      / np.sqrt(hidden))
+            self.params[f"b2_{h}"] = np.zeros(2)
+
+    def _forward(self, x: np.ndarray, head: str):
+        h_pre = x @ self.params["w1"] + self.params["b1"]
+        h = np.tanh(h_pre)
+        logits = h @ self.params[f"w2_{head}"] + self.params[f"b2_{head}"]
+        z = logits - logits.max(axis=1, keepdims=True)
+        p = np.exp(z)
+        p /= p.sum(axis=1, keepdims=True)
+        return h, p
+
+    def predict(self, x: np.ndarray, head: str = "A") -> np.ndarray:
+        _, p = self._forward(x, head)
+        return p.argmax(axis=1)
+
+    def loss_and_grads(self, x: np.ndarray, y: np.ndarray, head: str = "A"):
+        n = x.shape[0]
+        h, p = self._forward(x, head)
+        loss = float(-np.log(p[np.arange(n), y] + 1e-12).mean())
+        dlogits = p.copy()
+        dlogits[np.arange(n), y] -= 1.0
+        dlogits /= n
+        grads = {f"w2_{head}": h.T @ dlogits, f"b2_{head}": dlogits.sum(axis=0)}
+        dh = (dlogits @ self.params[f"w2_{head}"].T) * (1.0 - h ** 2)
+        grads["w1"] = x.T @ dh
+        grads["b1"] = dh.sum(axis=0)
+        return loss, grads
 
 
 # ---------------------------------------------------------------------------
@@ -212,12 +286,16 @@ class KappaSGD:
 
 
 def train_task(model: MLP, opt: KappaSGD, x: np.ndarray, y: np.ndarray,
-               epochs: int, batch: int, rng: np.random.Generator) -> None:
-    """Mini-batch training of one task."""
+               epochs: int, batch: int, rng: np.random.Generator,
+               head: str | None = None) -> None:
+    """Mini-batch training of one task (pass ``head`` for MultiHeadMLP)."""
     n = x.shape[0]
     for _ in range(epochs):
         order = rng.permutation(n)
         for start in range(0, n, batch):
             idx = order[start:start + batch]
-            _, grads = model.loss_and_grads(x[idx], y[idx])
+            if head is None:
+                _, grads = model.loss_and_grads(x[idx], y[idx])
+            else:
+                _, grads = model.loss_and_grads(x[idx], y[idx], head=head)
             opt.step(grads)
