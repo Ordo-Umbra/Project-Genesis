@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from project_genesis.continual_learning import (  # noqa: E402
     ConstructiveKappaSGD,
+    FunctionalKappaSGD,
     KappaSGD,
     MLP,
     accuracy,
@@ -240,6 +241,66 @@ class TestKappaSGD(unittest.TestCase):
         # explicit reanchor is available for deliberate resets
         opt.reanchor()
         np.testing.assert_allclose(opt.anchors["w1"], model.params["w1"])
+
+    def test_functional_no_memories_is_plain_sgd(self):
+        rng, model, x, y = _setup(seed=21)
+        twin = MLP(16, hidden=24, rng=np.random.default_rng(99))
+        for k in model.params:
+            twin.params[k] = model.params[k].copy()
+        _, grads = model.loss_and_grads(x, y)
+        FunctionalKappaSGD(model, lr=0.3, recovery=0.1, consumption=4.0).step(grads)
+        for k, g in grads.items():
+            twin.params[k] -= 0.3 * g
+            np.testing.assert_allclose(model.params[k], twin.params[k])
+
+    def test_functional_conflict_consumes_more_than_same_task(self):
+        # a conflicting task drains κ beyond same-task noise, and continued
+        # same-task training does not hurt the task itself
+        rng, model, x, y = _setup(seed=22)
+        opt = FunctionalKappaSGD(model, lr=0.5, recovery=0.05, consumption=8.0)
+        train_task(model, opt, x, y, epochs=15, batch=32, rng=rng)
+        opt.remember(x, y)
+        for _ in range(3):          # more of the same task
+            train_task(model, opt, x, y, epochs=1, batch=32, rng=rng)
+        kappa_same = opt.mean_kappa()
+        acc_same = accuracy(model, x, y)
+        xb, yb = permute_task(x, y, rng)   # conflicting task
+        train_task(model, opt, xb, yb, epochs=5, batch=32, rng=rng)
+        kappa_conflict = opt.mean_kappa()
+        self.assertGreater(acc_same, 0.9)
+        self.assertLess(kappa_conflict, kappa_same - 0.05)
+
+    def test_functional_protects_remembered_task(self):
+        # with memories of A, retention after a heterogeneous conflicting
+        # task beats plain SGD.  (On *totally* conflicting tasks — permuted
+        # features, shared head — single-buffer projection has a measured
+        # ceiling: even pure A-GEM barely beats plain SGD there, because B's
+        # learning inherently requires destroying A's function.  Split tasks
+        # are the mechanism's home regime.)
+        rng = np.random.default_rng(23)
+        (xa, ya), (xb, yb) = make_split_pair(rng, 16, 600)
+        model = MLP(16, hidden=24, rng=rng)
+        opt = FunctionalKappaSGD(model, lr=0.5, recovery=0.05, consumption=8.0)
+        train_task(model, opt, xa, ya, epochs=20, batch=32, rng=rng)
+        opt.remember(xa, ya)
+        train_task(model, opt, xb, yb, epochs=20, batch=32, rng=rng)
+        ret_functional = accuracy(model, xa, ya)
+        acq_functional = accuracy(model, xb, yb)
+
+        rng2 = np.random.default_rng(23)
+        (xa2, ya2), (xb2, yb2) = make_split_pair(rng2, 16, 600)
+        model2 = MLP(16, hidden=24, rng=rng2)
+        opt2 = KappaSGD(model2, lr=0.5)
+        train_task(model2, opt2, xa2, ya2, epochs=20, batch=32, rng=rng2)
+        train_task(model2, opt2, xb2, yb2, epochs=20, batch=32, rng=rng2)
+        self.assertGreater(ret_functional, accuracy(model2, xa2, ya2) + 0.05)
+        self.assertGreater(acq_functional, 0.8)   # B still learns
+
+    def test_functional_buffer_is_bounded(self):
+        rng, model, x, y = _setup(seed=24)
+        opt = FunctionalKappaSGD(model, lr=0.5, buffer_size=16)
+        opt.remember(x, y)
+        self.assertEqual(opt._memories[0][0].shape[0], 16)
 
     def test_kappa_stays_in_range(self):
         rng, model, x, y = _setup(seed=9)
