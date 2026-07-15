@@ -182,6 +182,7 @@ experiments/
   n3_constructive_kappa.py  Constructive-load κ: the per-parameter building/breaking distinction, tested — a registered negative with its mechanism (function-space is next)
   n3_functional_kappa.py    Function-space κ: damage measured on prior function, consolidation in the law — protection AND composability, first variant to hold both
   n3_combined_benchmark.py  The combined benchmark: composability + protection in one sequence, vs plain SGD, standard κ, and rehearsal at equal information
+  n3_scarcity_benchmark.py  The scarcity-scaled benchmark: trunk width as the capacity dial — the margin trends right but stays within noise
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1116,6 +1117,10 @@ The registered follow-up to F3: a single sequence demanding composability *and* 
 **The learning arc's honest closing state:** functional κ dominates every κ predecessor and matches the best baseline in each regime tested (plain SGD where nothing needs protecting; rehearsal at equal information) — but a *demonstrated advantage over all baselines simultaneously* has not appeared at this scale. The measured reason recurs across all three experiments: these miniatures have abundant capacity, and the whole programme's own law says the interesting regime is scarcity. The registered next step is therefore scale with genuine capacity pressure — narrower trunks, longer task sequences, standard benchmarks — where the capacity law's predictions become distinguishable from "do nothing."
 
 **Honest scope:** one sequence design, one operating point; rehearsal is one naive schedule (tuned replay and A-GEM proper are stronger baselines); miniature substrates, boundaries given.
+
+### The scarcity-scaled benchmark: width as the capacity dial — 1/3
+
+The G1 follow-up (`experiments/n3_scarcity_benchmark.py`): the combined sequence rerun with the trunk width swept 48 → 8. **1/3 registered predictions land**: functional κ stays within noise of rehearsal everywhere (H2 ✓), but the functional-vs-plain margin, though correctly signed and monotone in scarcity (`+0.001` at hidden=48 → `+0.010` at hidden=8), never reaches significance (H1 ✗, H3 ✗) — and naive rehearsal leads slightly at starved widths. **The arc's closing sentence, earned:** on this task family, at every capacity tested, the function-space capacity law is a well-behaved equal of the best baselines — its measured phenomenology (dial, crossover, amplification, consolidation) all real, its engineering advantage still unproven. Larger substrates with real datasets are where that question now lives.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
