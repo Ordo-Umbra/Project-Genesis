@@ -54,6 +54,7 @@ __all__ = [
     "MultiHeadMLP",
     "KappaSGD",
     "ConstructiveKappaSGD",
+    "FunctionalKappaSGD",
     "train_task",
     "accuracy",
 ]
@@ -263,6 +264,10 @@ class KappaSGD:
     def new_task(self) -> None:
         """Task-boundary hook (no-op here; see ConstructiveKappaSGD)."""
 
+    def remember(self, x: np.ndarray, y: np.ndarray,
+                 head: str | None = None) -> None:
+        """Memory hook (no-op here; see FunctionalKappaSGD)."""
+
     def mean_kappa(self) -> float:
         """Mean capacity across all parameters (1.0 when disabled)."""
         if self.kappa is None:
@@ -339,6 +344,115 @@ class ConstructiveKappaSGD(KappaSGD):
             gate = np.where(destructive, kap, 1.0)
             self.model.params[name] -= self.lr * gate * g
             load = np.where(destructive, np.abs(g), 0.0) / mean_abs
+            rate = self.recovery + self.consumption * load
+            k_ss = self.recovery * self.kappa0 / np.maximum(rate, 1e-12)
+            self.kappa[name] = k_ss + (kap - k_ss) * np.exp(-rate)
+
+
+class FunctionalKappaSGD(KappaSGD):
+    """Function-space constructive κ — the formulation the parametric failure named.
+
+    The per-parameter displacement variants (`ConstructiveKappaSGD`) failed
+    because a prior task's solution is an *optimum*: movement in either
+    direction destroys it, so no sign test on single weights can tell
+    building from breaking.  The distinction is **functional**: destructive
+    load is *what degrades prior function*.
+
+    This variant measures it directly.  A small buffer of exemplars is
+    stored per completed task (:meth:`remember`, called at task boundaries).
+    Each step computes the prior-task gradient ``g_prior`` on the buffer;
+    when the step conflicts with prior function (``g·g_prior < 0`` — to
+    first order the update raises prior-task loss), the gradient is split
+    into its **damaging component** (the projection onto ``g_prior``) and
+    its **orthogonal remainder**.  The remainder — new learning the prior
+    tasks are flat in — passes fully free; the damaging component is gated
+    by per-parameter κ and is what consumes capacity.  (The conflict signal
+    and the projection are A-GEM's; the *response* is the capacity law's —
+    A-GEM deletes the damaging component outright, here its passage is a
+    regenerating budget: fresh capacity permits some interference,
+    sustained interference throttles itself, recovery restores plasticity.
+    Two failed intermediates are part of this record: an elementwise-sign
+    variant read same-task gradient noise as ~50% conflict and drained κ
+    at the optimum; a global scalar gate protected too weakly because it
+    slowed the whole step instead of the damaging direction.)
+
+    With no memories stored the step is exactly plain SGD, so the first
+    task trains untouched.  Honest note: this optimizer uses information
+    the others do not (stored exemplars); rehearsal-family baselines are
+    the fair external comparison, named in the experiment.
+    """
+
+    def __init__(self, model: MLP, lr: float, recovery: float = 0.1,
+                 consumption: float = 1.0, kappa0: float = 1.0,
+                 buffer_size: int = 64):
+        super().__init__(model, lr, recovery=recovery,
+                         consumption=consumption, kappa0=kappa0)
+        self.buffer_size = buffer_size
+        self._memories: list[tuple[np.ndarray, np.ndarray, str | None]] = []
+
+    def remember(self, x: np.ndarray, y: np.ndarray,
+                 head: str | None = None) -> None:
+        """Store exemplars of a completed task — and consolidate.
+
+        Integration consumes the capacity to *un*-integrate: consolidation
+        sets the destructive budget to the law's own steady state under full
+        conflicting load, ``κ ← r/(r + c)`` (no new parameter), so protection
+        is in place from the first conflicting step rather than arriving
+        after the damage (the measured failure of the full-budget variant).
+        Recovery ``r`` then gradually returns plasticity — the
+        persistence↔plasticity dial, in function space — while sustained
+        conflict re-consumes the budget and keeps defended memories pinned.
+        """
+        n = min(self.buffer_size, x.shape[0])
+        self._memories.append((x[:n].copy(), y[:n].copy(), head))
+        k_consolidated = self.recovery * self.kappa0 / (self.recovery
+                                                        + self.consumption)
+        for name in self.kappa:
+            np.minimum(self.kappa[name], k_consolidated, out=self.kappa[name])
+
+    def _prior_gradient(self) -> dict:
+        """Summed prior-task gradients on the buffers at the current weights."""
+        total: dict = {}
+        for x, y, head in self._memories:
+            if head is None:
+                _, grads = self.model.loss_and_grads(x, y)
+            else:
+                _, grads = self.model.loss_and_grads(x, y, head=head)
+            for name, g in grads.items():
+                total[name] = total.get(name, 0.0) + g
+        return total
+
+    def step(self, grads: dict) -> None:
+        if not self._memories:
+            for name, g in grads.items():
+                self.model.params[name] -= self.lr * g
+            return
+        g_prior = self._prior_gradient()
+        dot, norm_p = 0.0, 0.0
+        for name, g in grads.items():
+            gp = g_prior.get(name)
+            if gp is not None:
+                dot += float((g * gp).sum())
+                norm_p += float((gp ** 2).sum())
+        if dot >= 0.0 or norm_p <= 1e-24:
+            # no first-order damage to prior function: fully constructive —
+            # the step passes free and the budget recovers (zero load)
+            for name, g in grads.items():
+                self.model.params[name] -= self.lr * g
+                kap = self.kappa[name]
+                self.kappa[name] = self.kappa0 + (kap - self.kappa0) * np.exp(
+                    -self.recovery)
+            return
+        coef = dot / norm_p                    # < 0: projection onto g_prior
+        mean_abs = np.mean([np.abs(g).mean() for g in grads.values()])
+        mean_abs = max(mean_abs, 1e-12)
+        for name, g in grads.items():
+            kap = self.kappa[name]
+            gp = g_prior.get(name)
+            g_par = coef * gp if gp is not None else 0.0   # damaging component
+            g_orth = g - g_par                             # free construction
+            self.model.params[name] -= self.lr * (g_orth + kap * g_par)
+            load = np.abs(g_par) / mean_abs
             rate = self.recovery + self.consumption * load
             k_ss = self.recovery * self.kappa0 / np.maximum(rate, 1e-12)
             self.kappa[name] = k_ss + (kap - k_ss) * np.exp(-rate)

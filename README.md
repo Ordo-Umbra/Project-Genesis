@@ -82,7 +82,7 @@ Docs/
   Capacity_As_Gravity.md     κ as the framework's gravity: a universal, mass-sourced, √(D/r)-screened attraction
   The_Emergent_Cosmos.md     Capstone (Act II): κ→gravity→matter→structure→cosmos, with toolkit map and frontiers
   The_Complete_Arc.md        Top-level synthesis: the whole program — both acts, the one-κ frontier, the honest boundaries
-tests/                 629 checks across the engine, instruments, and physics
+tests/                 633 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
   test_corpus_kappa.py
@@ -180,6 +180,8 @@ experiments/
   n3_continual_learning.py  The capacity law meets external ground truth: the persistence↔plasticity dial on real learning, with controls and a fair baseline
   n3_curriculum_order.py    Curriculum order under the capacity law: foundations-first vs composite-first on compositional tasks — and the protection↔composability dial
   n3_constructive_kappa.py  Constructive-load κ: the per-parameter building/breaking distinction, tested — a registered negative with its mechanism (function-space is next)
+  n3_functional_kappa.py    Function-space κ: damage measured on prior function, consolidation in the law — protection AND composability, first variant to hold both
+  n3_combined_benchmark.py  The combined benchmark: composability + protection in one sequence, vs plain SGD, standard κ, and rehearsal at equal information
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1088,6 +1090,32 @@ The curriculum experiment posed the theory question — can a capacity that dist
 Reproduce with `python experiments/n3_constructive_kappa.py` (≈ 5 minutes). `--quick` for a smaller scan.
 
 **Honest scope:** one harsh operating point, miniature substrates, task boundaries given, one anchor convention per variant; EWC/SI baselines and the function-space variant are the next test.
+
+### Function-space κ: the distinction done at the level it lives — 2/3
+
+The formulation the parametric failure demanded (`continual_learning.FunctionalKappaSGD` + `experiments/n3_functional_kappa.py`): a small buffer per completed task; per step, the gradient's **damaging component** (its projection onto the prior-task gradient, when they conflict) is gated by per-parameter κ and consumes capacity, while the orthogonal remainder — construction — passes free. Consolidation is part of the law: `remember()` sets the destructive budget to the steady state under full conflicting load (`κ ← r/(r+c)`, the law's own number), so protection exists from the first conflicting step; recovery `r` returns plasticity over time — the persistence↔plasticity dial in function space. (The conflict signal and projection are A-GEM's; the *response* — a regenerating budget instead of a hard delete — is the capacity law's.) The development record keeps three measured intermediates: elementwise-sign gating is noise-blind at optima; a global scalar gate protects too weakly; and a full-initial-budget version protects too *late* — damage outruns depletion, which is what forced consolidation into the law. A probe also measured the family's ceiling: on *totally* conflicting tasks even pure A-GEM barely beats plain SGD — single-buffer projection needs heterogeneous conflict to have an escape direction.
+
+Four optimizers, both suites, the harsh point `c = 4`; **2/3 registered predictions land**:
+
+- **F1 ✓ Composability restored.** Curriculum gain `+0.042` ≈ plain SGD's `+0.045` (standard κ: `+0.024`; parametric: `−0.005`) — the suppression is gone.
+- **F2 ✓ Protection intact.** Interference retention `0.614` vs plain's `0.521`, within noise of standard κ's `0.618` — while keeping acquisition at `0.950`.
+- **F3 ✗ No double payoff.** On the curriculum's all-task average it beats standard κ decisively (`+0.056 ± 0.006`) but only ties plain SGD (`0.866` vs `0.863`) — because the multi-head compositional suite rewards *not interfering*, which plain SGD already does when protection isn't needed.
+
+**Where the arc lands:** functional κ strictly dominates both κ predecessors — it protects like standard κ *and* composes like plain SGD, the combination no earlier variant achieved. What is not yet shown is an advantage over plain SGD where plain SGD is already sufficient; the natural registered follow-up is a combined benchmark (curriculum + interference in one sequence) and the fair-information baselines (rehearsal, A-GEM). Reproduce: `python experiments/n3_functional_kappa.py` (≈ 8 minutes).
+
+**Honest scope:** functional κ uses stored exemplars (64/task) the other optimizers do not; consolidation-to-steady-state is the law's own number but a design choice; one harsh operating point, miniature substrates, boundaries given.
+
+### The combined benchmark: both demands in one sequence — where the arc closes, for now
+
+The registered follow-up to F3: a single sequence demanding composability *and* protection — `A → B → XOR(A,B) → D` (dense conflict) on one shared trunk — with the fair-information baseline included (naive rehearsal using the same 64-exemplar buffers). `experiments/n3_combined_benchmark.py`; **2/3 registered predictions land**:
+
+- **G2 ✓ Beats standard κ decisively** (`+0.034 ± 0.008` on the combined average): the base law's rigidity costs the composite (standard κ's C = 0.56 vs functional's 0.75).
+- **G3 ✓ Holds its own against rehearsal** (`+0.002 ± 0.013`): the capacity response matches simple replay of the same stored information — the κ machinery is not worse than the obvious use of its own buffers.
+- **G1 ✗ Ties plain SGD** (`+0.001 ± 0.011`): with per-task heads and 48 hidden units, even the dense-conflict phase D fails to destroy an unprotected trunk enough for protection to pay — this miniature has spare capacity everywhere, and protection only earns its keep when capacity is genuinely scarce.
+
+**The learning arc's honest closing state:** functional κ dominates every κ predecessor and matches the best baseline in each regime tested (plain SGD where nothing needs protecting; rehearsal at equal information) — but a *demonstrated advantage over all baselines simultaneously* has not appeared at this scale. The measured reason recurs across all three experiments: these miniatures have abundant capacity, and the whole programme's own law says the interesting regime is scarcity. The registered next step is therefore scale with genuine capacity pressure — narrower trunks, longer task sequences, standard benchmarks — where the capacity law's predictions become distinguishable from "do nothing."
+
+**Honest scope:** one sequence design, one operating point; rehearsal is one naive schedule (tuned replay and A-GEM proper are stronger baselines); miniature substrates, boundaries given.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
