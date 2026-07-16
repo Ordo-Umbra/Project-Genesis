@@ -184,6 +184,7 @@ experiments/
   n3_combined_benchmark.py  The combined benchmark: composability + protection in one sequence, vs plain SGD, standard κ, and rehearsal at equal information
   n3_scarcity_benchmark.py  The scarcity-scaled benchmark: trunk width as the capacity dial — the margin trends right but stays within noise
   n3_growth_factor.py       The growth factor: perturbations in the κ cosmology — scale-dependent growth (the theory's GR departure) and Λ freeze-out, measured
+  n3_growth_spectrum.py     The growth spectrum: S(λ) is band-passed (footprint UV wall, screening IR wall) — the knee needs bigger boxes, quantified
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1134,6 +1135,12 @@ Act III returns to Act II's deepest open item: perturbations. `experiments/n3_gr
 Also measured on the way (kept in the record): the κ field's **saturation screening** — at high total load the soil saturates and *all* gravity switches off (forces vanish identically), so the instrument only works in the field's linear-response window; calibration is part of the experiment, not a nuisance.
 
 **Honest scope:** a Newtonian FLRW analogue, 2-D, one amplitude and box; `γ` fit in the linear regime only; no solved metric — but frontier #1 now has its first measured numbers, including the theory's first distinguishing prediction against GR.
+
+### The growth spectrum: D(k) against the analogue's own linear theory — 0/3, with the instrument's walls measured
+
+The registered follow-up (`experiments/n3_growth_spectrum.py`): measure the growth source `S(λ)` across a wavelength ladder, fit the Yukawa form, and benchmark the expanding N-body against the analogue's *own* linear ODE. **0/3 as registered — and the record is the diagnosis.** The measured `S(λ)` is **band-passed**, not Yukawa: UV-suppressed by the instrument's own Gaussian particle footprint (dividing out the derivable `exp(−k²w²)` factor gives `R² ≈ 0.82` and reveals `S ∝ k²`), IR-suppressed by κ screening. The corrected spectrum shows the entire accessible window lies *beyond* the screening knee at every field point tested — so the parent experiment's scale-dependent growth is the deep-screened `k²` regime, and resolving the knee itself requires `footprint ≪ 2πℓ ≪ box`: bigger boxes, finer grids — a compute rung, now quantified rather than guessed. The self-consistency benchmark misses its 20% bar narrowly (20–27%, window/nonlinearity bias).
+
+**Honest scope:** three registered failures, three mechanisms; the D(k) instrument and its two measured walls now exist for the 3-D, larger-box version where the knee — and a survey-style `fσ₈` readout — become reachable.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
