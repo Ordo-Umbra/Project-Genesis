@@ -187,6 +187,7 @@ experiments/
   n3_growth_spectrum.py     The growth spectrum: S(λ) is band-passed (footprint UV wall, screening IR wall) — the knee needs bigger boxes, quantified
   n3_screening_knee.py      The screening knee: the field's own dial moves the knee into the window — 3/3, and matter screens gravity (the loaded Debye law, measured)
   n3_local_screening.py     Local screening: one field, two gravities — 3/3, the range is set by the local environment (chameleon-style), not the box mean
+  n3_environment_growth.py  Environmental growth: the static field predicts the dynamics — 3/3, the dense band grows slower (near-sightedness beats extra mass)
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1178,6 +1179,20 @@ Together with the knee: the Debye law `ℓ_eff = √(D_κ/(r + c·ρ_local))` no
 Reproduce with `python experiments/n3_local_screening.py` (≈ 2 minutes; `--quick` for a smoke run).
 
 **Honest scope:** a static linear-response measurement (relaxed fields, light test probe) — the dynamical counterpart (growth measured per-environment in an N-body run) is the harder follow-up; sharp bath edges, one recovery rate, one probe mass (back-reaction bounded by the probe/bath load ratio, 0.2 at ρ = 0.1). The 2-D `K₀` shoulder fit is used for every measurement, so form bias cancels in the comparisons but not in absolute ξ.
+
+### Environmental growth: the static field predicts the dynamics — 3/3
+
+The registered dynamical counterpart (`experiments/n3_environment_growth.py`): one N-body universe with **two environments** — a dense band and a sparse band of particles (6× mass contrast) — the same plane wave planted through both, and the growth rate read *per band* from a single run (bands, not wave packets, keep the mode spectrally exact). The prediction is assembled **entirely from static measurements** on the initial relaxed field, with no free constants: `S_band ∝ ρ·κ̄²·(kℓ)²/(1+(kℓ)²)`, with the band density ρ, capacity level κ̄, and local range ℓ (the local-screening probe instrument, re-used verbatim) each measured before anything moves. The loaded law makes a counterintuitive call and the run confirms it — **3/3 registered predictions land:**
+
+- **E1 ✓ Near-sightedness wins.** The band with **six times the matter grows 3–6× slower**: R = S_dense/S_sparse = 0.29 (λ = 12) and 0.16 (λ = 32). Dense matter's own capacity consumption weakens (κ̄²) and shortens (ℓ) its gravity faster than its extra mass helps.
+- **E2 ✓ Cross-instrument closure.** Measured/predicted R = 0.92 and 0.86 — the relaxed field's three static numbers per band land on the N-body's dynamical growth to ~10–15%, far inside the factor-2 bar. The statics *predict* the dynamics.
+- **E3 ✓ The environment × scale interaction, isolated.** R(short)/R(long) = 1.82 vs the screen-only prediction 1.69 — in the double ratio ρ and κ̄ cancel exactly, so what remains is pure locality of the *range*: the environmental suppression is scale-dependent exactly as Yukawa screening with a locally-set ℓ requires.
+
+This closes a three-experiment arc on one law. The Debye screening `ℓ = √(D_κ/(r + c·ρ_local))` is now measured **dynamically at the mean-field level** (the knee), **statically and locally** (local screening), and **dynamically and locally with the two instruments predicting each other** (this experiment). In URP terms, the arc's one sentence: *distinction load doesn't just consume capacity — it locally shortens and weakens the reach of integration, and structure growth obeys that locality.*
+
+Reproduce with `python experiments/n3_environment_growth.py` (≈ 5 minutes; `--quick` for a smoke run).
+
+**Honest scope:** static-background growth (h₀ ≈ 0), one band geometry, one mass contrast, one recovery rate; band measurements use the central halves (≥ 3.7 ℓ_sparse from interfaces) but interface leakage is not zero; the `S ∝ ρκ̄²·screen` assembly is first-order (mean-field per band, linear response); per-band S carries unpropagated fit noise — the factor-2 bars absorb both. The expanding-background version (does Λ freeze-out differ per environment?) and multi-contrast sweeps remain open.
 
 ## Setup
 
