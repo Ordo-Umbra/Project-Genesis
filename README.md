@@ -185,6 +185,9 @@ experiments/
   n3_scarcity_benchmark.py  The scarcity-scaled benchmark: trunk width as the capacity dial — the margin trends right but stays within noise
   n3_growth_factor.py       The growth factor: perturbations in the κ cosmology — scale-dependent growth (the theory's GR departure) and Λ freeze-out, measured
   n3_growth_spectrum.py     The growth spectrum: S(λ) is band-passed (footprint UV wall, screening IR wall) — the knee needs bigger boxes, quantified
+  n3_screening_knee.py      The screening knee: the field's own dial moves the knee into the window — 3/3, and matter screens gravity (the loaded Debye law, measured)
+  n3_local_screening.py     Local screening: one field, two gravities — 3/3, the range is set by the local environment (chameleon-style), not the box mean
+  n3_environment_growth.py  Environmental growth: the static field predicts the dynamics — 3/3, the dense band grows slower (near-sightedness beats extra mass)
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -554,6 +557,8 @@ Two follow-ups tie the identification down (`n3_potts_nu.py`, `n3_potts_3d.py`; 
 - **The 3-D prediction is probed — and the sharper instrument overturned the first reading.** The Potts class predicts the 3-D transition is *first order*. The hysteresis/Binder scan (L ∈ {8…16}) found suggestive signatures: a persistent hot/cold window and Binder minima deepening with L. But the decisive observable is the **energy histogram** (`n3_latent_heat.py`): a first-order transition has latent heat, so the per-site energy distribution must go bimodal at the transition. It does not — every pooled hot+cold histogram is cleanly **unimodal** at every size, and the branch energy separation Δe ≤ 0.005 *shrinks* with L, even while the magnetisation branches still disagree. Same energy, different order: the "hysteresis" was **kinetic** (slow 3-D coarsening), not phase coexistence. Verdict: **no latent heat at Δe ≲ 0.001 resolution — the 3-D transition is continuous or unresolvably weakly first order at these sizes**, a candidate genuine deviation from the naive 3-D Potts expectation (the continuous-field, gauge-coupled realisation need not inherit the discrete model's order).
 
 Reproduce with `python experiments/n3_potts_transition.py`, `n3_potts_nu.py`, `n3_potts_3d.py`, `n3_latent_heat.py` (≈ 25 minutes each; `--quick` for smoke runs).
+
+**Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
 ### The S-functional at criticality
 
@@ -1142,7 +1147,52 @@ The registered follow-up (`experiments/n3_growth_spectrum.py`): measure the grow
 
 **Honest scope:** three registered failures, three mechanisms; the D(k) instrument and its two measured walls now exist for the 3-D, larger-box version where the knee — and a survey-style `fσ₈` readout — become reachable.
 
-**Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
+### The screening knee: the field's own dial — 3/3, and matter screens gravity
+
+The growth spectrum's closing sentence called the knee a compute rung (`footprint ≪ 2πℓ ≪ box`: bigger boxes, finer grids). But the condition names ℓ, not the box — and the screening length is the capacity field's **own dial**. `experiments/n3_screening_knee.py` turns the recovery rate `r` down to move the knee *into* the existing window, and scans the dial so the knee must *track* the field's law rather than match one number. Calibrating the instrument first produced the experiment's discovery, kept in the record:
+
+- **The parent's source estimator was contaminated.** It fitted `ln δ` on every point with `1.1 < δ < 3.0` — but after shell-crossing δ re-enters that band and poisons the slope (measured: S at λ = 10.7 collapses 400× between 60- and 140-step runs). The knee estimator fits only the *first contiguous* window crossing; some scatter in the parent's recorded spectrum is likely this artifact. Two more instrument walls were mapped: λ = 8 is the particle grid's **Nyquist mode** (biased projection), and n ≥ 6 harmonics (< 3 particles per wavelength) alias — the ladder stops at n = 5. And the saturation wall got its mechanism: at the parents' mass 0.3 the κ-wells **floor** at slow recovery (κ_min → 0.12, the source collapses ~500×), so the registered mass is 20× lighter (κ_min = 0.93 at r = 1).
+- **The vacuum screening law is wrong in a matter-filled box — and the right law is derivable.** Fitted ranges at heavy mass stalled far short of `√(D_κ/r)`. Linearising the capacity equation about the **loaded** homogeneous steady state gives a Debye-style screened mode, `ℓ_eff = √(D_κ/(r + c·⟨ρ⟩))` — **matter consumes capacity, and consumed capacity screens gravity**: κ-gravity is shorter-ranged inside matter, the analogue's own plasma-style screening (the phenomenology class of screened modified-gravity theories, walked into uninvited). Four calibration points at masses 0.1/0.3 match the loaded form to ~10% where the vacuum form is off by ×2.
+
+The registered scan (five recovery rates 1.0 → 0.05, five-harmonic ladder, the three middle rows untouched by calibration) then tests the loaded law. **3/3 registered predictions land:**
+
+- **K1 ✓ The knee resolves — same box, no compute rung.** At r = 0.05 the band-pass fit gives R² = 0.999 with the knee at 2πℓ = 18.1, strictly inside the ladder [12.8, 64] — the parent's walls measured from both sides at last.
+- **K2 ✓ The knee is the field's, in the loaded vacuum.** `ℓ_fit/ℓ_loaded` = 1.11, 1.04, 1.04, 1.06, 1.01 across the whole scan (registered bar: factor 2) — while the vacuum form drifts to 55% off at slow recovery. The knee tracks the dial with the *loaded* law's values.
+- **K3 ✓ The matter term is real and measurable.** Regressing `1/ℓ_fit²` on `r` reads **both field constants off structure growth**: D_κ = 1.26 (true 1.0) and the matter screening μ = 0.115 (c·⟨ρ⟩ = 0.074) — gravity's range inside matter, measured from the growth of structure, exactly as a survey would do it.
+
+One cross-link the result exposes: the recovery rate that caps gravity's range is the *same* `r` that sources the derived dark energy (`ρ_Λ = coeff·r·κ₀²`, [the self-contained cosmos](#a-self-contained-cosmos-the-expansion-driven-by-the-κ-field-itself)) — in this analogue, a universe with zero vacuum energy would have unscreened, infinite-range κ-gravity. One knob, two phenomena, and both ends of it now measured.
+
+Reproduce with `python experiments/n3_screening_knee.py` (≈ 30 minutes; `--quick` for a smoke run).
+
+**Honest scope:** 2-D analogue, one box/grid/amplitude, as the parents; the dial is `r` with D_κ fixed (the relax integrator's stability caps D_κ, so recovery is the accessible half of the ratio). The loaded form of ℓ was derived *during calibration* after the vacuum form failed at heavy mass; the operating mass was then fixed by a two-point corner check at r = 1 and 0.05, so the scan's middle rows are untouched predictions. ⟨ρ⟩ is the mean-field reading of a corrugated background; the footprint factor `exp(−k²w²)` is imposed from the parent's diagnosis, not refit; the saturation gauge (min κ) is recorded per row. The natural registered follow-up is the *local* version — probe pairs in a void vs embedded in a matter bath in the same box — testing whether the screening is environment-local (chameleon-style) rather than mean-field.
+
+### Local screening: one field, two gravities — 3/3
+
+The knee's registered follow-up (`experiments/n3_local_screening.py`): the loaded law was measured as a *global, mean-field* statement — one uniform bath, one range — but its own linearisation says the screened mode's mass is set by the capacity environment **where the disturbance lives**. So: is gravity's range local (chameleon-style) or set by the box average? The instrument needs no dynamics at all — a box whose left half carries a uniform matter bath and whose right half is void is relaxed *once*; a light test probe is added in one region at a time, and its induced deficit `δκ` — the mediator's propagator, read directly — is fitted with the 2-D screened form (`δκ ∝ K₀(d/ξ)`) for the **local range ξ**. **3/3 registered predictions land:**
+
+- **L1 ✓ One field, two gravities.** In the same relaxed configuration, ξ_bath = 1.63 vs ξ_void = 2.29 — and the bath value sits at the loaded law's own number (`√(D_κ/(r+cρ))` = 1.58, ratio 1.03). Gravity is shorter-ranged inside matter, *per region*, in one universe.
+- **L2 ✓ Locality beats mean-field.** The void range misses its local vacuum law `√(D_κ/r)` by 2.6% — and the global mean-load prediction by 25.7%. The void keeps its vacuum reach: screening is set by where you are, not by the box average.
+- **L3 ✓ The chameleon curve.** Sweeping bath density ρ = 0.025 → 0.2, the regression of `1/ξ²` on ρ recovers both constants of the loaded law — slope 1.80 (c = 2) and intercept 0.193 (r = 0.2), every point within 3–5% — the knee's K3 regression transposed from field dials to *environments* at fixed dials.
+
+Together with the knee: the Debye law `ℓ_eff = √(D_κ/(r + c·ρ_local))` now stands measured **twice, from independent instruments** — dynamically (structure growth under an expanding background) and statically (propagator response in a relaxed field) — and the static version establishes it is *local*. In the analogue's own vocabulary: distinction load shortens integration's reach exactly where the load sits; voids keep the vacuum range `√(D_κ/r)`, which stays finite only because `r > 0` — and that same `r` is the derived dark-energy source. Matter pockets are gravitationally near-sighted; the empty field is the long-range channel.
+
+Reproduce with `python experiments/n3_local_screening.py` (≈ 2 minutes; `--quick` for a smoke run).
+
+**Honest scope:** a static linear-response measurement (relaxed fields, light test probe) — the dynamical counterpart (growth measured per-environment in an N-body run) is the harder follow-up; sharp bath edges, one recovery rate, one probe mass (back-reaction bounded by the probe/bath load ratio, 0.2 at ρ = 0.1). The 2-D `K₀` shoulder fit is used for every measurement, so form bias cancels in the comparisons but not in absolute ξ.
+
+### Environmental growth: the static field predicts the dynamics — 3/3
+
+The registered dynamical counterpart (`experiments/n3_environment_growth.py`): one N-body universe with **two environments** — a dense band and a sparse band of particles (6× mass contrast) — the same plane wave planted through both, and the growth rate read *per band* from a single run (bands, not wave packets, keep the mode spectrally exact). The prediction is assembled **entirely from static measurements** on the initial relaxed field, with no free constants: `S_band ∝ ρ·κ̄²·(kℓ)²/(1+(kℓ)²)`, with the band density ρ, capacity level κ̄, and local range ℓ (the local-screening probe instrument, re-used verbatim) each measured before anything moves. The loaded law makes a counterintuitive call and the run confirms it — **3/3 registered predictions land:**
+
+- **E1 ✓ Near-sightedness wins.** The band with **six times the matter grows 3–6× slower**: R = S_dense/S_sparse = 0.29 (λ = 12) and 0.16 (λ = 32). Dense matter's own capacity consumption weakens (κ̄²) and shortens (ℓ) its gravity faster than its extra mass helps.
+- **E2 ✓ Cross-instrument closure.** Measured/predicted R = 0.92 and 0.86 — the relaxed field's three static numbers per band land on the N-body's dynamical growth to ~10–15%, far inside the factor-2 bar. The statics *predict* the dynamics.
+- **E3 ✓ The environment × scale interaction, isolated.** R(short)/R(long) = 1.82 vs the screen-only prediction 1.69 — in the double ratio ρ and κ̄ cancel exactly, so what remains is pure locality of the *range*: the environmental suppression is scale-dependent exactly as Yukawa screening with a locally-set ℓ requires.
+
+This closes a three-experiment arc on one law. The Debye screening `ℓ = √(D_κ/(r + c·ρ_local))` is now measured **dynamically at the mean-field level** (the knee), **statically and locally** (local screening), and **dynamically and locally with the two instruments predicting each other** (this experiment). In URP terms, the arc's one sentence: *distinction load doesn't just consume capacity — it locally shortens and weakens the reach of integration, and structure growth obeys that locality.*
+
+Reproduce with `python experiments/n3_environment_growth.py` (≈ 5 minutes; `--quick` for a smoke run).
+
+**Honest scope:** static-background growth (h₀ ≈ 0), one band geometry, one mass contrast, one recovery rate; band measurements use the central halves (≥ 3.7 ℓ_sparse from interfaces) but interface leakage is not zero; the `S ∝ ρκ̄²·screen` assembly is first-order (mean-field per band, linear response); per-band S carries unpropagated fit noise — the factor-2 bars absorb both. The expanding-background version (does Λ freeze-out differ per environment?) and multi-contrast sweeps remain open.
 
 ## Setup
 
