@@ -183,6 +183,7 @@ experiments/
   n3_functional_kappa.py    Function-space κ: damage measured on prior function, consolidation in the law — protection AND composability, first variant to hold both
   n3_combined_benchmark.py  The combined benchmark: composability + protection in one sequence, vs plain SGD, standard κ, and rehearsal at equal information
   n3_scarcity_benchmark.py  The scarcity-scaled benchmark: trunk width as the capacity dial — the margin trends right but stays within noise
+  n3_growth_factor.py       The growth factor: perturbations in the κ cosmology — scale-dependent growth (the theory's GR departure) and Λ freeze-out, measured
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1121,6 +1122,18 @@ The registered follow-up to F3: a single sequence demanding composability *and* 
 ### The scarcity-scaled benchmark: width as the capacity dial — 1/3
 
 The G1 follow-up (`experiments/n3_scarcity_benchmark.py`): the combined sequence rerun with the trunk width swept 48 → 8. **1/3 registered predictions land**: functional κ stays within noise of rehearsal everywhere (H2 ✓), but the functional-vs-plain margin, though correctly signed and monotone in scarcity (`+0.001` at hidden=48 → `+0.010` at hidden=8), never reaches significance (H1 ✗, H3 ✗) — and naive rehearsal leads slightly at starved widths. **The arc's closing sentence, earned:** on this task family, at every capacity tested, the function-space capacity law is a well-behaved equal of the best baselines — its measured phenomenology (dial, crossover, amplification, consolidation) all real, its engineering advantage still unproven. Larger substrates with real datasets are where that question now lives.
+
+### The growth factor: cosmological perturbations in the κ cosmology — frontier #1's first numbers (2/3)
+
+Act III returns to Act II's deepest open item: perturbations. `experiments/n3_growth_factor.py` plants a Zel'dovich plane wave in the κ-gravity FLRW analogue, calibrates the background to the field's own measured gravitational source (a static-run `√S`, EdS-matched `H₀`), and reads the growth factor `D(a)`. Three registered predictions; **2/3 land**:
+
+- **P2 ✓ The theory's own signature, measured.** Scale-dependent growth: the mode beyond the screening length grows slower (`γ = 1.32` vs `1.70`) — the falsifiable departure from GR that Yukawa-screened κ-gravity *requires*, now a number.
+- **P3 ✓ Dark energy freezes structure.** At matched `a`, the Λ background suppresses the same mode's growth by an order of magnitude (`D = 2.3` vs `25.9`).
+- **P1 ✗ with a diagnosis.** Sub-screening growth (`γ ≈ 1.70`) exceeds the 3-D EdS textbook value (1) — the substrate is 2-D while the expansion law and calibration use 3-D coefficients, a convention mismatch inherited from the parent Act II experiments. Registered follow-up: the self-consistent benchmark (the analogue's own linear ODE `δ̈ + 2Hδ̇ = Sδ` with the measured `S`).
+
+Also measured on the way (kept in the record): the κ field's **saturation screening** — at high total load the soil saturates and *all* gravity switches off (forces vanish identically), so the instrument only works in the field's linear-response window; calibration is part of the experiment, not a nuisance.
+
+**Honest scope:** a Newtonian FLRW analogue, 2-D, one amplitude and box; `γ` fit in the linear regime only; no solved metric — but frontier #1 now has its first measured numbers, including the theory's first distinguishing prediction against GR.
 
 **Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
