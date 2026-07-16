@@ -185,6 +185,7 @@ experiments/
   n3_scarcity_benchmark.py  The scarcity-scaled benchmark: trunk width as the capacity dial — the margin trends right but stays within noise
   n3_growth_factor.py       The growth factor: perturbations in the κ cosmology — scale-dependent growth (the theory's GR departure) and Λ freeze-out, measured
   n3_growth_spectrum.py     The growth spectrum: S(λ) is band-passed (footprint UV wall, screening IR wall) — the knee needs bigger boxes, quantified
+  n3_screening_knee.py      The screening knee: the field's own dial moves the knee into the window — 3/3, and matter screens gravity (the loaded Debye law, measured)
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1143,6 +1144,25 @@ Also measured on the way (kept in the record): the κ field's **saturation scree
 The registered follow-up (`experiments/n3_growth_spectrum.py`): measure the growth source `S(λ)` across a wavelength ladder, fit the Yukawa form, and benchmark the expanding N-body against the analogue's *own* linear ODE. **0/3 as registered — and the record is the diagnosis.** The measured `S(λ)` is **band-passed**, not Yukawa: UV-suppressed by the instrument's own Gaussian particle footprint (dividing out the derivable `exp(−k²w²)` factor gives `R² ≈ 0.82` and reveals `S ∝ k²`), IR-suppressed by κ screening. The corrected spectrum shows the entire accessible window lies *beyond* the screening knee at every field point tested — so the parent experiment's scale-dependent growth is the deep-screened `k²` regime, and resolving the knee itself requires `footprint ≪ 2πℓ ≪ box`: bigger boxes, finer grids — a compute rung, now quantified rather than guessed. The self-consistency benchmark misses its 20% bar narrowly (20–27%, window/nonlinearity bias).
 
 **Honest scope:** three registered failures, three mechanisms; the D(k) instrument and its two measured walls now exist for the 3-D, larger-box version where the knee — and a survey-style `fσ₈` readout — become reachable.
+
+### The screening knee: the field's own dial — 3/3, and matter screens gravity
+
+The growth spectrum's closing sentence called the knee a compute rung (`footprint ≪ 2πℓ ≪ box`: bigger boxes, finer grids). But the condition names ℓ, not the box — and the screening length is the capacity field's **own dial**. `experiments/n3_screening_knee.py` turns the recovery rate `r` down to move the knee *into* the existing window, and scans the dial so the knee must *track* the field's law rather than match one number. Calibrating the instrument first produced the experiment's discovery, kept in the record:
+
+- **The parent's source estimator was contaminated.** It fitted `ln δ` on every point with `1.1 < δ < 3.0` — but after shell-crossing δ re-enters that band and poisons the slope (measured: S at λ = 10.7 collapses 400× between 60- and 140-step runs). The knee estimator fits only the *first contiguous* window crossing; some scatter in the parent's recorded spectrum is likely this artifact. Two more instrument walls were mapped: λ = 8 is the particle grid's **Nyquist mode** (biased projection), and n ≥ 6 harmonics (< 3 particles per wavelength) alias — the ladder stops at n = 5. And the saturation wall got its mechanism: at the parents' mass 0.3 the κ-wells **floor** at slow recovery (κ_min → 0.12, the source collapses ~500×), so the registered mass is 20× lighter (κ_min = 0.93 at r = 1).
+- **The vacuum screening law is wrong in a matter-filled box — and the right law is derivable.** Fitted ranges at heavy mass stalled far short of `√(D_κ/r)`. Linearising the capacity equation about the **loaded** homogeneous steady state gives a Debye-style screened mode, `ℓ_eff = √(D_κ/(r + c·⟨ρ⟩))` — **matter consumes capacity, and consumed capacity screens gravity**: κ-gravity is shorter-ranged inside matter, the analogue's own plasma-style screening (the phenomenology class of screened modified-gravity theories, walked into uninvited). Four calibration points at masses 0.1/0.3 match the loaded form to ~10% where the vacuum form is off by ×2.
+
+The registered scan (five recovery rates 1.0 → 0.05, five-harmonic ladder, the three middle rows untouched by calibration) then tests the loaded law. **3/3 registered predictions land:**
+
+- **K1 ✓ The knee resolves — same box, no compute rung.** At r = 0.05 the band-pass fit gives R² = 0.999 with the knee at 2πℓ = 18.1, strictly inside the ladder [12.8, 64] — the parent's walls measured from both sides at last.
+- **K2 ✓ The knee is the field's, in the loaded vacuum.** `ℓ_fit/ℓ_loaded` = 1.11, 1.04, 1.04, 1.06, 1.01 across the whole scan (registered bar: factor 2) — while the vacuum form drifts to 55% off at slow recovery. The knee tracks the dial with the *loaded* law's values.
+- **K3 ✓ The matter term is real and measurable.** Regressing `1/ℓ_fit²` on `r` reads **both field constants off structure growth**: D_κ = 1.26 (true 1.0) and the matter screening μ = 0.115 (c·⟨ρ⟩ = 0.074) — gravity's range inside matter, measured from the growth of structure, exactly as a survey would do it.
+
+One cross-link the result exposes: the recovery rate that caps gravity's range is the *same* `r` that sources the derived dark energy (`ρ_Λ = coeff·r·κ₀²`, [the self-contained cosmos](#a-self-contained-cosmos-the-expansion-driven-by-the-κ-field-itself)) — in this analogue, a universe with zero vacuum energy would have unscreened, infinite-range κ-gravity. One knob, two phenomena, and both ends of it now measured.
+
+Reproduce with `python experiments/n3_screening_knee.py` (≈ 30 minutes; `--quick` for a smoke run).
+
+**Honest scope:** 2-D analogue, one box/grid/amplitude, as the parents; the dial is `r` with D_κ fixed (the relax integrator's stability caps D_κ, so recovery is the accessible half of the ratio). The loaded form of ℓ was derived *during calibration* after the vacuum form failed at heavy mass; the operating mass was then fixed by a two-point corner check at r = 1 and 0.05, so the scan's middle rows are untouched predictions. ⟨ρ⟩ is the mean-field reading of a corrugated background; the footprint factor `exp(−k²w²)` is imposed from the parent's diagnosis, not refit; the saturation gauge (min κ) is recorded per row. The natural registered follow-up is the *local* version — probe pairs in a void vs embedded in a matter bath in the same box — testing whether the screening is environment-local (chameleon-style) rather than mean-field.
 
 ## Setup
 
