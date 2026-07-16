@@ -186,6 +186,7 @@ experiments/
   n3_growth_factor.py       The growth factor: perturbations in the κ cosmology — scale-dependent growth (the theory's GR departure) and Λ freeze-out, measured
   n3_growth_spectrum.py     The growth spectrum: S(λ) is band-passed (footprint UV wall, screening IR wall) — the knee needs bigger boxes, quantified
   n3_screening_knee.py      The screening knee: the field's own dial moves the knee into the window — 3/3, and matter screens gravity (the loaded Debye law, measured)
+  n3_local_screening.py     Local screening: one field, two gravities — 3/3, the range is set by the local environment (chameleon-style), not the box mean
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1163,6 +1164,20 @@ One cross-link the result exposes: the recovery rate that caps gravity's range i
 Reproduce with `python experiments/n3_screening_knee.py` (≈ 30 minutes; `--quick` for a smoke run).
 
 **Honest scope:** 2-D analogue, one box/grid/amplitude, as the parents; the dial is `r` with D_κ fixed (the relax integrator's stability caps D_κ, so recovery is the accessible half of the ratio). The loaded form of ℓ was derived *during calibration* after the vacuum form failed at heavy mass; the operating mass was then fixed by a two-point corner check at r = 1 and 0.05, so the scan's middle rows are untouched predictions. ⟨ρ⟩ is the mean-field reading of a corrugated background; the footprint factor `exp(−k²w²)` is imposed from the parent's diagnosis, not refit; the saturation gauge (min κ) is recorded per row. The natural registered follow-up is the *local* version — probe pairs in a void vs embedded in a matter bath in the same box — testing whether the screening is environment-local (chameleon-style) rather than mean-field.
+
+### Local screening: one field, two gravities — 3/3
+
+The knee's registered follow-up (`experiments/n3_local_screening.py`): the loaded law was measured as a *global, mean-field* statement — one uniform bath, one range — but its own linearisation says the screened mode's mass is set by the capacity environment **where the disturbance lives**. So: is gravity's range local (chameleon-style) or set by the box average? The instrument needs no dynamics at all — a box whose left half carries a uniform matter bath and whose right half is void is relaxed *once*; a light test probe is added in one region at a time, and its induced deficit `δκ` — the mediator's propagator, read directly — is fitted with the 2-D screened form (`δκ ∝ K₀(d/ξ)`) for the **local range ξ**. **3/3 registered predictions land:**
+
+- **L1 ✓ One field, two gravities.** In the same relaxed configuration, ξ_bath = 1.63 vs ξ_void = 2.29 — and the bath value sits at the loaded law's own number (`√(D_κ/(r+cρ))` = 1.58, ratio 1.03). Gravity is shorter-ranged inside matter, *per region*, in one universe.
+- **L2 ✓ Locality beats mean-field.** The void range misses its local vacuum law `√(D_κ/r)` by 2.6% — and the global mean-load prediction by 25.7%. The void keeps its vacuum reach: screening is set by where you are, not by the box average.
+- **L3 ✓ The chameleon curve.** Sweeping bath density ρ = 0.025 → 0.2, the regression of `1/ξ²` on ρ recovers both constants of the loaded law — slope 1.80 (c = 2) and intercept 0.193 (r = 0.2), every point within 3–5% — the knee's K3 regression transposed from field dials to *environments* at fixed dials.
+
+Together with the knee: the Debye law `ℓ_eff = √(D_κ/(r + c·ρ_local))` now stands measured **twice, from independent instruments** — dynamically (structure growth under an expanding background) and statically (propagator response in a relaxed field) — and the static version establishes it is *local*. In the analogue's own vocabulary: distinction load shortens integration's reach exactly where the load sits; voids keep the vacuum range `√(D_κ/r)`, which stays finite only because `r > 0` — and that same `r` is the derived dark-energy source. Matter pockets are gravitationally near-sighted; the empty field is the long-range channel.
+
+Reproduce with `python experiments/n3_local_screening.py` (≈ 2 minutes; `--quick` for a smoke run).
+
+**Honest scope:** a static linear-response measurement (relaxed fields, light test probe) — the dynamical counterpart (growth measured per-environment in an N-body run) is the harder follow-up; sharp bath edges, one recovery rate, one probe mass (back-reaction bounded by the probe/bath load ratio, 0.2 at ρ = 0.1). The 2-D `K₀` shoulder fit is used for every measurement, so form bias cancels in the comparisons but not in absolute ξ.
 
 ## Setup
 
