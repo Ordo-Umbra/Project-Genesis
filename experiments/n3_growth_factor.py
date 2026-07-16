@@ -59,7 +59,8 @@ def growth_run(args, wavelength: float, omega_lambda: float,
         hubble0=h0, omega_m=(args.omega_m if omega_m is None else omega_m),
         omega_lambda=omega_lambda, p=3.0, dt=args.dt, steps=args.steps,
         center=[L / 2.0, L / 2.0], peculiar=pec.tolist(),
-        kappa_recovery=args.kappa_recovery)
+        kappa_recovery=args.kappa_recovery,
+        kappa_diffusion=getattr(args, "kappa_diffusion", 1.0))
     c = hist["center"]
     a_hist, d_hist = [], []
     q_flat = np.stack([qx, qy], axis=-1).reshape(-1, 2)

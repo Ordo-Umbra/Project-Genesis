@@ -555,6 +555,8 @@ Two follow-ups tie the identification down (`n3_potts_nu.py`, `n3_potts_3d.py`; 
 
 Reproduce with `python experiments/n3_potts_transition.py`, `n3_potts_nu.py`, `n3_potts_3d.py`, `n3_latent_heat.py` (≈ 25 minutes each; `--quick` for smoke runs).
 
+**Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
+
 ### The S-functional at criticality
 
 With a genuine critical system in hand, the program's last question comes home to the theory's central object: **what does `S = ΔC + κ·ΔI` do at a real phase transition?** `experiments/n3_s_criticality.py` measures the full functional — ΔC from the amplitude gradient energy, κ from the load, and the *standing* nonlocal coherence for the integration half — across temperature through T_c, on the same unpinned ensembles (deep thermalisation, jackknife errors, the Potts magnetisation measured alongside as the anchor):
@@ -1141,8 +1143,6 @@ Also measured on the way (kept in the record): the κ field's **saturation scree
 The registered follow-up (`experiments/n3_growth_spectrum.py`): measure the growth source `S(λ)` across a wavelength ladder, fit the Yukawa form, and benchmark the expanding N-body against the analogue's *own* linear ODE. **0/3 as registered — and the record is the diagnosis.** The measured `S(λ)` is **band-passed**, not Yukawa: UV-suppressed by the instrument's own Gaussian particle footprint (dividing out the derivable `exp(−k²w²)` factor gives `R² ≈ 0.82` and reveals `S ∝ k²`), IR-suppressed by κ screening. The corrected spectrum shows the entire accessible window lies *beyond* the screening knee at every field point tested — so the parent experiment's scale-dependent growth is the deep-screened `k²` regime, and resolving the knee itself requires `footprint ≪ 2πℓ ≪ box`: bigger boxes, finer grids — a compute rung, now quantified rather than guessed. The self-consistency benchmark misses its 20% bar narrowly (20–27%, window/nonlinearity bias).
 
 **Honest scope:** three registered failures, three mechanisms; the D(k) instrument and its two measured walls now exist for the 3-D, larger-box version where the knee — and a survey-style `fσ₈` readout — become reachable.
-
-**Honest scope:** the exponents are few-size fits at one (β_g, g_m) point — consistency with Potts from two independent exponents plus unimodal histograms, not a universality proof (that would want larger L and corrections to scaling). The Binder-crossing T_c estimate is unstable at this precision; peak positions and the collapse give the quoted T_c. The ν-collapse estimator carries interpolation bias on coarse T grids (quantified in `tests/test_potts_universality.py`).
 
 ## Setup
 
