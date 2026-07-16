@@ -67,6 +67,10 @@ project_genesis/
   sector_field_4d.py   4-D CP² sector field: composite U(1) f_{μν}, second-Chern charge (c₁∪c₁ exact on fluxes), d-generic Metropolis + gradient flow
   hopfield_substrate.py  Second substrate for the criticality law: thermal Hopfield network, ΔC/ΔI/κ readings, S-compass trajectory taxonomy
   continual_learning.py  κ-as-soil for weights: numpy MLP, capacity-gated SGD (per-parameter regenerating plasticity), task generators
+  capacity_gravity.py  κ as gravity: load masses, relaxed capacity wells, the free energy F[κ], screening-length instruments
+  capacity_dynamics.py Self-gravitating masses in the κ-field: overdamped/inertial/cosmological (FLRW) evolution, stress-energy, Friedmann-from-action
+  capacity_waves.py    Finite-speed κ (telegrapher form): causal cone at c_κ=√(D/τ), massive dispersion ω²=(Dk²+r+cρ)/τ−1/4τ², parabolic control
+  stable_forms.py      The spectrum of stable κ-forms: structural mass, binding, form interactions
   multiphase.py        Three-component Ψ∈ℂ³ sector field with 120° Y-junctions
   network_server.py    WebSocket server for remote monitoring and control
   numba_kernels.py     Numba JIT-accelerated field evolution kernels
@@ -188,6 +192,7 @@ experiments/
   n3_screening_knee.py      The screening knee: the field's own dial moves the knee into the window — 3/3, and matter screens gravity (the loaded Debye law, measured)
   n3_local_screening.py     Local screening: one field, two gravities — 3/3, the range is set by the local environment (chameleon-style), not the box mean
   n3_environment_growth.py  Environmental growth: the static field predicts the dynamics — 3/3, the dense band grows slower (near-sightedness beats extra mass)
+  n3_kappa_lightcone.py     The κ light cone: finite update rate τ gives the field a causal cone at √(D/τ) — 2/3, with the damping-envelope wall measured
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1193,6 +1198,18 @@ This closes a three-experiment arc on one law. The Debye screening `ℓ = √(D_
 Reproduce with `python experiments/n3_environment_growth.py` (≈ 5 minutes; `--quick` for a smoke run).
 
 **Honest scope:** static-background growth (h₀ ≈ 0), one band geometry, one mass contrast, one recovery rate; band measurements use the central halves (≥ 3.7 ℓ_sparse from interfaces) but interface leakage is not zero; the `S ∝ ρκ̄²·screen` assembly is first-order (mean-field per band, linear response); per-band S carries unpropagated fit noise — the factor-2 bars absorb both. The expanding-background version (does Λ freeze-out differ per environment?) and multi-contrast sweeps remain open.
+
+### The κ light cone: the field's update rate as its speed limit — 2/3
+
+Everywhere in the framework, κ-gravity acts **instantaneously** — the capacity field is relaxed adiabatically before masses move, a named piece of missing physics. `project_genesis/capacity_waves.py` gives κ the minimal honest extension: a finite update latency τ (the telegrapher form, `τ·∂²ₜκ + ∂ₜκ = D∇²κ + r(κ₀−κ) − c·ρ·κ`), under which the field acquires a **causal cone** with front speed `c_κ = √(D_κ/τ)` — the field's update rate *is* its speed limit — and the linearised loaded mode carries a **mass** `m² = r + c·ρ`: the same Debye term that runs through the screening arc, now governing *propagation*. `experiments/n3_kappa_lightcone.py` measures both. **2/3 registered predictions land — and the miss carries its mechanism:**
+
+- **W2 ✓ The update rate is the speed limit.** Across τ = 4 → 256, the measured front speed tracks `√(D_κ/τ)` (v/c = 0.78, 0.96, 1.02, 1.05; log-log slope −0.43 vs −0.5) — with the numerical lattice bound far above every speed tested, the limit measured is the field's own.
+- **W3 ✓ The Debye mass propagates.** Standing κ-waves on loaded backgrounds: ω matches the derived dispersion to four decimals at every density, and the frequency gap grows with matter exactly as the loaded law demands — `dω²/dρ = 0.03127` vs `c/τ = 0.03125`. The number that shortens static gravity's range (knee), sets it locally (local screening), and slows environmental growth, now gives the propagating wave its **mass** — measured a fourth way. Massive waves inside matter; the massless channel exists exactly where `r + c·ρ → 0`.
+- **W1 ✗ as registered, with the wall quantified.** The ballistic/diffusive toggle is clean at τ ≥ 16 (front-speed constancy 0.90–0.94 vs the parabolic control's 0.36), but the registered "at every τ" bar fails at τ = 4 (0.68): a damped wave's threshold front is ballistic only **within its damping envelope** (`t ≲ 2τ·ln(A/ε)` ≈ 28τ), and τ = 4's box-crossing sits at that envelope's edge (T = 102 vs ≈ 110) — 13 damping times deep. The cone is crisp only when observed inside the field's own memory time; the smaller calibration box (shorter crossing) passes the same τ at 0.90.
+
+Reproduce with `python experiments/n3_kappa_lightcone.py` (≈ 15 seconds; `--quick` for a smoke run); module checks in `tests/test_capacity_waves.py` (dispersion, causality bound, CFL guard, steady state).
+
+**Honest scope:** linear-response amplitudes (unclipped integrator); one D value; 2-D fronts carry the usual 2-D wake (Huygens fails in 2-D — the front is what is fitted); the dispersion estimator needs `Q = 2ωτ ≳ 2`, so the gap scan runs at large τ. The gravity experiments elsewhere remain adiabatic — **coupling the finite-speed field to moving masses (retarded κ-gravity: does orbital precession pick up the radiation-reaction signature?) is the registered next step**, and the τ → 0 overdamped limit keeps every earlier result inside the wave theory.
 
 ## Setup
 
