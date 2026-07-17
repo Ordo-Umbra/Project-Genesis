@@ -67,6 +67,10 @@ project_genesis/
   sector_field_4d.py   4-D CP² sector field: composite U(1) f_{μν}, second-Chern charge (c₁∪c₁ exact on fluxes), d-generic Metropolis + gradient flow
   hopfield_substrate.py  Second substrate for the criticality law: thermal Hopfield network, ΔC/ΔI/κ readings, S-compass trajectory taxonomy
   continual_learning.py  κ-as-soil for weights: numpy MLP, capacity-gated SGD (per-parameter regenerating plasticity), task generators
+  capacity_gravity.py  κ as gravity: load masses, relaxed capacity wells, the free energy F[κ], screening-length instruments
+  capacity_dynamics.py Self-gravitating masses in the κ-field: overdamped/inertial/cosmological (FLRW) evolution, stress-energy, Friedmann-from-action
+  capacity_waves.py    Finite-speed κ (telegrapher form): causal cone at c_κ=√(D/τ), massive dispersion ω²=(Dk²+r+cρ)/τ−1/4τ², retarded inertial gravity (Lyapunov energy), parabolic control
+  stable_forms.py      The spectrum of stable κ-forms: structural mass, binding, form interactions
   multiphase.py        Three-component Ψ∈ℂ³ sector field with 120° Y-junctions
   network_server.py    WebSocket server for remote monitoring and control
   numba_kernels.py     Numba JIT-accelerated field evolution kernels
@@ -188,6 +192,10 @@ experiments/
   n3_screening_knee.py      The screening knee: the field's own dial moves the knee into the window — 3/3, and matter screens gravity (the loaded Debye law, measured)
   n3_local_screening.py     Local screening: one field, two gravities — 3/3, the range is set by the local environment (chameleon-style), not the box mean
   n3_environment_growth.py  Environmental growth: the static field predicts the dynamics — 3/3, the dense band grows slower (near-sightedness beats extra mass)
+  n3_kappa_lightcone.py     The κ light cone: finite update rate τ gives the field a causal cone at √(D/τ) — 2/3, with the damping-envelope wall measured
+  n3_retarded_gravity.py    Retarded κ-gravity: drag law from statics, supersonic silence, and the binary inspiral — 3/3, the adiabatic control conserving
+  n3_quadrupole_line.py     The quadrupole line: even-harmonics-only selection rule (the no-dipole analogue), the dipole control, the medium's complex k — 3/3
+  n3_plunge_ringdown.py     The plunge and the ringdown: no long inspiral in this gravity — the trench mechanism, the sweep clock, the healing afterglow — 3/3
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1193,6 +1201,60 @@ This closes a three-experiment arc on one law. The Debye screening `ℓ = √(D_
 Reproduce with `python experiments/n3_environment_growth.py` (≈ 5 minutes; `--quick` for a smoke run).
 
 **Honest scope:** static-background growth (h₀ ≈ 0), one band geometry, one mass contrast, one recovery rate; band measurements use the central halves (≥ 3.7 ℓ_sparse from interfaces) but interface leakage is not zero; the `S ∝ ρκ̄²·screen` assembly is first-order (mean-field per band, linear response); per-band S carries unpropagated fit noise — the factor-2 bars absorb both. The expanding-background version (does Λ freeze-out differ per environment?) and multi-contrast sweeps remain open.
+
+### The κ light cone: the field's update rate as its speed limit — 2/3
+
+Everywhere in the framework, κ-gravity acts **instantaneously** — the capacity field is relaxed adiabatically before masses move, a named piece of missing physics. `project_genesis/capacity_waves.py` gives κ the minimal honest extension: a finite update latency τ (the telegrapher form, `τ·∂²ₜκ + ∂ₜκ = D∇²κ + r(κ₀−κ) − c·ρ·κ`), under which the field acquires a **causal cone** with front speed `c_κ = √(D_κ/τ)` — the field's update rate *is* its speed limit — and the linearised loaded mode carries a **mass** `m² = r + c·ρ`: the same Debye term that runs through the screening arc, now governing *propagation*. `experiments/n3_kappa_lightcone.py` measures both. **2/3 registered predictions land — and the miss carries its mechanism:**
+
+- **W2 ✓ The update rate is the speed limit.** Across τ = 4 → 256, the measured front speed tracks `√(D_κ/τ)` (v/c = 0.78, 0.96, 1.02, 1.05; log-log slope −0.43 vs −0.5) — with the numerical lattice bound far above every speed tested, the limit measured is the field's own.
+- **W3 ✓ The Debye mass propagates.** Standing κ-waves on loaded backgrounds: ω matches the derived dispersion to four decimals at every density, and the frequency gap grows with matter exactly as the loaded law demands — `dω²/dρ = 0.03127` vs `c/τ = 0.03125`. The number that shortens static gravity's range (knee), sets it locally (local screening), and slows environmental growth, now gives the propagating wave its **mass** — measured a fourth way. Massive waves inside matter; the massless channel exists exactly where `r + c·ρ → 0`.
+- **W1 ✗ as registered, with the wall quantified.** The ballistic/diffusive toggle is clean at τ ≥ 16 (front-speed constancy 0.90–0.94 vs the parabolic control's 0.36), but the registered "at every τ" bar fails at τ = 4 (0.68): a damped wave's threshold front is ballistic only **within its damping envelope** (`t ≲ 2τ·ln(A/ε)` ≈ 28τ), and τ = 4's box-crossing sits at that envelope's edge (T = 102 vs ≈ 110) — 13 damping times deep. The cone is crisp only when observed inside the field's own memory time; the smaller calibration box (shorter crossing) passes the same τ at 0.90.
+
+Reproduce with `python experiments/n3_kappa_lightcone.py` (≈ 15 seconds; `--quick` for a smoke run); module checks in `tests/test_capacity_waves.py` (dispersion, causality bound, CFL guard, steady state).
+
+**Honest scope:** linear-response amplitudes (unclipped integrator); one D value; 2-D fronts carry the usual 2-D wake (Huygens fails in 2-D — the front is what is fitted); the dispersion estimator needs `Q = 2ωτ ≳ 2`, so the gap scan runs at large τ. The gravity experiments elsewhere remain adiabatic — **coupling the finite-speed field to moving masses (retarded κ-gravity: does orbital precession pick up the radiation-reaction signature?) is the registered next step**, and the τ → 0 overdamped limit keeps every earlier result inside the wave theory.
+
+### Retarded κ-gravity: drag, the causal wall, and the inspiral — 3/3
+
+The registered coupling (`capacity_waves.evolve_inertial_retarded` + `experiments/n3_retarded_gravity.py`): masses move under the same envelope force as the adiabatic instrument, but from the field **as it currently is** — lagging, wavy, retarded. The telegrapher's energy law is exact (`d/dt[T + F[κ] + ∫(τ/2)κ̇²] = −∫κ̇² ≤ 0`), which makes the recorded energy a Lyapunov function and the derivation registrable: for a well co-moving at v ≪ c_κ, `κ̇ ≈ −v·∂ₓκ`, so the dissipated power is **predictable from the relaxed static well alone**: `P(v) = v²·Σ(∂ₓκ_static)²`. On the orbital experiment's own calibrated regime, **3/3 registered predictions land:**
+
+- **G1 ✓ The drag law — statics predict dissipation.** A towed mass dissipates `P ∝ v^2.04` with coefficient 1.167 vs the static well's 1.247 (ratio 0.94) — **gravitational drag**, the analogue's radiation-reaction channel, derived before it was run.
+- **G2 ✓ The causal wall.** `P/v²` rises monotonically toward c_κ (the co-moving operator carries `D_eff = D(1−v²/c_κ²)` — the well steepens as the source approaches the field's update rate), and a **supersonic mass is silent ahead**: fore/aft disturbance ratio 5.6×10⁻³, measured outside the startup transient's cone — strict causality, positionally verified.
+- **G3 ✓ The inspiral.** The retarded binary's energy decreases monotonically with net loss **~9000× the adiabatic control's drift** (1.26–1.28 vs 0.00014); the separation collapses (≈12 → 1.3) while the adiabatic control orbits at constant radius indefinitely; and the early-window loss is ordered in the update rate (slower field dissipates faster: 2.06 vs 1.99). **A finite update rate makes binaries decay — the analogue's gravitational-wave inspiral**, with the instantaneous-field control conserving energy to 0.003%.
+
+The finite-speed arc now reads as one derivation chain: the field's update rate is its speed limit (light cone) → the matter term gives its waves mass (dispersion) → and a bound system whose motion must be continually re-encoded by that finite-rate field **loses energy and spirals in**, at a rate the static well predicts. In URP terms: *integration at finite update rate charges a toll on every moving distinction, and the toll is computable.*
+
+Reproduce with `python experiments/n3_retarded_gravity.py` (≈ 5 minutes; `--quick` for a smoke run); the retarded integrator's checks (lone-mass quietness, Lyapunov monotonicity) live in `tests/test_capacity_waves.py`.
+
+**Honest scope:** the drag is the damped-telegrapher's `∫κ̇²` — this κ theory dissipates *in the field* (a resistive medium), so the decay mixes local drag and wave emission rather than isolating far-zone radiation (the GR-style flux split, and whether an `ω_rad = 2Ω` quadrupole line survives the mass gap, are the harder follow-ups); 2-D, one mass/width, orbital regime inherited from `n3_orbital_gravity`; supersonic silence is a strict-causality check, not Mach-cone tomography; the Lyapunov energy uses the same `F[κ]` as the adiabatic instrument, so the control comparison is like-for-like.
+
+### The quadrupole line: what the binary broadcasts — 3/3
+
+The registered spectral follow-up (`experiments/n3_quadrupole_line.py`): point a spectrometer at the binary. A rigidly-rotating equal-mass pair (kinematically driven, so the lines are razor-sharp) stirs the finite-speed field; probes on rings read the disturbance spectrum. The centrepiece is an **exact symmetry argument** — the analogue of GR's "no dipole radiation; the quadrupole leads": rotating an equal-mass pair by π *is* advancing it half a period, so the source is periodic with period `π/Ω` and the spectrum may contain **only even harmonics of Ω** — regime-independent (it survives damping, screening, and the lattice, which is itself π-symmetric), falsified by any resolved odd line. **3/3 registered predictions land:**
+
+- **Q1 ✓ The quadrupole selection rule.** The binary's dominant line sits at 2Ω (0.2646 vs 0.2667, within 2 bins), with odd-harmonic power **2×10⁻³** of the even — the forbidden lines are dark to one part in five hundred.
+- **Q2 ✓ The dipole control.** The single mass driven on the same circle — no half-period symmetry — radiates dominantly at Ω. The 2Ω selection is the binary's symmetry speaking, not the instrument's.
+- **Q3 ✓ The medium's complex wavenumber.** Driven waves in the damped telegrapher field carry `k = √((τω² − m² + iω)/D)`; the 2Ω line's measured absorption length across rings is 2.82 vs the derived `1/Im(k)` = 3.01 (ratio 0.94) — no fit freedom, the dispersion relation handed the answer over.
+
+With this the finite-speed arc has its full GR-analogue shape: a causal cone, massive waves in matter, drag and inspiral for bound systems, and a **quadrupole-led emission spectrum with the dipole channel forbidden by symmetry** — each piece measured, each with its registered control.
+
+Reproduce with `python experiments/n3_quadrupole_line.py` (≈ 15 seconds; `--quick` for a smoke run).
+
+**Honest scope:** kinematically driven sources — the free inspiraling binary chirps and needs a spectrogram, the registered follow-up; τ = 1 is an overdamped medium (ωτ < 1), so these are driven damped waves, not ringing ones (Q1/Q2 are symmetry statements immune to that; Q3 absorbs it in the complex k); probe rings are lattice-rounded; one Ω, one geometry; linear-response amplitudes.
+
+### The plunge and the ringdown: why this κ-gravity has no long inspiral — 3/3
+
+The chirp experiment (`experiments/n3_plunge_ringdown.py`) set out to record the free binary's rising line — and calibration found something better, which the registered run then nailed down: **the long inspiral does not exist in this theory.** A binary released at its calibrated circular speed merges in a fraction of an orbit at *every* wave latency, every mass and coupling probed, and even in a fast-healing high-diffusion regime (D = 9: 0.88 orbits). The mechanism is not wave drag but the parabolic flow's **memory**: a moving well digs (rate `c·load`) far faster than the vacuum heals (rate `r`), so the pair carves an **annular trench** whose outer wall pushes both masses inward — the binary is squeezed by its own wake, on a clock set by geometry alone. *(Calibration also caught and fixed a real integrator defect on the way: the wave step's damping kick was unstable/degenerate for `dt ≳ τ`; it is now an exponential integrator, exact for the damping part and converging properly to the parabolic flow as τ → 0. All three finite-speed experiments were re-run under the fix — every recorded verdict reproduces within 1–2%.)* **3/3 registered predictions land:**
+
+- **B1 ✓ Field memory, not wave retardation.** Merger time 9.6/10.0/10.0 across τ = 0.01/0.1/1.0 — a 10× swing in wave speed changes nothing (spread ×1.04) — while the adiabatic control (instant healing) orbits the full span at constant radius with 0.08% drift. The τ-toggle isolates the parabolic memory as the cause.
+- **B2 ✓ The trench, and the sweep clock.** Mid-plunge the orbit annulus is carved to κ_annulus/κ_outer = 0.41; and across six (mass, coupling) configurations the merger time matches the sweep clock `(π·d₀)/(4·v₀)` to **3–9%** (ratios 1.03–1.09) — coupling changes the force scale, the speed sets the clock: the universality that first looked like a bug is the mechanism's signature.
+- **B3 ✓ Silent ringdown, healing afterglow.** The merged pair survives as an eccentric rotor *below the load width* — spectrally silent (whitened rotor-band contrast 1.45; the originally expected 2×-bounce line is absent, and that expectation's failure is kept in the record with its mechanism) — while the probe field relaxes back with rate 0.0205 vs `r = 0.02` (**3%**): after the merger, what the channel carries is the wound healing at the field's own recovery rate.
+
+The finite-speed arc's closing shape, honestly: this κ-gravity supports a causal cone, massive waves, drag, quadrupole-selected emission — and **merger events that are plunge-and-afterglow bursts, not LIGO-style chirps**, because the field's friction and memory are strong at every probed scale. A theory variant with a small damping coefficient on κ̇ is the registered door to a true chirp.
+
+Reproduce with `python experiments/n3_plunge_ringdown.py` (≈ 5 minutes; `--quick` for a smoke run).
+
+**Honest scope:** the no-inspiral statement is about *this* κ theory (unit damping on κ̇, healing rate ≪ orbital rate) at the probed scales; the pre-merger waveform is under one cycle, which is the point; the sweep-clock constant is a geometric estimate whose factor-2 bar a six-point grid tests (it lands at 3–9%); the healing fit's late-time rate carries a decaying Dk² correction; equal masses, one box.
 
 ## Setup
 
