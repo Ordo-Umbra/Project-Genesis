@@ -117,6 +117,7 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
                              dt: float = 0.1, steps: int = 1000,
                              record_every: int = 10,
                              probes=None, kappa0=None,
+                             contact_b: float = 0.0,
                              kappa_diffusion: float = 1.0,
                              kappa_recovery: float = 0.05,
                              kappa_consumption: float = 2.0,
@@ -142,6 +143,14 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
     ``probes``: optional list of integer grid cells ``(i, j)``; κ at each
     is recorded **every step** into ``probe_kappa`` (shape steps × n) —
     the waveform channel for spectroscopy of the emitted disturbance.
+
+    ``contact_b``: the **exclusion (no-cloning) term** — an energy
+    ``E_x = (b/2)·Σ_x load_tot²`` added to the matter sector.  Zero for
+    separated structures, quadratic where identical distinction stacks:
+    duplicating a distinction in place costs capacity, so overlapping
+    loads repel below the footprint scale — degeneracy pressure.  The
+    force is the exact gradient ``F_i = −∂E_x/∂R_i``, and ``E_x`` is
+    included in ``energy``, so the Lyapunov law is preserved.
     """
     from .capacity_gravity import (capacity_free_energy, gaussian_load,
                                    relax_capacity)
@@ -159,10 +168,18 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
                 for pi, mi in zip(p, m)]
 
     def forces_of(p, kappa):
+        loads = loads_of(p)
         grad = [0.5 * (np.roll(kappa, -1, ax) - np.roll(kappa, 1, ax))
                 for ax in range(kappa.ndim)]
-        return np.array([[-c * float(np.sum(li * kappa * g)) for g in grad]
-                         for li in loads_of(p)])
+        f = np.array([[-c * float(np.sum(li * kappa * g)) for g in grad]
+                      for li in loads])
+        if contact_b:
+            tot = np.sum(loads, axis=0)
+            for i, li in enumerate(loads):
+                for ax in range(kappa.ndim):
+                    dli = 0.5 * (np.roll(li, -1, ax) - np.roll(li, 1, ax))
+                    f[i, ax] += contact_b * float(np.sum(tot * dli))
+        return f
 
     if kappa0 is not None:
         kappa = np.asarray(kappa0, dtype=float).copy()
@@ -183,6 +200,7 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
             ke = 0.5 * float(np.sum(m[:, None] * vel ** 2))
             total_load = np.sum(loads_of(pos), axis=0)
             fe = capacity_free_energy(kappa, total_load, **fkw)
+            ex = 0.5 * contact_b * float(np.sum(total_load ** 2))
             fk = 0.5 * tau * float(np.sum(kdot ** 2))
             hist["time"].append(i * dt)
             hist["positions"].append(pos.copy())
@@ -190,7 +208,7 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
             hist["kinetic"].append(ke)
             hist["field_energy"].append(float(fe))
             hist["field_kinetic"].append(fk)
-            hist["energy"].append(ke + float(fe) + fk)
+            hist["energy"].append(ke + float(fe) + fk + ex)
             hist["separation"].append(
                 float(np.linalg.norm(pos[0] - pos[1])) if len(m) == 2
                 else float("nan"))

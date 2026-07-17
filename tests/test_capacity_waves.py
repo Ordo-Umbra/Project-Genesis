@@ -99,6 +99,27 @@ def test_retarded_lone_mass_is_quiet():
     assert max(hist["dissipation"]) < 1e-9
 
 
+def test_contact_term_repels_overlapping_masses():
+    from project_genesis.capacity_waves import evolve_inertial_retarded
+    hist = evolve_inertial_retarded(
+        [[22.5, 24.0], [25.5, 24.0]], [[0.0, 0.0], [0.0, 0.0]], [1.2, 1.2],
+        shape=(48, 48), tau=1.0, dt=0.1, steps=150, record_every=15,
+        contact_b=0.5, kappa_recovery=0.02, kappa_consumption=0.8)
+    sep = np.asarray(hist["separation"])
+    # deep-overlap pair (sep = 3 ~ footprint): exclusion pushes them apart
+    assert sep[-1] > sep[0] + 0.5
+
+
+def test_contact_lyapunov_still_holds():
+    from project_genesis.capacity_waves import evolve_inertial_retarded
+    hist = evolve_inertial_retarded(
+        [[18.0, 24.0], [30.0, 24.0]], [[0.0, 0.6], [0.0, -0.6]], [1.2, 1.2],
+        shape=(48, 48), tau=1.0, dt=0.1, steps=400, record_every=20,
+        contact_b=0.3, kappa_recovery=0.02, kappa_consumption=0.8)
+    e = np.asarray(hist["energy"])
+    assert np.mean(np.diff(e) <= 1e-9) > 0.9
+
+
 def test_retarded_energy_is_lyapunov_for_moving_binary():
     from project_genesis.capacity_waves import evolve_inertial_retarded
     hist = evolve_inertial_retarded(
