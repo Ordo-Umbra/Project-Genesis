@@ -194,6 +194,7 @@ experiments/
   n3_environment_growth.py  Environmental growth: the static field predicts the dynamics — 3/3, the dense band grows slower (near-sightedness beats extra mass)
   n3_kappa_lightcone.py     The κ light cone: finite update rate τ gives the field a causal cone at √(D/τ) — 2/3, with the damping-envelope wall measured
   n3_retarded_gravity.py    Retarded κ-gravity: drag law from statics, supersonic silence, and the binary inspiral — 3/3, the adiabatic control conserving
+  n3_quadrupole_line.py     The quadrupole line: even-harmonics-only selection rule (the no-dipole analogue), the dipole control, the medium's complex k — 3/3
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1225,6 +1226,20 @@ The finite-speed arc now reads as one derivation chain: the field's update rate 
 Reproduce with `python experiments/n3_retarded_gravity.py` (≈ 5 minutes; `--quick` for a smoke run); the retarded integrator's checks (lone-mass quietness, Lyapunov monotonicity) live in `tests/test_capacity_waves.py`.
 
 **Honest scope:** the drag is the damped-telegrapher's `∫κ̇²` — this κ theory dissipates *in the field* (a resistive medium), so the decay mixes local drag and wave emission rather than isolating far-zone radiation (the GR-style flux split, and whether an `ω_rad = 2Ω` quadrupole line survives the mass gap, are the harder follow-ups); 2-D, one mass/width, orbital regime inherited from `n3_orbital_gravity`; supersonic silence is a strict-causality check, not Mach-cone tomography; the Lyapunov energy uses the same `F[κ]` as the adiabatic instrument, so the control comparison is like-for-like.
+
+### The quadrupole line: what the binary broadcasts — 3/3
+
+The registered spectral follow-up (`experiments/n3_quadrupole_line.py`): point a spectrometer at the binary. A rigidly-rotating equal-mass pair (kinematically driven, so the lines are razor-sharp) stirs the finite-speed field; probes on rings read the disturbance spectrum. The centrepiece is an **exact symmetry argument** — the analogue of GR's "no dipole radiation; the quadrupole leads": rotating an equal-mass pair by π *is* advancing it half a period, so the source is periodic with period `π/Ω` and the spectrum may contain **only even harmonics of Ω** — regime-independent (it survives damping, screening, and the lattice, which is itself π-symmetric), falsified by any resolved odd line. **3/3 registered predictions land:**
+
+- **Q1 ✓ The quadrupole selection rule.** The binary's dominant line sits at 2Ω (0.2646 vs 0.2667, within 2 bins), with odd-harmonic power **2×10⁻³** of the even — the forbidden lines are dark to one part in five hundred.
+- **Q2 ✓ The dipole control.** The single mass driven on the same circle — no half-period symmetry — radiates dominantly at Ω. The 2Ω selection is the binary's symmetry speaking, not the instrument's.
+- **Q3 ✓ The medium's complex wavenumber.** Driven waves in the damped telegrapher field carry `k = √((τω² − m² + iω)/D)`; the 2Ω line's measured absorption length across rings is 2.82 vs the derived `1/Im(k)` = 3.01 (ratio 0.94) — no fit freedom, the dispersion relation handed the answer over.
+
+With this the finite-speed arc has its full GR-analogue shape: a causal cone, massive waves in matter, drag and inspiral for bound systems, and a **quadrupole-led emission spectrum with the dipole channel forbidden by symmetry** — each piece measured, each with its registered control.
+
+Reproduce with `python experiments/n3_quadrupole_line.py` (≈ 15 seconds; `--quick` for a smoke run).
+
+**Honest scope:** kinematically driven sources — the free inspiraling binary chirps and needs a spectrogram, the registered follow-up; τ = 1 is an overdamped medium (ωτ < 1), so these are driven damped waves, not ringing ones (Q1/Q2 are symmetry statements immune to that; Q3 absorbs it in the complex k); probe rings are lattice-rounded; one Ω, one geometry; linear-response amplitudes.
 
 ## Setup
 
