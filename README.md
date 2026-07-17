@@ -195,6 +195,7 @@ experiments/
   n3_kappa_lightcone.py     The κ light cone: finite update rate τ gives the field a causal cone at √(D/τ) — 2/3, with the damping-envelope wall measured
   n3_retarded_gravity.py    Retarded κ-gravity: drag law from statics, supersonic silence, and the binary inspiral — 3/3, the adiabatic control conserving
   n3_quadrupole_line.py     The quadrupole line: even-harmonics-only selection rule (the no-dipole analogue), the dipole control, the medium's complex k — 3/3
+  n3_plunge_ringdown.py     The plunge and the ringdown: no long inspiral in this gravity — the trench mechanism, the sweep clock, the healing afterglow — 3/3
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1240,6 +1241,20 @@ With this the finite-speed arc has its full GR-analogue shape: a causal cone, ma
 Reproduce with `python experiments/n3_quadrupole_line.py` (≈ 15 seconds; `--quick` for a smoke run).
 
 **Honest scope:** kinematically driven sources — the free inspiraling binary chirps and needs a spectrogram, the registered follow-up; τ = 1 is an overdamped medium (ωτ < 1), so these are driven damped waves, not ringing ones (Q1/Q2 are symmetry statements immune to that; Q3 absorbs it in the complex k); probe rings are lattice-rounded; one Ω, one geometry; linear-response amplitudes.
+
+### The plunge and the ringdown: why this κ-gravity has no long inspiral — 3/3
+
+The chirp experiment (`experiments/n3_plunge_ringdown.py`) set out to record the free binary's rising line — and calibration found something better, which the registered run then nailed down: **the long inspiral does not exist in this theory.** A binary released at its calibrated circular speed merges in a fraction of an orbit at *every* wave latency, every mass and coupling probed, and even in a fast-healing high-diffusion regime (D = 9: 0.88 orbits). The mechanism is not wave drag but the parabolic flow's **memory**: a moving well digs (rate `c·load`) far faster than the vacuum heals (rate `r`), so the pair carves an **annular trench** whose outer wall pushes both masses inward — the binary is squeezed by its own wake, on a clock set by geometry alone. *(Calibration also caught and fixed a real integrator defect on the way: the wave step's damping kick was unstable/degenerate for `dt ≳ τ`; it is now an exponential integrator, exact for the damping part and converging properly to the parabolic flow as τ → 0. All three finite-speed experiments were re-run under the fix — every recorded verdict reproduces within 1–2%.)* **3/3 registered predictions land:**
+
+- **B1 ✓ Field memory, not wave retardation.** Merger time 9.6/10.0/10.0 across τ = 0.01/0.1/1.0 — a 10× swing in wave speed changes nothing (spread ×1.04) — while the adiabatic control (instant healing) orbits the full span at constant radius with 0.08% drift. The τ-toggle isolates the parabolic memory as the cause.
+- **B2 ✓ The trench, and the sweep clock.** Mid-plunge the orbit annulus is carved to κ_annulus/κ_outer = 0.41; and across six (mass, coupling) configurations the merger time matches the sweep clock `(π·d₀)/(4·v₀)` to **3–9%** (ratios 1.03–1.09) — coupling changes the force scale, the speed sets the clock: the universality that first looked like a bug is the mechanism's signature.
+- **B3 ✓ Silent ringdown, healing afterglow.** The merged pair survives as an eccentric rotor *below the load width* — spectrally silent (whitened rotor-band contrast 1.45; the originally expected 2×-bounce line is absent, and that expectation's failure is kept in the record with its mechanism) — while the probe field relaxes back with rate 0.0205 vs `r = 0.02` (**3%**): after the merger, what the channel carries is the wound healing at the field's own recovery rate.
+
+The finite-speed arc's closing shape, honestly: this κ-gravity supports a causal cone, massive waves, drag, quadrupole-selected emission — and **merger events that are plunge-and-afterglow bursts, not LIGO-style chirps**, because the field's friction and memory are strong at every probed scale. A theory variant with a small damping coefficient on κ̇ is the registered door to a true chirp.
+
+Reproduce with `python experiments/n3_plunge_ringdown.py` (≈ 5 minutes; `--quick` for a smoke run).
+
+**Honest scope:** the no-inspiral statement is about *this* κ theory (unit damping on κ̇, healing rate ≪ orbital rate) at the probed scales; the pre-merger waveform is under one cycle, which is the point; the sweep-clock constant is a geometric estimate whose factor-2 bar a six-point grid tests (it lands at 3–9%); the healing fit's late-time rate carries a decaying Dk² correction; equal masses, one box.
 
 ## Setup
 

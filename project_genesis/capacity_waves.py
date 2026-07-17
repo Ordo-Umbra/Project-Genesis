@@ -90,7 +90,12 @@ def step_capacity_wave(kappa: np.ndarray, kappa_dot: np.ndarray,
     force = (kappa_diffusion * periodic_laplacian(kappa)
              + kappa_recovery * (kappa_baseline - kappa)
              - kappa_consumption * load * kappa)
-    kappa_dot = kappa_dot + dt * (force - kappa_dot) / tau
+    # exponential integrator for the stiff damping part: exact for
+    # τ·κ̈ = force − κ̇ with force frozen over the step, unconditionally
+    # stable for any dt/τ, and τ → 0 recovers the parabolic flow
+    # (κ̇ → force).  A plain kick is unstable/degenerate for dt ≳ τ.
+    decay = np.exp(-dt / tau)
+    kappa_dot = force + (kappa_dot - force) * decay
     kappa = kappa + dt * kappa_dot
     return kappa, kappa_dot
 
@@ -111,6 +116,7 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
                              width: float = 2.5, tau: float = 1.0,
                              dt: float = 0.1, steps: int = 1000,
                              record_every: int = 10,
+                             probes=None, kappa0=None,
                              kappa_diffusion: float = 1.0,
                              kappa_recovery: float = 0.05,
                              kappa_consumption: float = 2.0,
@@ -132,6 +138,10 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
     lost by the masses is carried by the field and dissipated at exactly
     the recorded rate ``dissipation``.  Adiabatic κ-gravity conserves
     ``T + F``; retardation makes moving masses **drag and radiate**.
+
+    ``probes``: optional list of integer grid cells ``(i, j)``; κ at each
+    is recorded **every step** into ``probe_kappa`` (shape steps × n) —
+    the waveform channel for spectroscopy of the emitted disturbance.
     """
     from .capacity_gravity import (capacity_free_energy, gaussian_load,
                                    relax_capacity)
@@ -154,13 +164,21 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
         return np.array([[-c * float(np.sum(li * kappa * g)) for g in grad]
                          for li in loads_of(p)])
 
-    kappa = relax_capacity(np.sum(loads_of(pos), axis=0), **fkw)
+    if kappa0 is not None:
+        kappa = np.asarray(kappa0, dtype=float).copy()
+    else:
+        kappa = relax_capacity(np.sum(loads_of(pos), axis=0), **fkw)
     kdot = np.zeros_like(kappa)
     forces = forces_of(pos, kappa)
     hist = {k: [] for k in ("time", "positions", "velocities", "kinetic",
                             "field_energy", "field_kinetic", "energy",
                             "separation", "dissipation")}
+    if probes is not None:
+        hist["probe_kappa"] = []
     for i in range(steps):
+        if probes is not None:
+            hist["probe_kappa"].append([float(kappa[pi, pj])
+                                        for pi, pj in probes])
         if i % record_every == 0:
             ke = 0.5 * float(np.sum(m[:, None] * vel ** 2))
             total_load = np.sum(loads_of(pos), axis=0)
