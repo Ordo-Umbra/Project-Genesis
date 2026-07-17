@@ -69,7 +69,7 @@ project_genesis/
   continual_learning.py  κ-as-soil for weights: numpy MLP, capacity-gated SGD (per-parameter regenerating plasticity), task generators
   capacity_gravity.py  κ as gravity: load masses, relaxed capacity wells, the free energy F[κ], screening-length instruments
   capacity_dynamics.py Self-gravitating masses in the κ-field: overdamped/inertial/cosmological (FLRW) evolution, stress-energy, Friedmann-from-action
-  capacity_waves.py    Finite-speed κ (telegrapher form): causal cone at c_κ=√(D/τ), massive dispersion ω²=(Dk²+r+cρ)/τ−1/4τ², parabolic control
+  capacity_waves.py    Finite-speed κ (telegrapher form): causal cone at c_κ=√(D/τ), massive dispersion ω²=(Dk²+r+cρ)/τ−1/4τ², retarded inertial gravity (Lyapunov energy), parabolic control
   stable_forms.py      The spectrum of stable κ-forms: structural mass, binding, form interactions
   multiphase.py        Three-component Ψ∈ℂ³ sector field with 120° Y-junctions
   network_server.py    WebSocket server for remote monitoring and control
@@ -193,6 +193,7 @@ experiments/
   n3_local_screening.py     Local screening: one field, two gravities — 3/3, the range is set by the local environment (chameleon-style), not the box mean
   n3_environment_growth.py  Environmental growth: the static field predicts the dynamics — 3/3, the dense band grows slower (near-sightedness beats extra mass)
   n3_kappa_lightcone.py     The κ light cone: finite update rate τ gives the field a causal cone at √(D/τ) — 2/3, with the damping-envelope wall measured
+  n3_retarded_gravity.py    Retarded κ-gravity: drag law from statics, supersonic silence, and the binary inspiral — 3/3, the adiabatic control conserving
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1210,6 +1211,20 @@ Everywhere in the framework, κ-gravity acts **instantaneously** — the capacit
 Reproduce with `python experiments/n3_kappa_lightcone.py` (≈ 15 seconds; `--quick` for a smoke run); module checks in `tests/test_capacity_waves.py` (dispersion, causality bound, CFL guard, steady state).
 
 **Honest scope:** linear-response amplitudes (unclipped integrator); one D value; 2-D fronts carry the usual 2-D wake (Huygens fails in 2-D — the front is what is fitted); the dispersion estimator needs `Q = 2ωτ ≳ 2`, so the gap scan runs at large τ. The gravity experiments elsewhere remain adiabatic — **coupling the finite-speed field to moving masses (retarded κ-gravity: does orbital precession pick up the radiation-reaction signature?) is the registered next step**, and the τ → 0 overdamped limit keeps every earlier result inside the wave theory.
+
+### Retarded κ-gravity: drag, the causal wall, and the inspiral — 3/3
+
+The registered coupling (`capacity_waves.evolve_inertial_retarded` + `experiments/n3_retarded_gravity.py`): masses move under the same envelope force as the adiabatic instrument, but from the field **as it currently is** — lagging, wavy, retarded. The telegrapher's energy law is exact (`d/dt[T + F[κ] + ∫(τ/2)κ̇²] = −∫κ̇² ≤ 0`), which makes the recorded energy a Lyapunov function and the derivation registrable: for a well co-moving at v ≪ c_κ, `κ̇ ≈ −v·∂ₓκ`, so the dissipated power is **predictable from the relaxed static well alone**: `P(v) = v²·Σ(∂ₓκ_static)²`. On the orbital experiment's own calibrated regime, **3/3 registered predictions land:**
+
+- **G1 ✓ The drag law — statics predict dissipation.** A towed mass dissipates `P ∝ v^2.04` with coefficient 1.167 vs the static well's 1.247 (ratio 0.94) — **gravitational drag**, the analogue's radiation-reaction channel, derived before it was run.
+- **G2 ✓ The causal wall.** `P/v²` rises monotonically toward c_κ (the co-moving operator carries `D_eff = D(1−v²/c_κ²)` — the well steepens as the source approaches the field's update rate), and a **supersonic mass is silent ahead**: fore/aft disturbance ratio 5.6×10⁻³, measured outside the startup transient's cone — strict causality, positionally verified.
+- **G3 ✓ The inspiral.** The retarded binary's energy decreases monotonically with net loss **~9000× the adiabatic control's drift** (1.26–1.28 vs 0.00014); the separation collapses (≈12 → 1.3) while the adiabatic control orbits at constant radius indefinitely; and the early-window loss is ordered in the update rate (slower field dissipates faster: 2.06 vs 1.99). **A finite update rate makes binaries decay — the analogue's gravitational-wave inspiral**, with the instantaneous-field control conserving energy to 0.003%.
+
+The finite-speed arc now reads as one derivation chain: the field's update rate is its speed limit (light cone) → the matter term gives its waves mass (dispersion) → and a bound system whose motion must be continually re-encoded by that finite-rate field **loses energy and spirals in**, at a rate the static well predicts. In URP terms: *integration at finite update rate charges a toll on every moving distinction, and the toll is computable.*
+
+Reproduce with `python experiments/n3_retarded_gravity.py` (≈ 5 minutes; `--quick` for a smoke run); the retarded integrator's checks (lone-mass quietness, Lyapunov monotonicity) live in `tests/test_capacity_waves.py`.
+
+**Honest scope:** the drag is the damped-telegrapher's `∫κ̇²` — this κ theory dissipates *in the field* (a resistive medium), so the decay mixes local drag and wave emission rather than isolating far-zone radiation (the GR-style flux split, and whether an `ω_rad = 2Ω` quadrupole line survives the mass gap, are the harder follow-ups); 2-D, one mass/width, orbital regime inherited from `n3_orbital_gravity`; supersonic silence is a strict-causality check, not Mach-cone tomography; the Lyapunov energy uses the same `F[κ]` as the adiabatic instrument, so the control comparison is like-for-like.
 
 ## Setup
 

@@ -107,6 +107,89 @@ def step_capacity_parabolic(kappa: np.ndarray, load: np.ndarray | float, *,
                          - kappa_consumption * load * kappa)
 
 
+def evolve_inertial_retarded(positions, velocities, masses, *, shape,
+                             width: float = 2.5, tau: float = 1.0,
+                             dt: float = 0.1, steps: int = 1000,
+                             record_every: int = 10,
+                             kappa_diffusion: float = 1.0,
+                             kappa_recovery: float = 0.05,
+                             kappa_consumption: float = 2.0,
+                             kappa_baseline: float = 1.0) -> dict:
+    """Inertial masses coupled to the finite-speed (telegrapher) κ field.
+
+    The retarded counterpart of ``capacity_dynamics.evolve_inertial``: the
+    field is *not* relaxed adiabatically — ``(κ, κ̇)`` co-evolve with the
+    masses, which feel the same envelope force ``F_i = −c·Σ load_i·κ·∇κ``
+    from the field **as it currently is** (lagging, wavy, retarded).  The
+    field starts from the parabolic steady state of the initial positions
+    (κ̇ = 0), so all early dissipation is source motion, not transient.
+
+    Exact energy bookkeeping (multiply the field equation by κ̇):
+
+        d/dt [ T_mass + F[κ] + ∫(τ/2)κ̇² ] = −∫κ̇²  ≤ 0 ,
+
+    so the recorded ``energy`` is a Lyapunov function — mechanical energy
+    lost by the masses is carried by the field and dissipated at exactly
+    the recorded rate ``dissipation``.  Adiabatic κ-gravity conserves
+    ``T + F``; retardation makes moving masses **drag and radiate**.
+    """
+    from .capacity_gravity import (capacity_free_energy, gaussian_load,
+                                   relax_capacity)
+
+    pos = np.asarray(positions, dtype=float).copy()
+    vel = np.asarray(velocities, dtype=float).copy()
+    m = np.asarray(masses, dtype=float)
+    c = kappa_consumption
+    fkw = dict(kappa_diffusion=kappa_diffusion, kappa_recovery=kappa_recovery,
+               kappa_consumption=kappa_consumption,
+               kappa_baseline=kappa_baseline)
+
+    def loads_of(p):
+        return [gaussian_load(shape, [tuple(pi)], width, mi)
+                for pi, mi in zip(p, m)]
+
+    def forces_of(p, kappa):
+        grad = [0.5 * (np.roll(kappa, -1, ax) - np.roll(kappa, 1, ax))
+                for ax in range(kappa.ndim)]
+        return np.array([[-c * float(np.sum(li * kappa * g)) for g in grad]
+                         for li in loads_of(p)])
+
+    kappa = relax_capacity(np.sum(loads_of(pos), axis=0), **fkw)
+    kdot = np.zeros_like(kappa)
+    forces = forces_of(pos, kappa)
+    hist = {k: [] for k in ("time", "positions", "velocities", "kinetic",
+                            "field_energy", "field_kinetic", "energy",
+                            "separation", "dissipation")}
+    for i in range(steps):
+        if i % record_every == 0:
+            ke = 0.5 * float(np.sum(m[:, None] * vel ** 2))
+            total_load = np.sum(loads_of(pos), axis=0)
+            fe = capacity_free_energy(kappa, total_load, **fkw)
+            fk = 0.5 * tau * float(np.sum(kdot ** 2))
+            hist["time"].append(i * dt)
+            hist["positions"].append(pos.copy())
+            hist["velocities"].append(vel.copy())
+            hist["kinetic"].append(ke)
+            hist["field_energy"].append(float(fe))
+            hist["field_kinetic"].append(fk)
+            hist["energy"].append(ke + float(fe) + fk)
+            hist["separation"].append(
+                float(np.linalg.norm(pos[0] - pos[1])) if len(m) == 2
+                else float("nan"))
+            hist["dissipation"].append(float(np.sum(kdot ** 2)))
+        acc = forces / m[:, None]
+        vel_half = vel + 0.5 * acc * dt
+        pos = pos + vel_half * dt
+        kappa, kdot = step_capacity_wave(
+            kappa, kdot, np.sum(loads_of(pos), axis=0), tau=tau, dt=dt, **fkw)
+        forces = forces_of(pos, kappa)
+        acc = forces / m[:, None]
+        vel = vel_half + 0.5 * acc * dt
+    hist["final_positions"] = pos.copy()
+    hist["kappa"] = kappa
+    return hist
+
+
 def front_radius(delta: np.ndarray, center, threshold: float) -> float:
     """Largest periodic distance from ``center`` where ``|δ| > threshold``."""
     shape = delta.shape

@@ -83,3 +83,29 @@ def test_mass_grows_with_density_and_speed_with_update_rate():
     assert wave_mass2(0.05, 2.0, 0.2) > wave_mass2(0.05, 2.0, 0.0)
     assert wave_speed(1.0, 4.0) > wave_speed(1.0, 64.0)
     assert np.isnan(dispersion_omega(0.01, tau=0.5))   # overdamped mode
+
+
+def test_retarded_lone_mass_is_quiet():
+    from project_genesis.capacity_waves import evolve_inertial_retarded
+    hist = evolve_inertial_retarded(
+        [[24.0, 24.0]], [[0.0, 0.0]], [1.2],
+        shape=(48, 48), tau=1.0, dt=0.1, steps=200, record_every=20,
+        kappa_recovery=0.02, kappa_consumption=0.8)
+    e = np.asarray(hist["energy"])
+    # a lone mass at rest in its own relaxed well: no motion, no
+    # dissipation — energy conserved to fine tolerance
+    assert abs(e[-1] - e[0]) / abs(e[0]) < 1e-6
+    # residual kappa-dot from the finite relax tolerance seeds ~1e-11
+    assert max(hist["dissipation"]) < 1e-9
+
+
+def test_retarded_energy_is_lyapunov_for_moving_binary():
+    from project_genesis.capacity_waves import evolve_inertial_retarded
+    hist = evolve_inertial_retarded(
+        [[18.0, 24.0], [30.0, 24.0]], [[0.0, 0.8], [0.0, -0.8]], [1.2, 1.2],
+        shape=(48, 48), tau=1.0, dt=0.1, steps=400, record_every=20,
+        kappa_recovery=0.02, kappa_consumption=0.8)
+    e = np.asarray(hist["energy"])
+    assert e[-1] < e[0]                      # net dissipation
+    assert np.mean(np.diff(e) <= 1e-9) > 0.9  # monotone (Lyapunov)
+    assert all(d >= 0.0 for d in hist["dissipation"])
