@@ -69,7 +69,7 @@ project_genesis/
   continual_learning.py  κ-as-soil for weights: numpy MLP, capacity-gated SGD (per-parameter regenerating plasticity), task generators
   capacity_gravity.py  κ as gravity: load masses, relaxed capacity wells, the free energy F[κ], screening-length instruments
   capacity_dynamics.py Self-gravitating masses in the κ-field: overdamped/inertial/cosmological (FLRW) evolution, stress-energy, Friedmann-from-action
-  capacity_waves.py    Finite-speed κ (telegrapher form): causal cone at c_κ=√(D/τ), massive dispersion ω²=(Dk²+r+cρ)/τ−1/4τ², retarded inertial gravity (Lyapunov energy), parabolic control
+  capacity_waves.py    Finite-speed κ (telegrapher form): causal cone at c_κ=√(D/τ), massive dispersion ω²=(Dk²+r+cρ)/τ−1/4τ², retarded inertial gravity (Lyapunov energy), the exclusion contact term (b/2)∫ρ², parabolic control
   stable_forms.py      The spectrum of stable κ-forms: structural mass, binding, form interactions
   multiphase.py        Three-component Ψ∈ℂ³ sector field with 120° Y-junctions
   network_server.py    WebSocket server for remote monitoring and control
@@ -196,6 +196,7 @@ experiments/
   n3_retarded_gravity.py    Retarded κ-gravity: drag law from statics, supersonic silence, and the binary inspiral — 3/3, the adiabatic control conserving
   n3_quadrupole_line.py     The quadrupole line: even-harmonics-only selection rule (the no-dipole analogue), the dipole control, the medium's complex k — 3/3
   n3_plunge_ringdown.py     The plunge and the ringdown: no long inspiral in this gravity — the trench mechanism, the sweep clock, the healing afterglow — 3/3
+  n3_exclusion_core.py      The exclusion core: no-cloning as degeneracy pressure — the collapse gets a floor, and the ringdown returns at the well's own pitch — 3/3
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1255,6 +1256,20 @@ The finite-speed arc's closing shape, honestly: this κ-gravity supports a causa
 Reproduce with `python experiments/n3_plunge_ringdown.py` (≈ 5 minutes; `--quick` for a smoke run).
 
 **Honest scope:** the no-inspiral statement is about *this* κ theory (unit damping on κ̇, healing rate ≪ orbital rate) at the probed scales; the pre-merger waveform is under one cycle, which is the point; the sweep-clock constant is a geometric estimate whose factor-2 bar a six-point grid tests (it lands at 3–9%); the healing fit's late-time rate carries a decaying Dk² correction; equal masses, one box.
+
+### The exclusion core: no-cloning as degeneracy pressure — 3/3
+
+The plunge ended every binary in a silent merged point — and the URP's own exclusion idea (*in a structure, adding the same distinction does not expand the structure*) names what the matter sector was missing. `experiments/n3_exclusion_core.py` tests it, with the calibration failure kept in the record: **saturating the load does not repel** — this free energy's binding comes from the *concavity* of `F(ρ) = rcρ/2(r+cρ)`, so capping stacked load makes merging cheaper (measured: the E(s) curve barely moves). The faithful implementation must make duplication *cost* capacity: the minimal convex penalty `E_x = (b/2)∫ρ_tot²` — zero for separated structures, quadratic where identical distinction stacks — whose exact gradient is a contact force. `E_x(2ρ) > 2E_x(ρ)`: the clone is refused; degeneracy pressure enters exactly as contact terms do in nuclear equations of state. **3/3 registered predictions land:**
+
+- **X1 ✓ The exclusion barrier.** At b = 0.2 the static two-body energy turns from monotone-attractive-into-contact (the b = 0 control) into a curve with an **interior minimum at s\* = 6** and a 0.45 barrier against contact — adding the same distinction in place costs, so structures cannot be superposed.
+- **X2 ✓ The collapse gets a floor.** The released binary still plunges (the trench is orbit-scale physics, untouched) but now stalls at late mean separation **6.36 vs s\* = 6** (ratio 1.06), where the b = 0 baseline grinds down to 1.61 — a **contact binary held open by exclusion**, the analogue of degeneracy pressure halting gravitational collapse.
+- **X3 ✓ The ringdown returns — at the well's own pitch.** Held open at finite size, the merged system finally rings: the waveform carries a line at ω = 0.472 with whitened contrast **437** (the silent-blob baseline: 1.45), matching the separation channel's libration (0.477) — and the *static* energy curve's curvature predicted the pitch (`√(E″(s*)/μ)` = 0.393). The same friction that forbids the inspiral damps the ring within a few cycles, and the rotational 2Ω line dies with the drag-drained angular momentum — the audible mode is the radial libration on the exclusion floor.
+
+One idea closed three loops at once: the no-cloning principle gives the matter sector a Pauli-style core, the core halts the trench collapse at a computable radius, and the halted system restores the waveform the silent merger had erased — with the ringdown frequency read off the same statics that predicted the floor.
+
+Reproduce with `python experiments/n3_exclusion_core.py` (≈ 20 seconds; `--quick` for a smoke run); contact-term checks (repulsion sign, Lyapunov) in `tests/test_capacity_waves.py`.
+
+**Honest scope:** the contact term is a minimal *variant* — the smallest convex no-cloning penalty, added to the matter sector only (the field equation is untouched); b = 0.2 was chosen in static calibration for an interior minimum away from both walls; the failed load-saturation route is kept with its mechanism; one (mass, coupling), τ = 0.1; a spun-up variant is the registered door to the rotational 2Ω line, and deriving `b` from the framework's own information-counting (rather than dialing it) is the deeper open item.
 
 ## Setup
 
