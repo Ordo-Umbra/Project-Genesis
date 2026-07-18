@@ -808,3 +808,337 @@ n-fold gap.
   c = 0.8, τ = 0.1); statics on relax_capacity with the exact
   min, dynamics on the symmetrized smoothed min (ε = 1e-4) with
   conjugate-gradient solves, as the base branch.
+
+
+---
+
+# Part V — the dilute operating point
+
+### Where the derivation is self-consistent: the two forms are ONE theory only in the JOINT dilute-broad limit, the local form buys no floor there (a structural factor 2), and the released binary is repelled while the baseline collapses
+
+*Follow-up #4, registered by Part IV.  Experiment:
+`experiments/n3_exclusion_dilute.py`; implementation: no new code
+paths — the arc's own instruments (`exclusion_energy_density`,
+`exclusion_gap_full`, `duplicated_load`,
+`linear_response_exclusion_gap`, `contact_derived`); tests:
+`tests/test_exclusion_dilute.py`.  Verdict: **0/3 — recorded as-is.
+The pre-registered bars fail, and their failure is the finding: the
+convergence claim is verified as a JOINT asymptotic statement (each
+single limit leaves a measured remainder), the local form's missing
+floor is structural rather than a defect (the overlap cross term is
+generically ~2× the broad-screened binding), and the 2×2 decomposition
+pins what Part II actually fixed at this operating point — the
+duplicated-component CONSTRUCTION, not the functional.*
+
+---
+
+## The operating point (design — measure first)
+
+The point must live inside the refusal window with gravity still
+observable, per the spec's three criteria — all measured:
+
+- **(a) peak total load at contact** (s = 1): **0.019975 < 0.8·r/(2c)
+  = 0.025** ✓.  The whole configuration sits inside the refusal
+  window ρ < r/(2c) = 0.03125.
+- **(b) width ≥ 2ξ**: ξ = √(D/r) = 4.4721 at r = 0.05, so 2ξ =
+  8.9443.  The spec's example width 8 FAILS this criterion; the ONE
+  registered adjustment moves the width to **10** ✓ (width/ξ = 2.24).
+- **(c) the no-exclusion baseline measurably collapses within
+  t_max**: measured FIRST (an instrument necessity, as follow-up #3):
+  released from rest at d₀ = 12, the baseline reaches separation < 3
+  at **t ≈ 4.0** — deep inside t_max = 250, whose late window is
+  t > 150 ✓.  The registered t_max-extension branch did not fire;
+  the dilute regime's cost profile is the OPPOSITE of the time-box's
+  concern — the light binary (inertial mass = load amplitude = 0.01)
+  is FAST (8 ms/step at 96²).
+
+Chosen point: **size 96, width 10, amplitude = mass 0.01, r = 0.05,
+c = 0.8, τ = 0.1, dt = 0.1** — a DIFFERENT regime from the arc's
+dense point by construction (that is the point of the follow-up).
+Gravity stays observable: single-blob capacity dip δκ = 0.1097 at the
+blob centre, pair binding span 0.24921 (contact → separated).  For
+the record: **b = 2c²/r = 25.6** at this point.
+
+## The convergence derivation (the claim under test)
+
+One short calculation, two remainder structures.  In the dilute-broad
+regime — blob amplitude ≪ r/(2c) AND width ≫ ξ — both derivations
+reduce to the same energy on the duplicated component
+ρ_dup = min(ρ₁, ρ₂):
+
+- **Part I (homogeneous local form).**
+  e(ρ) = c²rρ²/((r+cρ)(r+2cρ)) = (c²/r)·ρ²·(1+cρ/r)⁻¹(1+2cρ/r)⁻¹,
+  so ∫e(ρ_dup) ≈ (c²/r)∫ρ_dup² with remainder factor
+  (1+cρ/r)⁻¹(1+2cρ/r)⁻¹ — the QUADRATIC criterion is 3cρ/r ≪ 1.
+- **Part II (full functional).**  In linear response
+  E(ρ) = (cκ₀²/2)∫ρ − (c²κ₀²/2)(ρ, G_r ρ) + O(c³), and for a load
+  broad on the kernel's scale, (ρ, G_r ρ) → (1/r)∫ρ²; the gap is
+  E_x = c²κ₀²(ρ_dup, G_r ρ_dup) ≈ (c²κ₀²/r)∫ρ_dup² — the SAME
+  coefficient (κ₀ = 1), with TWO remainders: the O(c³) linear-response
+  remainder (order cAκ₀/r) and the kernel-range remainder
+  r·(ρ, G_r ρ)/∫ρ² = 1 − O(ξ²/w²).
+
+So the claim "Parts I and II are one theory where both are valid" is
+exact in the JOINT limit cAκ₀/r → 0 AND ξ/w → 0; at any finite point
+the two forms carry DIFFERENT remainders, and their ratio is the
+product of the two remainder structures.  The experiment measures the
+map.
+
+## P1 — the two derivations are one theory here: FAIL (recorded as-is)
+
+E_x(s) on the duplicated component, Part-I local ∫e(ρ_dup) against
+Part-II full-functional gap, with the common quadratic benchmark
+(c²/r)∫ρ_dup² and the linear-response kernel value for the mechanism
+columns:
+
+     s      E_x(I)    E_x(II)   I/II     I/quad   II/LR    LR/quad
+     2     0.26987    0.24121   1.1188   0.7560   0.7988   0.8459
+     4     0.23855    0.21173   1.1267   0.7628   0.8070   0.8390
+     6     0.20827    0.18339   1.1356   0.7708   0.8161   0.8317
+     8     0.17948    0.15664   1.1458   0.7800   0.8262   0.8239
+     10    0.15259    0.13187   1.1571   0.7901   0.8370   0.8158
+     12    0.12790    0.10934   1.1697   0.8013   0.8484   0.8074
+     14    0.10563    0.08926   1.1835   0.8133   0.8603   0.7988
+     16    0.08592    0.07169   1.1985   0.8259   0.8724   0.7899
+     18    0.06878    0.05662   1.2147   0.8391   0.8846   0.7809
+     20    0.05416    0.04396   1.2321   0.8525   0.8966   0.7717
+     24    0.03191    0.02513   1.2698   0.8795   0.9196   0.7532
+     28    0.01751    0.01335   1.3109   0.9053   0.9401   0.7346
+     32    0.00892    0.00659   1.3545   0.9286   0.9575   0.7160
+     36    0.00422    0.00302   1.3996   0.9485   0.9715   0.6975
+
+Worst |ratio − 1| = 0.3996, best 0.1188 — the 10% bar fails at EVERY
+ladder point.  The s-dependent map IS the result: agreement is BEST
+at contact (ratio 1.119), where the duplicated component is broad and
+slowly varying — exactly where both approximations are valid — and
+degrades monotonically down the skirts, where the min-of-tails ridge
+narrows below ξ (transverse scale ~ w²/s) and neither the
+local-density nor the broad-kernel approximation is valid.  Both
+forms approach the common (c²/r)∫ρ_dup² limit FROM BELOW (I/quad
+rises 0.756 → 0.949, II/LR rises 0.799 → 0.972 as the overlap
+density falls); their ratio does not cancel because the remainders
+are different functions of the configuration.
+
+**EXPLORATORY (not pre-registered) — the joint-limit structure.**
+Amplitude scan at the operating width (s = 2): I/II = 1.119 (A =
+0.01), 1.159 (0.003), 1.174 (0.001) — NOT → 1: at fixed width the
+amplitude remainders vanish (I/quad → 0.970, II/LR → 0.977) but the
+kernel-range remainder LR/quad = 0.846 is irreducible at ξ/w = 0.45.
+Width scan at A = 0.001: I/II = 1.174 (w = 10), 1.072 (w = 16),
+1.030 (w = 24) — → 1 as ξ/w → 0.  The two derivations converge in
+the JOINT dilute-broad limit and only there; the convergence claim is
+verified as the asymptotic statement, with both approach directions
+measured.
+
+## P2 — Part I's form buys a floor where it is self-consistent: FAIL (recorded as-is)
+
+Statics at the arc's protocol (relax_capacity field curve plus the
+exclusion term, zeroed at the ladder's far end):
+
+    derived  E(s) = 2:+0.0727 4:+0.0713 6:+0.0690 8:+0.0659 10:+0.0621
+                    12:+0.0575 14:+0.0524 16:+0.0468 18:+0.0409 20:+0.0349
+                    24:+0.0231 28:+0.0129 32:+0.0051 36:+0.0000
+    control  E(s) = 2:-0.2492 4:-0.2427 6:-0.2322 8:-0.2183 10:-0.2015
+                    12:-0.1825 14:-0.1622 16:-0.1413 18:-0.1204 20:-0.1003
+                    24:-0.0642 28:-0.0353 32:-0.0142 36:+0.0000
+
+The derived curve is MONOTONE DECREASING — its argmin sits at the
+ladder's far edge (s = 36), i.e. NO ladder-interior minimum (the
+arc's convention: an edge argmin is no floor — Part I's D2 recorded
+the s = 1 edge the same way); the curve is still falling at the edge,
+toward the unbound pair at infinity.  The control is monotone
+attractive ✓.  P2 fails, and the mechanism is STRUCTURAL, not an
+edge effect: the derived exclusion's separation-dependent span is
++0.32190 against the field binding span 0.24921 — ratio **1.292**.
+In the deep dilute-broad limit the ratio tends to exactly **2**,
+amplitude-independent: the local form's overlap cross term is
+2(c²/r)∫ρ₁ρ₂ (from ∫(ρ₁+ρ₂)²), while the quadratic-form binding is
+c²κ₀²(ρ₁, G_r ρ₂) ≈ (c²/r)∫ρ₁ρ₂ — the gap's 2E − E(2) combinatorics
+prices the overlap at twice what the same counting pays for binding.
+The measured 1.292 sits below 2 because e saturates at the contact
+density (I/quad = 0.756 there) and the kernel is not perfectly flat
+(LR/quad = 0.846).  **The local form generically cannot buy a floor
+in the dilute-broad regime** — it refuses the clone AND the bound
+pair with the same stiffness.
+
+For the record: the constant-b term with b = 2c²/r = 25.6 (the
+dilute-limit claim end-to-end) — its exclusion at contact is 1.60049
+against the derived form's 0.94872, an overshoot of **1.687×**:
+at the contact density e(ρ) sits at **59.3%** of its quadratic
+asymptote (3cρ/r = 0.96 there — the refusal-window criterion
+cρ/r < 1/2 is ~16× looser than the quadratic criterion 3cρ/r ≪ 1).
+The b-term statics are monotone decreasing too (no floor), only
+stiffer.  And the Part-II form at the same point (recorded, no bar):
+interior floor at **s\* = 12, barrier 0.06515**.
+
+### P2x — EXPLORATORY (not pre-registered, no bar): the 2×2 {functional × construction} decomposition
+
+Two differences separate the derivations — the FUNCTIONAL
+(homogeneous e(ρ) vs the full gap) and the CONSTRUCTION (applied to
+ρ_tot vs to ρ_dup = min).  The four statics:
+
+    local-on-total (derived): argmin at the far edge — NO floor
+    local-on-min:             interior floor s* = 14, barrier 0.07720
+    full-on-total:            argmin at the far edge — NO floor
+    full-on-min (Part II):    interior floor s* = 12, barrier 0.06515
+
+BOTH functionals buy a floor on the duplicated-component
+construction; NEITHER does on the total load.  At the dilute point,
+what Part II actually fixed is the CONSTRUCTION — pricing only the
+cloned component, whose s-dependence falls off with the overlap,
+instead of the total load, whose cross term refuses at every
+separation.  (Contrast with the dense point, where the FUNCTIONAL was
+the fix: there the homogeneous form inverted into a merger subsidy
+and only the gradient-corrected gap restored the sign.  The two
+points decompose Part II's repair differently — at the dense point
+the gradient physics, at the dilute point the min-construction.)
+
+## P3 — dynamics from rest: FAIL — no registered branch fired (recorded as-is)
+
+Released from rest at d₀ = 12 (the branch-neutral choice: the
+circular-speed calibration of the dense-point runs assumes a bound
+orbit, and P2 registers doubt about a floor), t_max = 250:
+
+- **baseline**: collapses at t ≈ 4.0 (measured first); late mean
+  separation **6.10** (the post-plunge slosh takes long to damp at
+  these densities — recorded as-is);
+- **derived form**: **REPELLED** — the pair accelerates outward from
+  rest, max separation **41.49**, late mean **39.80**, end-of-run
+  mean **41.47** (the plain, not periodic, separation norm is the
+  arc's convention: with a repulsive pair on a periodic box the late
+  trajectory winds around the torus — recorded, not interpreted);
+- ratio derived/baseline **6.52**.
+
+The stall bar has no referent (no interior static s\*), the
+baseline-collapse fallback does not apply (the baseline collapses
+in-window), so NEITHER registered branch describes the outcome: the
+P2 statics carry the mechanism — no floor, net repulsion at every
+separation, and the released binary slides down the monotone
+potential away from contact.
+
+**Score: 0/3 — all three pre-registered predictions fail at the
+operating point the spec's own criteria select, and the failures
+carry the answer.**
+
+## What this closes
+
+- **The convergence claim (Part IV's registered follow-up) is
+  CLOSED as a regime statement.**  Parts I and II are one theory
+  EXACTLY in the joint dilute-broad limit — both reduce to
+  (c²/r)∫ρ_dup² with κ₀ = 1 — and the follow-up has measured both
+  approach directions (amplitude remainders → 0 with cAκ₀/r,
+  kernel-range remainder → 0 with ξ/w) and the s-dependent remainder
+  map at the operating point (best 12% at contact, worst 40% in the
+  far skirts).  The 10% pre-registered bar fails because the spec's
+  operating-point criteria (window edge + width ≥ 2ξ) select a point
+  at the regime's EDGE, not its deep interior — the disagreement is
+  the product of two different, measured remainder structures, not a
+  defect of either derivation.
+- **Part I's D2 failure is now FULLY a validity-regime statement.**
+  The homogeneous local form on the total load misses the floor in
+  BOTH regimes, for opposite reasons: above the refusal window (the
+  dense point) it is too SOFT — it inverts into a merger subsidy;
+  below the window (this point) it is too STIFF — the overlap cross
+  term refuses at ~2× the binding, amplitude-independent.  There is
+  no density at which the local form on ρ_tot buys the floor; the
+  floor needs the duplicated-component construction (the 2×2), and at
+  the dense point it needs the gradient functional as well (Part II).
+- **Part I's registered follow-up 4 ("a dilute operating point") is
+  CLOSED — answered in the negative for the floor.**  Inside the
+  window the derived term is indeed repulsive (the tests confirm it),
+  but it is NOT the calibrated constant-b term there (59% of
+  b = 2c²/r at the contact density), and "self-consistent" does not
+  imply "buys a floor": the floor is structurally excluded in the
+  same regime that makes the form self-consistent.
+
+## Errata (recorded inside Part V; earlier parts are append-only and untouched)
+
+1. **Part I, registered follow-up 4** says "inside the refusal window
+   (ρ < r/(2c)) the derived term *is* the calibrated term with
+   b = 2c²/r".  Measured here: inside the window the term is the
+   calibrated QUADRATIC form only to 59–80% (the window criterion
+   cρ/r < 1/2 is ~16× looser than the quadratic criterion
+   3cρ/r ≪ 1); the constant-b term overshoots the derived exclusion
+   at contact by 1.687×.  The follow-up's "would test the floor where
+   the derivation is self-consistent" is answered above: no floor.
+2. **The spec of this follow-up (SPEC5 §3)** registered a test
+   expecting "e(ρ)/(ρ²/2) = 2c²/r to 1% at the blob amplitude" —
+   mathematically false at A = 0.01 (measured 0.653083×2c²/r, 35%
+   off; the expectation confused the window criterion with the
+   quadratic criterion).  The test file guards the true dilute LIMIT
+   (holds to 1% at ρ = 1e-4) and pins the at-amplitude value as
+   measured; the 1% expectation is recorded as failing here, not
+   edited anywhere.
+3. **Part IV, registered follow-up 1** expects the homogeneous and
+   full-functional derivations to agree "where the core stays
+   linear".  Measured: linearity of the core (cAκ₀/r → 0) is NOT
+   sufficient — at fixed width the ratio saturates at 1.174 (the
+   kernel-range remainder); agreement additionally requires the broad
+   limit ξ/w → 0.  The expectation is refined, not refuted.
+
+## Honest edges (Part V)
+
+- **External interference, recorded.**  This session worked in a
+  shared environment where a fabricated rewrite of this document
+  circulated (an earlier corrupted base was repaired at e52cdab
+  before this part was written).  The fabrication was excluded by
+  content-level checks — git tree diffs and blob hashes against the
+  remote base — and this part was appended to the verified true
+  record; nothing in the record was rewritten.
+- **A different operating point by construction.**  Nothing here
+  re-measures the dense point; the two points' different physics is
+  the content of the follow-up.
+- **Broad blobs make shallow wells — instrument choices recorded.**
+  Width 10 from criterion (b) (the spec example's 8 fails 2ξ = 8.94);
+  rest release as the branch-neutral choice; t_max = 250 from the
+  measured baseline collapse t ≈ 4.0 (extension branch did not fire);
+  the statics ladder reaches s = 36, where width-10 tails begin to
+  feel the periodic image (~1% of amplitude) — monotone verdicts are
+  zeroing-invariant, and the edge-argmin convention is the arc's own.
+- **Lyapunov bookkeeping at the dilute point.**  The binary's
+  inertial mass equals the load amplitude (0.01 — 60× lighter than
+  the dense point), so speeds reach 0.3–0.55 within the first second;
+  the recorded energy carries an oscillating residual up to 6e-4 per
+  record (dt-insensitive over 0.01–0.1, present identically in the
+  no-exclusion baseline — the fast-motion instrument regime of the
+  retarded bookkeeping, not the exclusion term, whose force is the
+  exact gradient of the booked Σe(ρ_tot)).  The field sector alone
+  with a frozen load is monotone to 9e-15.  The net law holds in
+  every run; the recorded dissipation is an end-of-step rectangle
+  undercount of ∫κ̇² (~2.2× for dt = τ, measured in a field-only
+  ringdown).  The repo's 1e-6 dense-point per-record bar does not
+  apply at this operating point; the tests pin the measured residual.
+- **Agreement is at the pair level.**  The n-copy sector's O(c²)
+  theorem is the same convergence statement one level up; the n-copy
+  dilute remainder (N1) and this part's map are consistent.
+- **P3's late separations** use the arc's plain (not periodic) norm;
+  with a repulsive pair on a torus the late trajectory is a
+  lattice-winding artifact — recorded, not interpreted.
+- **The P1 comparison is between the local form ON ρ_dup and the
+  full-functional form** (the spec's registered comparison); the
+  local form on ρ_tot differs from it by the s-independent
+  self-energy 2∫e(ρ₁), which statics zeroing removes and dynamics
+  feel as a constant — the P2 statics use the dynamics' own
+  ρ_tot form, as registered.
+
+## Registered follow-ups (final re-registration)
+
+1. **Identity generation** (unchanged from Parts III–IV): labels are
+   assigned, not derived; a load that carries its own distinction
+   structure is the honest next candidate.
+2. **A retarded exclusion sector** (unchanged): the exclusion force
+   is adiabatic while gravity is retarded.
+3. **Rotating trimers and n ≥ 4 stacks** (unchanged from Part IV).
+4. **The remainder map, made analytic.**  The kernel-range remainder
+   r·(ρ_dup, G_r ρ_dup)/∫ρ_dup² of the min-ridge geometry (the ridge
+   narrows as ~w²/s down the skirts) is computable in closed form; a
+   derivation of the full s-dependent remainder would make the
+   convergence claim quantitative everywhere, not only in the joint
+   limit.
+5. **A min-construction local dynamics term.**  The 2×2 shows the
+   homogeneous FUNCTIONAL floors on the min-construction
+   (local-on-min, s\* = 14) — the local form is not floorless in
+   principle, only on the total load.  The dynamics' `contact_derived`
+   path prices ρ_tot; a `contact_derived_min` path (analytic, no new
+   physics) would test whether the framework's homogeneous counting,
+   given the right construction, lands on Part II's floor.
