@@ -197,6 +197,11 @@ experiments/
   n3_quadrupole_line.py     The quadrupole line: even-harmonics-only selection rule (the no-dipole analogue), the dipole control, the medium's complex k — 3/3
   n3_plunge_ringdown.py     The plunge and the ringdown: no long inspiral in this gravity — the trench mechanism, the sweep clock, the healing afterglow — 3/3
   n3_exclusion_core.py      The exclusion core: no-cloning as degeneracy pressure — the collapse gets a floor, and the ringdown returns at the well's own pitch — 3/3
+  n3_exclusion_derived.py   Deriving b, Part I: the homogeneous gap 2F(ρ)−F(2ρ) — 2/3; refuses clones only in the dilute window, inverts into a merger subsidy at the operating point
+  n3_exclusion_gradient.py  Deriving b, Part II: the full-functional gap on the duplicated component — 3/3; the parameter-free floor (s*=8), the ringdown at the statics' pitch
+  n3_exclusion_labelled.py  Deriving b, Part III: labelled loads — 3/3; exclusion prices only true clones (φ=0 is bitwise the baseline), barrier monotone in shared fraction
+  n3_exclusion_ncopy.py     Deriving b, Part IV: the n-copy sector — 3/3; pairwise = n-copy at O(c²), trimer floor, the saturation split measured
+  n3_exclusion_dilute.py    Deriving b, Part V: the dilute operating point — 0/3 recorded as-is; joint-limit convergence, the min-construction pinned by a 2×2, the repelled binary
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1270,6 +1275,18 @@ One idea closed three loops at once: the no-cloning principle gives the matter s
 Reproduce with `python experiments/n3_exclusion_core.py` (≈ 20 seconds; `--quick` for a smoke run); contact-term checks (repulsion sign, Lyapunov) in `tests/test_capacity_waves.py`.
 
 **Honest scope:** the contact term is a minimal *variant* — the smallest convex no-cloning penalty, added to the matter sector only (the field equation is untouched); b = 0.2 was chosen in static calibration for an interior minimum away from both walls; the failed load-saturation route is kept with its mechanism; one (mass, coupling), τ = 0.1; a spun-up variant is the registered door to the rotational 2Ω line, and deriving `b` from the framework's own information-counting (rather than dialing it) is the deeper open item.
+
+### Deriving the exclusion coefficient: the dial becomes a theorem — five parts
+
+The exclusion core's registered deep item — derive `b` instead of dialing it — is closed by a five-part program (full record: [`Docs/Deriving_The_Exclusion_Coefficient.md`](Docs/Deriving_The_Exclusion_Coefficient.md); experiments `n3_exclusion_derived / _gradient / _labelled / _ncopy / _dilute`; instruments in `capacity_waves.py`, 50 new checks in the suite). The arc, in one breath:
+
+- **Part I (2/3).** The extensivity reading — a clone should pay the extensive price, so `e(ρ) = 2F(ρ) − F(2ρ)` — is parameter-free but built on the *homogeneous* free energy: it refuses clones only below `ρ = r/2c` and **inverts into a merger subsidy** at the operating densities. The calibrated b = 0.2 is refuted as a derivation and clarified as a surrogate (`b(ρ) = 2c²ℓ²(ρ)/D` — degeneracy stiffness set by the local capacity range).
+- **Part II (3/3) — the theorem.** Rederived against the **full functional** (gradient terms kept) and priced on the **duplicated component** `min(ρ₁,ρ₂)`: the gap `2E(ρ_dup) − E(2ρ_dup)` is non-negative *by concavity* (E is a minimum over functions affine in the load amplitude), repulsive at every separation by construction, and at the operating point it **buys the floor with no free parameters** — s\* = 8, barrier 0.68, the stalled binary at 8.56, the ringdown at the statics' pitch. The dialed b = 0.2 is superseded.
+- **Part III (3/3).** Labelled loads make exclusion **identity-selective**: gravity stays identity-blind; exclusion fires per shared distinction type only. Orthogonal labels are *bitwise* the no-exclusion baseline; the barrier grows monotonically with the shared fraction. "Gravity binds everything; exclusion selectively refuses the sharing discount for true clones."
+- **Part IV (3/3).** The n-copy sector: pairwise and n-copy pricing are one theorem at O(c²); their split at operating amplitude is the measured core saturation; the same-label trimer stalls on its own static floor.
+- **Part V (0/3, recorded as-is — and the failures carry the answer).** At the dilute point the spec's own criteria select, the two derivations converge only in the *joint* dilute-broad limit; the homogeneous form on the total load buys a floor at **no** density (too soft above the window, too stiff below); and a 2×2 decomposition pins what Part II fixed: the **min-construction** everywhere, the gradient functional additionally at the dense point.
+
+Standing follow-ups from the series: identity *generation* (labels are assigned, not derived — the bridge from "exclusion prices identity" to "exclusion explains individuality"), a retarded exclusion sector, rotating trimers/n ≥ 4, and the analytic remainder map. *(Series contributed by the Kimi K3 swarm; independently verified — the full suite passes (693 checks) and the Part II statics reproduce digit-for-digit; one Python-3.11 compatibility fix applied to the Part II experiment's verdict formatting.)*
 
 ## Setup
 
