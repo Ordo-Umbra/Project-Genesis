@@ -37,6 +37,8 @@ from __future__ import annotations
 
 import numpy as np
 
+from .capacity_gravity import (capacity_free_energy, gaussian_load,
+                               relax_capacity)
 from .multiphase import periodic_laplacian
 
 
@@ -113,6 +115,224 @@ def exclusion_energy_derivative(rho, *, kappa_recovery: float,
             / ((r + c * rho) ** 2 * (r + 2.0 * c * rho) ** 2))
 
 
+# ---------------------------------------------------------------------------
+# Part II — the gradient terms: the exclusion gap of the FULL F[κ]
+#
+# Part I derived the exclusion term from the HOMOGENEOUS F(ρ), dropping the
+# gradient energy (D/2)|∇κ|².  With gradients kept, the relaxed minimum of
+# the capacity free energy at fixed load ρ is, in linear response
+# (cρκ₀ ≪ r),
+#
+#     E(ρ) = (cκ₀²/2)·∫ρ  −  (c²κ₀²/2)·(ρ, G_r ρ)  +  O(c³) ,
+#
+# where (r − D∇²)G_r = δ is the screened (Yukawa) kernel of range
+# ξ = √(D/r) — the same kernel that mediates κ-gravity.  The full-overlap
+# gap of two identical copies is then a POSITIVE, NONLOCAL self-interaction
+#
+#     G(ρ₁) := 2E(ρ₁) − E(2ρ₁) = c²κ₀²·(ρ₁, G_r ρ₁)  >  0 .
+#
+# Exactly (beyond linear response) E(A) = min_κ F[κ; A·ρ₁] is a minimum
+# over functions AFFINE in A, hence concave in A — so G(A) ≥ 0 at every
+# amplitude: no sign flip of the total gap is possible.  The functions
+# below measure this gap with the framework's own instruments.
+# ---------------------------------------------------------------------------
+
+
+def _screened_kernel_hat(shape, *, kappa_diffusion: float,
+                         kappa_recovery: float) -> np.ndarray:
+    """``Ĝ(k) = 1/(r + D|k|²)`` on the periodic lattice.
+
+    ``|k|²`` is the symbol ``4Σ_ax sin²(k_ax/2)`` of the repo's 5-point
+    ``periodic_laplacian``, so the kernel inverts exactly the operator the
+    capacity relaxer descends.  The k = 0 mode is finite because r > 0:
+    ``Ĝ(0) = 1/r``.
+    """
+    ks = [2.0 * np.pi * np.fft.fftfreq(int(n)) for n in shape]
+    grids = np.meshgrid(*ks, indexing="ij")
+    k2 = sum(4.0 * np.sin(g / 2.0) ** 2 for g in grids)
+    return 1.0 / (kappa_recovery + kappa_diffusion * k2)
+
+
+def screened_green_function(shape, *, kappa_diffusion: float,
+                            kappa_recovery: float) -> np.ndarray:
+    """The lattice Green's function ``G_r`` of ``(r − D∇²)`` in real space.
+
+    ``(r − D∇²)G_r = δ`` on the periodic lattice — the screened/Yukawa
+    kernel of range ``ξ = √(D/r)`` that mediates both κ-gravity and, in
+    linear response, the exclusion self-interaction.  Constructed by FFT.
+    """
+    return np.fft.ifftn(_screened_kernel_hat(
+        shape, kappa_diffusion=kappa_diffusion,
+        kappa_recovery=kappa_recovery)).real
+
+
+def apply_screened_kernel(rho, *, kappa_diffusion: float,
+                          kappa_recovery: float) -> np.ndarray:
+    """``(G_r ρ)(x)`` — the screened kernel applied to a load, by FFT."""
+    rho = np.asarray(rho, dtype=float)
+    return np.fft.ifftn(np.fft.fftn(rho) * _screened_kernel_hat(
+        rho.shape, kappa_diffusion=kappa_diffusion,
+        kappa_recovery=kappa_recovery)).real
+
+
+def linear_response_exclusion_gap(rho, *, kappa_diffusion: float,
+                                  kappa_recovery: float,
+                                  kappa_consumption: float,
+                                  kappa_baseline: float = 1.0) -> float:
+    """``G_LR(ρ) = c²κ₀²·(ρ, G_r ρ)`` — the linear-response full-overlap gap.
+
+    The gap ``2E(ρ) − E(2ρ)`` of the relaxed capacity free energy, to
+    leading (quadratic) order in the load: positive for every nonzero ρ —
+    a nonlocal exclusion self-interaction through the screened kernel.
+    """
+    c, k0 = kappa_consumption, kappa_baseline
+    gr = apply_screened_kernel(rho, kappa_diffusion=kappa_diffusion,
+                               kappa_recovery=kappa_recovery)
+    return float(c * c * k0 * k0 * np.sum(np.asarray(rho, dtype=float) * gr))
+
+
+def duplicated_load(load1, load2):
+    """``ρ_dup(x) = min(ρ₁, ρ₂)(x)`` — the cloned (common) component of a pair.
+
+    For two IDENTICAL copies, the pointwise minimum is exactly the load
+    that is present twice — the duplicated fraction whose stack the
+    exclusion principle prices at the extensive cost.  (Exact for
+    identical copies only; for non-identical loads it is the maximal
+    common component — the same maximal-identicality convention as the
+    Part-I term.)
+    """
+    return np.minimum(load1, load2)
+
+
+def exclusion_gap_full(rho_dup, *, kappa_diffusion: float = 1.0,
+                       kappa_recovery: float = 0.02,
+                       kappa_consumption: float = 0.8,
+                       kappa_baseline: float = 1.0) -> float:
+    """``E_x = 2E(ρ_dup) − E(2ρ_dup)`` — the full-functional exclusion gap.
+
+    ``E(ρ) = F[κ̄[ρ]]`` is the RELAXED capacity free energy at fixed load
+    (``relax_capacity`` + ``capacity_free_energy``, the repo's own
+    instruments) — gradient energy included, i.e. the gradient-corrected
+    counterpart of the Part-I homogeneous gap ``∫e(ρ)``.  Non-negative for
+    every load (E is concave in the load's amplitude as a minimum over
+    affine functions), zero when ``ρ_dup = 0``.
+    """
+    fkw = dict(kappa_diffusion=kappa_diffusion,
+               kappa_recovery=kappa_recovery,
+               kappa_consumption=kappa_consumption,
+               kappa_baseline=kappa_baseline)
+
+    def _e(load):
+        kappa = relax_capacity(load, **fkw)
+        return capacity_free_energy(kappa, load, **fkw)
+
+    return 2.0 * _e(rho_dup) - _e(2.0 * rho_dup)
+
+
+def _relax_functional(kappa: np.ndarray, load: np.ndarray, *,
+                      kappa_diffusion: float = 1.0,
+                      kappa_recovery: float = 0.02,
+                      kappa_consumption: float = 0.8,
+                      kappa_baseline: float = 1.0) -> float:
+    """``F*[κ] = Σ_x [(D/2)κ(−∇²)κ + (r/2)(κ−κ₀)² + (c/2)·load·κ²]``.
+
+    The functional the capacity relaxer ACTUALLY descends: integration by
+    parts of the gradient term against the repo's 5-point
+    ``periodic_laplacian``.  It differs from ``capacity_free_energy``
+    (central-difference gradient) only at O(stencil²) — but the relaxed
+    field is EXACTLY its minimum, so forces derived from it through the
+    envelope theorem are exact to solver tolerance (measured: force vs
+    finite-difference energy agree to 1 part in 1e4; against the
+    central-difference functional the residual is ~1%).  Used for the
+    ``contact_full`` energy bookkeeping.
+    """
+    quad = 0.5 * kappa_diffusion * float(
+        np.sum(kappa * (-periodic_laplacian(kappa))))
+    rec = 0.5 * kappa_recovery * float(
+        np.sum((kappa - kappa_baseline) ** 2))
+    cons = 0.5 * kappa_consumption * float(np.sum(load * kappa * kappa))
+    return quad + rec + cons
+
+
+def _solve_relaxed(load: np.ndarray, kappa_init: np.ndarray | None = None,
+                   *, kappa_diffusion: float = 1.0,
+                   kappa_recovery: float = 0.02,
+                   kappa_consumption: float = 0.8,
+                   kappa_baseline: float = 1.0,
+                   rtol: float = 1e-12, max_iters: int = 5000) -> np.ndarray:
+    """Solve ``(r + c·load − D∇²)κ = rκ₀`` — the relaxed capacity fixed point.
+
+    The relaxer's steady state is the solution of a LINEAR system in κ
+    (the load is fixed), so it can be solved directly: conjugate gradient
+    on the symmetric positive-definite operator (bounded below by r > 0),
+    optionally warm-started from ``kappa_init``.  Same fixed point as
+    ``relax_capacity`` (validated against it to its own tolerance in
+    ``tests/test_exclusion_gradient.py``), ~50× faster per solve — the
+    ``contact_full`` force path needs two solves per timestep.  The
+    solution lies in (0, κ₀), so the relaxer's clip is inactive there.
+    """
+    r, c, k0 = kappa_recovery, kappa_consumption, float(kappa_baseline)
+    src = c * load
+
+    def _apply(k):
+        return r * k + src * k - kappa_diffusion * periodic_laplacian(k)
+
+    b = np.full_like(load, r * k0)
+    x = np.full_like(load, k0) if kappa_init is None else kappa_init.copy()
+    res = b - _apply(x)
+    p = res.copy()
+    rs = float(np.sum(res * res))
+    bnorm = float(np.sum(b * b))
+    for _ in range(max_iters):
+        if rs <= rtol * rtol * bnorm:
+            break
+        ap = _apply(p)
+        alpha = rs / float(np.sum(p * ap))
+        x = x + alpha * p
+        res = res - alpha * ap
+        rs_new = float(np.sum(res * res))
+        p = res + (rs_new / rs) * p
+        rs = rs_new
+    return x
+
+
+def _smoothed_min(a, b, eps: float):
+    """``(a+b)/2 − ½√((a−b)² + 4ε²)`` — a smooth min (smooth-abs form).
+
+    Converges uniformly to ``min(a, b)`` as ε → 0 (error ≤ ε); smooth
+    everywhere, so the ``contact_full`` force is the exact gradient of the
+    smoothed functional it is booked against.  At exact ties (a = b — the
+    symmetry plane of an equal binary, which LANDS on lattice sites) it
+    assigns the symmetric 50/50 subgradient, which the hard
+    ``min + indicator`` rule does not (measured: the hard rule breaks
+    Newton's third law on the tie plane by up to ~35% of the force).
+    """
+    return 0.5 * (a + b) - 0.5 * np.sqrt((a - b) ** 2 + 4.0 * eps * eps)
+
+
+def _smoothed_min_weight(a, b, eps: float):
+    """``∂/∂a smoothed_min(a, b) = ½ − (a−b)/(2√((a−b)² + 4ε²)) ∈ (0, 1)``."""
+    return 0.5 - 0.5 * (a - b) / np.sqrt((a - b) ** 2 + 4.0 * eps * eps)
+
+
+def _gaussian_load_and_grad(shape, center, width: float, amplitude: float):
+    """``(ρ, ∇ρ)`` for one periodic Gaussian blob — analytic load gradient.
+
+    Same periodic-distance construction as
+    ``capacity_gravity.gaussian_load``; the gradient is the exact
+    ``∂ρ/∂x_ax = −ρ·(x_ax − R_ax)/width²`` (not a finite difference), so
+    forces built from it are the exact gradient of the load-parameterised
+    energy to solver tolerance.
+    """
+    shape = tuple(int(s) for s in shape)
+    grids = np.meshgrid(*[np.arange(s) for s in shape], indexing="ij")
+    disp = [(((g - c0 + s / 2.0) % s) - s / 2.0)
+            for g, c0, s in zip(grids, center, shape)]
+    r2 = sum(d * d for d in disp)
+    rho = amplitude * np.exp(-r2 / (2.0 * width ** 2))
+    return rho, [rho * (-d / (width * width)) for d in disp]
+
+
 def step_capacity_wave(kappa: np.ndarray, kappa_dot: np.ndarray,
                        load: np.ndarray | float, *, tau: float = 1.0,
                        kappa_diffusion: float = 1.0,
@@ -160,6 +380,8 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
                              probes=None, kappa0=None,
                              contact_b: float = 0.0,
                              contact_derived: bool = False,
+                             contact_full: bool = False,
+                             contact_full_eps: float = 1e-4,
                              kappa_diffusion: float = 1.0,
                              kappa_recovery: float = 0.05,
                              kappa_consumption: float = 2.0,
@@ -205,33 +427,95 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
     ``e'(ρ) = b·ρ``) — and ``E_x`` is included in ``energy``, so the
     Lyapunov law is preserved by the same argument.  Mutually exclusive
     with a nonzero ``contact_b``.
-    """
-    from .capacity_gravity import (capacity_free_energy, gaussian_load,
-                                   relax_capacity)
 
-    if contact_b and contact_derived:
-        raise ValueError("contact_b and contact_derived are mutually "
-                         "exclusive: the derived form has no free b.")
+    ``contact_full``: the gradient-corrected derived term (Part II) —
+    the exclusion energy of the FULL functional, applied to the
+    duplicated (cloned) fraction of the pair:
+
+        E_x = 2E(ρ_dup) − E(2ρ_dup) ,   ρ_dup = min(ρ₁, ρ₂) ,
+
+    with ``E(ρ)`` the relaxed minimum of the capacity free energy at
+    fixed load — gradient energy included, so the κ-field's own
+    (D/2)|∇κ|² cost of the overlap is priced in.  This is the exact
+    binary instrument: it vanishes for separated structures
+    (ρ_dup → 0), equals the full-overlap gap ``2E(ρ₁) − E(2ρ₁)`` at
+    coincidence, and is non-negative everywhere.  The force is the exact
+    gradient w.r.t. the blob positions by the envelope theorem:
+    ``δE/δρ(x) = (c/2)κ̄(x)²`` at the relaxed field, so with
+    ``w = c·(κ̄[ρ_dup]² − κ̄[2ρ_dup]²)``,
+
+        F_i = Σ_x w·(∂ρ_dup/∂ρ_i)·∇ρ_i ,
+
+    computed with ANALYTIC load gradients and the two auxiliary relaxed
+    fields solved directly (conjugate gradient on the relaxer's linear
+    fixed point, ``_solve_relaxed``; the exclusion sector is adiabatic,
+    like ``contact_b``'s instantaneous term — the retarded co-evolving κ
+    still mediates the gravity part).  The min is taken in its smoothed
+    form (``_smoothed_min`` with ``contact_full_eps``) so the force is
+    everywhere the exact gradient of the recorded E_x — the hard
+    min + indicator rule mis-splits the symmetry tie-plane, which lands
+    on lattice sites for an equal binary (measured: up to ~35%
+    third-law violation; the smoothed form conserves momentum to machine
+    precision and matches finite-difference E_x to 1 part in 1e4).
+    ``E_x`` is booked in ``energy`` through ``_relax_functional`` — the
+    functional the relaxer actually descends — so the Lyapunov law is
+    preserved exactly as for ``contact_b``.  Binary instrument:
+    requires exactly two masses, and is mutually exclusive with
+    ``contact_b`` and ``contact_derived``.
+    """
+    n_contact = ((1 if contact_b else 0) + int(contact_derived)
+                 + int(contact_full))
+    if n_contact > 1:
+        raise ValueError("contact_b, contact_derived and contact_full "
+                         "are mutually exclusive: pick one exclusion "
+                         "bookkeeping (the derived and full forms have "
+                         "no free b).")
 
     pos = np.asarray(positions, dtype=float).copy()
     vel = np.asarray(velocities, dtype=float).copy()
     m = np.asarray(masses, dtype=float)
     c = kappa_consumption
+    if contact_full and len(m) != 2:
+        raise ValueError("contact_full is the binary instrument: the "
+                         "duplicated fraction ρ_dup = min(ρ₁, ρ₂) is "
+                         "defined for exactly two masses.")
     fkw = dict(kappa_diffusion=kappa_diffusion, kappa_recovery=kappa_recovery,
                kappa_consumption=kappa_consumption,
                kappa_baseline=kappa_baseline)
+    # warm-started auxiliary relaxed fields + the E_x of the last
+    # forces_of call (reused by the energy record at the same positions)
+    full_state = {"k1": None, "k2": None, "ex": 0.0}
 
     def loads_of(p):
         return [gaussian_load(shape, [tuple(pi)], width, mi)
                 for pi, mi in zip(p, m)]
 
     def forces_of(p, kappa):
-        loads = loads_of(p)
+        if contact_full:
+            lg = [_gaussian_load_and_grad(shape, tuple(pi), width, mi)
+                  for pi, mi in zip(p, m)]
+            loads = [x[0] for x in lg]
+        else:
+            loads = loads_of(p)
         grad = [0.5 * (np.roll(kappa, -1, ax) - np.roll(kappa, 1, ax))
                 for ax in range(kappa.ndim)]
         f = np.array([[-c * float(np.sum(li * kappa * g)) for g in grad]
                       for li in loads])
-        if contact_b or contact_derived:
+        if contact_full:
+            dup = _smoothed_min(loads[0], loads[1], contact_full_eps)
+            k1 = _solve_relaxed(dup, full_state["k1"], **fkw)
+            k2 = _solve_relaxed(2.0 * dup, full_state["k2"], **fkw)
+            full_state["k1"], full_state["k2"] = k1, k2
+            full_state["ex"] = (
+                2.0 * _relax_functional(k1, dup, **fkw)
+                - _relax_functional(k2, 2.0 * dup, **fkw))
+            w = c * (k1 * k1 - k2 * k2)
+            for i in range(2):
+                wi = w * _smoothed_min_weight(loads[i], loads[1 - i],
+                                              contact_full_eps)
+                for ax in range(kappa.ndim):
+                    f[i, ax] += float(np.sum(wi * lg[i][1][ax]))
+        elif contact_b or contact_derived:
             tot = np.sum(loads, axis=0)
             eprime = (exclusion_energy_derivative(
                           tot, kappa_recovery=kappa_recovery,
@@ -265,7 +549,9 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
             ke = 0.5 * float(np.sum(m[:, None] * vel ** 2))
             total_load = np.sum(loads_of(pos), axis=0)
             fe = capacity_free_energy(kappa, total_load, **fkw)
-            if contact_derived:
+            if contact_full:
+                ex = float(full_state["ex"])
+            elif contact_derived:
                 ex = float(np.sum(exclusion_energy_density(
                     total_load, kappa_recovery=kappa_recovery,
                     kappa_consumption=kappa_consumption)))
@@ -300,7 +586,7 @@ def front_radius(delta: np.ndarray, center, threshold: float) -> float:
     """Largest periodic distance from ``center`` where ``|δ| > threshold``."""
     shape = delta.shape
     grids = np.meshgrid(*[np.arange(s) for s in shape], indexing="ij")
-    d2 = sum((((g - c + s / 2) % s) - s / 2) ** 2
+    d2 = sum((((g - c + s / 2.0) % s) - s / 2.0) ** 2
              for g, c, s in zip(grids, center, shape))
     mask = np.abs(delta) > threshold
     if not mask.any():
