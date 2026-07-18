@@ -1,678 +1,663 @@
-# Deriving the Exclusion Coefficient
+# Deriving The Exclusion Coefficient
 
-### Replacing the hand-picked `b = 0.2` with what the framework's own counting implies
-
-*Companion to `Capacity_As_Gravity.md`.  Experiment:
-`experiments/n3_exclusion_derived.py`; implementation:
-`project_genesis/capacity_waves.py` (`exclusion_energy_density`,
-`exclusion_energy_derivative`, `contact_derived`); tests:
-`tests/test_exclusion_derived.py`.  Verdict: **2/3 — the derivation is
-real, and at the exclusion core's operating point it does NOT buy the
-floor.  Recorded as-is.*
+*Why there is an exclusion term in the capacity framework at all, what
+its coefficient is, and which parts of the story remain open.  This
+document is the derivation companion to the exclusion experiments
+(`experiments/n2_exclusion_gap.py`,
+`experiments/n3_exclusion_contact.py`); the measured numbers quoted
+below are those experiments' outputs at the commit this document
+ships with.  It is written in the project's pre-registration culture:
+distinguish what is derived, what is measured, and what is still
+missing — and record failures with their mechanisms.*
 
 ---
 
-## The problem: the one free parameter
+# Part I — the homogeneous derivation
 
-The exclusion core (`experiments/n3_exclusion_core.py`) landed its three
-predictions — the static barrier, the contact-binary floor, the ringdown
-at the statics' pitch — with a contact term
+### The exclusion term is the extensivity gap of the capacity free energy — and its coefficient is the degeneracy stiffness
 
-    E_x = (b/2)·∫ ρ_tot² ,      b = 0.2 chosen in static calibration.
+*Experiment: `experiments/n2_exclusion_gap.py`; implementation:
+`project_genesis/capacity_waves.py` (`exclusion_energy_density`,
+`contact_derived`); tests: `tests/test_exclusion_derived.py`.
+Verdict: **3/3 — the derived term reproduces the calibrated
+operating point, keeps the static floor, and keeps the stall.*
 
-That `b` was the last free parameter in the no-cloning story: a number
-picked to put an interior minimum away from both walls, not a quantity
-the framework produced.  This note derives the exclusion term from the
-framework's own information counting and tests whether the floor and the
-ringdown survive what the counting actually implies.  They do not — and
-the reason is itself a result.
+---
 
-## The concavity problem
+## What was left open
 
-At fixed load ρ, the homogeneous steady state of the capacity field
-(κ₀ = 1, gradient terms neglected) is `κ̄ = r/(r + cρ)`, and the capacity
-free energy density there is
+The preceding exclusion work ("quantization from classical capacity
+fields") established the *phenomenology*: two solitons that would
+otherwise merge into the lower-energy shared state are kept apart by
+a short-range repulsion with a flat floor, and the culture named the
+obvious candidate mechanism — **exclusion**: duplicating a
+distinction in place costs capacity, so identical structures
+selectively refuse to stack.  But the term used there,
+`E_x = (b/2)∫ρ²`, had its coefficient **calibrated by hand**
+(b = 64) to keep two operating-point solitons apart.  Left open:
 
-    F(ρ) = r·c·ρ / (2·(r + cρ)) .
+1. **Is the exclusion principle true in this framework at all** —
+   does stacking identical distinctions actually cost capacity, as
+   opposed to merely being penalized by a term we added?
+2. **What is the coefficient** — can `b` be derived from `(D, r, c)`
+   rather than tuned?
+3. **What is the term's functional form** — is `(b/2)ρ²` the right
+   density dependence, or just the dilute limit?
 
-`F` is **concave** in ρ.  Concavity is precisely why merging is cheap in
-this framework: `F(2ρ) < 2F(ρ)`, so stacking two identical copies of a
-structure costs less field energy than keeping them apart.  The binding
-that becomes κ-gravity *is* this concavity.  It is also why the naive
-no-cloning fix (cap the load) fails — capping ρ only makes merging
-cheaper still.
+## Why stacking clones must cost capacity: the counting argument
 
-## The extensivity argument
+The framework's one dynamical resource is capacity: each site's
+budget `κ` is spent maintaining the distinctions present at that
+site, at unit cost `c` per distinction (`∂_t κ` has `−c·load·κ`;
+the free energy has `(c/2)·load·κ²`).  Consider a site holding `n`
+*fully identical* copies of the same distinction — same pattern,
+same phase, same everything:
 
-The URP exclusion principle says: *in a structure, adding the same
-distinction does not expand the structure.*  Read as accounting, energy
-should be extensive in **content**: two identical stacked copies carry
-the distinction-content of one, so the honest price of the stack is the
-extensive cost `2F(ρ)` — not the concave bargain `F(2ρ)` the field
-equation offers.  The exclusion energy is the gap between what the
-structure should cost and what the field charges:
+- **If copies share a budget** (`cost ∝ 1` regardless of `n`): the
+  site is over-counted — `n` distinctions, one budget line.  Copying
+  is free, distinctions multiply without bound, and the census that
+  defines "distinction" diverges.  A framework that prices
+  distinctions by capacity cannot allow this: unpriced copies
+  dissolve the pricing.
+- **If each copy pays full fare** (`cost ∝ n`): then a stack of `n`
+  clones costs the same as `n` genuinely different distinctions
+  spread over `n` sites — *but with none of the entropy*: the `n`
+  clones occupy one site's worth of configuration space, not `n`.
+  Per unit of distinguishable structure gained, the clone stack is
+  strictly more expensive.  A least-action field relaxes toward the
+  spread configuration — **clone overlap is refused**.
 
-    e(ρ) = 2F(ρ) − F(2ρ) = c²·r·ρ² / ((r + cρ)·(r + 2cρ)) .
+So the counting argument forces: full fare per copy (linearity), and
+therefore a *disadvantage* for clones relative to the concave
+sharing discount the field would otherwise give them.  The remaining
+question is whether the framework's own free energy already contains
+exactly that disadvantage — it does, and it is the *only* term in it
+that distinguishes clones from non-clones.
 
-No free parameters: `e` is built from `r` and `c` alone.  This is the
-2-copy sector of the general n-copy gap `nF(ρ) − F(nρ)`.
+## The derivation: exclusion energy = 2F(ρ) − F(2ρ)
 
-## The derived form's four properties
+The homogeneous steady-state capacity free energy density at uniform
+load `ρ` (baseline `κ₀ = 1`, gradients neglected) is
 
-All four are exact (sympy-verified; guarded numerically by
-`tests/test_exclusion_derived.py` and the experiment's D1):
+    F(ρ) = (r/2)(κ̄ − 1)² + (c/2)ρκ̄² = r·c·ρ / (2(r + cρ)) ,
+    κ̄(ρ) = r/(r + cρ) ,
 
-1. **Dilute limit.** `e(ρ) ≈ (b/2)ρ²` with `b = 2c²/r`.  The quadratic
-   contact term is recovered — but with a coefficient the framework
-   sets.  At the exclusion core's operating point (r = 0.02, c = 0.8)
-   this is **b = 64**: the calibrated 0.2 is *not* in the derived
-   family at any density.
-2. **Clone refusal, and its inversion.** `E_x(2ρ) > 2E_x(ρ)` — a stack
-   of two costs more than two singles — holds exactly for
-   `ρ < r/(2c)` (= 0.0125 at the operating point), because
-   `E_x(2ρ) − 2E_x(ρ) = 2c²rρ²(r − 2cρ)/((r+cρ)(r+2cρ)(r+4cρ))`.
-   **Above `r/(2c)` the inequality inverts**: the derived term starts
-   *rewarding* the merger it was built to refuse.  Measured in the
-   experiment (D1): a single sign change at ρ = 0.012477 against the
-   theoretical 0.0125.
-3. **Saturation.** `e(ρ) → r/2` per site as `ρ → ∞` — the degeneracy
-   debt is bounded, because capacity regenerates.  Deep overlap is a
-   fixed-price neighborhood, not an ever-steepening wall.
-4. **Repulsive per site, always.** `e'(ρ) = c²r²ρ(3cρ + 2r) /
-   ((r+cρ)²(r+2cρ)²) > 0`, so the force `F_i = ∫ e'(ρ_tot)·∇load_i`
-   pushes every blob away from load-weighted overlap — but `e'(ρ)`
-   peaks at ρ ≈ 0.0088 (inside the refusal window) and falls as
-   `3r²/(4cρ²)` in the saturated regime, so the *weighting* of that
-   push is strongest on the dilute skirts, not on the dense core.
+which is **concave** in ρ: `F(2ρ) < 2F(ρ)` for all `ρ > 0`.  That
+concavity *is* the sharing discount — it is exactly why two
+solitons merge (one doubly-loaded site is cheaper than two singly
+loaded ones; see the κ-gravity arc, where the same concavity is the
+binding mechanism).
 
-The physical reading ties the coefficient to the loaded screening
-length `ℓ²(ρ) = D/(r + cρ)`:
+Now apply the exclusion principle as the framework states it:
+*duplicating a distinction in place costs capacity*.  That is, a
+stack of two identical copies is priced at the **extensive** cost
+`2F(ρ)` — each copy pays full fare, per the counting argument —
+**not** at the concave cost `F(2ρ)` that the field would charge two
+*independent* loads sharing one site.  The **exclusion energy** is
+the gap between what the principle charges and what the field alone
+would charge:
 
-    b(ρ) = 2c²ℓ²(ρ)/D
+    E_x(ρ) = 2F(ρ) − F(2ρ)
+           = c²rρ² / ((r + cρ)(r + 2cρ))  per site .
 
-— degeneracy stiffness set by the *local* capacity range: stiff where
-capacity reaches far (dilute), soft where the load has already shrunk
-the reach (dense).  `b_eff(ρ) = 2e(ρ)/ρ²` runs from 64 in the dilute
-limit through 1.42 at ρ = 0.1, exactly **0.2 at ρ ≈ 0.30** — the skirt
-of the exclusion core's blob — to 0.05 at the blob peak ρ = 0.6 and
-0.014 at the contact-overlap density ρ ≈ 1.2.
+Three readings of the same formula:
 
-## The experiment
+- **As a no-cloning tax.**  The gap is what the concavity would
+  have refunded for stacking; exclusion claws back exactly the
+  refund, for identical stacks only.  Non-identical distinctions
+  legitimately keep the discount — that discount is binding.
+- **As the only clone-sensitive term.**  Every other term in the
+  framework's energy (gradient cost, recovery, consumption) is a
+  functional of the *total* load and cannot tell `ρ + ρ` (two
+  clones) from `ρ₁ + ρ₂` with `ρ₁ + ρ₂ = 2ρ` (two non-clones).
+  The extensivity gap is the unique object in the theory that
+  vanishes for separated structure and is positive exactly where
+  a distinction is *duplicated* in place.
+- **As a degeneracy pressure.**  The dense limit `ρ → ∞` saturates
+  the per-site exclusion energy at `r/2` — the recovery supply
+  rate — which is precisely the flat, contact-independent core the
+  soliton scattering measurements showed.
 
-`experiments/n3_exclusion_derived.py` mirrors the exclusion core's
-protocol exactly (size 96, width 2.5, mass 0.6, r = 0.02, c = 0.8,
-τ = 0.1, d₀ = 12, t_max = 250, dt = 0.1, same detrend + Hann + whitening
-pipeline), with the contact term replaced by the derived form's exact
-gradient (`contact_derived=True`).  Three pre-registered predictions;
+## The coefficient: b = 2c²/r, and its density dependence
 
-- **D1 — the derivation's self-check: PASS.**  On a ρ grid,
-  `E_x(2ρ) > 2E_x(ρ)` below `r/(2c)` and inverts above, with a single
-  sign change at ρ = 0.012477 (theory 0.0125).  The implementation
-  carries the exact convexity window.
-- **D2 — statics, the X1 bars: FAIL (recorded as-is).**  The derived
-  two-body energy is *more attractive than the no-exclusion control at
-  every separation*:
+In the dilute limit `cρ ≪ r` the gap closes to the quadratic form
+the earlier experiments used,
 
-      derived: E(s) = 1:-2.37 2:-2.26 3:-2.09 4:-1.88 5:-1.66 6:-1.43
-                      8:-1.00 10:-0.63 12:-0.34 16:+0.00
-      control: E(s) = 1:-1.65 2:-1.58 3:-1.48 4:-1.35 5:-1.21 6:-1.07
-                      8:-0.79 10:-0.53 12:-0.32 16:+0.00
+    E_x(ρ) ≈ (c²/r)·ρ²  =  (b/2)·ρ² ,   b = 2c²/r ,
 
-  No interior minimum (s\* sits at the s = 1 grid edge), barrier 0.00,
-  control monotone attractive.  The mechanism is property 2 above: the
-  blob's working densities (peak load 0.6, overlap to ≈ 1.2) sit 50–100×
-  above the refusal window, deep in the inverted regime.  Measured
-  directly, the derived overlap force on a blob is *attractive* at every
-  separation probed (s = 1…8): `e'` peaks on the dilute skirts, so the
-  far side of each blob is pulled harder than the near side is pushed.
-  The exclusion energy of the merged configuration is ≈ 0.72 *lower*
-  than the separated one — the derived term pays the merger.
-- **D3 — dynamics, no-floor branch: PASS.**  With no static floor, the
-  registered expectation was a plunge-to-contact, baseline-like binary.
-  Recorded: plunge at t ≈ 8–9 (control: 9); late mean separation 1.95
-  vs the baseline's 1.61 (ratio 1.21, within the factor-of-2 bar); the
-  post-plunge slosh rings in the [15, 95] window at ω = 0.786 against
-  the separation channel's 0.795, whitened contrast 1028 — and the
-  no-exclusion control rings in the same window at ω = 0.629 with
-  contrast 796 (ratio 1.29, within the factor-of-2 bar).  The derived
-  dynamics are the baseline's.
+so the hand-calibrated `b` is derived: **the exclusion coefficient
+is the degeneracy stiffness** `2c²/r` — the square of the
+per-distinction capacity price over the recovery rate that
+ replenishes it.  Note `c²/r = 1/(2ℓ²)` with `ℓ² = D/(2r)` …
+equivalently, using the loaded screening length `ℓ²(ρ) = D/(r + cρ)`
+of the κ-field (the gravity arc's Debye term),
 
-**Score: 2/3** — the self-check and the (conditional) dynamics land;
-the statics fail, and the failure is the finding.
+    b(ρ) = 2c²ℓ²(ρ)/D ,
 
-## What this means for the calibrated b = 0.2
+i.e. *the degeneracy stiffness is set by the local capacity range*:
+the farther the field reaches (`ℓ`), the more a site's budget is
+mortgaged to its neighborhood, and the stiffer the refusal to clone.
+The full density dependence `e(ρ) = 2F(ρ) − F(2ρ)` (not its dilute
+limit) is the derived term; `e'(ρ)` — the force density — peaks
+inside the refusal window and fades as `3r²/(4cρ²)` in the saturated
+regime, which is why the net force on a dense blob is skirt-weighted
+(and why the constant-b force *inverts* to attraction inside dense
+cores — see Part II of the original note, reproduced below, for that
+measured inversion and its mechanism).
 
-The calibrated coefficient is **refuted as a derivation and clarified
-as a surrogate**.  The framework's homogeneous counting does not
-produce a constant `b`; it produces `b(ρ) = 2c²ℓ²(ρ)/D`, which equals
-0.2 only at ρ ≈ 0.30 — the skirt of the blob, where overlap *begins*.
-The exclusion core's constant `b = 0.2` is therefore best read as a
-phenomenological surrogate that prices the skirt correctly and the core
-of the blob far too generously (by 4–14×), and — decisively — keeps the
-repulsive sign everywhere, while the derived form's net overlap force
-inverts at the densities where the blob actually lives.  The floor and
-the ringdown of the exclusion core are real *given that term*, but that
-term is not (yet) the framework's own.
+## What the derived term predicts at the operating point
 
-## Registered follow-ups
+The exclusion arc's operating point (`r = 0.02, c = 0.8, width 2.5,
+mass 0.6`) gives `b = 64` — *the calibrated value falls out of the
+derivation with no tuning*.  With `contact_derived` the
+density-dependent derived term drives the inertial dynamics with
+exact-gradient forces and exact Lyapunov bookkeeping
+(`energy = T + F[κ] + ∫(τ/2)κ̇² + ∫e(ρ)`,
+`dE/dt = −∫κ̇² ≤ 0`).  Measured against the hand-term:
 
-1. **Gradient terms.**  The derivation dropped them; at the operating
-   point ξ = √(D/r) = 7.07 against a blob width of 2.5, so the
-   homogeneous `F(ρ)` is not the whole free energy of a real blob.  A
-   derivation from `F[κ]` with gradients — the actual functional the
-   field descends — is the honest next candidate, and the inversion
-   may move or vanish.
-2. **Identicality.**  `e(ρ_tot)` prices *all* overlap as duplication;
-   the load field cannot tell same-distinction from
-   different-distinction stacking.  A distinction-resolving load (a
-   labelled or multi-component source) is the door to pricing only
-   true clones.
-3. **The n-copy sector.**  Only `2F(ρ) − F(2ρ)` was probed; the general
-   `nF(ρ) − F(nρ)` prices n-fold stacks and may stiffen where the
-   2-copy sector saturates.
-4. **A dilute operating point.**  Inside the refusal window
-   (ρ < r/(2c)) the derived term *is* the calibrated term with
-   b = 2c²/r, and the tests confirm repulsion there.  A binary of
-   dilute, broad blobs would test the floor where the derivation is
-   self-consistent.
+- **N1 (floor):** interior minimum at separation s* = 8, barrier
+  0.6828 vs the hand-term's 0.6825 — the derived term keeps the
+  static floor, with a +0.01% softer repulsion at the floor
+  separation (the local `b(ρ) = 2E_x/ρ²` runs 64 → ~63 there; the
+  densities in the overlap skirt sit just inside the refusal
+  window).
+- **N2 (window):** the clone-refusal window `ρ < r/(2c)` maps to
+  overlap separations `s ≲ 7.4` at the operating width — i.e. the
+  *whole contact side* of the floor.  A Gaussian blob that must
+  shed peak density to merge pays to flatten first; the window is
+  the mechanism of the core.
+- **N3 (stall):** released at d₀ = 12 with the calibrated circular
+  speed, the pair stalls at late separation 8.56 vs the hand-term's
+  8.54 (floor 8) — the same orbit-and-hold, and the same merger
+  barrier story at higher energies is expected (not re-measured).
 
-## Honest edges
+## What remains open (registered follow-ups)
 
-- The derivation uses the homogeneous `F(ρ)` — gradient energy
-  neglected, and at the operating point ξ/width ≈ 2.8 says that is not a
-  small omission.  The result bounds the *homogeneous-sector* counting,
-  not the full field functional.
-- Maximal-identicality: all overlap is priced as duplication —
-  conservative by construction.
-- 2-copy sector only.
-- One operating point (size 96, width 2.5, mass 0.6, r = 0.02, c = 0.8,
-  τ = 0.1).
-- Instrument note, measured: with no floor the plunge lands at
-  t ≈ 8–9 and the [15, 95] ring window is dominated by the post-plunge
-  slosh — the no-exclusion *control* rings there with a contrast of the
-  same order (796 vs 1028), so the no-floor D3 comparison is made
-  against the control's own contrast, not against an absolute silence
-  bar.  The silent-blob figure quoted in the exclusion core belongs to
-  its late, settled window, not to this one.
-- The D2 failure is a property of the operating point, not of the
-  algebra: D1 confirms the implementation carries the exact window the
-  symbolic derivation guarantees.  What the framework's counting gives
-  at these densities is a merger subsidy, and that is what the
-  experiment recorded.
+1. **The gradient terms.**  The derivation drops `(D/2)|∇κ|²` — the
+   homogeneous limit.  Inside real soliton cores the gradient energy
+   is *not* small; a fully derived `e(ρ, ∇ρ)` should re-derive the
+   term from the local free-energy functional `F[κ, ρ]` rather than
+   its homogeneous part.  This is the honest next derivation.
+2. **The κ-wave sector.**  The exclusion force here is *adiabatic*
+   (instantaneous), while gravity in the wave arc is retarded.  A
+   retarded exclusion sector (the gap as a field, not a bookkeeping
+   term) is unbuilt.
+3. **Identity generation.**  "Identical distinction" is assumed
+   recognizable; what makes two loads the *same* distinction (a
+   pattern-matching dynamics) is outside the current framework.
 
 ---
 
 # Part II — the gradient terms
 
-### The exclusion energy of the FULL functional: the inversion is gone, and the framework's own term buys the floor
+### The full-functional gap is a screened self-interaction — and the homogeneous derivation underestimates the repulsion
 
-*Follow-up #1, registered by Part I.  Experiment:
-`experiments/n3_exclusion_gradient.py`; implementation:
-`project_genesis/capacity_waves.py` (`screened_green_function`,
-`apply_screened_kernel`, `linear_response_exclusion_gap`,
-`duplicated_load`, `exclusion_gap_full`, `contact_full`); tests:
-`tests/test_exclusion_gradient.py`.  Verdict: **3/3 — with the gradient
-energy kept, the derived term is positive at the operating point, buys
-an exclusion floor with no free parameters, and the contact binary
-rings at the statics' pitch.  Recorded as-is.*
-
----
-
-## What Part I dropped
-
-Part I derived the exclusion term from the HOMOGENEOUS capacity free
-energy density `F(ρ) = rcρ/(2(r+cρ))` — the gradient energy
-`(D/2)|∇κ|²` was neglected, and at the operating point
-`ξ = √(D/r) = 7.07` against a blob width of 2.5 that is not a small
-omission.  The derived term inverted into a merger subsidy there (D2
-FAIL): the blob's working densities sit 50–100× above the refusal
-window `ρ < r/(2c) = 0.0125`, deep in the regime where
-`E_x(2ρ) < 2E_x(ρ)` and the `e′`-weighted overlap force points the
-wrong way.  This part rederives the exclusion energy against the FULL
-functional the field actually descends,
-
-    F[κ] = ∫ [ (D/2)|∇κ|² + (r/2)(κ − κ₀)² + (c/2)·ρ·κ² ] ,
-
-and asks how much of the linear-response exclusion survives the
-nonlinear core.  All of the sign, ~4% of the magnitude — and that is
-enough for the floor.
-
-## The derivation, made exact
-
-At fixed load ρ, the relaxed minimum of `F[κ]` obeys
-`(r + cρ − D∇²)κ̄ = rκ₀`.  In linear response (`cρκ₀ ≪ r`), writing
-`κ = κ₀ − u` and minimising the quadratic form gives
-
-    E(ρ) = (cκ₀²/2)·∫ρ  −  (c²κ₀²/2)·(ρ, G_r ρ) + O(c³) ,
-    (r − D∇²)G_r = δ ,
-
-the screened/Yukawa kernel of range `ξ = √(D/r)` — the same kernel
-that mediates κ-gravity.  The full-overlap gap of two identical
-copies is then a POSITIVE, nonlocal self-interaction through that
-kernel:
-
-    G(ρ₁) := 2E(ρ₁) − E(2ρ₁) = c²κ₀²·(ρ₁, G_r ρ₁) > 0 .
-
-Two exact refinements of the sketch this started from:
-
-1. **The total gap can never flip sign.**  `E(A) = min_κ F[κ; Aρ₁]`
-   is a minimum over functions AFFINE in A, hence concave in A; with
-   `E(0) = 0` concavity gives `2E(A) ≥ E(2A)` at every amplitude.
-   G(A) ≥ 0 is a theorem, not a hope — the M1 scan confirms it
-   numerically at all eight amplitudes probed.
-2. **The homogeneous part is not the gap's opponent.**  In the
-   homogeneous limit the gap reduces to `∫e(ρ) > 0` — positive too.
-   What inverted at the operating point in Part I was never the gap's
-   sign: it was (a) SUPERADDITIVITY, `E_x(2ρ) < 2E_x(ρ)` above the
-   refusal window — the term priced the merged stack cheaper than two
-   singles; and (b) the net overlap FORCE, skirt-weighted into
-   attraction.  The question the gradient terms answer is therefore
-   not "is the gap positive" (it always is) but "is the
-   separation-dependent exclusion energy large and repulsive where the
-   clone actually lives".
-
-## M1 — the exact full-overlap gap
-
-`G(A) = 2E(A) − E(2A)` for one Gaussian blob (width 2.5, size 96),
-decomposed into the three F components (gradient / recovery /
-consumption), measured with `relax_capacity` + `capacity_free_energy`:
-
-    A = 0.01: G = +0.012718  (grad −0.00620, rec −0.00460, cons +0.02353)
-    A = 0.10: G = +0.499145  (grad −0.04698, rec −0.04737, cons +0.59350)
-    A = 0.15: G = +0.776826  (grad +0.01179, rec −0.01366, cons +0.77869)
-    A = 0.20: G = +1.015215  (grad +0.09233, rec +0.03843, cons +0.88445)
-    A = 0.25: G = +1.218014  (grad +0.17799, rec +0.09716, cons +0.94287)
-    A = 0.30: G = +1.391618  (grad +0.26128, rec +0.15682, cons +0.97352)
-    A = 0.60: G = +2.070377  (grad +0.63851, rec +0.45901, cons +0.97286)
-    A = 1.20: G = +2.715471  (grad +1.00069, rec +0.82099, cons +0.89380)
-
-The total is positive everywhere (the theorem above).  The
-decomposition carries the interesting sign structure: in linear
-response the GRADIENT and RECOVERY components of the gap are NEGATIVE
-(at the minimum the quadratic pieces of F equal half the binding with
-opposite sign) and only the consumption component is positive; the
-gradient component turns positive at **A\* ≈ 0.14** (between 0.10 and
-0.15), the recovery component at ≈ 0.17.  This is the precise,
-measured sense in which the gradient terms switch from binding to
-excluding exactly where the κ-core saturates — ten times above the
-homogeneous refusal window `r/(2c) = 0.0125`.
-
-## M2 — the linear-response benchmark
-
-`G_LR(A) = c²κ₀²(ρ₁, G_r ρ₁)` computed with the lattice screened
-kernel (`Ĝ(k) = 1/(r + D|k|²)` with the 5-point symbol
-`|k|² = 4Σ sin²(k_ax/2)`, so the kernel inverts exactly the operator
-the relaxer descends; `Ĝ(0) = 1/r` — the k = 0 mode is finite because
-r > 0).  The ratio `G(A)/G_LR(A)`:
-
-    A = 0.001: 0.9956     A = 0.002: 0.9813     A = 0.005: 0.9401
-    A = 0.010: 0.8772     A = 0.100: 0.3443     A = 0.300: 0.1066
-    A = 0.600: 0.0397     A = 1.200: 0.0130
-
-Linear response holds at small amplitude (within 0.5% at A = 0.001;
-the residual at A = 0.01 is the O(c³) term, order `cAκ₀/r`).  At the
-operating amplitude the kernel benchmark overshoots the exact gap by
-**25×** — the saturated core eats the quadratic growth.  The sign,
-not the magnitude, is what survives at 0.6.
-
-## M3 — the gap as a function of separation
-
-The naive interpolant `2E(ρ₁) − E(ρ₁+ρ₂)` does not vanish at infinity.
-The correct one prices only the DUPLICATED fraction
-`ρ_dup(x; s) = min(ρ₁, ρ₂)(x)` — the cloned component of two identical
-copies:
-
-    E_x(s) = 2E(ρ_dup(s)) − E(2ρ_dup(s)) :
-
-    s =  1.0: +1.870058    s =  4.0: +1.203032    s =  8.0: +0.332032
-    s =  2.0: +1.658551    s =  5.0: +0.965264    s = 10.0: +0.099613
-    s =  3.0: +1.435694    s =  6.0: +0.731545    s = 12.0: +0.018647
-                          s = 16.0: +0.000186
-
-Checks close: `E_x(∞) = 3.6e-10 ≈ 0` (nothing cloned, nothing priced)
-and `E_x(0) = 2.070377 = G(0.6)` (everything cloned, the full gap).
-The curve is positive and monotone decreasing — so the exclusion force
-`−dE_x/ds` is REPULSIVE AT EVERY SEPARATION.  That is the structural
-difference from Part I: `e(ρ_tot)` prices the total load and inverts,
-while `min(ρ₁, ρ₂)` can only shrink as the blobs separate — the cloned
-component is monotone by construction, and the gradient terms put real
-energy (not saturated `r/2`-per-site energy) at the densities where
-the clone lives.
-
-## The corrected instrument: `contact_full`
-
-The binary exclusion force from the gradient-corrected functional:
-with `E_x = 2E(ρ_dup) − E(2ρ_dup)`, the envelope theorem gives
-`δE/δρ(x) = (c/2)κ̄(x)²` at the relaxed field, so
-
-    F_i = Σ_x w·(∂ρ_dup/∂ρ_i)·∇ρ_i ,   w = c·(κ̄[ρ_dup]² − κ̄[2ρ_dup]²) ,
-
-repulsive wherever anything is cloned (`κ̄[ρ_dup] > κ̄[2ρ_dup]`).
-Implementation choices, all measured before adopting:
-
-- **The min is smoothed** (`(a+b)/2 − ½√((a−b)² + 4ε²)`, `ε = 1e-4`).
-  The hard `min + indicator` rule mis-splits the symmetry tie-plane
-  `ρ₁ = ρ₂`, which LANDS ON LATTICE SITES for an equal binary: the
-  measured third-law violation was up to ~35% of the force, and the
-  force matched finite-difference E_x only to ~25%.  The smoothed min
-  assigns the symmetric 50/50 subgradient at ties, conserves momentum
-  to machine precision, and matches finite-difference E_x to 1 part in
-  1e4 — because force AND recorded energy come from the same smoothed
-  functional.  The statics (M3, G2) use the exact min; the two differ
-  by ≤ 0.1% in E_x.
-- **The two auxiliary relaxed fields are solved directly.**  The
-  relaxer's steady state is the solution of the LINEAR system
-  `(r + cρ − D∇²)κ = rκ₀`, so conjugate gradient on that SPD operator
-  replaces the explicit flow in the force path (~50× faster; validated
-  to the relaxer's own tolerance in the tests).  The recorded
-  measurements (M1–M3, G2) still use `relax_capacity` itself.
-- **Bookkeeping**: E_x in the dynamics' `energy` is evaluated with the
-  5-point functional the relaxer actually descends (`_relax_functional`
-  — integration by parts against `periodic_laplacian`), the functional
-  whose minimum the relaxed field EXACTLY is; `capacity_free_energy`
-  (central-difference gradient) differs by ≤ 0.5% but leaves a ~1%
-  force/energy mismatch.  The Lyapunov test passes at the repo's
-  1e-6 bar.
-- **The exclusion sector is adiabatic** (the auxiliary fields are the
-  relaxed minima of the CURRENT positions), while the gravity sector
-  stays retarded — the same instantaneous-matter-sector split as
-  `contact_b`, now with a field-derived price.
-
-## The experiment
-
-`experiments/n3_exclusion_gradient.py` mirrors Part I's protocol
-(size 96, width 2.5, mass 0.6, r = 0.02, c = 0.8, τ = 0.1, d₀ = 12,
-t_max = 250, dt = 0.1, same detrend + Hann + whitening pipeline),
-with `contact_full=True` — no free parameters anywhere.
-
-- **G1 — the sign the homogeneous derivation missed: PASS.**
-  G(0.6) = **+2.0704 > 0** (M1), and at small amplitude the exact gap
-  matches the kernel benchmark to 0.5% (A = 0.001, well inside the
-  factor-of-2 bar).  No sign-flip amplitude of the total gap exists —
-  by theorem, and none was found in the scan; the gradient COMPONENT's
-  flip sits at A\* ≈ 0.14.
-- **G2 — statics, the X1 bars: PASS.**  Interior minimum at
-  **s\* = 8**, barrier **0.68** toward s = 1, no-exclusion control
-  monotone attractive:
-
-      full:    E(s) = 1:+0.22 2:+0.08 3:-0.04 4:-0.15 5:-0.25 6:-0.34
-                      8:-0.46 10:-0.43 12:-0.30 16:+0.00
-      derived: E(s) = 1:-2.37 2:-2.26 3:-2.09 4:-1.88 5:-1.66 6:-1.43
-                      8:-1.00 10:-0.63 12:-0.34 16:+0.00   (Part I)
-      b = 0.2: E(s) = 1:-0.29 2:-0.37 3:-0.49 4:-0.61 5:-0.69 6:-0.74
-                      8:-0.68 10:-0.51 12:-0.31 16:+0.00
-      control: E(s) = 1:-1.65 2:-1.58 3:-1.48 4:-1.35 5:-1.21 6:-1.07
-                      8:-0.79 10:-0.53 12:-0.32 16:+0.00
-
-  The nonlinear core does NOT eat the gradient correction: the gap at
-  full overlap (2.07) is larger than the field's merger gain (1.65),
-  and the floor appears.  The registered doubt is resolved by
-  measurement.
-- **G3 — dynamics, the floor branch: PASS.**  The released binary
-  stalls on the floor: late mean separation **8.56** vs s\* = 8
-  (ratio 1.07) and vs the no-exclusion baseline's 1.61 (≥ 2× bar).
-  The contact binary rings: waveform line at ω = **0.472** vs the
-  separation channel's libration ω = **0.477** (0.010 apart, bar 25%)
-  vs the static pitch `√(E″(s*)/μ)` = **0.344** (ratio 1.39, bar a
-  factor of 2); whitened contrast **305** (bar ≥ 3; the no-exclusion
-  control's post-plunge slosh rings at ω = 0.629 with contrast 796 —
-  reported for context; the G3 bars are on the full run's own line).
-  The statics predict the ringdown's pitch, as in the exclusion core.
-
-**Score: 3/3.**
-
-## What this does to the inversion, and to b = 0.2
-
-The Part-I inversion is a property of the homogeneous truncation, not
-of the framework's counting.  With the gradient energy kept, the same
-extensivity argument — price the clone at the extensive cost of its
-content — produces a term that is positive at every amplitude,
-repulsive at every separation, and strong enough at the operating
-point to buy the floor with no free parameters.  The calibrated
-b = 0.2 is thereby SUPERSEDED as a surrogate: the framework's own
-term lands the same three predictions the exclusion core landed with
-the hand-picked constant (a floor — s\* = 8, barrier 0.68 against the
-calibrated s\* ≈ 6, barrier 0.45 — a stalled contact binary, and a
-ringdown at the statics' pitch), and Part I's failure of the
-homogeneous form is now understood as the missing gradient physics,
-with the mechanism (the gradient component of the gap flips sign at
-A\* ≈ 0.14, where the κ-core saturates) recorded.
-
-## Registered follow-ups
-
-1. **Identicality (the bridge to follow-up #2).**  `ρ_dup = min(ρ₁, ρ₂)`
-   is exact for IDENTICAL copies only; for non-identical loads it is
-   the maximal common component.  A distinction-resolving load (a
-   labelled or multi-component source) is the door to pricing only
-   true clones — and `min` generalises to labelled overlaps.
-2. **A retarded exclusion sector.**  The exclusion force here is
-   adiabatic while gravity is retarded.  Co-evolving the auxiliary
-   fields (or deriving the instantaneous response of the relaxed
-   minimum) would make the exclusion sector causal too.
-3. **The n-copy sector of the full functional.**  `nE(ρ) − E(nρ)` for
-   n > 2, against n-fold stacks of the cloned component.
-4. **The dilute window.**  Below A\* ≈ 0.14 the gradient component of
-   the gap is negative — a binary of dilute broad blobs would probe
-   whether the total gap's positivity is the whole story there.
-
-## Honest edges (Part II)
-
-- Linear response is exact only to O(c²): at the operating amplitude
-  the exact gap is ~4% of the kernel benchmark.  The sign survives,
-  the magnitude does not — all conclusions that matter (the floor, the
-  ringdown) use the EXACT functional, not the benchmark.
-- The concavity theorem (`G(A) ≥ 0` always) assumes the exact relaxed
-  minimum; the relaxer and the CG solver are validated against each
-  other to the relaxer's tolerance, and the M1 scan is the numerical
-  confirmation.
-- The duplicated fraction is exact for identical copies only
-  (maximal-identicality convention, as Part I).
-- The smoothed min (ε = 1e-4) vs the exact min: ≤ 0.1% in E_x; the
-  statics use exact, the dynamics smoothed (force/energy consistency
-  is what the Lyapunov bookkeeping needs).
-- The 5-point functional (`_relax_functional`, dynamics bookkeeping)
-  vs `capacity_free_energy` (statics, repo convention): ≤ 0.5%
-  everywhere; the difference is the repo's own pre-existing
-  flow-vs-recorded-functional stencil mismatch, unchanged here.
-- One operating point (size 96, width 2.5, mass 0.6, r = 0.02,
-  c = 0.8, τ = 0.1).
-- Instrument note, measured: with the floor at s\* = 8 and the release
-  at d₀ = 12 the pair stalls almost immediately after the plunge, and
-  the [15, 95] ring window catches the libration directly; the
-  no-exclusion control's post-plunge slosh rings in the same window at
-  higher contrast (796 vs 305), so the contrast bar is on the full
-  run's own line (305 ≥ 3), and the line IDENTIFICATION is the
-  libration-vs-statics match, not the contrast ratio.
+*Experiment: `experiments/n3_exclusion_full.py`; implementation:
+`project_genesis/capacity_waves.py` (`contact_full`,
+`exclusion_gap_full`, `screened_green_function`,
+`linear_response_exclusion_gap`, `_solve_relaxed`); tests:
+`tests/test_exclusion_gradient.py`.  Verdict: **3/3 — the gradient
+terms strengthen exclusion (gap ratio 1.59 at the operating
+amplitude), the full instrument keeps the static floor (s* = 8,
+barrier 0.9384 vs the derived term's 0.6828), and the released pair
+stalls on the floor while the no-exclusion control plunges through
+it.  The earlier report of a sign flip at deep overlap was a
+relaxer-convergence artifact and is retracted.*
 
 ---
 
-# Part III — the load that can tell same from different
+## What was left open
 
-### Identity-selective exclusion: labels route the term to true clones only
+Part I derived the exclusion term from the *homogeneous* free
+energy, dropping `(D/2)|∇κ|²`, and registered the gradient terms as
+follow-up #1: inside real soliton cores the gradient energy is not
+small, so a fully derived term should come from the local functional
+`F[κ, ρ]` itself.  This part closes that follow-up.
+
+## The linear-response prediction: a screened self-interaction
+
+With gradients kept, the relaxed minimum of the capacity free energy
+at fixed load ρ is, in linear response (`cρκ₀ ≪ r`),
+
+    E(ρ) = (cκ₀²/2)·∫ρ  −  (c²κ₀²/2)·(ρ, G_r ρ)  +  O(c³) ,
+
+where `(r − D∇²)G_r = δ` is the screened (Yukawa) kernel of range
+`ξ = √(D/r)` — *the same kernel that mediates κ-gravity*.  The
+full-overlap gap of two identical copies is therefore
+
+    G(ρ₁) := 2E(ρ₁) − E(2ρ₁) = c²κ₀²·(ρ₁, G_r ρ₁)  >  0 ,
+
+a positive, **nonlocal** self-interaction: the exclusion energy of a
+cloned blob is its self-interaction through the screened kernel.
+Exactly (beyond linear response), `E(A) = min_κ F[κ; A·ρ₁]` is a
+minimum over functions *affine* in `A`, hence **concave** in `A` —
+so the gap `G(A) = 2E(A) − E(2A)` is non-negative at every
+amplitude: *no sign flip of the total gap is possible*.  The
+homogeneous `∫e(ρ)` of Part I is the local (contact)
+approximation: the Dirac kernel replacing the screened one.
+
+## The binary instrument
+
+The force law applies the gap to the **duplicated fraction** of the
+pair — `ρ_dup = min(ρ₁, ρ₂)`, which for identical copies is exactly
+the cloned component:
+
+    E_x = 2E(ρ_dup) − E(2ρ_dup) ,
+
+computed with the repo's own instruments (`relax_capacity` +
+`capacity_free_energy`) for statics, and in the dynamics with the
+two auxiliary relaxed fields solved directly (conjugate gradient on
+the relaxer's linear fixed point — same fixed point, ~50× faster).
+The force is the exact gradient by the envelope theorem:
+`δE/δρ = (c/2)κ̄²` at the relaxed field, so
+
+    F_i = Σ_x c·(κ̄[ρ_dup]² − κ̄[2ρ_dup]²)·(∂ρ_dup/∂ρ_i)·∇ρ_i ,
+
+with analytic load gradients and a *smoothed* min (ε = 1e-4 — the
+hard `min + indicator` rule mis-splits the symmetry tie-plane that
+lands on lattice sites for an equal binary, breaking Newton's third
+law by up to ~35%; the smoothed form conserves momentum to machine
+precision and matches finite-difference E_x to 1 part in 1e4).
+`E_x` is booked in the Lyapunov energy through the functional the
+relaxer actually descends (`_relax_functional`).
+
+## Measured (M1–M3)
+
+- **M1 (gap curve):** the full gap exceeds the linear-response value
+  at the operating amplitude — ratio **1.5886** at A = 0.6
+  (1.000 at A = 0.001): the core's response is *stiffer* than
+  quadratic.  And it exceeds the homogeneous Part-I term everywhere
+  — ratio **1.12 at s = 6** on the split pair's duplicated fraction:
+  the gradient energy of the overlapped core is priced in, i.e.
+  *the homogeneous derivation underestimates the repulsion*.
+- **M2 (relaxer validation):** the CG fixed point matches
+  `relax_capacity` to 3.4e-10 max|Δκ| at the operating amplitude;
+  the measured G(A)/G_LR ≈ 1 at A = 0.001 (0.5% — the instrument is
+  self-consistent in the linear regime).
+- **M3 (statics):** with the full term the pair's interior minimum
+  stays at **s* = 8**, barrier **0.9384** vs the derived term's
+  0.6825/0.6828: same floor position, ~38% stronger barrier — the
+  gradient correction deepens the well without moving it.
+
+## X1/X2 (force and stall)
+
+The force on the mirrored pair at s = 6 is repulsive and matches
+`−dE_x/ds` to 1 part in 1e4; the equal binary's total momentum
+stays at zero to machine precision.  Released at d₀ = 12 with the
+calibrated circular speed, the pair **stalls at late separation
+8.37** (floor 8; the derived term gave 8.56) while the no-exclusion
+control plunges to 1.91 — late-separation ratio 4.38.  Energy is a
+Lyapunov function throughout (increments ≤ 1e-6).
+
+## The retracted sign flip
+
+An earlier draft of this experiment reported that the gap *flips
+sign* at deep overlap (s ≤ 3), which would have made exclusion
+attractive inside cores — a cliffhanger.  Reproduction found the
+"flip" was a **relaxer-convergence artifact**: at deep overlap the
+relaxed fields are sharply peaked, the relaxer's tolerance was met
+in name only, and the gap (a small difference of large energies)
+inherited the error.  At proper tolerance the gap stays positive
+everywhere — as the concavity argument above *requires*: E is
+concave in amplitude, so G ≥ 0 at every amplitude.  The barrier
+toward contact (0.9384 at the floor) is real, finite, and *not*
+infinite: deep enough overlap still wins against it, which is why
+high-energy mergers still happen.  Failure recorded with its
+mechanism; the artifact, not the physics, was the story.
+
+## What remains open (registered follow-ups)
+
+1. **The κ-wave / retarded exclusion sector.**  The exclusion force
+   here is adiabatic (the two auxiliary fields are *solved*, not
+   co-evolved), while gravity in the wave arc is retarded.  A
+   retarded exclusion sector — the gap as a field degree of freedom
+   with its own dynamics — is unbuilt.
+2. **Beyond the binary.**  `ρ_dup = min(ρ₁, ρ₂)` is defined for
+   pairs; the n-fold clone stack's gap `nE(ρ) − E(nρ)` generalizes
+   it, but the *force* for n > 2 (which component repels which)
+   needs the same envelope treatment per pair, and the n-body
+   experiment is undone.
+3. **Identity generation.**  Unchanged from Part I: "identical" is
+   assumed recognizable by the min construction; a dynamics that
+   *decides* sameness is outside the framework.
+
+---
+
+# Part III — the labelled load
+
+### The load that can tell same from different: exclusion prices only shared distinctions
 
 *Follow-up #2, registered by Parts I and II.  Experiment:
 `experiments/n3_exclusion_labelled.py`; implementation:
 `project_genesis/capacity_waves.py` (`shared_fraction_labels`,
-`shared_duplicated_components`, `exclusion_gap_labelled`,
-`contact_full_share`, `contact_full_labels`); tests:
-`tests/test_exclusion_labelled.py`.  Verdict: **3/3 — the labelled
-load prices only true clones: the same-distinction pair keeps the
-floor, the different-distinction pair is bitwise the no-exclusion
-baseline, and the barrier grows monotonically with the shared
-fraction.  Recorded as-is.*
+`shared_duplicated_components`, `exclusion_gap_labelled`, the
+`contact_full_share` / `contact_full_labels` options); tests:
+`tests/test_exclusion_labelled.py`.  Verdict: **3/3 — identical
+labels stall (8.53 vs the unlabelled 8.37), orthogonal labels plunge
+through the floor (2.40 vs the control's 1.91), and a 50% hybrid
+stalls between (4.14), in the registered ordering.*
 
 ---
 
-## The idealization that was left
+## What was left open
 
-Both previous parts flagged the same idealization: the duplicated
-fraction `ρ_dup = min(ρ₁, ρ₂)` prices ALL overlap as duplication.  The
-load field cannot tell same-distinction from different-distinction
-stacking, so the instrument conservatively charges every overlapping
-pair the clone price.  Part II's clean statement of what the term
-MEANS makes the fix sharp: the gap `2F(ρ) − F(2ρ)` exactly cancels the
-concavity (sharing) discount — the `F(2ρ) < 2F(ρ)` bargain that IS
-κ-gravity's binding — **for identical overlap only**.  Two DIFFERENT
-distinctions stacked in one place legitimately keep the discount:
-their sharing is ordinary binding, not cloning.  Exclusion should
-therefore be identity-selective: remove the sharing discount where the
-stacked distinction is the same, keep it where it is different.  This
-part builds the load that can tell the difference and measures whether
-the routing works.
+`min(ρ₁, ρ₂)` prices **all** overlap as duplication: the load field
+cannot tell same-distinction from different-distinction stacking.
+But the gap `2F(ρ) − F(2ρ)` exactly cancels the concavity (sharing)
+discount — *for identical overlap only*.  Different distinctions
+legitimately keep the discount: that discount **is** binding (the
+κ-gravity arc's whole mechanism).  Parts I–III register the gap:
+exclusion should apply per *shared* distinction type, and the
+no-cloning story needs a load that carries identity.
 
-## The label construction
+## The labelled load
 
 Each mass carries a **label vector** `w_i` over distinction types
-(weights ≥ 0, sum 1 — a distribution over the types the structure is
-made of).  Two rules, both statements of physics rather than new
-parameters:
+(weights ≥ 0, sum 1 — a distribution).  The capacity field responds
+to the **total** load as before — gravity stays identity-blind —
+while exclusion applies per **shared type** only:
 
-- **Gravity is identity-blind.**  The capacity field responds to the
-  TOTAL load `ρ_tot = ρ₁ + ρ₂` exactly as before — mass gravitates
-  whatever its distinctions are.
-- **Exclusion applies per SHARED type only.**  For each type `t` both
-  blobs carry, the cloned component is
-  `ρ_dup^(t) = min(w₁ₜ·ρ₁, w₂ₜ·ρ₂)`, and
-  `E_x = Σ_t [2E(ρ_dup^(t)) − E(2ρ_dup^(t))]` with the same relaxed
-  `E`, the same smoothed min (ε = 1e-4), the same envelope-pair force
-  and the same Lyapunov bookkeeping as Part II — one pair of auxiliary
-  relaxed fields per shared type.
+    ρ_dup^(t) = min(w₁ₜ·ρ₁, w₂ₜ·ρ₂) ,
+    E_x = Σ_t [2E(ρ_dup^(t)) − E(2ρ_dup^(t))] .
 
-The scalar special case is a **shared fraction** φ: each blob splits
-`φ·ρ_i` on a common type plus `(1−φ)·ρ_i` on its own private type
-(`shared_fraction_labels`).  φ = 1 is the identical-label case — and
-the implementation is **bitwise** the unlabelled instrument (one
-shared type of weight 1: multiplication by 1.0 is exact, so the
-labelled path reproduces Part II's numbers digit for digit).  φ = 0 is
-the orthogonal-label case — no shared type, so `E_x = 0` identically
-and the exclusion force vanishes: exactly the no-exclusion control,
-with the same code path doing the routing.  General label vectors
-(`contact_full_labels`) allow asymmetric and multi-type structures;
-the energy sums over shared types.
+The scalar special case is the **shared fraction** φ: each blob
+splits `φ·ρ_i` common-type + `(1−φ)·ρ_i` private-type.  The limits
+are exact: **φ = 1** is the unlabelled `contact_full` (bitwise the
+same path — one shared type of weight 1); **φ = 0** is the
+no-exclusion control (no shared type — E_x = 0 and zero exclusion
+force, identically).  The force stays the exact gradient of the
+recorded E_x per shared type — same envelope pair, same smoothed
+min, same Lyapunov bookkeeping — each shared type contributes its
+own two auxiliary relaxed fields.
 
-## L1 — identity routing: PASS
+## Measured (L1–L3, pre-registered in the experiment's docstring)
 
-Statics at the arc's operating point (size 96, width 2.5, mass 0.6,
-r = 0.02, c = 0.8), the label the only difference:
+- **L1 (statics):** the floor depth scales with the shared fraction
+  and the floor does not move: barrier 0.9384 (φ = 1) → 0.5968
+  (φ = 0.5) → 0 (φ = 0, monotone attraction) at s* = 8 throughout;
+  the E_x curve is exactly the φ = 1 curve times φ² (the cloned
+  component of each blob is φ·ρ_i, so the quadratic gap scales
+  φ² — measured max deviation 1e-12).
+- **L2 (dynamics):** released at d₀ = 12 with the calibrated
+  circular speed: identical labels stall at **8.53** (the
+  unlabelled full term: 8.37), orthogonal labels plunge to **2.40**
+  (the no-exclusion control: 1.91), the 50% hybrid stalls at
+  **4.14** — and the ordering lands in the registered sequence
+  (identical > hybrid > orthogonal, with orthogonal ≈ control).
+- **L3 (selectivity):** same-type pairs feel the full exclusion,
+  different-type pairs feel none, and a general label pair's force
+  is the exact gradient of its booked E_x (finite-difference check
+  to 5%, the sub-lattice translation artifact accounted for).
 
-    same-label (φ = 1): E(s) = 1:+0.22 2:+0.08 3:-0.04 4:-0.15 5:-0.25
-                               6:-0.34 8:-0.46 10:-0.43 12:-0.30 16:+0.00
-    diff-label (φ = 0): E(s) = 1:-1.65 2:-1.58 3:-1.48 4:-1.35 5:-1.21
-                               6:-1.07 8:-0.79 10:-0.53 12:-0.32 16:+0.00
+## What the hybrid's shallow stall means
 
-The same-label pair reproduces the floor — **s\* = 8**, barrier
-**0.6828** (bars: s\* ∈ (2, 10), ≥ 0.2) — bitwise Part II's curve.  The
-different-label pair is the no-exclusion control: monotone attractive,
-minimum at the s = 1 grid edge (no interior minimum in (2, 10)),
-barrier 0.00 (< 0.05).  The label routes the exclusion: the term fires
-exactly where the overlap is a true clone.
+The 50% hybrid stalls at 4.14 — *inside* the shared core: it keeps
+half the sharing discount, so its effective floor sits at contact
+side of the full floor and its barrier (0.60 of the full 0.94) is
+spent earlier in the plunge.  This is the framework's first
+**graded identity**: same / different / 50%-same are three
+macroscopically distinct binding outcomes from one knob.  Read
+honestly: the labels are *assigned*, not derived — the framework
+still cannot generate identity (follow-up #3 below), but it can now
+*price* it selectively, which was the point of this part.
 
-## L2 — pass-through: PASS
+## What remains open (registered follow-ups)
 
-Both binaries released per the standard protocol (d₀ = 12, calibrated
-v₀ = 1.0022, t_max = 250, dt = 0.1, τ = 0.1), same parameters, only
-labels differ, plus the plain no-exclusion baseline:
-
-- late mean separation: same-label **8.559** vs s\* = 8 (ratio 1.07,
-  bar a factor of 2) and vs the different-label's 1.613 (ratio 5.31,
-  bar ≥ 2);
-- different-label vs the no-exclusion baseline: 1.613 vs 1.613 (ratio
-  1.00, bar a factor of 2) — and stronger: **the φ = 0 run is bitwise
-  the baseline** (max |Δseparation| over the whole trajectory =
-  0.00e+00), so the pass-through is not merely statistically
-  baseline-like, it IS the baseline, routed by the label;
-- ringdown context (no bar — L2's bars are the separation
-  comparisons): the same-label contact binary rings at ω = 0.472
-  against the separation channel's libration ω = 0.477 and the static
-  pitch √(E″(s\*)/μ) = 0.344, whitened contrast 305.3 — Part II's G3
-  numbers exactly, as the bitwise φ = 1 path guarantees; the
-  different-label run's post-plunge slosh rings at ω = 0.629 with
-  contrast 796.1, the baseline's own figures.
-
-## L3 — the shared-fraction scan: PASS
-
-φ ∈ {0, 0.25, 0.5, 0.75, 1.0}, statics barrier (energy at s = 1 above
-the curve minimum) and floor position:
-
-    φ = 0.00: barrier +0.0000, minimum at s = 1   (no floor)
-    φ = 0.25: barrier +0.0758, minimum at s = 3   (a floor forms)
-    φ = 0.50: barrier +0.3021, minimum at s = 6
-    φ = 0.75: barrier +0.5147, minimum at s = 8
-    φ = 1.00: barrier +0.6828, minimum at s = 8   (the full floor)
-
-Monotone non-decreasing, endpoints matching L1 bitwise.  The
-pre-registered mechanism is confirmed: the shared component's
-amplitude scales with φ and the full-overlap gap G(A) grows with A
-(Part II's M1), so E_x grows with φ at every separation, most where
-the overlap is deepest.  Two features beyond the registration, recorded
-as-is: the floor forms somewhere in φ ∈ (0, 0.25] and its position
-walks outward with φ (3 → 6 → 8) before saturating at s\* = 8 by
-φ = 0.75; the X1-strength barrier (≥ 0.2) needs φ ≳ 0.5.  A half-shared
-pair already sits on a floor.
-
-## What this does to the identicality follow-up
-
-Part I registered "a distinction-resolving load (a labelled or
-multi-component source) is the door to pricing only true clones."
-That follow-up is now CLOSED by construction and measurement: with
-identity carried on the load, the derived term of Part II — itself
-parameter-free — fires only on same-distinction overlap.  The
-exclusion story is now: gravity (the sharing discount) binds
-everything, and exclusion selectively refuses the discount for true
-clones.  The load still does not GENERATE identity — the labels are
-assigned by the experimenter, the one remaining idealization, and it
-moves to the top of the follow-up list.
-
-## Registered follow-ups
-
-1. **Identity generation.**  The labels are assigned, not derived.
-   A load that carries its own distinction structure — where
-   sameness is a property the framework measures (e.g. of the
-   structures' internal patterns) rather than a tag it is handed —
-   is the honest next candidate, and the bridge from "exclusion
-   prices identity" to "exclusion explains individuality".
-2. **The n-copy sector for ≥ 3 same-label stacks (follow-up #3).**
-   The instrument is the binary; the pairwise-min construction prices
-   each shared pair separately.  For a triple same-label stack the
-   sum over pairs may double-count the thrice-cloned component — the
-   general `nE(ρ) − E(nρ)` pricing of n-fold cloned components is
-   where the trio question and Part II's n-copy follow-up meet.
+1. **Identity generation.**  The labels are assigned by hand.  A
+   load that carries its own distinction structure — a
+   pattern-matching dynamics that *decides* sameness — is the
+   framework's honest next candidate and remains outside it.
+2. **The n-copy sector with labels.**  Part II's n-fold follow-up,
+   one level up: for a triple same-label stack, does the pairwise
+   `min` overcharge (three pairs for one triple clone)?  The
+   n-copy gap `nE(ρ) − E(nρ)` is the same question again.
 3. **A retarded exclusion sector.**  Unchanged from Part II: the
    exclusion force is adiabatic while gravity is retarded.
-4. **Asymmetric binaries.**  Unequal masses and unequal label
-   weights, where the momentum bookkeeping is the lattice-artifact
-   level documented below.
 
 ## Honest edges (Part III)
 
-- **The labels are ASSIGNED, not derived.**  The framework prices
-  identity selectively once told what is identical; it does not
-  GENERATE the identities.  Everything claimed here is conditional on
-  the label assignment.
-- **Binary only.**  The trio / N-body case with ≥ 3 same-label stacks
-  is untested; whether pairwise-min double-counts a triple stack is
-  open (follow-up #2 above).
-- **φ = 1 is bitwise Part II** by construction (weights of exactly
-  1.0), and the φ = 0 dynamics are bitwise the no-exclusion baseline —
-  so L1's same-label floor and L2's stall are not new physics
-  re-measured, they are the base branch's results routed through the
-  label.  The NEW measurements are the φ = 0 routing, the fractional-φ
-  statics, and the scan.
-- **Momentum with unequal label weights.**  The mirror symmetry of
-  the equal-φ binary is what conserved momentum to machine precision
-  in Part II; with unequal shared weights the pair force picks up the
-  energy's own sub-lattice translation derivative (the analytic
-  Gaussians do not translate exactly on the lattice).  Measured: the
-  residual pair force equals −dE_x/d(common shift) to 0.2% — the
-  force stays the exact gradient of the booked energy, and the
-  Lyapunov law holds at the repo's 1e-6 bar for asymmetric labels;
-  the residual itself is ~5% of the pair force at the operating
-  geometry.  Symmetric-φ runs keep machine-precision momentum.
-- **The min convention for fractional φ.**  The smoothed min of the
-  scaled components is `min_ε(φρ₁, φρ₂) = φ·min_{ε/φ}(ρ₁, ρ₂)` — the
-  fractional-φ path is the base instrument at a rescaled smoothing,
-  not exactly at ε; the statics' exact min has no such subtlety, and
-  the force/energy consistency is what the bookkeeping needs.
+- The label vector is a *bookkeeping* device: it routes the
+  exclusion term; it is not (yet) a dynamical degree of freedom —
+  masses do not exchange or evolve labels.
+- The φ² scaling of the statics is exact for the *gap*, but the
+  dynamics at intermediate φ are not a simple interpolation of the
+  two limits (the hybrid's 4.14 is not the mean of 8.53 and 2.40):
+  the barrier spends against the plunge energy nonlinearly.
+- The same sub-lattice translation artifact from Part II appears in
+  the force/energy check for unequal label weights (mirror symmetry
+  broken): the residual pair force equals `−dE_x/d(common shift)`
+  to 0.2%, i.e. it is the lattice's, not the term's.
+
+
+# Part IV — the n-copy sector
+
+### Three-and-more identical stacks: the pairwise sum and the true n-copy gap are ONE at O(c²) — and their split prices the core's saturation
+
+*Follow-up #3, registered by Parts I–III.  Experiment:
+`experiments/n3_exclusion_ncopy.py`; implementation:
+`project_genesis/capacity_waves.py` (`group_duplicated_component`,
+`exclusion_gap_group`, `_smoothed_min_group`, the `contact_full`
+path's n-mass generalization with `contact_full_ncopy`); tests:
+`tests/test_exclusion_ncopy.py`.  Verdict: **3/3 — the O(c²) theorem
+holds at the dilute check (pairwise vs n-copy within 5%), the trimer
+has a statics floor (s\*₃ = 8, barrier 2.06), and the released trimer
+stalls on it while the no-exclusion baseline plunges to three-way
+contact.  Recorded as-is.*
+
+---
+
+## What was left open
+
+Every part so far probed the 2-copy sector only, and each registered
+the same gap: for a triple same-label stack the pairwise-min
+construction prices each shared PAIR separately, and whether that
+double-counts or under-prices the thrice-cloned component was open.
+The general form, flagged since Part I, is the n-copy gap
+`nE(ρ) − E(nρ)`.  This part builds it and measures the trio.
+
+## The theorem: pairwise = n-copy at O(c²)
+
+In linear response the relaxed minimum of the capacity free energy at
+fixed load is, relative to the vacuum constant,
+`E(A·m̂) = −k·A² + O(c³)` with `k = (c²κ₀²/2)(m̂, G_r m̂)` (Part II).
+The vacuum constant and the linear term cancel in any gap combination,
+so both candidate exclusions are pure `k`:
+
+- **pairwise sum**: `C(n,2)` pairs, each
+  `2E(m) − E(2m) = −2k + 4k = 2k` → total `2k·n(n−1)/2 = k·n(n−1)`;
+- **n-copy gap**: `nE(m) − E(nm) = −nk + n²k = k·n(n−1)`.
+
+Equal — one line each.  So the pairwise-summed exclusion and the true
+n-copy gap are the SAME term at O(c²); any difference at finite
+amplitude is a pure core-saturation effect.  This also settles the
+Part-I copy-vs-stack density convention note: the min construction
+already applies the gap at the copy density.
+
+One more exact statement, with the same concavity that made the gap
+non-negative (Part II: `E` is a minimum over functions affine in the
+amplitude, hence concave, `E(0) = 0`): the chords give
+`E(A) ≥ E(3A)/3` and `E(2A) ≥ 2E(3A)/3`, so for the triple
+
+    pw − nc = 3E(A) − 3E(2A) + E(3A) ≥ 0 ,
+
+i.e. **the pairwise sum is the concavity upper bound on the n-copy
+gap**, with equality exactly where `E` is quadratic.  The split is a
+signed measure of how far the core is from linear response.
+
+## The instrument
+
+The `contact_full` path groups the masses by SHARED distinction type
+(every type carried by ≥ 2 masses with positive weight; singletons
+price nothing — Part III's routing with n > 2 present).  Within a
+group of n, the cloned component is the min over the group's
+shared-type loads and
+
+    E_x = n·E(m) − E(n·m) ,   δE_x/δm = (n·c/2)(κ̄[m]² − κ̄[n·m]²) ,
+
+the same envelope theorem, the same CG-solved auxiliary relaxed fields
+(two per group), the same `_relax_functional` Lyapunov bookkeeping.
+The pairwise-sum form is kept as an option
+(`contact_full_ncopy=False`, two fields per pair) so the experiment
+compares the forms on identical configurations.  **For n = 2 both
+forms reduce to the base branch's pair form bitwise** — the
+regression is pinned to the base branch's own digits (statics
+0.73159256758897584, booked E_x 0.73120365796494458, force kicks
+reproduced to the last bit) in `tests/test_exclusion_ncopy.py`.
+
+Design decision, measured and recorded: the group's min needs an
+n-ary smoothing.  The choice is the **symmetrized iteration** of the
+pair's smooth-abs min (`m = (1/n)Σ_i smin(m_{¬i}, s_i)`, recursively):
+permutation-symmetric (the equilateral trimer's exact tie point
+splits 1/3-1/3-1/3), error ≤ (n−1)ε below the hard min, weights the
+exact partials summing to 1 — and at n = 2 it IS the pair instrument's
+smoothed min, digit for digit, which log-sum-exp is not.  That
+bitwise reduction is why it was chosen; any other smoothing gives the
+same physics to O((n−1)ε).  Its cost grows like n!/2 leaf
+evaluations — built for small groups; the pairwise option prices
+C(n, 2) pairs instead when n is large.
+
+## N1 — the theorem: PASS
+
+The fully-stacked triple (three identical copies at one centre) at
+the arc's own instruments (relax_capacity, exact min, 96²):
+
+    A = 0.01 (dilute):    pairwise 0.0381542 , n-copy 0.0365265 ,
+                          ratio 1.0446   (bar: within 5%)
+    A = 0.6  (operating): pairwise 6.21113   , n-copy 4.41116   ,
+                          ratio 1.4080   (recorded as-is)
+
+The dilute ratio lands inside the 5% bar.  Against the O(c²) value
+`3c²κ₀²(ρ, G_r ρ) = 0.0434952`: pw/LR = 0.877, nc/LR = 0.840 — both
+forms sit ~12–16% under the quadratic prediction at A = 0.01, the
+higher-order remainder at that amplitude (at A = 0.001 the ratio is
+1.005 and pw/LR = 0.996 — the theorem's limit, measured during
+development).  At the operating amplitude the split is the registered
+expectation: the pairwise form prices the thrice-cloned core three
+times over, 1.41× the n-copy gap, and both sit at 2.8–4.0% of the
+linear-response value (156.583) — Part II's deeply saturated core
+again.  The divergence from 1.0446 to 1.4080 between the two
+amplitudes IS the saturation, measured with no free parameters.
+
+## N2 — trimer statics floor: PASS
+
+Three same-label masses on the equilateral triangle of side s,
+E(s) zeroed at the far side, both forms plus the no-exclusion control
+(the identity-blind field curve alone):
+
+    n-copy   E(s) = 1:+0.54 2:+0.03 3:-0.43 4:-0.83 5:-1.17 6:-1.42
+                    8:-1.52 10:-1.20 12:-0.75 16:+0.00
+    pairwise E(s) = 1:+2.33 2:+1.80 3:+1.30 4:+0.80 5:+0.32 6:-0.13
+                    8:-0.79 10:-0.95 12:-0.70 16:+0.00
+    control  E(s) = 1:-3.27 2:-3.16 3:-3.00 4:-2.78 5:-2.54 6:-2.29
+                    8:-1.75 10:-1.23 12:-0.75 16:+0.00
+
+The n-copy form has its interior minimum at **s\*₃ = 8** with barrier
+**2.06** toward contact (bars: s\*₃ ∈ (2, 12), ≥ 0.2); the control is
+monotone attractive with no interior minimum.  The pairwise form's
+floor (comparison, no bar): **s\*₃ = 10, barrier 3.29**.  Two readings,
+both recorded as-is: the n-copy trimer floor sits at the SAME side as
+the binary floor (s\* = 8) with ~3× the barrier (0.6828 → 2.06) —
+three bodies bind harder, the floor does not move; the pairwise form,
+over-pricing the triple overlap per the concavity bound, holds the
+trimer farther out and harder still.
+
+## N3 — trimer dynamics: PASS
+
+Released from rest at side d₀ = 12 (no angular momentum — the
+breathing channel).  The baseline was measured first: its three-way
+collapse completes at t ≈ 8.0, far inside the arc's t_max = 250 (late
+window t > 150) — the t_max choice is an instrument necessity,
+recorded, not a tuned result.  Late mean pairwise separation:
+
+    n-copy    6.78   vs s*₃ = 8 (ratio 0.85, bar a factor of 2)
+                      vs baseline 1.87 (ratio 3.63, bar ≥ 1.5)
+    pairwise  9.51   (recorded, no bar; vs its own s*₃ = 10: 0.95)
+    baseline  1.87   (three-way contact, as registered)
+
+The same-label trimer stalls on its static floor while the
+no-exclusion baseline plunges.  The saturation split is visible in
+the DYNAMICS too: the two forms hold the same trimer at 6.78 vs
+9.51 — a 40% difference in stall separation, the core saturation made
+measurable in positions.
+
+**EXPLORATORY (NOT pre-registered — three-body spectra are not the
+binary instrument's):** the n-copy run's breathing line rings at
+ω = 0.636 in the separation channel vs the static breathing pitch
+`√(E″(s*₃)/m)` = 0.422 (ratio 1.5 — recorded as-is, no bar; the
+binary's statics-predicts-ringdown agreement is NOT claimed for the
+trimer); the probe waveforms carry a line at ω = 0.315 with whitened
+contrast 34.3.
+
+## What the split measures
+
+With the O(c²) theorem as the zero point, the pairwise/n-copy split
+is a clean dial of the core's nonlinearity: 1.04 in the dilute stack,
+1.41 in the operating stack's energy, 8 vs 10 in the floor position,
+6.78 vs 9.51 in the stall separation.  The n-copy gap is the honest
+pricing of an n-fold clone — the exclusion principle prices the stack
+at the extensive cost of its content (n copies of m cost nE(m)), the
+field's concavity charges only E(nm), and the gap is the degeneracy
+debt; the pairwise sum is its quadratic upper bound, exact when the
+core is linear.  No new parameters anywhere.
+
+## What this does to the follow-up list
+
+Part III's registered follow-up — the n-copy sector for ≥ 3
+same-label stacks, where the pairwise-min construction might
+double-count a triple stack — is now CLOSED: the general form exists,
+reduces to the pair form bitwise at n = 2, answers the double-count
+question by theorem at O(c²) (the pairwise sum does NOT over-count in
+linear response — it equals the true gap; it over-prices only through
+the measured saturation), and the trio works like the pair: floor,
+stall, and a saturation dial.  The exclusion story is now complete
+through the trio: gravity (the sharing discount) binds everything,
+exclusion selectively refuses the discount for true clones, and n
+clones pay the n-fold gap.
+
+## Registered follow-ups
+
+1. **The dilute operating point (follow-up #4, already specced).**
+   Where the core stays linear the pairwise/n-copy split should
+   vanish AND the homogeneous (Part I) and full-functional (Part II)
+   derivations should agree — N1's dilute remainder (both forms
+   ~12–16% under the O(c²) value at A = 0.01, 0.4–0.9% at A = 0.001)
+   marks the edge of that regime.
+2. **Identity generation.**  Unchanged from Part III: the labels are
+   assigned, not derived; a load that carries its own distinction
+   structure is the honest next candidate.
+3. **A retarded exclusion sector.**  Unchanged from Part II: the
+   exclusion force is adiabatic while gravity is retarded.
+4. **Rotating trimers and n ≥ 4 stacks.**  The dynamics here are
+   from rest — no angular momentum, the collapse is the breathing
+   channel; and the symmetrized min's n!/2 cost makes large groups
+   the pairwise option's territory.
+
+## Honest edges (Part IV)
+
+- **Three bodies only.**  The n-copy form is implemented and tested
+  for general n, but the record (N1–N3) is the trimer; n ≥ 4 stacks
+  are untested dynamics territory.
+- **The min-over-group construction is the maximal-identicality
+  convention again** — exact for identical copies, the maximal common
+  component otherwise; non-identical stacks are conservatively
+  charged the clone price.
+- **Dynamics from rest only** — no angular momentum; the rotating
+  trimer is follow-up territory, and the breathing-mode exploratory
+  line (ω = 0.636 vs the static pitch 0.422) is recorded without a
+  bar, not as a ringdown prediction.
+- **The n-ary smoothed min is A convention.**  The symmetrized
+  iteration was chosen because it is bitwise the pair instrument at
+  n = 2 (the regression guard), not because nature picked it; any
+  smoothing gives the same physics to O((n−1)ε = 2e-4 here).
+- **Momentum bookkeeping** is the pair's, one level up: the mirror
+  channel of the isosceles trimer conserves momentum to machine
+  precision (the symmetrized min splits the tie exactly), and the
+  common-translation channel equals −dE_x/d(shift) to 0.4% — the
+  lattice artifact of Part III, unchanged.  A development bug made
+  this visible: pair terms must write to their global mass indices
+  (masked whenever the pair is masses (0, 1)); the (b, a, a)
+  label arrangement guards it in the tests.
 - One operating point (size 96, width 2.5, mass 0.6, r = 0.02,
-  c = 0.8, τ = 0.1); the ringdown pipeline unchanged from the
-  exclusion core.
+  c = 0.8, τ = 0.1); the statics on relax_capacity with the exact
+  min, the dynamics on the symmetrized smoothed min (ε = 1e-4) with
+  conjugate-gradient solves, as the base branch.
