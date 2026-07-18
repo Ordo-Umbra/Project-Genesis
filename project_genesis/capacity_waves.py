@@ -329,6 +329,95 @@ def exclusion_gap_labelled(load1, load2, labels1, labels2, *,
                          load1, load2, labels1, labels2)))
 
 
+# ---------------------------------------------------------------------------
+# Part IV — the n-copy sector (three-and-more identical stacks)
+#
+# Parts I–III probed the 2-copy sector only: the pairwise-min construction
+# prices each shared pair separately, and whether that double-counts or
+# under-prices a triple stack was left open.  The general form is the
+# n-copy gap: within a group of n masses sharing a distinction type, the
+# cloned component is the min over the group's (shared-type) loads and
+#
+#     E_x = n·E(m) − E(n·m) ,   m(x) = min over the group .
+#
+# THEOREM (O(c²)): in linear response (E(A·m̂) = −k·A² relative to the
+# vacuum constant, k = (c²κ₀²/2)(m̂, G_r m̂)) the PAIRWISE-summed exclusion
+# Σ over pairs [2E(m) − E(2m)] and the true n-copy gap nE(m) − E(nm) are
+# EQUAL — both = k·n(n−1).  Proof: both combinations kill the vacuum
+# constant and the linear term, and each is quadratic in A; the
+# coefficients match (n(n−1)/2 pairs × 2k = k·n(n−1) = n²k − nk).  So
+# pairwise = n-copy EXACTLY at O(c²); any difference at the operating
+# amplitude is a pure core-saturation effect — the split between the two
+# forms measures the nonlinearity of the core.  This also settles the
+# Part-I copy-vs-stack density convention note: the min construction
+# already applies the gap at the copy density.  For n = 2 both forms
+# reduce to the base branch's pair form (bitwise, regression-tested);
+# both are kept so the experiment can compare them on identical
+# configurations.
+# ---------------------------------------------------------------------------
+
+
+def group_duplicated_component(loads, weights=None):
+    """``m(x) = min_i (w_i·ρ_i)(x)`` — the cloned component of an n-fold stack.
+
+    For ``n`` IDENTICAL copies the pointwise minimum over the group's
+    (shared-type) loads is exactly the load present ``n`` times — the
+    n-fold cloned component the exclusion principle prices at the
+    extensive cost ``n·E(m)``.  Exact min (the statics convention,
+    matching ``duplicated_load`` / ``shared_duplicated_components``);
+    ``weights`` are the per-mass label weights on the shared type
+    (default 1 — the whole group is one shared type).  The same
+    maximal-identicality convention as the pair instrument for
+    non-identical loads.
+    """
+    loads = [np.asarray(l, dtype=float) for l in loads]
+    if weights is None:
+        weights = [1.0] * len(loads)
+    return np.minimum.reduce([float(w) * l for w, l in zip(weights, loads)])
+
+
+def exclusion_gap_group(loads, weights=None, *, n_copy: bool = True,
+                        kappa_diffusion: float = 1.0,
+                        kappa_recovery: float = 0.02,
+                        kappa_consumption: float = 0.8,
+                        kappa_baseline: float = 1.0) -> float:
+    """The exclusion energy of an n-fold same-label stack, both forms.
+
+    ``n_copy=True`` (the generalization): ``E_x = n·E(m) − E(n·m)`` with
+    ``m`` the group's cloned component (``group_duplicated_component``)
+    and ``E(ρ) = F[κ̄[ρ]]`` the relaxed capacity free energy, as
+    ``exclusion_gap_full``.  ``n_copy=False`` (the option): the pairwise
+    sum ``Σ over pairs [2E(m_ij) − E(2m_ij)]``, ``m_ij = min`` over the
+    pair.  The two are EQUAL at O(c²) — the theorem above — and their
+    split at the operating amplitude measures core saturation.  For
+    n = 2 both reduce to ``exclusion_gap_full(duplicated_load(...))``
+    bitwise.  Fewer than two loads price nothing (0.0 — a singleton's
+    private type is not duplicated).
+    """
+    fkw = dict(kappa_diffusion=kappa_diffusion,
+               kappa_recovery=kappa_recovery,
+               kappa_consumption=kappa_consumption,
+               kappa_baseline=kappa_baseline)
+    loads = [np.asarray(l, dtype=float) for l in loads]
+    n = len(loads)
+    if n < 2:
+        return 0.0
+    if weights is None:
+        weights = [1.0] * n
+    comps = [float(w) * l for w, l in zip(weights, loads)]
+
+    def _e(load):
+        kappa = relax_capacity(load, **fkw)
+        return capacity_free_energy(kappa, load, **fkw)
+
+    if n_copy:
+        m = np.minimum.reduce(comps)
+        return float(n * _e(m) - _e(n * m))
+    return float(sum(2.0 * _e(np.minimum(comps[i], comps[j]))
+                     - _e(2.0 * np.minimum(comps[i], comps[j]))
+                     for i in range(n) for j in range(i + 1, n)))
+
+
 def _relax_functional(kappa: np.ndarray, load: np.ndarray, *,
                       kappa_diffusion: float = 1.0,
                       kappa_recovery: float = 0.02,
@@ -415,6 +504,51 @@ def _smoothed_min_weight(a, b, eps: float):
     return 0.5 - 0.5 * (a - b) / np.sqrt((a - b) ** 2 + 4.0 * eps * eps)
 
 
+def _smoothed_min_group(loads, eps: float):
+    """``(m, [∂m/∂s_i])`` — the smoothed min over ``n ≥ 2`` fields and its gradient.
+
+    The symmetrized iteration of the pair's smooth-abs form:
+
+        n = 2:  ``_smoothed_min(s₁, s₂)`` itself (bitwise — the pair
+                instrument's min, tie-plane 50/50 and all);
+        n > 2:  ``m = (1/n)·Σ_i smoothed_min(m_{¬i}, s_i)`` with
+                ``m_{¬i}`` the group's smoothed min of the other n−1.
+
+    Fully permutation-symmetric by construction (the n = 3 tie point of
+    an equilateral trimer splits 1/3-1/3-1/3), smooth everywhere, and
+    ``min − (n−1)ε ≤ m ≤ min``.  The returned weights are the exact
+    partials of the same composed function (chain rule through the
+    iteration) and sum to 1, so the ``contact_full`` force stays the
+    exact gradient of the recorded E_x — the base branch's bookkeeping
+    argument, now for n arguments.  Cost grows like n!/2 leaf
+    evaluations: built for small groups (the trimer); the pairwise
+    option prices a large group at C(n, 2) pair terms instead.
+    """
+    n = len(loads)
+    if n == 2:
+        a, b = loads
+        return (_smoothed_min(a, b, eps),
+                [_smoothed_min_weight(a, b, eps),
+                 _smoothed_min_weight(b, a, eps)])
+    m = 0.0
+    dws = [0.0] * n
+    for i in range(n):
+        rest = loads[:i] + loads[i + 1:]
+        mi, dwi = _smoothed_min_group(rest, eps)
+        ti = _smoothed_min(mi, loads[i], eps)
+        wa = _smoothed_min_weight(mi, loads[i], eps)
+        wb = _smoothed_min_weight(loads[i], mi, eps)
+        m = m + ti
+        k = 0
+        for j in range(n):
+            if j == i:
+                dws[j] = dws[j] + wb
+            else:
+                dws[j] = dws[j] + wa * dwi[k]
+                k += 1
+    return m / n, [d / n for d in dws]
+
+
 def _gaussian_load_and_grad(shape, center, width: float, amplitude: float):
     """``(ρ, ∇ρ)`` for one periodic Gaussian blob — analytic load gradient.
 
@@ -484,6 +618,7 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
                              contact_full_eps: float = 1e-4,
                              contact_full_share: float = 1.0,
                              contact_full_labels=None,
+                             contact_full_ncopy: bool = True,
                              kappa_diffusion: float = 1.0,
                              kappa_recovery: float = 0.05,
                              kappa_consumption: float = 2.0,
@@ -561,8 +696,7 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
     precision and matches finite-difference E_x to 1 part in 1e4).
     ``E_x`` is booked in ``energy`` through ``_relax_functional`` — the
     functional the relaxer actually descends — so the Lyapunov law is
-    preserved exactly as for ``contact_b``.  Binary instrument:
-    requires exactly two masses, and is mutually exclusive with
+    preserved exactly as for ``contact_b``.  Mutually exclusive with
     ``contact_b`` and ``contact_derived``.
 
     ``contact_full_share`` / ``contact_full_labels``: the labelled load
@@ -570,7 +704,7 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
     different-distinction stacking.  Each mass carries a label vector
     over distinction types; the capacity field responds to the TOTAL
     load as before (gravity is identity-blind), while exclusion prices
-    only the SHARED-type components:
+    only the SHARED-type components.  For the binary:
 
         E_x = Σ_t [2E(ρ_dup^(t)) − E(2ρ_dup^(t))] ,
         ρ_dup^(t) = smoothed_min(w₁ₜ·ρ₁, w₂ₜ·ρ₂) ,
@@ -582,12 +716,37 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
     exactly the unlabelled ``contact_full`` (one shared type of weight
     1 — bitwise the same path); φ = 0 is the no-exclusion control (no
     shared type — E_x = 0 and zero exclusion force, identically).
-    ``contact_full_labels`` takes a general ``(labels₁, labels₂)`` pair
-    of dicts {type: weight} (weights ≥ 0, sum 1) and overrides
+    ``contact_full_labels`` takes per-mass dicts {type: weight}
+    (weights ≥ 0, sum 1 — one dict per mass) and overrides
     ``contact_full_share``.  The force stays the exact gradient of the
     recorded E_x per shared type (same envelope pair, same smoothed min,
     same Lyapunov bookkeeping — each shared type contributes its own two
     auxiliary relaxed fields).
+
+    ``contact_full_ncopy``: the n-copy sector (Part IV) — the
+    generalization to ``n ≥ 2`` masses.  The masses are grouped by
+    SHARED distinction type (every type carried by ≥ 2 masses with
+    positive weight forms one group; singletons price nothing), and
+    within a group of n the cloned component is the min over the
+    group's shared-type loads.  With ``contact_full_ncopy=True`` (the
+    default — the generalization) the group pays the true n-copy gap
+
+        E_x^(t) = n·E(m) − E(n·m) ,   m = smoothed min over the group
+
+    (``_smoothed_min_group`` — the symmetrized iteration of the pair's
+    smoothed min, same ε, permutation-symmetric, weights the exact
+    partials); with ``contact_full_ncopy=False`` the group pays the
+    pairwise sum ``Σ over its pairs [2E(m_ij) − E(2m_ij)]`` instead.
+    The two forms are EQUAL at O(c²) — the pairwise-summed exclusion
+    and the n-copy gap are both k·n(n−1) in linear response — so their
+    split at the operating amplitude is a pure core-saturation
+    measurement.  For n = 2 both forms reduce to the base branch's
+    pair form bitwise (regression-tested in
+    ``tests/test_exclusion_ncopy.py``).  The force stays the exact
+    gradient of the recorded E_x: ``δE_x/δm = (n·c/2)(κ̄[m]² − κ̄[n·m]²)``
+    by the same envelope theorem, the same CG-solved auxiliary fields
+    (two per group, or two per pair), and the same Lyapunov
+    bookkeeping.
     """
     n_contact = ((1 if contact_b else 0) + int(contact_derived)
                  + int(contact_full))
@@ -601,37 +760,65 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
     vel = np.asarray(velocities, dtype=float).copy()
     m = np.asarray(masses, dtype=float)
     c = kappa_consumption
-    if contact_full and len(m) != 2:
-        raise ValueError("contact_full is the binary instrument: the "
-                         "duplicated fraction ρ_dup = min(ρ₁, ρ₂) is "
-                         "defined for exactly two masses.")
+    if contact_full and len(m) < 2:
+        raise ValueError("contact_full prices duplicated overlap: pass "
+                         "at least two masses (a single mass clones "
+                         "nothing).")
     if not contact_full and (contact_full_labels is not None
-                             or float(contact_full_share) != 1.0):
-        raise ValueError("contact_full_share / contact_full_labels modify "
-                         "the contact_full exclusion term; pass "
-                         "contact_full=True to use them.")
-    # the shared-type weights (w₁ₜ, w₂ₜ) of the labelled load: the types
-    # BOTH blobs carry with positive weight — exclusion prices only
-    # these.  Default share 1 is exactly the unlabelled instrument.
-    shared_w = []
+                             or float(contact_full_share) != 1.0
+                             or contact_full_ncopy is not True):
+        raise ValueError("contact_full_share / contact_full_labels / "
+                         "contact_full_ncopy modify the contact_full "
+                         "exclusion term; pass contact_full=True to use "
+                         "them.")
+    # the exclusion terms: one per same-label GROUP (the n-copy form) or
+    # one per shared PAIR (the pairwise form).  A group is a distinction
+    # type ≥ 2 masses carry with positive weight — exclusion prices
+    # only these; singletons (private types) clone nothing and pay
+    # nothing.  Default share 1 is exactly the unlabelled instrument.
+    terms = []
     if contact_full:
         if contact_full_labels is not None:
-            labels1, labels2 = contact_full_labels
+            all_labels = list(contact_full_labels)
+            if len(all_labels) != len(m):
+                raise ValueError("contact_full_labels takes one label "
+                                 "dict per mass "
+                                 f"({len(all_labels)} given for "
+                                 f"{len(m)} masses).")
         else:
-            labels1, labels2 = shared_fraction_labels(contact_full_share)
-        _check_labels(labels1, "contact_full_labels[0]")
-        _check_labels(labels2, "contact_full_labels[1]")
-        shared_w = [(float(w1), float(labels2.get(t, 0.0)))
-                    for t, w1 in labels1.items()
-                    if w1 > 0.0 and labels2.get(t, 0.0) > 0.0]
+            share = float(contact_full_share)
+            if not 0.0 <= share <= 1.0:
+                raise ValueError("contact_full_share must lie in "
+                                 f"[0, 1], got {share}")
+            all_labels = [{"shared": share,
+                           f"private_{i + 1}": 1.0 - share}
+                          for i in range(len(m))]
+        seen = []
+        for i, lab in enumerate(all_labels):
+            _check_labels(lab, f"contact_full_labels[{i}]")
+            for t in lab:
+                if t not in seen:
+                    seen.append(t)
+        for t in seen:
+            members = [(i, float(all_labels[i].get(t, 0.0)))
+                       for i in range(len(m))]
+            members = [(i, w) for i, w in members if w > 0.0]
+            if len(members) < 2:
+                continue
+            if contact_full_ncopy:
+                terms.append(("group", members))
+            else:
+                terms.extend(("pair", members[a], members[b])
+                             for a in range(len(members))
+                             for b in range(a + 1, len(members)))
     fkw = dict(kappa_diffusion=kappa_diffusion, kappa_recovery=kappa_recovery,
                kappa_consumption=kappa_consumption,
                kappa_baseline=kappa_baseline)
-    # warm-started auxiliary relaxed fields (one pair per shared type) +
-    # the E_x of the last forces_of call (reused by the energy record at
+    # warm-started auxiliary relaxed fields (one pair per term) + the
+    # E_x of the last forces_of call (reused by the energy record at
     # the same positions)
-    full_state = {"k1": [None] * len(shared_w),
-                  "k2": [None] * len(shared_w), "ex": 0.0}
+    full_state = {"k1": [None] * len(terms),
+                  "k2": [None] * len(terms), "ex": 0.0}
 
     def loads_of(p):
         return [gaussian_load(shape, [tuple(pi)], width, mi)
@@ -650,22 +837,50 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
                       for li in loads])
         if contact_full:
             ex_total = 0.0
-            for ti, (w1t, w2t) in enumerate(shared_w):
-                s1, s2 = w1t * loads[0], w2t * loads[1]
-                dup = _smoothed_min(s1, s2, contact_full_eps)
-                k1 = _solve_relaxed(dup, full_state["k1"][ti], **fkw)
-                k2 = _solve_relaxed(2.0 * dup, full_state["k2"][ti],
-                                    **fkw)
-                full_state["k1"][ti], full_state["k2"][ti] = k1, k2
-                ex_total += (2.0 * _relax_functional(k1, dup, **fkw)
-                             - _relax_functional(k2, 2.0 * dup, **fkw))
-                w = c * (k1 * k1 - k2 * k2)
-                for i, (si, sj, wit) in enumerate(((s1, s2, w1t),
-                                                   (s2, s1, w2t))):
-                    wi = w * _smoothed_min_weight(si, sj,
-                                                  contact_full_eps)
-                    for ax in range(kappa.ndim):
-                        f[i, ax] += wit * float(np.sum(wi * lg[i][1][ax]))
+            for ti, term in enumerate(terms):
+                if term[0] == "group":
+                    # the n-copy form: E_x = n·E(m) − E(n·m) with m the
+                    # group's smoothed min; δE_x/δm = (n·c/2)(κ̄[m]² −
+                    # κ̄[n·m]²) by the same envelope theorem.  Two
+                    # members reduce to the pair form bitwise.
+                    members = term[1]
+                    n_g = len(members)
+                    dup, dws = _smoothed_min_group(
+                        [w_it * loads[i] for i, w_it in members],
+                        contact_full_eps)
+                    k1 = _solve_relaxed(dup, full_state["k1"][ti], **fkw)
+                    k2 = _solve_relaxed(n_g * dup, full_state["k2"][ti],
+                                        **fkw)
+                    full_state["k1"][ti], full_state["k2"][ti] = k1, k2
+                    ex_total += (n_g * _relax_functional(k1, dup, **fkw)
+                                 - _relax_functional(k2, n_g * dup, **fkw))
+                    w = 0.5 * n_g * c * (k1 * k1 - k2 * k2)
+                    for k, (i, wit) in enumerate(members):
+                        wi = w * dws[k]
+                        for ax in range(kappa.ndim):
+                            f[i, ax] += wit * float(
+                                np.sum(wi * lg[i][1][ax]))
+                else:
+                    # the pairwise form: the base branch's pair term,
+                    # summed over the group's unordered pairs.
+                    _, (ia, wa), (ib, wb) = term
+                    s1, s2 = wa * loads[ia], wb * loads[ib]
+                    dup = _smoothed_min(s1, s2, contact_full_eps)
+                    k1 = _solve_relaxed(dup, full_state["k1"][ti], **fkw)
+                    k2 = _solve_relaxed(2.0 * dup, full_state["k2"][ti],
+                                        **fkw)
+                    full_state["k1"][ti], full_state["k2"][ti] = k1, k2
+                    ex_total += (2.0 * _relax_functional(k1, dup, **fkw)
+                                 - _relax_functional(k2, 2.0 * dup, **fkw))
+                    w = c * (k1 * k1 - k2 * k2)
+                    for i, (si, sj, wit) in zip((ia, ib),
+                                                ((s1, s2, wa),
+                                                 (s2, s1, wb))):
+                        wi = w * _smoothed_min_weight(si, sj,
+                                                      contact_full_eps)
+                        for ax in range(kappa.ndim):
+                            f[i, ax] += wit * float(
+                                np.sum(wi * lg[i][1][ax]))
             full_state["ex"] = ex_total
         elif contact_b or contact_derived:
             tot = np.sum(loads, axis=0)
