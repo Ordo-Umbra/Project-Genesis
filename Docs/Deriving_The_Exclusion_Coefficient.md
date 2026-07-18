@@ -483,3 +483,196 @@ A\* ≈ 0.14, where the κ-core saturates) recorded.
   higher contrast (796 vs 305), so the contrast bar is on the full
   run's own line (305 ≥ 3), and the line IDENTIFICATION is the
   libration-vs-statics match, not the contrast ratio.
+
+---
+
+# Part III — the load that can tell same from different
+
+### Identity-selective exclusion: labels route the term to true clones only
+
+*Follow-up #2, registered by Parts I and II.  Experiment:
+`experiments/n3_exclusion_labelled.py`; implementation:
+`project_genesis/capacity_waves.py` (`shared_fraction_labels`,
+`shared_duplicated_components`, `exclusion_gap_labelled`,
+`contact_full_share`, `contact_full_labels`); tests:
+`tests/test_exclusion_labelled.py`.  Verdict: **3/3 — the labelled
+load prices only true clones: the same-distinction pair keeps the
+floor, the different-distinction pair is bitwise the no-exclusion
+baseline, and the barrier grows monotonically with the shared
+fraction.  Recorded as-is.*
+
+---
+
+## The idealization that was left
+
+Both previous parts flagged the same idealization: the duplicated
+fraction `ρ_dup = min(ρ₁, ρ₂)` prices ALL overlap as duplication.  The
+load field cannot tell same-distinction from different-distinction
+stacking, so the instrument conservatively charges every overlapping
+pair the clone price.  Part II's clean statement of what the term
+MEANS makes the fix sharp: the gap `2F(ρ) − F(2ρ)` exactly cancels the
+concavity (sharing) discount — the `F(2ρ) < 2F(ρ)` bargain that IS
+κ-gravity's binding — **for identical overlap only**.  Two DIFFERENT
+distinctions stacked in one place legitimately keep the discount:
+their sharing is ordinary binding, not cloning.  Exclusion should
+therefore be identity-selective: remove the sharing discount where the
+stacked distinction is the same, keep it where it is different.  This
+part builds the load that can tell the difference and measures whether
+the routing works.
+
+## The label construction
+
+Each mass carries a **label vector** `w_i` over distinction types
+(weights ≥ 0, sum 1 — a distribution over the types the structure is
+made of).  Two rules, both statements of physics rather than new
+parameters:
+
+- **Gravity is identity-blind.**  The capacity field responds to the
+  TOTAL load `ρ_tot = ρ₁ + ρ₂` exactly as before — mass gravitates
+  whatever its distinctions are.
+- **Exclusion applies per SHARED type only.**  For each type `t` both
+  blobs carry, the cloned component is
+  `ρ_dup^(t) = min(w₁ₜ·ρ₁, w₂ₜ·ρ₂)`, and
+  `E_x = Σ_t [2E(ρ_dup^(t)) − E(2ρ_dup^(t))]` with the same relaxed
+  `E`, the same smoothed min (ε = 1e-4), the same envelope-pair force
+  and the same Lyapunov bookkeeping as Part II — one pair of auxiliary
+  relaxed fields per shared type.
+
+The scalar special case is a **shared fraction** φ: each blob splits
+`φ·ρ_i` on a common type plus `(1−φ)·ρ_i` on its own private type
+(`shared_fraction_labels`).  φ = 1 is the identical-label case — and
+the implementation is **bitwise** the unlabelled instrument (one
+shared type of weight 1: multiplication by 1.0 is exact, so the
+labelled path reproduces Part II's numbers digit for digit).  φ = 0 is
+the orthogonal-label case — no shared type, so `E_x = 0` identically
+and the exclusion force vanishes: exactly the no-exclusion control,
+with the same code path doing the routing.  General label vectors
+(`contact_full_labels`) allow asymmetric and multi-type structures;
+the energy sums over shared types.
+
+## L1 — identity routing: PASS
+
+Statics at the arc's operating point (size 96, width 2.5, mass 0.6,
+r = 0.02, c = 0.8), the label the only difference:
+
+    same-label (φ = 1): E(s) = 1:+0.22 2:+0.08 3:-0.04 4:-0.15 5:-0.25
+                               6:-0.34 8:-0.46 10:-0.43 12:-0.30 16:+0.00
+    diff-label (φ = 0): E(s) = 1:-1.65 2:-1.58 3:-1.48 4:-1.35 5:-1.21
+                               6:-1.07 8:-0.79 10:-0.53 12:-0.32 16:+0.00
+
+The same-label pair reproduces the floor — **s\* = 8**, barrier
+**0.6828** (bars: s\* ∈ (2, 10), ≥ 0.2) — bitwise Part II's curve.  The
+different-label pair is the no-exclusion control: monotone attractive,
+minimum at the s = 1 grid edge (no interior minimum in (2, 10)),
+barrier 0.00 (< 0.05).  The label routes the exclusion: the term fires
+exactly where the overlap is a true clone.
+
+## L2 — pass-through: PASS
+
+Both binaries released per the standard protocol (d₀ = 12, calibrated
+v₀ = 1.0022, t_max = 250, dt = 0.1, τ = 0.1), same parameters, only
+labels differ, plus the plain no-exclusion baseline:
+
+- late mean separation: same-label **8.559** vs s\* = 8 (ratio 1.07,
+  bar a factor of 2) and vs the different-label's 1.613 (ratio 5.31,
+  bar ≥ 2);
+- different-label vs the no-exclusion baseline: 1.613 vs 1.613 (ratio
+  1.00, bar a factor of 2) — and stronger: **the φ = 0 run is bitwise
+  the baseline** (max |Δseparation| over the whole trajectory =
+  0.00e+00), so the pass-through is not merely statistically
+  baseline-like, it IS the baseline, routed by the label;
+- ringdown context (no bar — L2's bars are the separation
+  comparisons): the same-label contact binary rings at ω = 0.472
+  against the separation channel's libration ω = 0.477 and the static
+  pitch √(E″(s\*)/μ) = 0.344, whitened contrast 305.3 — Part II's G3
+  numbers exactly, as the bitwise φ = 1 path guarantees; the
+  different-label run's post-plunge slosh rings at ω = 0.629 with
+  contrast 796.1, the baseline's own figures.
+
+## L3 — the shared-fraction scan: PASS
+
+φ ∈ {0, 0.25, 0.5, 0.75, 1.0}, statics barrier (energy at s = 1 above
+the curve minimum) and floor position:
+
+    φ = 0.00: barrier +0.0000, minimum at s = 1   (no floor)
+    φ = 0.25: barrier +0.0758, minimum at s = 3   (a floor forms)
+    φ = 0.50: barrier +0.3021, minimum at s = 6
+    φ = 0.75: barrier +0.5147, minimum at s = 8
+    φ = 1.00: barrier +0.6828, minimum at s = 8   (the full floor)
+
+Monotone non-decreasing, endpoints matching L1 bitwise.  The
+pre-registered mechanism is confirmed: the shared component's
+amplitude scales with φ and the full-overlap gap G(A) grows with A
+(Part II's M1), so E_x grows with φ at every separation, most where
+the overlap is deepest.  Two features beyond the registration, recorded
+as-is: the floor forms somewhere in φ ∈ (0, 0.25] and its position
+walks outward with φ (3 → 6 → 8) before saturating at s\* = 8 by
+φ = 0.75; the X1-strength barrier (≥ 0.2) needs φ ≳ 0.5.  A half-shared
+pair already sits on a floor.
+
+## What this does to the identicality follow-up
+
+Part I registered "a distinction-resolving load (a labelled or
+multi-component source) is the door to pricing only true clones."
+That follow-up is now CLOSED by construction and measurement: with
+identity carried on the load, the derived term of Part II — itself
+parameter-free — fires only on same-distinction overlap.  The
+exclusion story is now: gravity (the sharing discount) binds
+everything, and exclusion selectively refuses the discount for true
+clones.  The load still does not GENERATE identity — the labels are
+assigned by the experimenter, the one remaining idealization, and it
+moves to the top of the follow-up list.
+
+## Registered follow-ups
+
+1. **Identity generation.**  The labels are assigned, not derived.
+   A load that carries its own distinction structure — where
+   sameness is a property the framework measures (e.g. of the
+   structures' internal patterns) rather than a tag it is handed —
+   is the honest next candidate, and the bridge from "exclusion
+   prices identity" to "exclusion explains individuality".
+2. **The n-copy sector for ≥ 3 same-label stacks (follow-up #3).**
+   The instrument is the binary; the pairwise-min construction prices
+   each shared pair separately.  For a triple same-label stack the
+   sum over pairs may double-count the thrice-cloned component — the
+   general `nE(ρ) − E(nρ)` pricing of n-fold cloned components is
+   where the trio question and Part II's n-copy follow-up meet.
+3. **A retarded exclusion sector.**  Unchanged from Part II: the
+   exclusion force is adiabatic while gravity is retarded.
+4. **Asymmetric binaries.**  Unequal masses and unequal label
+   weights, where the momentum bookkeeping is the lattice-artifact
+   level documented below.
+
+## Honest edges (Part III)
+
+- **The labels are ASSIGNED, not derived.**  The framework prices
+  identity selectively once told what is identical; it does not
+  GENERATE the identities.  Everything claimed here is conditional on
+  the label assignment.
+- **Binary only.**  The trio / N-body case with ≥ 3 same-label stacks
+  is untested; whether pairwise-min double-counts a triple stack is
+  open (follow-up #2 above).
+- **φ = 1 is bitwise Part II** by construction (weights of exactly
+  1.0), and the φ = 0 dynamics are bitwise the no-exclusion baseline —
+  so L1's same-label floor and L2's stall are not new physics
+  re-measured, they are the base branch's results routed through the
+  label.  The NEW measurements are the φ = 0 routing, the fractional-φ
+  statics, and the scan.
+- **Momentum with unequal label weights.**  The mirror symmetry of
+  the equal-φ binary is what conserved momentum to machine precision
+  in Part II; with unequal shared weights the pair force picks up the
+  energy's own sub-lattice translation derivative (the analytic
+  Gaussians do not translate exactly on the lattice).  Measured: the
+  residual pair force equals −dE_x/d(common shift) to 0.2% — the
+  force stays the exact gradient of the booked energy, and the
+  Lyapunov law holds at the repo's 1e-6 bar for asymmetric labels;
+  the residual itself is ~5% of the pair force at the operating
+  geometry.  Symmetric-φ runs keep machine-precision momentum.
+- **The min convention for fractional φ.**  The smoothed min of the
+  scaled components is `min_ε(φρ₁, φρ₂) = φ·min_{ε/φ}(ρ₁, ρ₂)` — the
+  fractional-φ path is the base instrument at a rescaled smoothing,
+  not exactly at ε; the statics' exact min has no such subtlety, and
+  the force/energy consistency is what the bookkeeping needs.
+- One operating point (size 96, width 2.5, mass 0.6, r = 0.02,
+  c = 0.8, τ = 0.1); the ringdown pipeline unchanged from the
+  exclusion core.
