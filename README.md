@@ -1289,6 +1289,20 @@ The exclusion core's registered deep item — derive `b` instead of dialing it �
 
 Standing follow-ups from the series: identity *generation* (labels are assigned, not derived — the bridge from "exclusion prices identity" to "exclusion explains individuality"), a retarded exclusion sector, rotating trimers/n ≥ 4, and the analytic remainder map. *(Series contributed by the Kimi K3 swarm; independently verified — the full suite passes (693 checks) and the Part II statics reproduce digit-for-digit; one Python-3.11 compatibility fix applied to the Part II experiment's verdict formatting.)*
 
+### Identity generation: sameness measured, not assigned — 2/3
+
+The series' top follow-up, closed at its first rung (`experiments/n3_identity_generation.py`): remove the label *assignment*. Structures here are **clusters** — each mass's load *is* its internal arrangement of sub-blobs, the pattern that gravitates — and the memory corpus is the identity registry (`add_if_stable` certifies, `copy_subfield` clones with lineage, `compose` builds composites). Sameness is then a measurement, and the measure is the arc's own min-construction one level down: **φ(A,B) = Σ min(p_A, p_B)** on the normalized internal patterns — the duplicated fraction of the two structures' distinction content. Measured φ routes exclusion through the existing shared-fraction machinery: *min on patterns generates identity; identity routes min on loads.* **2/3 registered predictions land:**
+
+- **Y1 ✓ Identity is measured, and it routes exclusion.** The lineage clone measures φ = 1.000 and its pair sits on the exclusion floor (interior s\* = 6, barrier 0.380); the independently-formed structure measures φ = 0.433 and its pair's barrier is 0.003 — sameness read off the structures themselves orders the exclusion, with nothing assigned.
+- **Y2 ✓ Composition interpolates.** The corpus's own composite measures part-clone of both parents (φ = 0.786 and 0.647) and its floor sits strictly between theirs (barrier 0.120 between 0.003 and 0.380).
+- **Y3 ✗ as registered, with the mechanism.** Drifting a clone's internals (jitter η) releases the floor at a measurable η\* ≈ 0.5–1 sub-blob widths — the individuality threshold exists — but the registered strict monotonicity of φ(η) fails at the scan's far end: φ decays to the **decorrelation floor** (≈ 0.43, exactly the independent-pair level) by η ≈ 2 and then *fluctuates about it* (0.436 → 0.467 at η = 3 → 4). A fully drifted clone is statistically an independent structure, and single-seed noise about that floor is not re-identification; the multi-seed average that would pin η\* cleanly is the registered follow-up.
+
+The conceptual arc your original intuition started — *adding the same distinction doesn't expand the structure* — now runs unbroken: no-cloning as a contact core (dialed) → derived from the framework's own counting (theorem) → routed by identity (labels) → **identity itself measured from what structures are made of**, with "how different must a clone drift to become an individual" answered by an in-framework number.
+
+Reproduce with `python experiments/n3_identity_generation.py` (≈ 8 minutes; `--quick` for a smoke run).
+
+**Honest scope:** statics only (Part III's L2 established the φ-routed dynamics follow the statics bitwise; the new content here is the *measurement* of φ); patterns are position-registered patches (no rotation/translation invariance — an aligned-similarity φ is a follow-up); sameness is collapsed to a scalar shared fraction before routing; one structure family (5 sub-blobs), one jitter seed (the Y3 noise floor); the corpus's stability gate is set loose — identity via the engine's own emergent stable objects is the deeper registered door.
+
 ## Setup
 
 Create a Python environment and install the declared runtime dependencies:
