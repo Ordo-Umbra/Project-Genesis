@@ -202,6 +202,7 @@ experiments/
   n3_exclusion_labelled.py  Deriving b, Part III: labelled loads — 3/3; exclusion prices only true clones (φ=0 is bitwise the baseline), barrier monotone in shared fraction
   n3_exclusion_ncopy.py     Deriving b, Part IV: the n-copy sector — 3/3; pairwise = n-copy at O(c²), trimer floor, the saturation split measured
   n3_exclusion_dilute.py    Deriving b, Part V: the dilute operating point — 0/3 recorded as-is; joint-limit convergence, the min-construction pinned by a 2×2, the repelled binary
+  n3_identity_generation.py Identity generation: sameness measured from internal patterns (φ = Σmin), not assigned — clones floor, independents don't, and drift sets an individuality threshold
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
