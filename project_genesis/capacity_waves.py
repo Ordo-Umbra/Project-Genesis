@@ -229,6 +229,106 @@ def exclusion_gap_full(rho_dup, *, kappa_diffusion: float = 1.0,
     return 2.0 * _e(rho_dup) - _e(2.0 * rho_dup)
 
 
+# ---------------------------------------------------------------------------
+# Part III — the load that can tell same from different (labelled loads)
+#
+# min(ρ₁, ρ₂) prices ALL overlap as duplication: the load field cannot
+# tell same-distinction from different-distinction stacking.  But the gap
+# 2F(ρ) − F(2ρ) exactly cancels the concavity (sharing) discount — for
+# IDENTICAL overlap only; different distinctions legitimately keep the
+# discount (that discount IS binding).  The labelled load makes exclusion
+# identity-selective: each mass carries a label vector w_i over
+# distinction types (weights ≥ 0, sum 1), the capacity field responds to
+# the TOTAL load as before (gravity is identity-blind), and exclusion
+# applies per SHARED type only: ρ_dup^(t) = min(w₁ₜρ₁, w₂ₜρ₂),
+# E_x = Σ_t [2E(ρ_dup^(t)) − E(2ρ_dup^(t))].  Identical labels recover
+# min(ρ₁, ρ₂); orthogonal labels price nothing (the no-exclusion
+# control); a shared fraction φ splits each blob φ·ρ_i common +
+# (1−φ)·ρ_i private.
+# ---------------------------------------------------------------------------
+
+
+def shared_fraction_labels(share: float):
+    """The scalar special case of the labelled load: the (labels₁, labels₂)
+    pair for shared fraction ``share`` (φ).
+
+    Each blob's load splits ``φ·ρ_i`` on the COMMON type plus
+    ``(1−φ)·ρ_i`` on its OWN private type::
+
+        labels₁ = {"shared": φ, "private_1": 1 − φ}
+        labels₂ = {"shared": φ, "private_2": 1 − φ}
+
+    φ = 1 is the identical-label case (the whole pair is one shared type
+    — the base ``contact_full`` form); φ = 0 the orthogonal-label case
+    (no shared type, no exclusion).  Label vectors are dicts mapping a
+    distinction type to its weight; weights are ≥ 0 and sum to 1.
+    """
+    share = float(share)
+    if not 0.0 <= share <= 1.0:
+        raise ValueError(f"share must lie in [0, 1], got {share}")
+    return ({"shared": share, "private_1": 1.0 - share},
+            {"shared": share, "private_2": 1.0 - share})
+
+
+def _check_labels(labels, name: str) -> None:
+    """Label-vector sanity: weights ≥ 0, sum 1 (a distribution over types)."""
+    total = 0.0
+    for t, w in labels.items():
+        w = float(w)
+        if w < 0.0:
+            raise ValueError(f"{name} has a negative weight on type {t!r}: "
+                             f"{w} (label weights are ≥ 0).")
+        total += w
+    if abs(total - 1.0) > 1e-9:
+        raise ValueError(f"{name} weights sum to {total}, not 1 — a label "
+                         "vector is a distribution over distinction types.")
+
+
+def shared_duplicated_components(load1, load2, labels1, labels2):
+    """``[ρ_dup^(t)]`` — the cloned component of each SHARED distinction type.
+
+    For every type ``t`` both blobs carry with positive weight,
+    ``ρ_dup^(t) = min(w₁ₜ·ρ₁, w₂ₜ·ρ₂)`` (pointwise, exact min — the
+    statics convention, matching ``duplicated_load``).  Types carried by
+    only one blob are private: nothing is duplicated, nothing is priced.
+    Returns the list of shared-type components (empty for orthogonal
+    labels).
+    """
+    _check_labels(labels1, "labels1")
+    _check_labels(labels2, "labels2")
+    load1 = np.asarray(load1, dtype=float)
+    load2 = np.asarray(load2, dtype=float)
+    comps = []
+    for t, w1 in labels1.items():
+        w2 = labels2.get(t, 0.0)
+        if w1 > 0.0 and w2 > 0.0:
+            comps.append(np.minimum(float(w1) * load1, float(w2) * load2))
+    return comps
+
+
+def exclusion_gap_labelled(load1, load2, labels1, labels2, *,
+                           kappa_diffusion: float = 1.0,
+                           kappa_recovery: float = 0.02,
+                           kappa_consumption: float = 0.8,
+                           kappa_baseline: float = 1.0) -> float:
+    """``E_x = Σ_t [2E(ρ_dup^(t)) − E(2ρ_dup^(t))]`` — the labelled gap.
+
+    The gradient-corrected exclusion energy of a labelled pair: the
+    full-functional gap (``exclusion_gap_full``) of each shared-type
+    cloned component, summed over shared types.  Identical labels
+    (φ = 1) recover the base ``2E(min(ρ₁, ρ₂)) − E(2·min(ρ₁, ρ₂))``
+    bitwise; orthogonal labels give exactly 0 — same-distinction overlap
+    loses the sharing discount, different-distinction overlap keeps it.
+    """
+    fkw = dict(kappa_diffusion=kappa_diffusion,
+               kappa_recovery=kappa_recovery,
+               kappa_consumption=kappa_consumption,
+               kappa_baseline=kappa_baseline)
+    return float(sum(exclusion_gap_full(comp, **fkw)
+                     for comp in shared_duplicated_components(
+                         load1, load2, labels1, labels2)))
+
+
 def _relax_functional(kappa: np.ndarray, load: np.ndarray, *,
                       kappa_diffusion: float = 1.0,
                       kappa_recovery: float = 0.02,
@@ -382,6 +482,8 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
                              contact_derived: bool = False,
                              contact_full: bool = False,
                              contact_full_eps: float = 1e-4,
+                             contact_full_share: float = 1.0,
+                             contact_full_labels=None,
                              kappa_diffusion: float = 1.0,
                              kappa_recovery: float = 0.05,
                              kappa_consumption: float = 2.0,
@@ -462,6 +564,30 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
     preserved exactly as for ``contact_b``.  Binary instrument:
     requires exactly two masses, and is mutually exclusive with
     ``contact_b`` and ``contact_derived``.
+
+    ``contact_full_share`` / ``contact_full_labels``: the labelled load
+    (Part III) — the load that can tell same-distinction from
+    different-distinction stacking.  Each mass carries a label vector
+    over distinction types; the capacity field responds to the TOTAL
+    load as before (gravity is identity-blind), while exclusion prices
+    only the SHARED-type components:
+
+        E_x = Σ_t [2E(ρ_dup^(t)) − E(2ρ_dup^(t))] ,
+        ρ_dup^(t) = smoothed_min(w₁ₜ·ρ₁, w₂ₜ·ρ₂) ,
+
+    summed over the types t both blobs carry (``shared_fraction_labels``
+    / ``shared_duplicated_components`` / ``exclusion_gap_labelled``).
+    ``contact_full_share`` is the scalar special case: each blob splits
+    φ·ρ_i common-type + (1−φ)·ρ_i private-type.  The default φ = 1 is
+    exactly the unlabelled ``contact_full`` (one shared type of weight
+    1 — bitwise the same path); φ = 0 is the no-exclusion control (no
+    shared type — E_x = 0 and zero exclusion force, identically).
+    ``contact_full_labels`` takes a general ``(labels₁, labels₂)`` pair
+    of dicts {type: weight} (weights ≥ 0, sum 1) and overrides
+    ``contact_full_share``.  The force stays the exact gradient of the
+    recorded E_x per shared type (same envelope pair, same smoothed min,
+    same Lyapunov bookkeeping — each shared type contributes its own two
+    auxiliary relaxed fields).
     """
     n_contact = ((1 if contact_b else 0) + int(contact_derived)
                  + int(contact_full))
@@ -479,12 +605,33 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
         raise ValueError("contact_full is the binary instrument: the "
                          "duplicated fraction ρ_dup = min(ρ₁, ρ₂) is "
                          "defined for exactly two masses.")
+    if not contact_full and (contact_full_labels is not None
+                             or float(contact_full_share) != 1.0):
+        raise ValueError("contact_full_share / contact_full_labels modify "
+                         "the contact_full exclusion term; pass "
+                         "contact_full=True to use them.")
+    # the shared-type weights (w₁ₜ, w₂ₜ) of the labelled load: the types
+    # BOTH blobs carry with positive weight — exclusion prices only
+    # these.  Default share 1 is exactly the unlabelled instrument.
+    shared_w = []
+    if contact_full:
+        if contact_full_labels is not None:
+            labels1, labels2 = contact_full_labels
+        else:
+            labels1, labels2 = shared_fraction_labels(contact_full_share)
+        _check_labels(labels1, "contact_full_labels[0]")
+        _check_labels(labels2, "contact_full_labels[1]")
+        shared_w = [(float(w1), float(labels2.get(t, 0.0)))
+                    for t, w1 in labels1.items()
+                    if w1 > 0.0 and labels2.get(t, 0.0) > 0.0]
     fkw = dict(kappa_diffusion=kappa_diffusion, kappa_recovery=kappa_recovery,
                kappa_consumption=kappa_consumption,
                kappa_baseline=kappa_baseline)
-    # warm-started auxiliary relaxed fields + the E_x of the last
-    # forces_of call (reused by the energy record at the same positions)
-    full_state = {"k1": None, "k2": None, "ex": 0.0}
+    # warm-started auxiliary relaxed fields (one pair per shared type) +
+    # the E_x of the last forces_of call (reused by the energy record at
+    # the same positions)
+    full_state = {"k1": [None] * len(shared_w),
+                  "k2": [None] * len(shared_w), "ex": 0.0}
 
     def loads_of(p):
         return [gaussian_load(shape, [tuple(pi)], width, mi)
@@ -502,19 +649,24 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
         f = np.array([[-c * float(np.sum(li * kappa * g)) for g in grad]
                       for li in loads])
         if contact_full:
-            dup = _smoothed_min(loads[0], loads[1], contact_full_eps)
-            k1 = _solve_relaxed(dup, full_state["k1"], **fkw)
-            k2 = _solve_relaxed(2.0 * dup, full_state["k2"], **fkw)
-            full_state["k1"], full_state["k2"] = k1, k2
-            full_state["ex"] = (
-                2.0 * _relax_functional(k1, dup, **fkw)
-                - _relax_functional(k2, 2.0 * dup, **fkw))
-            w = c * (k1 * k1 - k2 * k2)
-            for i in range(2):
-                wi = w * _smoothed_min_weight(loads[i], loads[1 - i],
-                                              contact_full_eps)
-                for ax in range(kappa.ndim):
-                    f[i, ax] += float(np.sum(wi * lg[i][1][ax]))
+            ex_total = 0.0
+            for ti, (w1t, w2t) in enumerate(shared_w):
+                s1, s2 = w1t * loads[0], w2t * loads[1]
+                dup = _smoothed_min(s1, s2, contact_full_eps)
+                k1 = _solve_relaxed(dup, full_state["k1"][ti], **fkw)
+                k2 = _solve_relaxed(2.0 * dup, full_state["k2"][ti],
+                                    **fkw)
+                full_state["k1"][ti], full_state["k2"][ti] = k1, k2
+                ex_total += (2.0 * _relax_functional(k1, dup, **fkw)
+                             - _relax_functional(k2, 2.0 * dup, **fkw))
+                w = c * (k1 * k1 - k2 * k2)
+                for i, (si, sj, wit) in enumerate(((s1, s2, w1t),
+                                                   (s2, s1, w2t))):
+                    wi = w * _smoothed_min_weight(si, sj,
+                                                  contact_full_eps)
+                    for ax in range(kappa.ndim):
+                        f[i, ax] += wit * float(np.sum(wi * lg[i][1][ax]))
+            full_state["ex"] = ex_total
         elif contact_b or contact_derived:
             tot = np.sum(loads, axis=0)
             eprime = (exclusion_energy_derivative(
