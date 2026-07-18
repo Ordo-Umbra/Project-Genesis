@@ -415,10 +415,11 @@ def main() -> None:
             f"A = {a:g}: G = {v['total']:+.4f} (grad {v['gradient']:+.4f}"
             f", rec {v['recovery']:+.4f}, cons {v['consumption']:+.4f})"
             for a, v in m1.items()) + ".")
+    flips_text = (str(sign_flips) if sign_flips else
+                  "NONE — the concavity of E(A) = min_κ F[κ; Aρ] in A "
+                  "forbids one at every amplitude")
     lines.append(
-        f"    total-gap sign changes: "
-        f"{sign_flips if sign_flips else 'NONE — the concavity of '
-          'E(A) = min_κ F[κ; Aρ] in A forbids one at every amplitude'}; "
+        f"    total-gap sign changes: {flips_text}; "
         f"the GRADIENT component of the gap is negative in linear "
         f"response and turns positive at A ≈ {grad_flip} — the gradient "
         f"terms switch from binding to excluding where the core "
