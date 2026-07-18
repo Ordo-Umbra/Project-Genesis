@@ -1,161 +1,204 @@
 # Deriving the Exclusion Coefficient
 
-### The capacity framework's own counting: the exclusion energy is the extensivity gap of F(ρ) — exact, parameter-free, and at the operating point it is not a barrier
+### Replacing the hand-picked `b = 0.2` with what the framework's own counting implies
 
-*The companion note `Docs/The_No_Cloning_Exclusion.md` argues on
-counting grounds that identical distinctions must repel — the
-exclusion principle is not optional.  The exclusion core
-(`experiments/n3_exclusion_core.py`) bought the phenomenon with a
-hand-picked quadratic contact `(b/2)ρ²`, b = 0.2 calibrated to the
-X1 statics.  This note derives the term from the framework's own free
-energy, runs the derived form through the identical experiment
-(`experiments/n3_exclusion_derived.py`), and records what happens —
-including where it fails, and why.  Experiment verdict: **2/3 — the
-derivation is exact and its force has the right sign in the regime
-where the premises hold (D1, D3), but at the operating point the
-derived term inverts into a merger subsidy (D2 FAIL): the framework's
-own counting, in its homogeneous form, does NOT produce the exclusion
-barrier where it is needed.  Recorded as-is.***
+*Companion to `Capacity_As_Gravity.md`.  Experiment:
+`experiments/n3_exclusion_derived.py`; implementation:
+`project_genesis/capacity_waves.py` (`exclusion_energy_density`,
+`exclusion_energy_derivative`, `contact_derived`); tests:
+`tests/test_exclusion_derived.py`.  Verdict: **2/3 — the derivation is
+real, and at the exclusion core's operating point it does NOT buy the
+floor.  Recorded as-is.*
 
 ---
 
-## The derivation
+## The problem: the one free parameter
 
-Take the capacity free energy
+The exclusion core (`experiments/n3_exclusion_core.py`) landed its three
+predictions — the static barrier, the contact-binary floor, the ringdown
+at the statics' pitch — with a contact term
 
-    F[κ] = ∫ [ (D/2)|∇κ|² + (r/2)(κ − κ₀)² + (c/2)·ρ·κ² ]
+    E_x = (b/2)·∫ ρ_tot² ,      b = 0.2 chosen in static calibration.
 
-and drop, for this step, the gradient term (the homogeneous limit —
-the step the honest-edges section below flags as the suspect).  At
-fixed load ρ the minimum is the homogeneous steady state
-`κ̄(ρ) = rκ₀/(r + cρ)`, and the free energy DENSITY is
+That `b` was the last free parameter in the no-cloning story: a number
+picked to put an interior minimum away from both walls, not a quantity
+the framework produced.  This note derives the exclusion term from the
+framework's own information counting and tests whether the floor and the
+ringdown survive what the counting actually implies.  They do not — and
+the reason is itself a result.
 
-    F(ρ) = r·c·ρ·κ₀² / (2(r + cρ))  .
+## The concavity problem
 
-F(ρ) is CONCAVE in ρ (`F″ < 0`): the per-site cost of stacked load
-grows sublinearly — the capacity field saturates, so merging is cheap.
-That concavity is precisely what the exclusion principle must fight.
+At fixed load ρ, the homogeneous steady state of the capacity field
+(κ₀ = 1, gradient terms neglected) is `κ̄ = r/(r + cρ)`, and the capacity
+free energy density there is
 
-The exclusion (no-cloning) principle says: a stack of two identical
-copies must be priced at the EXTENSIVE cost `2F(ρ)`, not the concave
-`F(2ρ)`.  The exclusion energy is the extensivity gap:
+    F(ρ) = r·c·ρ / (2·(r + cρ)) .
 
-    e(ρ) := 2F(ρ) − F(2ρ) = c²rρ²κ₀² / ((r + cρ)(r + 2cρ)) .
+`F` is **concave** in ρ.  Concavity is precisely why merging is cheap in
+this framework: `F(2ρ) < 2F(ρ)`, so stacking two identical copies of a
+structure costs less field energy than keeping them apart.  The binding
+that becomes κ-gravity *is* this concavity.  It is also why the naive
+no-cloning fix (cap the load) fails — capping ρ only makes merging
+cheaper still.
 
-Properties, all exact:
+## The extensivity argument
 
-- `e(0) = 0` (separated structures cost nothing extra);
-- dilute limit `e(ρ) ≈ (b/2)ρ²` with `b = 2c²/r` — the hand-picked
-  quadratic contact is the dilute limit of the derived form;
-- saturates at `rκ₀²/2` per site as `ρ → ∞`;
-- `e(2ρ) > 2e(ρ)` — clone REFUSAL, the stack costing more than two
-  singles — holds exactly for `ρ < r/(2c)` (and inverts above it);
-- equivalently `b(ρ) = 2c²ℓ²(ρ)/D` with the loaded screening length
-  `ℓ² = D/(r + cρ)`: degeneracy stiffness set by the local capacity
-  range — the more matter stacks, the shorter the range, the stiffer
-  the term, exactly the physical picture.
+The URP exclusion principle says: *in a structure, adding the same
+distinction does not expand the structure.*  Read as accounting, energy
+should be extensive in **content**: two identical stacked copies carry
+the distinction-content of one, so the honest price of the stack is the
+extensive cost `2F(ρ)` — not the concave bargain `F(2ρ)` the field
+equation offers.  The exclusion energy is the gap between what the
+structure should cost and what the field charges:
 
-At the exclusion-core operating point (r = 0.02, c = 0.8): the derived
-coefficient is `2c²/r = 64` — 320× the calibrated b = 0.2 — and the
-refusal window is `ρ < 0.0125` while the blob's working densities are
-0.6–1.2.  The gap between the derivation's regime and the operating
-point is the story of this note.
+    e(ρ) = 2F(ρ) − F(2ρ) = c²·r·ρ² / ((r + cρ)·(r + 2cρ)) .
+
+No free parameters: `e` is built from `r` and `c` alone.  This is the
+2-copy sector of the general n-copy gap `nF(ρ) − F(nρ)`.
+
+## The derived form's four properties
+
+All four are exact (sympy-verified; guarded numerically by
+`tests/test_exclusion_derived.py` and the experiment's D1):
+
+1. **Dilute limit.** `e(ρ) ≈ (b/2)ρ²` with `b = 2c²/r`.  The quadratic
+   contact term is recovered — but with a coefficient the framework
+   sets.  At the exclusion core's operating point (r = 0.02, c = 0.8)
+   this is **b = 64**: the calibrated 0.2 is *not* in the derived
+   family at any density.
+2. **Clone refusal, and its inversion.** `E_x(2ρ) > 2E_x(ρ)` — a stack
+   of two costs more than two singles — holds exactly for
+   `ρ < r/(2c)` (= 0.0125 at the operating point), because
+   `E_x(2ρ) − 2E_x(ρ) = 2c²rρ²(r − 2cρ)/((r+cρ)(r+2cρ)(r+4cρ))`.
+   **Above `r/(2c)` the inequality inverts**: the derived term starts
+   *rewarding* the merger it was built to refuse.  Measured in the
+   experiment (D1): a single sign change at ρ = 0.012477 against the
+   theoretical 0.0125.
+3. **Saturation.** `e(ρ) → r/2` per site as `ρ → ∞` — the degeneracy
+   debt is bounded, because capacity regenerates.  Deep overlap is a
+   fixed-price neighborhood, not an ever-steepening wall.
+4. **Repulsive per site, always.** `e'(ρ) = c²r²ρ(3cρ + 2r) /
+   ((r+cρ)²(r+2cρ)²) > 0`, so the force `F_i = ∫ e'(ρ_tot)·∇load_i`
+   pushes every blob away from load-weighted overlap — but `e'(ρ)`
+   peaks at ρ ≈ 0.0088 (inside the refusal window) and falls as
+   `3r²/(4cρ²)` in the saturated regime, so the *weighting* of that
+   push is strongest on the dilute skirts, not on the dense core.
+
+The physical reading ties the coefficient to the loaded screening
+length `ℓ²(ρ) = D/(r + cρ)`:
+
+    b(ρ) = 2c²ℓ²(ρ)/D
+
+— degeneracy stiffness set by the *local* capacity range: stiff where
+capacity reaches far (dilute), soft where the load has already shrunk
+the reach (dense).  `b_eff(ρ) = 2e(ρ)/ρ²` runs from 64 in the dilute
+limit through 1.42 at ρ = 0.1, exactly **0.2 at ρ ≈ 0.30** — the skirt
+of the exclusion core's blob — to 0.05 at the blob peak ρ = 0.6 and
+0.014 at the contact-overlap density ρ ≈ 1.2.
 
 ## The experiment
 
-`experiments/n3_exclusion_derived.py` runs the derived term
-(`contact_derived=True` in `evolve_inertial_retarded`) through the
-exclusion core's protocol unchanged (size 96, width 2.5, mass 0.6,
-r = 0.02, c = 0.8, τ = 0.1, d₀ = 12, t_max = 250, same detrend + Hann
-+ whitening ringdown pipeline), with the pre-registered predictions:
+`experiments/n3_exclusion_derived.py` mirrors the exclusion core's
+protocol exactly (size 96, width 2.5, mass 0.6, r = 0.02, c = 0.8,
+τ = 0.1, d₀ = 12, t_max = 250, dt = 0.1, same detrend + Hann + whitening
+pipeline), with the contact term replaced by the derived form's exact
+gradient (`contact_derived=True`).  Three pre-registered predictions;
 
-- **D1 — the dilute statics: PASS.**  Two blobs of amplitude 0.01,
-  separation 3, exclusion forces only (gravity off): the derived term
-  repels, and the measured drift ratio against the calibrated
-  b-form is 54.8, matching the exact dilute prediction
-  `2c²/r / 0.2 = 320 × ⟨∇ρ²⟩/⟨e″∇ρ⟩ = 55.6` to 1.5% (the gap is the
-  blob's own profile factor).  The derivation's force law is right
-  where the premises hold.
-- **D2 — the operating-point statics: FAIL (recorded as-is).**  The
-  two-body energy `E(s) = F[κ̄(ρ_tot)] + Σe(ρ_tot)` has NO interior
-  minimum — it is monotone attractive, *more* attractive than the
-  no-exclusion control:
+- **D1 — the derivation's self-check: PASS.**  On a ρ grid,
+  `E_x(2ρ) > 2E_x(ρ)` below `r/(2c)` and inverts above, with a single
+  sign change at ρ = 0.012477 (theory 0.0125).  The implementation
+  carries the exact convexity window.
+- **D2 — statics, the X1 bars: FAIL (recorded as-is).**  The derived
+  two-body energy is *more attractive than the no-exclusion control at
+  every separation*:
 
       derived: E(s) = 1:-2.37 2:-2.26 3:-2.09 4:-1.88 5:-1.66 6:-1.43
                       8:-1.00 10:-0.63 12:-0.34 16:+0.00
       control: E(s) = 1:-1.65 2:-1.58 3:-1.48 4:-1.35 5:-1.21 6:-1.07
                       8:-0.79 10:-0.53 12:-0.32 16:+0.00
 
-  The derived term makes the merged configuration CHEAPER, not dearer.
-  The mechanism is exact and measured: the exclusion energy of the
-  merged configuration is ≈ 0.72 *lower* than the separated one —
-  `E_x(2ρ) < 2E_x(ρ)` above the refusal window, so the derived term
-  pays the merger.  The blobs' working densities (0.6–1.2) sit 50–100×
-  above the refusal window `ρ < r/(2c) = 0.0125`.
-- **D3 — dynamics, no-floor branch: PASS.**  With no static floor,
-  the registered expectation was plunge-to-contact, baseline-like: the
-  released binary's late separation is 1.61 vs the baseline's 1.61
-  (ratio 1.00), and the whitened contrast through the identical
-  pipeline is 796 vs the baseline's 796 (ratio 1.00).  As predicted,
-  no floor in the statics means no floor in the dynamics.
+  No interior minimum (s\* sits at the s = 1 grid edge), barrier 0.00,
+  control monotone attractive.  The mechanism is property 2 above: the
+  blob's working densities (peak load 0.6, overlap to ≈ 1.2) sit 50–100×
+  above the refusal window, deep in the inverted regime.  Measured
+  directly, the derived overlap force on a blob is *attractive* at every
+  separation probed (s = 1…8): `e'` peaks on the dilute skirts, so the
+  far side of each blob is pulled harder than the near side is pushed.
+  The exclusion energy of the merged configuration is ≈ 0.72 *lower*
+  than the separated one — the derived term pays the merger.
+- **D3 — dynamics, no-floor branch: PASS.**  With no static floor, the
+  registered expectation was a plunge-to-contact, baseline-like binary.
+  Recorded: plunge at t ≈ 8–9 (control: 9); late mean separation 1.95
+  vs the baseline's 1.61 (ratio 1.21, within the factor-of-2 bar); the
+  post-plunge slosh rings in the [15, 95] window at ω = 0.786 against
+  the separation channel's 0.795, whitened contrast 1028 — and the
+  no-exclusion control rings in the same window at ω = 0.629 with
+  contrast 796 (ratio 1.29, within the factor-of-2 bar).  The derived
+  dynamics are the baseline's.
 
-**Score: 2/3.**
+**Score: 2/3** — the self-check and the (conditional) dynamics land;
+the statics fail, and the failure is the finding.
 
-## What this means
+## What this means for the calibrated b = 0.2
 
-The framework's own counting produces an exclusion term that is exact
-and parameter-free, and that inverts at the densities where exclusion
-is needed.  Three honest readings:
-
-1. The homogeneous truncation is the suspect.  Dropping the gradient
-   energy `(D/2)|∇κ|²` at a blob whose width (2.5) is comparable to
-   the screening length ξ = √(D/r) = 7.07 is not a small omission —
-   the gradient energy of the overlap is precisely where a steep
-   stack pays extra.  The gap's clause "same kernel, same screening
-   physics" suggests the exclusion force may live in the part of F[κ]
-   this derivation truncated.
-2. The calibrated b = 0.2 is not the derived term's dilute limit at
-   any operating density — it is 1/320 of the derived dilute
-   coefficient.  Its success at the operating point (X1–X3) is
-   therefore NOT explained by this derivation; it stands as a
-   surrogate whose justification is still open.
-3. The counting argument's conclusion (identical distinctions repel)
-   is not refuted — the DERIVATION chain from F(ρ) to that conclusion
-   has a hole at operating densities.  The failure is located,
-   measured, and mechanised.
+The calibrated coefficient is **refuted as a derivation and clarified
+as a surrogate**.  The framework's homogeneous counting does not
+produce a constant `b`; it produces `b(ρ) = 2c²ℓ²(ρ)/D`, which equals
+0.2 only at ρ ≈ 0.30 — the skirt of the blob, where overlap *begins*.
+The exclusion core's constant `b = 0.2` is therefore best read as a
+phenomenological surrogate that prices the skirt correctly and the core
+of the blob far too generously (by 4–14×), and — decisively — keeps the
+repulsive sign everywhere, while the derived form's net overlap force
+inverts at the densities where the blob actually lives.  The floor and
+the ringdown of the exclusion core are real *given that term*, but that
+term is not (yet) the framework's own.
 
 ## Registered follow-ups
 
-1. **Exclusion with gradient terms.**  Redo the derivation against
-   the FULL F[κ] including `(D/2)|∇κ|²`: the stack's gradient-energy
-   cost at fixed load, then the extensivity gap of the full
-   functional.  If the gradient term supplies the barrier at operating
-   densities, the framework derives exclusion with no free parameters.
-2. **The identicality test.**  The term prices `ρ_tot` — it cannot
-   tell two identical copies from two distinguishable ones at the same
-   site.  A distinction-resolving load (labelled sources) is the
-   bridge to the no-cloning theorem's actual clause.
-3. **The 3-copy sector.**  `e_n(ρ) = nF(ρ) − F(nρ)` against an
-   n-fold stack — the derived form predicts the whole sector with no
-   new parameters.
-4. **The dilute operating point.**  A binary of dilute broad blobs
-   (amplitude ≲ 0.01), where the derived term IS the barrier — does
-   the framework's own term reproduce the exclusion core's floor and
-   ringdown there?
+1. **Gradient terms.**  The derivation dropped them; at the operating
+   point ξ = √(D/r) = 7.07 against a blob width of 2.5, so the
+   homogeneous `F(ρ)` is not the whole free energy of a real blob.  A
+   derivation from `F[κ]` with gradients — the actual functional the
+   field descends — is the honest next candidate, and the inversion
+   may move or vanish.
+2. **Identicality.**  `e(ρ_tot)` prices *all* overlap as duplication;
+   the load field cannot tell same-distinction from
+   different-distinction stacking.  A distinction-resolving load (a
+   labelled or multi-component source) is the door to pricing only
+   true clones.
+3. **The n-copy sector.**  Only `2F(ρ) − F(2ρ)` was probed; the general
+   `nF(ρ) − F(nρ)` prices n-fold stacks and may stiffen where the
+   2-copy sector saturates.
+4. **A dilute operating point.**  Inside the refusal window
+   (ρ < r/(2c)) the derived term *is* the calibrated term with
+   b = 2c²/r, and the tests confirm repulsion there.  A binary of
+   dilute, broad blobs would test the floor where the derivation is
+   self-consistent.
 
 ## Honest edges
 
-- The derivation drops the gradient energy (the homogeneous limit);
-  at the operating point ξ/width ≈ 2.8, so this is a controlled but
-  potentially decisive truncation — follow-up 1.
-- The term acts on the total load and cannot resolve identical from
-  distinguishable copies (maximal-identicality convention) —
-  follow-up 2.
-- D1's ratio check has a ~2% profile-factor residual (finite-difference
-  drift over two steps, blob-profile weighting); the exact prediction
-  is the force-law ratio, the measured quantity is a drift ratio.
-- One operating point (size 96, width 2.5, mass 0.6, r = 0.02,
-  c = 0.8, τ = 0.1).
+- The derivation uses the homogeneous `F(ρ)` — gradient energy
+  neglected, and at the operating point ξ/width ≈ 2.8 says that is not a
+  small omission.  The result bounds the *homogeneous-sector* counting,
+  not the full field functional.
+- Maximal-identicality: all overlap is priced as duplication —
+  conservative by construction.
+- 2-copy sector only.
+- One operating point (size 96, width 2.5, mass 0.6, r = 0.02, c = 0.8,
+  τ = 0.1).
+- Instrument note, measured: with no floor the plunge lands at
+  t ≈ 8–9 and the [15, 95] ring window is dominated by the post-plunge
+  slosh — the no-exclusion *control* rings there with a contrast of the
+  same order (796 vs 1028), so the no-floor D3 comparison is made
+  against the control's own contrast, not against an absolute silence
+  bar.  The silent-blob figure quoted in the exclusion core belongs to
+  its late, settled window, not to this one.
+- The D2 failure is a property of the operating point, not of the
+  algebra: D1 confirms the implementation carries the exact window the
+  symbolic derivation guarantees.  What the framework's counting gives
+  at these densities is a merger subsidy, and that is what the
+  experiment recorded.
 
 ---
 
