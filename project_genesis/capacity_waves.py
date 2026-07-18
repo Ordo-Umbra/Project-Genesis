@@ -586,7 +586,7 @@ def front_radius(delta: np.ndarray, center, threshold: float) -> float:
     """Largest periodic distance from ``center`` where ``|δ| > threshold``."""
     shape = delta.shape
     grids = np.meshgrid(*[np.arange(s) for s in shape], indexing="ij")
-    d2 = sum((((g - c + s / 2.0) % s) - s / 2.0) ** 2
+    d2 = sum((((g - c + s / 2) % s) - s / 2) ** 2
              for g, c, s in zip(grids, center, shape))
     mask = np.abs(delta) > threshold
     if not mask.any():
