@@ -203,6 +203,7 @@ experiments/
   n3_exclusion_ncopy.py     Deriving b, Part IV: the n-copy sector — 3/3; pairwise = n-copy at O(c²), trimer floor, the saturation split measured
   n3_exclusion_dilute.py    Deriving b, Part V: the dilute operating point — 0/3 recorded as-is; joint-limit convergence, the min-construction pinned by a 2×2, the repelled binary
   n3_identity_generation.py Identity generation: sameness measured from internal patterns (φ = Σmin), not assigned — clones floor, independents don't, and drift sets an individuality threshold
+  n3_identity_invariance.py Identity invariance: aligned sameness (max over rigid motions) — the stranger gap survives, the floor follows identity not pose; the resolution trade-off measured
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1302,6 +1303,18 @@ The conceptual arc your original intuition started — *adding the same distinct
 Reproduce with `python experiments/n3_identity_generation.py` (≈ 8 minutes; `--quick` for a smoke run).
 
 **Honest scope:** statics only (Part III's L2 established the φ-routed dynamics follow the statics bitwise; the new content here is the *measurement* of φ); patterns are position-registered patches (no rotation/translation invariance — an aligned-similarity φ is a follow-up); sameness is collapsed to a scalar shared fraction before routing; one structure family (5 sub-blobs), one jitter seed (the Y3 noise floor); the corpus's stability gate is set loose — identity via the engine's own emergent stable objects is the deeper registered door.
+
+### Identity invariance: a moved clone is still a clone — 2/3
+
+The registered follow-up (`experiments/n3_identity_invariance.py`): identity should be intrinsic, so the measure becomes **φ_inv = max over rigid motions of the duplicated fraction** (coarse-to-fine rotation scan with sub-cell shift refinement; the maximizing transform is returned — the measure doesn't just score sameness, it *finds* the motion that exhibits it). Calibration produced two findings kept in the record: the parent's 5-blob family is nearly **pose-degenerate** (stranger φ_inv = 0.81 — with few internal distinctions, most structures are the same up to pose; *identity modulo pose requires complexity*), so the registered family is 10 sharper sub-blobs; and φ-routing alone cannot carry a rotated clone's floor because the exclusion min is spatial — exclusion prices cloned **content**, which is pose-invariant, so the instrument splits: pose-true gravity, aligned-content exclusion. **2/3 registered:**
+
+- **V1 ✗ as registered, with the trade-off measured.** The 90° clone recovers exactly (φ_inv = 1.000, 0.0° error), but the non-lattice angles land at 0.906/0.910 against the 0.95 bar (angle errors 3.5°/2.0°): two bilinear resamplings cost ~9% on patterns this sharp. The mechanism is a genuine **resolution trade-off** — the sharpness that defeats pose-degeneracy is exactly what makes resampling lossy. Higher-order interpolation / upsampled patches are the registered fix.
+- **V2 ✓ A stranger is not.** Maximizing over ~10⁴ alignments inflates the stranger's score (0.574 → 0.690, reported honestly) but the **clone/stranger gap survives: 0.216** — alignment does not manufacture identity.
+- **V3 ✓ The floor follows identity, not pose.** The rotated-clone pair routed through content-aligned exclusion carries barrier **0.254 vs the true clone's 0.243** (ratio 1.05), where pose-registered routing gives 0.000 — the exclusion physics is now invariant under how a structure happens to sit in space.
+
+Reproduce with `python experiments/n3_identity_invariance.py` (≈ 10 minutes; `--quick` for a smoke run).
+
+**Honest scope:** rigid motions only (reflection/scale/deformation untested); the V1 bar was set above what the calibration probe itself suggested and the miss is recorded, not re-barred; the stranger's absolute φ_inv is maximization-inflated — the registered claim is the surviving gap; one structure family and seed pair; statics only, as the parent.
 
 ## Setup
 
