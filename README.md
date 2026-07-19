@@ -73,6 +73,7 @@ project_genesis/
   stable_forms.py      The spectrum of stable κ-forms: structural mass, binding, form interactions
   multiphase.py        Three-component Ψ∈ℂ³ sector field with 120° Y-junctions
   dimensional_forms.py CW-census of the sector tessellation: 0D junctions / 1D walls / 2D domains, the Euler invariant V−E+F, junction valence
+  chiral_field.py      The chiral (parity-breaking) spin term: complex Ginzburg–Landau with coupling λ, intrinsic precession Ω=−λ, vorticity (spin density)
   network_server.py    WebSocket server for remote monitoring and control
   numba_kernels.py     Numba JIT-accelerated field evolution kernels
   render.py            Text-based slice rendering for terrain inspection
@@ -207,6 +208,7 @@ experiments/
   n3_identity_invariance.py Identity invariance: aligned sameness (max over rigid motions) — the stranger gap survives, the floor follows identity not pose; the resolution trade-off measured
   n3_kappa_molecule.py      The κ-molecule: derived-exclusion floor + spin — 2/3; the first persistent bound object, overdamped rotation (Q<½), but the quasi-static drag rate is refuted 8×; sings at the statics' libration pitch
   n3_quark_generations.py   The dimensional-form hierarchy: 0D/1D/2D forms as CW-cells — 3/3; the confined ratio is the trivalent 2:3:1 (N⋆=3), the Euler defect is a deconfinement order parameter
+  n3_chiral_spin.py         Chiral spin: the parity-breaking term gives the field intrinsic spin Ω=−λ — 3/3; λ=0 restores parity, and the spin lives on the 0D 'light' forms
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1351,6 +1353,20 @@ This lands the collab's "quark families" intuition inside the testbench and ties
 Reproduce with `python experiments/n3_quark_generations.py` (≈ 5 minutes; `--quick` for a smoke run); census checks in `tests/test_dimensional_forms.py`.
 
 **Honest scope:** the census is exact on synthetic tilings but carries a pixel-scale defect on smooth fields (short edges eaten by the junction-dilation cut inflate the confined-phase Euler a few % — recorded); the deconfined speckle is genuinely not a clean CW-complex (that *is* Q2). Temperature is the phase dial (β ↔ 1/T), not the repo's gauge β; the 2D domain count F is few-large in the confined phase (the collab counted blob morphology, a different instrument — the rigorous object here is the CW-cell census and its Euler/valence invariants); one lattice (96²), 3-palette Allen–Cahn, seed-averaged.
+
+### Chiral spin: the parity-breaking term, and where the spin lives — 3/3
+
+The registered next rung, and the one the last two arcs were both pointing at: the census left the 0D junctions handedness-blind, the κ-molecule couldn't hold angular momentum, and the collab's "vorticity (spin analog)" histograms were symmetric — all because the sector dynamics carry no **chiral term**. `project_genesis/chiral_field.py` adds the minimal one via the complex Ginzburg–Landau field, `∂_t ψ = ψ + (1 + iλ)∇²ψ − (1 + iλ)|ψ|²ψ`, with λ the chiral coupling (λ=0 = real GL, parity-symmetric). The key subtlety: the field-mean vorticity ⟨ω⟩ is **topologically pinned to ~0** on the torus (vortices and antivortices pair), so it cannot see chirality — the observable that can is the field's **intrinsic precession Ω**, the rate its order parameter rotates. `experiments/n3_chiral_spin.py`, **3/3 registered:**
+
+- **H1 ✓ Parity holds at λ=0.** Ω = 0.0000 and the topological control ⟨ω⟩ ≈ 0 at every λ — no chiral term, no spin, the collab's symmetric case reproduced (and the total-vorticity trap sidestepped).
+- **H2 ✓ Spin is the chiral coupling, signed and linear.** Across the λ-scan **Ω = −λ** (fit slope −1.01), with Ω(+λ) and Ω(−λ) opposite — the chiral term gives the field an intrinsic angular frequency whose sign is the handedness. *This is spin as a term*: an internal degree of freedom that rotates, exactly what the scalar κ-molecule lacked.
+- **H3 ✓ Spin lives on the 0D forms.** The vorticity (spin density) is concentrated **83–107×** more on the 0D junctions of the phase tessellation than in the interiors, at every λ, while the trivalent structure survives (valence 3.00). The point-like "light" forms of the dimensional census *are* the spin-carriers — spin rides on the tessellation without dissolving it.
+
+This closes the loop the whole synthesis pointed at: the dimensional families (0D/1D/2D) are the CW-cells fixed by the N⋆=3 junction rule, and now the **0D "light" forms carry spin** via a single parity-breaking coupling — with the collab's symmetric-vorticity baseline recovered exactly at λ=0. The registered next rung brings it home to gravity: does a *chiral* κ-field let a bound pair hold the angular momentum the achiral κ-molecule drained (Z2)?
+
+Reproduce with `python experiments/n3_chiral_spin.py` (≈ 8 minutes; `--quick` for a smoke run); chiral-field checks (Ω=−λ, parity at λ=0, topological neutrality of ⟨ω⟩, parity-odd vorticity) in `tests/test_chiral_field.py`.
+
+**Honest scope:** the chiral term is the CGL minimal one (single coupling λ on diffusion and reaction); the spin observable is the temporal precession Ω, since the spatial net vorticity is topologically neutral on the torus (kept only as control); Ω=−λ is exact for the CGL bulk; one lattice (96²), 3 phase-sectors for the census tie-in; the junction spin-concentration is a magnitude ratio (cores are where |ψ|→0, so |ω| peaks there — the physics is that the census's 0D class *locates* those cores).
 
 ## Setup
 
