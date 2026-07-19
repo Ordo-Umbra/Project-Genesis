@@ -132,6 +132,36 @@ class RetardedGravityTests(unittest.TestCase):
         self.assertGreater(np.mean(np.diff(e) <= 1e-9), 0.9)  # Lyapunov
         self.assertTrue(all(d >= 0.0 for d in hist["dissipation"]))
 
+    def test_chiral_coupling_off_is_a_no_op(self):
+        # chiral_coupling = 0 must reproduce the base run bit-for-bit
+        kw = dict(shape=(40, 40), tau=1.0, dt=0.1, steps=60, record_every=20,
+                  kappa_recovery=0.02, kappa_consumption=0.8)
+        base = evolve_inertial_retarded(
+            [[16.0, 20.0], [24.0, 20.0]], [[0.0, 0.3], [0.0, -0.3]],
+            [0.6, 0.6], **kw)
+        off = evolve_inertial_retarded(
+            [[16.0, 20.0], [24.0, 20.0]], [[0.0, 0.3], [0.0, -0.3]],
+            [0.6, 0.6], chiral_omega=0.2, chiral_coupling=0.0, **kw)
+        self.assertTrue(np.allclose(base["final_positions"],
+                                    off["final_positions"]))
+
+    def test_chiral_drive_injects_signed_rotation(self):
+        # a bound pair gains rotation whose sign follows chiral_omega
+        def late_omega(omega_bg):
+            kw = dict(shape=(48, 48), width=2.5, tau=0.1, dt=0.1, steps=200,
+                      record_every=20, contact_b=0.3, kappa_recovery=0.02,
+                      kappa_consumption=0.8)
+            h = evolve_inertial_retarded(
+                [[19.0, 24.0], [29.0, 24.0]], [[0.0, 0.0], [0.0, 0.0]],
+                [0.6, 0.6], chiral_omega=omega_bg,
+                chiral_coupling=(0.05 if omega_bg else 0.0), **kw)
+            pos = np.asarray(h["positions"])
+            sv = pos[:, 0, :] - pos[:, 1, :]
+            phi = np.unwrap(np.arctan2(sv[:, 1], sv[:, 0]))
+            return float(np.gradient(phi)[-5:].mean())
+        self.assertGreater(late_omega(0.3), late_omega(0.0))
+        self.assertLess(late_omega(-0.3), late_omega(0.0))
+
 
 if __name__ == "__main__":
     unittest.main()

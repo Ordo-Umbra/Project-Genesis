@@ -211,6 +211,7 @@ experiments/
   n3_kappa_molecule.py      The κ-molecule: derived-exclusion floor + spin — 2/3; the first persistent bound object, overdamped rotation (Q<½), but the quasi-static drag rate is refuted 8×; sings at the statics' libration pitch
   n3_quark_generations.py   The dimensional-form hierarchy: 0D/1D/2D forms as CW-cells — 3/3; the confined ratio is the trivalent 2:3:1 (N⋆=3), the Euler defect is a deconfinement order parameter
   n3_chiral_spin.py         Chiral spin: the parity-breaking term gives the field intrinsic spin Ω=−λ — 3/3; λ=0 restores parity, and the spin lives on the 0D 'light' forms
+  n3_spinning_molecule.py   The spinning molecule: a chiral drive lets the bound κ-pair hold Ω where the achiral molecule drained (Z2) — the first bound object that turns
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1369,6 +1370,20 @@ This closes the loop the whole synthesis pointed at: the dimensional families (0
 Reproduce with `python experiments/n3_chiral_spin.py` (≈ 8 minutes; `--quick` for a smoke run); chiral-field checks (Ω=−λ, parity at λ=0, topological neutrality of ⟨ω⟩, parity-odd vorticity) in `tests/test_chiral_field.py`.
 
 **Honest scope:** the chiral term is the CGL minimal one (single coupling λ on diffusion and reaction); the spin observable is the temporal precession Ω, since the spatial net vorticity is topologically neutral on the torus (kept only as control); Ω=−λ is exact for the CGL bulk; one lattice (96²), 3 phase-sectors for the census tie-in; the junction spin-concentration is a magnitude ratio (cores are where |ψ|→0, so |ω| peaks there — the physics is that the census's 0D class *locates* those cores).
+
+### The spinning molecule: chirality lets the bound pair hold Ω — 3/3
+
+The registered bridge from Act III §5 back to §4 (`experiments/n3_spinning_molecule.py`): the κ-molecule was the first persistent bound object but *could not spin* — rotation was overdamped (Q < ½), the viscous κ-medium draining any angular momentum before a cycle (its Z2 failure). The chiral-spin result supplies the missing piece: the field precesses at Ω = −λ, and it lives on the 0D forms. So the molecule's forms are embedded in that chirally-precessing background, which drags each toward co-rotation about the pair's centre of mass — a *self-limiting* drive (`capacity_waves.evolve_inertial_retarded`, `chiral_omega`/`chiral_coupling`), so the bound pair reaches a **steady spin** where the chiral drive balances the κ-drag rather than being flung apart. **3/3 registered predictions land:**
+
+- **S1 ✓ The achiral molecule drains (Z2, recovered).** With no chiral drive, late Ω = 0.00000 — the initial spin is gone, the pair sits on its floor without turning, the κ-molecule's overdamped verdict reproduced.
+- **S2 ✓ The chiral molecule holds its spin.** With the drive on, the pair reaches a persistent late rotation (−0.0133 / −0.0041 / +0.0058 / +0.0129 across the Ω_bg = ∓0.2…±0.2 scan) — nonzero, held, and bounded on the derived exclusion floor (sep ≈ 8.5 ≈ s⋆). **The first bound object in the program that turns.**
+- **S3 ✓ The spin is the field's, signed and graded.** Late Ω vs Ω_bg is monotone through zero (slope +0.062) with the sign following at every point — the molecule inherits the chiral field's handedness and turns it up with the coupling.
+
+This closes the loop the whole matter picture pointed at: **derived-exclusion binding + finite-speed gravity + a chiral term = a persistent, spinning bound object** — a form that has a place in the dimensional census, a conjugate partner on a parameter-free floor, and now a spin it can hold. The registered deeper rung is the honest two-field version: co-evolving the complex chiral field *with* the real κ-gravity, rather than representing the background's precession as a drag.
+
+Reproduce with `python experiments/n3_spinning_molecule.py` (≈ 10 minutes; `--quick` for a smoke run); chiral-coupling checks (off = bit-for-bit no-op, drive injects signed rotation) in `tests/test_capacity_waves.py`.
+
+**Honest scope:** the chiral coupling is a rotational drag toward the background's rigid rotation Ω_bg = −λ (the CGL precession of §5) — a self-limiting drive, not yet a derived two-field coupling; the steady spin sits well below Ω_bg because the κ-drag is strong (Q < ½, the same viscosity that drained the achiral molecule, now balanced not defeated); one operating point, the derived exclusion floor, equal masses; a small initial kick so S1 shows the drain rather than mere rest.
 
 ## Setup
 
