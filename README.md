@@ -88,6 +88,8 @@ Docs/
   Capacity_As_Gravity.md     κ as the framework's gravity: a universal, mass-sourced, √(D/r)-screened attraction
   The_Emergent_Cosmos.md     Capstone (Act II): κ→gravity→matter→structure→cosmos, with toolkit map and frontiers
   The_Complete_Arc.md        Top-level synthesis: the whole program — both acts, the one-κ frontier, the honest boundaries
+  Deriving_The_Exclusion_Coefficient.md  The pair-binding derivation (Parts I–V): no-cloning as a parameter-free degeneracy pressure
+  The_Woven_Forms.md         Capstone (Act III): the field's matter — dimensional forms (2:3:1), natural pairs, finite-speed gravity, chiral spin; measured vs. vision
 tests/                 633 checks across the engine, instruments, and physics
   test_genesis_engine.py
   test_annealed_matter.py
