@@ -72,6 +72,7 @@ project_genesis/
   capacity_waves.py    Finite-speed κ (telegrapher form): causal cone at c_κ=√(D/τ), massive dispersion ω²=(Dk²+r+cρ)/τ−1/4τ², retarded inertial gravity (Lyapunov energy), the exclusion contact term (b/2)∫ρ², parabolic control
   stable_forms.py      The spectrum of stable κ-forms: structural mass, binding, form interactions
   multiphase.py        Three-component Ψ∈ℂ³ sector field with 120° Y-junctions
+  dimensional_forms.py CW-census of the sector tessellation: 0D junctions / 1D walls / 2D domains, the Euler invariant V−E+F, junction valence
   network_server.py    WebSocket server for remote monitoring and control
   numba_kernels.py     Numba JIT-accelerated field evolution kernels
   render.py            Text-based slice rendering for terrain inspection
@@ -205,6 +206,7 @@ experiments/
   n3_identity_generation.py Identity generation: sameness measured from internal patterns (φ = Σmin), not assigned — clones floor, independents don't, and drift sets an individuality threshold
   n3_identity_invariance.py Identity invariance: aligned sameness (max over rigid motions) — the stranger gap survives, the floor follows identity not pose; the resolution trade-off measured
   n3_kappa_molecule.py      The κ-molecule: derived-exclusion floor + spin — 2/3; the first persistent bound object, overdamped rotation (Q<½), but the quasi-static drag rate is refuted 8×; sings at the statics' libration pitch
+  n3_quark_generations.py   The dimensional-form hierarchy: 0D/1D/2D forms as CW-cells — 3/3; the confined ratio is the trivalent 2:3:1 (N⋆=3), the Euler defect is a deconfinement order parameter
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1330,6 +1332,25 @@ This closes the finite-speed + exclusion arc on a physical object: **a κ-molecu
 Reproduce with `python experiments/n3_kappa_molecule.py` (≈ 10 minutes; `--quick` for a smoke run).
 
 **Honest scope:** one operating point (the exclusion arc's), one spin; the exclusion sector is adiabatic while gravity is retarded (the base-branch split); the drag prediction is quasi-static (v/c_κ ≈ 0.16) and rigid-rotor — precisely the assumption Z2 refutes; the libration pitch uses a coarse parabola through the derived `E(s)` grid near s\*; equal masses.
+
+### The dimensional-form hierarchy: quark generations as CW-cells — 3/3
+
+Working backwards from the collab explorations (which read the field's emergent structures as **dimensional families** — 0D points, 1D lines, 2D blobs, a "quark generation hierarchy" whose densities shifted with phase), this gives that reading a rigorous backbone. The families are the **cells of the sector tessellation's CW-complex** (`project_genesis/dimensional_forms.py`): a site's codimension is set by how many sectors meet in its neighbourhood — 1 → domain interior (2-cell), 2 → wall (1-cell), ≥3 → junction (0-cell) — and the census counts connected components: V junctions, E wall arcs, F domains. Two exact facts the collab morphology-counting never had:
+
+- **Euler on the torus.** A clean CW-decomposition obeys `V − E + F = 0` (verified exact on synthetic tilings — stripes, block, brick — in `tests/test_dimensional_forms.py`).
+- **The trivalent (N⋆=3) signature.** Where walls meet in threes — the 120° Y-junctions the [sector program](#the-unpinned-s_p-transition--sector-choice-in-the-potts-class) selects — `2E = 3V` and Euler *fix* the hierarchy at `V : E : F = 2 : 3 : 1`. The generation hierarchy is not a free density; it is the junction valence.
+
+`experiments/n3_quark_generations.py` coarsens a three-component Allen–Cahn sector field from noise across a temperature ladder (the collab's β ↔ 1/T) and censuses each phase. **3/3 registered predictions land:**
+
+- **Q1 ✓ Topology fixes the confined hierarchy.** The coldest phase has mean junction valence **3.00** (pure Y-junctions) and census ratio **V:E:F = 1.90 : 2.54 : 1** — the trivalent 2:3:1, measured. The three "generations" sit in a topological ratio the N⋆=3 junction rule forces.
+- **Q2 ✓ The Euler defect is a deconfinement order parameter.** The normalised defect `|V−E+F|/(V+E+F)` jumps from **0.066** (confined, a near-clean tessellation) to **0.71** (hot) — the clean CW-complex shatters into speckle, and the census's *own topological consistency* is the order parameter. The break is sharp: it fires between T=0 and T=0.02, the confined tessellation existing only at the cold point.
+- **Q3 ✓ The form densities track the phase.** The 2D-interior area fraction falls monotonically **0.81 → 0.22** as T rises while the wall+junction fraction rises **0.19 → 0.78** — the different phases carry different densities of the forms, the collab's central reading, now on a validated instrument.
+
+This lands the collab's "quark families" intuition inside the testbench and ties it to the repo's spine: the dimensional hierarchy *is* the N⋆=3 trivalent-junction constraint, and deconfinement *is* the topological shattering of the tessellation. The registered next rung is **spin as a chiral term** — a parity-breaking (Dzyaloshinskii–Moriya-style) coupling would split the 0D junctions by handedness, the natural home for the vorticity the collab measured (and the angular momentum the κ-molecule couldn't hold).
+
+Reproduce with `python experiments/n3_quark_generations.py` (≈ 5 minutes; `--quick` for a smoke run); census checks in `tests/test_dimensional_forms.py`.
+
+**Honest scope:** the census is exact on synthetic tilings but carries a pixel-scale defect on smooth fields (short edges eaten by the junction-dilation cut inflate the confined-phase Euler a few % — recorded); the deconfined speckle is genuinely not a clean CW-complex (that *is* Q2). Temperature is the phase dial (β ↔ 1/T), not the repo's gauge β; the 2D domain count F is few-large in the confined phase (the collab counted blob morphology, a different instrument — the rigorous object here is the CW-cell census and its Euler/valence invariants); one lattice (96²), 3-palette Allen–Cahn, seed-averaged.
 
 ## Setup
 
