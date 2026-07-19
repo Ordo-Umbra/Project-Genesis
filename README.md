@@ -212,6 +212,7 @@ experiments/
   n3_quark_generations.py   The dimensional-form hierarchy: 0D/1D/2D forms as CW-cells — 3/3; the confined ratio is the trivalent 2:3:1 (N⋆=3), the Euler defect is a deconfinement order parameter
   n3_chiral_spin.py         Chiral spin: the parity-breaking term gives the field intrinsic spin Ω=−λ — 3/3; λ=0 restores parity, and the spin lives on the 0D 'light' forms
   n3_spinning_molecule.py   The spinning molecule: a chiral drive lets the bound κ-pair hold Ω where the achiral molecule drained (Z2) — the first bound object that turns
+  n3_form_abundances.py     Form abundances: three generations because space is 2-D (families=d+1, palette-independent) — 3/3; topologically protected, heavy rarest; no numerical quark-match claimed
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1384,6 +1385,20 @@ This closes the loop the whole matter picture pointed at: **derived-exclusion bi
 Reproduce with `python experiments/n3_spinning_molecule.py` (≈ 10 minutes; `--quick` for a smoke run); chiral-coupling checks (off = bit-for-bit no-op, drive injects signed rotation) in `tests/test_capacity_waves.py`.
 
 **Honest scope:** the chiral coupling is a rotational drag toward the background's rigid rotation Ω_bg = −λ (the CGL precession of §5) — a self-limiting drive, not yet a derived two-field coupling; the steady spin sits well below Ω_bg because the κ-drag is strong (Q < ½, the same viscosity that drained the achiral molecule, now balanced not defeated); one operating point, the derived exclusion floor, equal masses; a small initial kick so S1 shows the drain rather than mere rest.
+
+### Form abundances: why three generations, and which is rarest — 3/3
+
+The abundance frontier the synthesis named first (`experiments/n3_form_abundances.py`), tested with a hard line against numerology: it pins the **structure** of the generation hierarchy and makes *no* claim of a numerical match to real quark masses. **3/3 registered:**
+
+- **A1 ✓ The number of generations is the spatial dimension, not the palette.** Across sector counts P = 3, 4, 5, 6, exactly **three** families are populated (0-/1-/2-cells), valence ≈ 3.03, ratio near 2:3:1 — three domains generically meet at a point whatever the palette, so the family count is `d + 1 = 3` in 2-D. *Three generations because space is 2-D* — a topological census, not a palette accident (and the sharpest form of the prediction: **4 families in 3-D**, the registered next rung).
+- **A2 ✓ The abundances are topologically protected across energy.** Running the field further (coarsening depths 150→600) leaves the 0D:1D:2D ratio constant (coefficient of variation **0.057**) — the abundances are fixed by the junction topology, not tuned by how far the field has run; they change only at the deconfinement break (`n3_quark_generations` Q2).
+- **A3 ✓ The heavy generation is the rarest.** The 2D "heavy" family is least abundant by count at every point — the qualitative shape of ordinary matter, where the heaviest generation is rarest. *(Structural resemblance only; no numerical quark-abundance match claimed.)*
+
+This is the honest answer to "why three generations": not a fit to the Standard Model's numbers, but a topological count — three families set by the two dimensions of space, their ratio fixed by trivalent junctions, robust to the sector count and to energy within the confined phase. The collab's abundance intuition lands as *structure*, with the numerology firmly declined.
+
+Reproduce with `python experiments/n3_form_abundances.py` (≈ 3 minutes; `--quick` for a smoke run).
+
+**Honest scope:** tests the structure (family count = 2-D CW dimensions, topological protection, which family is rarest), **not** a numerical match to quark data — that remains a stretch the program does not make; the 2:3:1 ratio drifts slightly as the palette grows (higher-order junctions creep in, within the bar); "energy" here is coarsening depth at fixed cold phase; one lattice (96²); the 3-D census (predicting four families) is the registered next rung.
 
 ## Setup
 

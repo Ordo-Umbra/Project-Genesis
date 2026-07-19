@@ -80,10 +80,26 @@ the same confined→deconfined axis Act II's Wilson-loop work walks
 (`Monte_Carlo_Confinement.md`), now read off the geometry of the forms
 themselves.
 
+**And why *three*.**  *(Measured — `experiments/n3_form_abundances.py`, 3/3.)*
+The abundance question — how many families, and which is rarest — has a
+topological answer that declines the numerology.  Across sector counts
+`P = 3, 4, 5, 6` exactly **three** families stay populated with valence ≈ 3 and
+ratio near `2:3:1`: three domains generically meet at a point whatever the
+palette, so the family count is `d + 1 = 3` in two dimensions.  *Three
+generations because space is 2-D* — cells of dimension 0, 1, 2 — not because of
+any tuning, and the sharpest form of the claim is the prediction of **four**
+families in 3-D (the registered next rung).  The abundances are **topologically
+protected** (the ratio's coefficient of variation is `0.057` as the field is run
+from fine to coarse — fixed by the junctions, not by energy) and the **2D "heavy"
+family is the rarest** at every point — the qualitative shape of ordinary matter,
+where the heaviest generation is fewest.  What is *not* claimed, and is marked so
+in the experiment itself, is any numerical match to real quark masses or
+abundances; the result is the **structure** of the hierarchy, not its numbers.
+
 **What this establishes:** the "three generations" are a *topological necessity*
 of a trivalently-junctioned field, keyed to the same `N⋆ = 3` that runs through
 the whole program.  The light/medium/heavy forms and the three colour sectors
-are one fact seen twice.
+are one fact seen twice — and *three* is the dimension of space plus one.
 
 ---
 
@@ -196,6 +212,20 @@ junctions** of the tessellation while the trivalent structure survives (valence
 dimensional family, a conjugate partner, and a spin — are now all present in one
 field, and the spin lands precisely on the 0D forms the census counts.
 
+**And the loop closes.**  *(Measured — `experiments/n3_spinning_molecule.py`,
+3/3.)*  The κ-molecule of §4 could not spin (its `Z2` failure); the chiral term
+is what it was missing.  Embedding the molecule's forms in the chirally-
+precessing background — so the medium drags each toward co-rotation at
+`Ω_bg = −λ` — gives the bound pair a **steady, persistent spin** where the achiral
+molecule drained to rest (`Ω → 0`), with the pair still bound on its derived
+exclusion floor (`sep ≈ s⋆`) and the spin's sign following the coupling's.  The
+first bound object in the program **turns**: derived-exclusion binding +
+finite-speed gravity + a chiral term assemble a persistent, spinning bound state
+— a form with a place in the census, a conjugate partner on a parameter-free
+floor, and a spin it can hold.  (The spin is driven here as a rotational drag
+toward the background rate, not yet a derived two-field coupling — the honest
+next rung.)
+
 ---
 
 ## 6. Where criticality sits in all of this
@@ -231,29 +261,38 @@ apart plainly:
 **Measured (pre-registered verdicts in this repo).**
 - The dimensional forms are CW-cells; the confined ratio is the trivalent
   `2:3:1` fixed by `N⋆ = 3`; the Euler defect is a deconfinement order parameter.
+- **The generation count is topological**: three families because space is 2-D
+  (`d + 1`), palette-independent; the abundances are topologically protected
+  across energy, and the heavy (2D) family is the rarest — the *structure* of the
+  collab's abundance hierarchy, with no numerical quark-match claimed.
 - The natural pair has a parameter-free binding floor derived from the field's
   own free energy; identity can be measured, not just assigned.
 - The forms gravitate at finite speed, drag, radiate quadrupole-led, and merge by
   plunge; a `±` pair on the exclusion floor is a persistent bound object.
 - Spin is a chiral term giving intrinsic precession `Ω = −λ`, carried by the 0D
   forms; `λ = 0` restores the collab's parity-symmetric baseline.
+- **The molecule spins**: with the chiral term, a bound `±` pair holds a
+  persistent, bounded rotation where the achiral molecule drained (its `Z2`
+  failure) — the loop from §5 back to §4 closed.
 
 **Frontier (intuition the foundations now make testable, without a verdict).**
-- **The abundances.**  The collab's striking claim — that the 0D/1D/2D densities,
-  as the field is run at different energies and phases, reproduce the *observed
-  proportions* of the real generations — is not yet tested rigorously here.  The
-  census instrument now exists to test it; the verdict does not.
+- **The abundance *numbers*.**  The count and ordering of the families are now
+  measured as *structure*; the collab's stronger claim — that the densities at
+  different energies reproduce the *numerical proportions* of the real
+  generations — is deliberately **not** made, and is a numerological stretch the
+  program declines rather than a pending verdict.
 - **The pairs as quarks.**  That the charge-conjugate exclusion pairs *are* the
   analogue of quark pairs, with the right multiplet structure, is a reading, not
   a measurement.  The `N⋆ = 3` colour tie is measured; the flavour structure is
   not.
+- **Four families in 3-D.**  The dimensional-form prediction has a sharp,
+  untested edge: a 3-D census should show `d + 1 = 4` families (cells of dim
+  0–3).  The census is 2-D today; the 3-D extension is the sharpest next test.
 - **Spin's higher-dimensional manifestations.**  The chiral term is the 2-D
   minimal one; the program's intuition that it is the shadow of a
   higher-dimensional structure (and that spin is quantised, not continuous) is
-  untested.
-- **The spinning molecule.**  Whether a *chiral* κ-field lets a bound pair hold
-  the angular momentum the achiral molecule drained (the κ-molecule's `Z2`
-  failure) is the immediate next rung — the bridge from §5 back to §4.
+  untested — as is the derived two-field chiral κ-gravity (the spinning molecule
+  is driven, not yet self-consistently coupled).
 - **One number for criticality.**  Whether the collab's pattern-clarity `β` and
   Act I's `κ̂(scale)` are the same object, or one is a shadow of the other.
 
@@ -274,14 +313,16 @@ apart plainly:
 | File | Verdict | Result |
 |---|---|---|
 | `n3_quark_generations.py` | 3/3 | forms as CW-cells; confined `2:3:1`; Euler-deconfinement |
+| `n3_form_abundances.py` | 3/3 | three families because space is 2-D (`d+1`); protected; heavy rarest |
 | `n3_chiral_spin.py` | 3/3 | spin `Ω = −λ`, on the 0D forms; parity at `λ = 0` |
+| `n3_spinning_molecule.py` | 3/3 | a chiral drive lets the bound pair hold `Ω` (§5→§4 closed) |
 | `n3_exclusion_*` (five) | see doc | the derived, parameter-free pair-binding floor |
 | `n3_identity_generation / _invariance.py` | 2/3, 2/3 | identity measured from structure, pose-invariant |
 | `n3_kappa_lightcone.py` | 2/3 | causal cone `c_κ = √(D/τ)`; the propagating mass |
 | `n3_retarded_gravity.py` | 3/3 | drag, inspiral, supersonic silence |
 | `n3_quadrupole_line.py` | 3/3 | even-harmonic (no-dipole) selection rule |
 | `n3_plunge_ringdown.py` | 3/3 | no long inspiral — the trench plunge |
-| `n3_kappa_molecule.py` | 2/3 | the first persistent bound object; it cannot spin |
+| `n3_kappa_molecule.py` | 2/3 | the first persistent bound object; achiral, cannot spin |
 
 **Documents.**  `Deriving_The_Exclusion_Coefficient.md` (the pair-binding
 derivation, Parts I–V); this file (the Act III synthesis); `The_Complete_Arc.md`
@@ -290,8 +331,10 @@ derivation, Parts I–V); this file (the Act III synthesis); `The_Complete_Arc.m
 ---
 
 *Act III's one sentence: held near criticality, a single capacity field
-tessellates into a countable inventory of forms whose three-fold proportion is
-fixed by topology, binds them in conjugate pairs on a derived floor, gravitates
-them at a finite speed, and — with one parity-breaking term — spins the
-point-like ones; the matter that intuition read backwards from quarks is, in its
-foundations, now measured, and the abundances are the frontier it opens onto.*
+tessellates into a countable inventory of forms — three families because space
+is two-dimensional, their proportion fixed by topology and the heavy one rarest —
+binds them in conjugate pairs on a derived floor, gravitates them at a finite
+speed, and, with one parity-breaking term, spins the point-like ones and lets a
+bound pair hold that spin; the matter that intuition read backwards from quarks
+is, in its structure, now measured, and what stays declined is only its
+numerology.*
