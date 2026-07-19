@@ -613,6 +613,8 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
                              record_every: int = 10,
                              probes=None, kappa0=None,
                              contact_b: float = 0.0,
+                             chiral_omega: float = 0.0,
+                             chiral_coupling: float = 0.0,
                              contact_derived: bool = False,
                              contact_full: bool = False,
                              contact_full_eps: float = 1e-4,
@@ -902,6 +904,25 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
     else:
         kappa = relax_capacity(np.sum(loads_of(pos), axis=0), **fkw)
     kdot = np.zeros_like(kappa)
+    def chiral_kick(p, v):
+        """Drag each form toward the chiral background's rigid rotation.
+
+        The forms are embedded in the chirally-precessing background (the
+        CGL field's Ω = −λ, `chiral_field`): that medium drags an embedded
+        source toward co-rotation at ``chiral_omega`` about the centre of
+        mass, handed by ``sign(chiral_omega)``.  Applied as a velocity
+        relaxation ``v += dt·g·(v_bg − v)`` — self-limiting (a drag, not a
+        pump), so it spins the bound pair up to the background rate rather
+        than flinging it apart.  ``chiral_coupling = 0`` is the achiral
+        molecule (Z2) unchanged.
+        """
+        if not chiral_coupling or p.shape[0] < 2:
+            return v
+        com = np.average(p, axis=0, weights=m)
+        rel = p - com
+        v_bg = chiral_omega * np.stack([-rel[:, 1], rel[:, 0]], axis=1)
+        return v + dt * chiral_coupling * (v_bg - v)
+
     forces = forces_of(pos, kappa)
     hist = {k: [] for k in ("time", "positions", "velocities", "kinetic",
                             "field_energy", "field_kinetic", "energy",
@@ -944,6 +965,7 @@ def evolve_inertial_retarded(positions, velocities, masses, *, shape,
         forces = forces_of(pos, kappa)
         acc = forces / m[:, None]
         vel = vel_half + 0.5 * acc * dt
+        vel = chiral_kick(pos, vel)
     hist["final_positions"] = pos.copy()
     hist["kappa"] = kappa
     return hist
