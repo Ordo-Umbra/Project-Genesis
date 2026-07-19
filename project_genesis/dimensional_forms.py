@@ -32,6 +32,8 @@ more than arbitrary morphology:
 
 from __future__ import annotations
 
+import itertools as _itertools
+
 import numpy as np
 
 try:
@@ -41,46 +43,59 @@ except Exception:  # pragma: no cover
     _HAS_SCIPY = False
 
 
-def local_dimension(labels: np.ndarray) -> np.ndarray:
-    """Per-site codimension class from the number of sectors in its 4-nbhd.
+def _moore_distinct(labels: np.ndarray) -> np.ndarray:
+    """Distinct-sector count per site over the full Moore neighbourhood."""
+    stack = []
+    for offs in _itertools.product((-1, 0, 1), repeat=labels.ndim):
+        shifted = labels
+        for ax, o in enumerate(offs):
+            if o:
+                shifted = np.roll(shifted, o, ax)
+        stack.append(shifted)
+    s = np.sort(np.stack(stack, axis=0), axis=0)
+    return 1 + np.sum(s[1:] != s[:-1], axis=0)
 
-    Returns an int array: ``2`` (domain interior / 2-cell), ``1`` (wall /
-    1-cell), ``0`` (junction / 0-cell).  Neighbourhoods are periodic — the
-    tessellation lives on the torus.
+
+def local_dimension(labels: np.ndarray) -> np.ndarray:
+    """Per-site cell dimension from the number of sectors in its von-Neumann nbhd.
+
+    A site where ``k`` distinct sectors meet has codimension ``k − 1``, so its
+    cell dimension is ``d + 1 − k`` (clamped at 0), where ``d`` is the spatial
+    dimension.  In 2-D: 1 sector → 2-cell (interior), 2 → 1-cell (wall), ≥3 →
+    0-cell (junction).  In 3-D: 1 → 3-cell (volume), 2 → 2-cell (face), 3 →
+    1-cell (triple line), ≥4 → 0-cell (vertex).  Neighbourhoods are periodic —
+    the tessellation lives on the torus.
     """
-    if labels.ndim != 2:
-        raise ValueError("labels must be a 2-D sector-id array")
-    lab = labels
-    neigh = np.stack([
-        lab,
-        np.roll(lab, 1, 0), np.roll(lab, -1, 0),
-        np.roll(lab, 1, 1), np.roll(lab, -1, 1),
-    ], axis=0)
-    # distinct-label count per site: sort along the stack and count changes
-    s = np.sort(neigh, axis=0)
+    d = labels.ndim
+    stack = [labels]
+    for ax in range(d):
+        stack.append(np.roll(labels, 1, ax))
+        stack.append(np.roll(labels, -1, ax))
+    s = np.sort(np.stack(stack, axis=0), axis=0)
     distinct = 1 + np.sum(s[1:] != s[:-1], axis=0)
-    dim = np.full(lab.shape, 2, dtype=int)      # interior by default
-    dim[distinct == 2] = 1                       # wall
-    dim[distinct >= 3] = 0                       # junction
-    return dim
+    return np.maximum(d + 1 - distinct, 0).astype(int)
 
 
 def _dilate(mask: np.ndarray) -> np.ndarray:
-    """One-step 8-connected periodic dilation."""
+    """One-step Moore (fully-connected) periodic dilation, any dimension."""
     out = mask.copy()
-    for dx in (-1, 0, 1):
-        for dy in (-1, 0, 1):
-            out |= np.roll(np.roll(mask, dx, 0), dy, 1)
+    for offs in _itertools.product((-1, 0, 1), repeat=mask.ndim):
+        if any(offs):
+            shifted = mask
+            for ax, o in enumerate(offs):
+                if o:
+                    shifted = np.roll(shifted, o, ax)
+            out = out | shifted
     return out
 
 
 def _count_components(mask: np.ndarray, *, periodic: bool = True) -> int:
-    """Connected components of a boolean mask (periodic, 8-connectivity)."""
+    """Connected components of a boolean mask (periodic, Moore-connectivity)."""
     if not _HAS_SCIPY:
         raise RuntimeError("scipy is required for the dimensional census")
     if not mask.any():
         return 0
-    structure = np.ones((3, 3), dtype=int)
+    structure = np.ones((3,) * mask.ndim, dtype=int)
     labeled, n = _ndi.label(mask, structure=structure)
     if not periodic:
         return int(n)
@@ -98,7 +113,7 @@ def _count_components(mask: np.ndarray, *, periodic: bool = True) -> int:
         if ra != rb:
             parent[max(ra, rb)] = min(ra, rb)
 
-    for axis in (0, 1):
+    for axis in range(mask.ndim):
         front = labeled.take(0, axis=axis)
         back = labeled.take(-1, axis=axis)
         for f, b in zip(front.ravel(), back.ravel()):
@@ -109,38 +124,50 @@ def _count_components(mask: np.ndarray, *, periodic: bool = True) -> int:
 
 
 def dimensional_census(labels: np.ndarray, *, periodic: bool = True) -> dict:
-    """Full 0D/1D/2D census of a sector-labelled 2-D field.
+    """Full CW-census of a sector-labelled field, in any spatial dimension.
 
-    Returns counts ``V`` (junctions / 0-cells), ``E`` (wall arcs / 1-cells),
-    ``F`` (domains / 2-cells), the Euler number ``V − E + F`` (0 on the
-    torus for a clean CW-decomposition), the mean junction valence, and the
-    ratio vector normalised to F — the dimensional hierarchy.
+    Counts the connected components of each cell dimension ``ℓ = 0..d``
+    (``d = labels.ndim``): a ℓ-cell is a component of ``{dim == ℓ}`` **cut at
+    the lower-dimensional cells** (the dilated ``{dim < ℓ}`` removed, so cells
+    split at their boundaries); the top cells (ℓ = d) are the domains
+    themselves.  Returns per-dimension counts ``cells`` (``cells[0]`` = 0-cells
+    …), the named ``V``/``E``/``F``(/``C`` in 3-D), and the **Euler number**
+    ``Σ (−1)^ℓ N_ℓ`` — which is 0 on the torus ``Tᵈ`` for a clean
+    decomposition (``V − E + F`` in 2-D, ``V − E + F − C`` in 3-D).
+
+    Also: ``mean_valence`` (distinct sectors at the 0-cells — 3 for 2-D
+    Y-junctions, ~4 for 3-D tetrahedral vertices), ``valence_by_dim`` (the
+    Plateau structure: how many sectors meet at each cell dimension), the
+    ratio to the top cell, and per-dimension area fractions.
     """
+    d = labels.ndim
     dim = local_dimension(labels)
-    v = _count_components(dim == 0, periodic=periodic)
-    # edges are wall arcs CUT at the junctions: remove a 1-pixel-dilated
-    # junction neighbourhood from the wall set so arcs meeting at a vertex
-    # become separate 1-cells (else the whole wall graph is one component)
-    junction_dil = _dilate(dim == 0)
-    wall_arcs = (dim == 1) & ~junction_dil
-    e = _count_components(wall_arcs, periodic=periodic)
-    # F = number of domains = periodic connected components of equal label
-    f = _count_domains(labels, periodic=periodic)
-    euler = v - e + f
-    # mean junction valence: distinct sectors touching each junction site,
-    # averaged over junction sites (3 for a clean Y-junction phase)
-    valence = _mean_junction_valence(labels, dim)
-    total = max(v + e + f, 1)
-    return {
-        "V": v, "E": e, "F": f, "euler": euler,
-        "mean_valence": valence,
-        "fraction_0D": v / total, "fraction_1D": e / total,
-        "fraction_2D": f / total,
-        "ratio_to_F": (v / max(f, 1), e / max(f, 1), 1.0),
-        "area_0D": int(np.sum(dim == 0)),
-        "area_1D": int(np.sum(dim == 1)),
-        "area_2D": int(np.sum(dim == 2)),
+    cells = {}
+    for ell in range(d):                     # 0 .. d-1 : cut at lower cells
+        mask = (dim == ell)
+        if ell > 0:
+            mask = mask & ~_dilate(dim < ell)
+        cells[ell] = _count_components(mask, periodic=periodic)
+    cells[d] = _count_domains(labels, periodic=periodic)   # top cells = domains
+    euler = int(sum((-1) ** ell * cells[ell] for ell in range(d + 1)))
+    total = max(sum(cells.values()), 1)
+    top = max(cells[d], 1)
+    out = {
+        "cells": {ell: cells[ell] for ell in range(d + 1)},
+        "euler": euler,
+        "mean_valence": _mean_junction_valence(labels, dim),
+        "valence_by_dim": _valence_by_dim(labels, dim),
+        "ratio_to_top": tuple(cells[ell] / top for ell in range(d + 1)),
     }
+    # named keys (V/E/F in 2-D — F is the domain count there; V/E/F/C in 3-D)
+    names = ["V", "E", "F", "C"]
+    for ell in range(d + 1):
+        out[names[ell]] = cells[ell]
+        out[f"area_{ell}D"] = int(np.sum(dim == ell))
+        out[f"fraction_{ell}D"] = cells[ell] / total
+    if d == 2:                               # back-compat with the 2-D callers
+        out["ratio_to_F"] = out["ratio_to_top"]
+    return out
 
 
 def _count_domains(labels: np.ndarray, *, periodic: bool = True) -> int:
@@ -152,22 +179,26 @@ def _count_domains(labels: np.ndarray, *, periodic: bool = True) -> int:
 
 
 def _mean_junction_valence(labels: np.ndarray, dim: np.ndarray) -> float:
-    """Average number of distinct sectors meeting at a junction site."""
+    """Average number of distinct sectors meeting at a 0-cell (vertex) site."""
     js = dim == 0
     if not js.any():
         return 0.0
-    neigh = np.stack([
-        labels,
-        np.roll(labels, 1, 0), np.roll(labels, -1, 0),
-        np.roll(labels, 1, 1), np.roll(labels, -1, 1),
-        np.roll(np.roll(labels, 1, 0), 1, 1),
-        np.roll(np.roll(labels, 1, 0), -1, 1),
-        np.roll(np.roll(labels, -1, 0), 1, 1),
-        np.roll(np.roll(labels, -1, 0), -1, 1),
-    ], axis=0)
-    s = np.sort(neigh, axis=0)
-    distinct = 1 + np.sum(s[1:] != s[:-1], axis=0)
-    return float(distinct[js].mean())
+    return float(_moore_distinct(labels)[js].mean())
+
+
+def _valence_by_dim(labels: np.ndarray, dim: np.ndarray) -> dict:
+    """Mean distinct sectors meeting at each cell dimension (Plateau structure).
+
+    A clean foam has ``d + 1 − ℓ`` sectors meeting at a ℓ-cell: in 3-D,
+    4 at vertices (0-cells), 3 along triple lines (1-cells), 2 on faces
+    (2-cells).
+    """
+    distinct = _moore_distinct(labels)
+    out = {}
+    for ell in range(labels.ndim + 1):
+        mask = dim == ell
+        out[ell] = float(distinct[mask].mean()) if mask.any() else 0.0
+    return out
 
 
 def scalar_sector_labels(field: np.ndarray, n_levels: int = 4) -> np.ndarray:

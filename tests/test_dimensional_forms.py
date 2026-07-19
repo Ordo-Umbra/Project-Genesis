@@ -68,6 +68,43 @@ class EulerBackboneTests(unittest.TestCase):
         self.assertLess(abs(c["ratio_to_F"][1] - 3.0), 0.6)
 
 
+class ThreeDimensionalTests(unittest.TestCase):
+    def test_slabs_euler_zero(self):
+        # two slab domains, two planar walls, no edges/vertices on T^3
+        lab = np.zeros((24, 24, 24), dtype=int)
+        lab[12:, :, :] = 1
+        c = dimensional_census(lab)
+        self.assertEqual((c["V"], c["E"], c["F"], c["C"]), (0, 0, 2, 2))
+        self.assertEqual(c["euler"], 0)          # 0 - 0 + 2 - 2
+
+    def test_eight_block_is_a_valid_cw_complex(self):
+        # 2x2x2 cubes: a clean CW-decomposition of the 3-torus
+        lab = np.zeros((24, 24, 24), dtype=int)
+        idx = 0
+        for a in (slice(0, 12), slice(12, 24)):
+            for b in (slice(0, 12), slice(12, 24)):
+                for c_ in (slice(0, 12), slice(12, 24)):
+                    lab[a, b, c_] = idx
+                    idx += 1
+        c = dimensional_census(lab)
+        self.assertEqual(c["euler"], 0)          # V-E+F-C = 8-24+24-8
+        self.assertEqual(len(c["cells"]), 4)     # four cell dimensions
+
+    def test_four_families_need_the_fourth_sector(self):
+        # a 0-cell (vertex) needs 4 distinct sectors to meet in 3-D
+        from project_genesis.multiphase import sector_labels, step_multiphase
+        import numpy as np2
+        def families(palette):
+            r = np2.random.default_rng(0)
+            f = 0.1 * r.standard_normal((palette, 40, 40, 40))
+            for _ in range(120):
+                f = step_multiphase(f, diffusion=1.0, gamma=1.5, dt=0.1)
+            c = dimensional_census(sector_labels(f))
+            return sum(1 for k in c["cells"].values() if k > 0)
+        self.assertEqual(families(3), 3)         # one sector short of a vertex
+        self.assertEqual(families(4), 4)         # d + 1 = 4 families
+
+
 class ScalarLabelTests(unittest.TestCase):
     def test_level_banding_gives_requested_sector_count(self):
         field = np.linspace(0, 1, 400).reshape(20, 20)
