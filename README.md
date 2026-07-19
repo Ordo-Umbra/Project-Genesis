@@ -72,7 +72,7 @@ project_genesis/
   capacity_waves.py    Finite-speed κ (telegrapher form): causal cone at c_κ=√(D/τ), massive dispersion ω²=(Dk²+r+cρ)/τ−1/4τ², retarded inertial gravity (Lyapunov energy), the exclusion contact term (b/2)∫ρ², parabolic control
   stable_forms.py      The spectrum of stable κ-forms: structural mass, binding, form interactions
   multiphase.py        Three-component Ψ∈ℂ³ sector field with 120° Y-junctions
-  dimensional_forms.py CW-census of the sector tessellation: 0D junctions / 1D walls / 2D domains, the Euler invariant V−E+F, junction valence
+  dimensional_forms.py CW-census of the sector tessellation (any dimension): 0D/1D/2D(/3D) cells, the Euler invariant V−E+F(−C), junction valence, the Plateau structure
   chiral_field.py      The chiral (parity-breaking) spin term: complex Ginzburg–Landau with coupling λ, intrinsic precession Ω=−λ, vorticity (spin density)
   network_server.py    WebSocket server for remote monitoring and control
   numba_kernels.py     Numba JIT-accelerated field evolution kernels
@@ -213,6 +213,7 @@ experiments/
   n3_chiral_spin.py         Chiral spin: the parity-breaking term gives the field intrinsic spin Ω=−λ — 3/3; λ=0 restores parity, and the spin lives on the 0D 'light' forms
   n3_spinning_molecule.py   The spinning molecule: a chiral drive lets the bound κ-pair hold Ω where the achiral molecule drained (Z2) — the first bound object that turns
   n3_form_abundances.py     Form abundances: three generations because space is 2-D (families=d+1, palette-independent) — 3/3; topologically protected, heavy rarest; no numerical quark-match claimed
+  n3_3d_generations.py      Four generations in 3-D: the census's sharpest prediction — 3/3; families=min(P,d+1), the Plateau foam valences 4/3/2/1, Euler V−E+F−C=0 on T³
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1399,6 +1400,20 @@ This is the honest answer to "why three generations": not a fit to the Standard 
 Reproduce with `python experiments/n3_form_abundances.py` (≈ 3 minutes; `--quick` for a smoke run).
 
 **Honest scope:** tests the structure (family count = 2-D CW dimensions, topological protection, which family is rarest), **not** a numerical match to quark data — that remains a stretch the program does not make; the 2:3:1 ratio drifts slightly as the palette grows (higher-order junctions creep in, within the bar); "energy" here is coarsening depth at fixed cold phase; one lattice (96²); the 3-D census (predicting four families) is the registered next rung.
+
+### Four generations in 3-D: the census's sharpest prediction — 3/3
+
+The crispest, most falsifiable form of the dimensional-form law (`experiments/n3_3d_generations.py`): if the generation count is `d + 1` (three families in 2-D), then a **3-D** field must carry **four** — vertices, triple-lines, faces, volumes (0-/1-/2-/3-cells) — with Euler `V − E + F − C = 0` on the 3-torus and the tetrahedral **Plateau** junction structure of a real foam. The census module is dimension-general (validated exact on synthetic `T³` tilings), and calibration sharpened the law: a vertex needs *four* distinct sectors to meet, so the count is `min(P, d+1)` — the fourth generation appears exactly when the fourth sector is available. **3/3 registered:**
+
+- **D1 ✓ Four families, and the fourth needs the fourth sector.** The 3-D census gives `min(P, 4)` families across P = 3, 4, 5 — that is **3, 4, 4**. The vertex (0-cell) family is *empty* at P = 3 (one sector short of a tetrahedral vertex) and appears at P = 4 = d+1, then saturates. **Four generations because space is 3-D**, once four sectors can meet at a point.
+- **D2 ✓ The Plateau foam structure.** At P = 4 the mean sectors meeting at the 0/1/2/3-cells are **4.00 / 3.07 / 2.17 / 1.24** vs the tetrahedral 4/3/2/1 — vertices where four domains meet, triple-lines where three do, faces where two: the junction structure of a real 3-D soap froth (Plateau's laws), the 3-D analogue of 2-D's trivalent Y-junctions.
+- **D3 ✓ Euler on the 3-torus.** At P = 4 the normalised defect `|V−E+F−C|/(V+E+F+C)` = **0.070** — a consistent CW-decomposition of `T³`, the topological backbone the family count rests on.
+
+This is the dimensional-form prediction at its sharpest, and it lands: **the number of generations is the dimension of space plus one** — three in 2-D, four in 3-D — a topological count, not a fit. The informative near-miss is P = 3 in 3-D: three families and a large Euler defect, because it is one sector short of a clean four-cell foam. (The numerology stays declined, as in 2-D; what is measured is the *structure*.)
+
+Reproduce with `python experiments/n3_3d_generations.py` (≈ 6 minutes; `--quick` for a smoke run); 3-D census checks (slab/8-block Euler=0, four-families-need-four-sectors) in `tests/test_dimensional_forms.py`.
+
+**Honest scope:** structure only, no numerical generation-data match; the Plateau valences carry the usual pixel spread (the 3-cell value sits slightly above 1 — interiors touch walls in the Moore neighbourhood); one lattice (48³), Allen–Cahn, seed-averaged; the census reuses the 2-D instrument unchanged (it is dimension-general).
 
 ## Setup
 

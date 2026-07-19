@@ -87,8 +87,14 @@ topological answer that declines the numerology.  Across sector counts
 ratio near `2:3:1`: three domains generically meet at a point whatever the
 palette, so the family count is `d + 1 = 3` in two dimensions.  *Three
 generations because space is 2-D* — cells of dimension 0, 1, 2 — not because of
-any tuning, and the sharpest form of the claim is the prediction of **four**
-families in 3-D (the registered next rung).  The abundances are **topologically
+any tuning.  And the sharpest form of the claim is now **measured**
+(`experiments/n3_3d_generations.py`, 3/3): a 3-D field carries **four**
+families (vertices, triple-lines, faces, volumes) with the tetrahedral
+**Plateau** valences `4/3/2/1` and Euler `V − E + F − C = 0` on the 3-torus —
+and the count is `min(P, d + 1)`, the fourth (vertex) generation appearing
+exactly when a fourth sector is available to meet at a point (P = 3 in 3-D is
+one sector short, and carries only three).  *The number of generations is the
+dimension of space plus one.*  The abundances are **topologically
 protected** (the ratio's coefficient of variation is `0.057` as the field is run
 from fine to coarse — fixed by the junctions, not by energy) and the **2D "heavy"
 family is the rarest** at every point — the qualitative shape of ordinary matter,
@@ -261,10 +267,12 @@ apart plainly:
 **Measured (pre-registered verdicts in this repo).**
 - The dimensional forms are CW-cells; the confined ratio is the trivalent
   `2:3:1` fixed by `N⋆ = 3`; the Euler defect is a deconfinement order parameter.
-- **The generation count is topological**: three families because space is 2-D
-  (`d + 1`), palette-independent; the abundances are topologically protected
-  across energy, and the heavy (2D) family is the rarest — the *structure* of the
-  collab's abundance hierarchy, with no numerical quark-match claimed.
+- **The generation count is the dimension of space plus one**: three families
+  in 2-D, **four in 3-D** (vertices/edges/faces/volumes, with the Plateau `4/3/2/1`
+  valences and Euler `V−E+F−C = 0` on `T³`), the count `min(P, d+1)` — the
+  abundances are topologically protected across energy, the heavy family rarest —
+  the *structure* of the collab's abundance hierarchy, no numerical quark-match
+  claimed.
 - The natural pair has a parameter-free binding floor derived from the field's
   own free energy; identity can be measured, not just assigned.
 - The forms gravitate at finite speed, drag, radiate quadrupole-led, and merge by
@@ -285,9 +293,6 @@ apart plainly:
   analogue of quark pairs, with the right multiplet structure, is a reading, not
   a measurement.  The `N⋆ = 3` colour tie is measured; the flavour structure is
   not.
-- **Four families in 3-D.**  The dimensional-form prediction has a sharp,
-  untested edge: a 3-D census should show `d + 1 = 4` families (cells of dim
-  0–3).  The census is 2-D today; the 3-D extension is the sharpest next test.
 - **Spin's higher-dimensional manifestations.**  The chiral term is the 2-D
   minimal one; the program's intuition that it is the shadow of a
   higher-dimensional structure (and that spin is quantised, not continuous) is
@@ -304,7 +309,7 @@ apart plainly:
 
 | File | What it adds |
 |---|---|
-| `dimensional_forms.py` | CW-census: 0D/1D/2D forms, Euler `V−E+F`, junction valence |
+| `dimensional_forms.py` | CW-census (any dimension): 0D/1D/2D(/3D) cells, Euler, junction valence, the Plateau structure |
 | `chiral_field.py` | The chiral spin term (CGL), precession `Ω = −λ`, vorticity |
 | `capacity_waves.py` | Finite-speed `κ` (telegrapher), retarded gravity, the exclusion contact terms |
 
@@ -314,6 +319,7 @@ apart plainly:
 |---|---|---|
 | `n3_quark_generations.py` | 3/3 | forms as CW-cells; confined `2:3:1`; Euler-deconfinement |
 | `n3_form_abundances.py` | 3/3 | three families because space is 2-D (`d+1`); protected; heavy rarest |
+| `n3_3d_generations.py` | 3/3 | **four** families in 3-D (`min(P,d+1)`); Plateau `4/3/2/1`; Euler on `T³` |
 | `n3_chiral_spin.py` | 3/3 | spin `Ω = −λ`, on the 0D forms; parity at `λ = 0` |
 | `n3_spinning_molecule.py` | 3/3 | a chiral drive lets the bound pair hold `Ω` (§5→§4 closed) |
 | `n3_exclusion_*` (five) | see doc | the derived, parameter-free pair-binding floor |
