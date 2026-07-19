@@ -204,6 +204,7 @@ experiments/
   n3_exclusion_dilute.py    Deriving b, Part V: the dilute operating point — 0/3 recorded as-is; joint-limit convergence, the min-construction pinned by a 2×2, the repelled binary
   n3_identity_generation.py Identity generation: sameness measured from internal patterns (φ = Σmin), not assigned — clones floor, independents don't, and drift sets an individuality threshold
   n3_identity_invariance.py Identity invariance: aligned sameness (max over rigid motions) — the stranger gap survives, the floor follows identity not pose; the resolution trade-off measured
+  n3_kappa_molecule.py      The κ-molecule: derived-exclusion floor + spin — 2/3; the first persistent bound object, overdamped rotation (Q<½), but the quasi-static drag rate is refuted 8×; sings at the statics' libration pitch
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1315,6 +1316,20 @@ The registered follow-up (`experiments/n3_identity_invariance.py`): identity sho
 Reproduce with `python experiments/n3_identity_invariance.py` (≈ 10 minutes; `--quick` for a smoke run).
 
 **Honest scope:** rigid motions only (reflection/scale/deformation untested); the V1 bar was set above what the calibration probe itself suggested and the miss is recorded, not re-barred; the stranger's absolute φ_inv is maximization-inflated — the registered claim is the surviving gap; one structure family and seed pair; statics only, as the parent.
+
+### The κ-molecule: the first persistent binary, and why it cannot spin — 2/3
+
+The reunion experiment (`experiments/n3_kappa_molecule.py`): three recorded results meet. The plunge showed this gravity's binaries cannot orbit (the trench collapse) and merge silent (the soft blob); the derived exclusion (Part II) holds a pair open on a **parameter-free** floor; and the quadrupole selection rule (the 2Ω line) had only ever been heard from a *driven* rotor. Give the floor-supported pair angular momentum — with the drag coefficient `C_θ = Σ(∂_θκ)²` and moment of inertia `I` both read off **one relaxed field** — and ask whether it becomes a spinning molecule. **2/3 registered predictions land, and the miss is the physics:**
+
+- **Z1 ✓ The molecule exists.** With derived exclusion + spin, the pair locks at separation ≈ s\* = 9 across the whole run (t ∈ [50, 400]) while the no-exclusion control merges (sep → 0.2) — the co-evolved theory's **first persistent bound object**, exclusion turning the plunge into a κ-molecule.
+- **Z2 ✗ as registered — overdamping confirmed, the quasi-static rate refuted.** Z2 was a *compound* bar: `Q = 2Ω₀·I/C_θ < ½` **and** the spin-down rate ≈ the quasi-static `C_θ/I`. The first half holds decisively — `Q = 0.267 < ½`, both constants from the relaxed field, so the free rotor's 2Ω line is genuinely **impossible** here (the quadrupole line lived only because the drive resupplied the angular momentum this viscous medium drains). But the second half fails hard: the measured spin-down is **~8× slower** than `C_θ/I` (0.083 vs 0.68). The mechanism is retardation — the overdamped pair barely moves, so the lagging field never builds the full static gradient `C_θ` assumes, and the real torque is far weaker. The quasi-static drag *law* is refuted even as the overdamping it implies is confirmed.
+- **Z3 ✓ The song that remains is the floor's own.** The waveform's dominant line (whitened contrast 77) sits at ω = 0.512 vs the **derived static libration pitch** `√(E″(s*)/μ)` = 0.355 (ratio 1.44, within the factor-2 bar) — the molecule sings, but radially, at the pitch the parameter-free exclusion statics set.
+
+This closes the finite-speed + exclusion arc on a physical object: **a κ-molecule is a librating contact pair, not a spinning one** — the derived floor is stiff, the medium viscous, and this gravity supports vibration but not rotation. The Z2 miss sharpens the open door: the naive quasi-static drag coefficient is not the right rate law in the overdamped/retarded regime, and a weak-field-friction variant (the plunge arc's registered door) is where a *spinning* molecule — and the free 2Ω line — could finally live.
+
+Reproduce with `python experiments/n3_kappa_molecule.py` (≈ 10 minutes; `--quick` for a smoke run).
+
+**Honest scope:** one operating point (the exclusion arc's), one spin; the exclusion sector is adiabatic while gravity is retarded (the base-branch split); the drag prediction is quasi-static (v/c_κ ≈ 0.16) and rigid-rotor — precisely the assumption Z2 refutes; the libration pitch uses a coarse parabola through the derived `E(s)` grid near s\*; equal masses.
 
 ## Setup
 
