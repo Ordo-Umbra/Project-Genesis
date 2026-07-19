@@ -105,6 +105,31 @@ class ThreeDimensionalTests(unittest.TestCase):
         self.assertEqual(families(4), 4)         # d + 1 = 4 families
 
 
+class FlavourTests(unittest.TestCase):
+    def test_domain_flavours_are_the_sectors(self):
+        from project_genesis.dimensional_forms import cell_flavours
+        lab = np.zeros((30, 30), dtype=int)
+        lab[:, 10:20] = 1
+        lab[:, 20:] = 2
+        fc = cell_flavours(lab, 2)                 # top cells = domains
+        self.assertEqual(set(fc.keys()),
+                         {frozenset({0}), frozenset({1}), frozenset({2})})
+
+    def test_junction_flavour_is_the_meeting_triple(self):
+        from project_genesis.dimensional_forms import cell_flavours
+        lab = np.zeros((30, 30), dtype=int)       # three sectors meet
+        lab[:, 15:] = 1
+        lab[15:, 15:] = 2
+        fc = cell_flavours(lab, 0)                 # 0-cells (junctions)
+        self.assertTrue(all(len(k) == 3 for k in fc))
+        self.assertIn(frozenset({0, 1, 2}), fc)
+
+    def test_flavour_entropy_bounds(self):
+        from project_genesis.dimensional_forms import flavour_entropy
+        self.assertAlmostEqual(flavour_entropy({"a": 5, "b": 5}), 1.0)
+        self.assertLess(flavour_entropy({"a": 99, "b": 1}), 0.5)
+
+
 class ScalarLabelTests(unittest.TestCase):
     def test_level_banding_gives_requested_sector_count(self):
         field = np.linspace(0, 1, 400).reshape(20, 20)

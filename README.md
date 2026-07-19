@@ -72,7 +72,7 @@ project_genesis/
   capacity_waves.py    Finite-speed κ (telegrapher form): causal cone at c_κ=√(D/τ), massive dispersion ω²=(Dk²+r+cρ)/τ−1/4τ², retarded inertial gravity (Lyapunov energy), the exclusion contact term (b/2)∫ρ², parabolic control
   stable_forms.py      The spectrum of stable κ-forms: structural mass, binding, form interactions
   multiphase.py        Three-component Ψ∈ℂ³ sector field with 120° Y-junctions
-  dimensional_forms.py CW-census of the sector tessellation (any dimension): 0D/1D/2D(/3D) cells, the Euler invariant V−E+F(−C), junction valence, the Plateau structure
+  dimensional_forms.py CW-census of the sector tessellation (any dimension): 0D/1D/2D(/3D) cells, Euler V−E+F(−C), junction valence, the Plateau structure, and the flavour (sector-composition) multiplets
   chiral_field.py      The chiral (parity-breaking) spin term: complex Ginzburg–Landau with coupling λ, intrinsic precession Ω=−λ, vorticity (spin density)
   network_server.py    WebSocket server for remote monitoring and control
   numba_kernels.py     Numba JIT-accelerated field evolution kernels
@@ -214,6 +214,7 @@ experiments/
   n3_spinning_molecule.py   The spinning molecule: a chiral drive lets the bound κ-pair hold Ω where the achiral molecule drained (Z2) — the first bound object that turns
   n3_form_abundances.py     Form abundances: three generations because space is 2-D (families=d+1, palette-independent) — 3/3; topologically protected, heavy rarest; no numerical quark-match claimed
   n3_3d_generations.py      Four generations in 3-D: the census's sharpest prediction — 3/3; families=min(P,d+1), the Plateau foam valences 4/3/2/1, Euler V−E+F−C=0 on T³
+  n3_flavour_structure.py   Flavour structure: the forms' second quantum number (sector-composition) — 3/3; the multiplet sizes are Pascal's C(P,d+1−ℓ), democratic, conserved; no CKM-match claimed
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1414,6 +1415,20 @@ This is the dimensional-form prediction at its sharpest, and it lands: **the num
 Reproduce with `python experiments/n3_3d_generations.py` (≈ 6 minutes; `--quick` for a smoke run); 3-D census checks (slab/8-block Euler=0, four-families-need-four-sectors) in `tests/test_dimensional_forms.py`.
 
 **Honest scope:** structure only, no numerical generation-data match; the Plateau valences carry the usual pixel spread (the 3-cell value sits slightly above 1 — interiors touch walls in the Moore neighbourhood); one lattice (48³), Allen–Cahn, seed-averaged; the census reuses the 2-D instrument unchanged (it is dimension-general).
+
+### Flavour structure: the forms' second quantum number is Pascal's triangle — 3/3
+
+The flavour frontier the synthesis named (`experiments/n3_flavour_structure.py`): the census gave each form a **generation** (its cell dimension); this measures its *other* quantum number — its **flavour**, the identity of the sectors composing it. A domain is one sector (a bare colour), a wall two (a colour–anticolour pair, meson-like), a junction `d+1` (a colour-singlet triple, baryon-like). Held to the same anti-numerology line as the abundances: it tests the *structure*, not a match to CKM angles or masses. **3/3 registered:**
+
+- **L1 ✓ The flavour spectrum is Pascal's triangle.** With P sectors the flavour count at generation ℓ is exactly `C(P, d+1−ℓ)` — in 2-D, domains `C(P,1)`, walls `C(P,2)`, junctions `C(P,3)`. Measured realised/expected: **P=4 [4/4, 6/6, 4/4]; P=5 [5/5, 10/10, 10/10]** — every flavour of the multiplet realised, the sizes a row of Pascal's triangle across the generations.
+- **L2 ✓ Flavour is democratic under the sector symmetry.** With the sectors equivalent, each multiplet is uniformly populated (normalised entropy **0.93–0.98** at every generation) — an unbroken flavour symmetry.
+- **L3 ✓ Flavour is a conserved quantum number.** The distribution is stable as the field runs further (entropy 0.981/0.974/0.942 across coarsening depths spanning ×3) — a good label, not a coarsening transient.
+
+So a form carries **two orthogonal quantum numbers at once**: its generation (dimensional family) and its flavour (sector-composition) — the structural echo of a quark's generation and its colour content, with the multiplet sizes fixed by Pascal's triangle. The numerology (CKM, masses) stays declined; the *structure* is measured.
+
+Reproduce with `python experiments/n3_flavour_structure.py` (≈ 8 minutes; `--quick` for a smoke run); flavour checks (domain/junction composition, entropy bounds) in `tests/test_dimensional_forms.py`.
+
+**Honest scope:** structure only — no CKM/mass match (declined, as with abundances); flavour is the sector-composition (generic size `d+1−ℓ` per generation, the non-generic 4-sector junction dropped); a flavour **hierarchy** from breaking the sector symmetry is *not* shown — Allen–Cahn is winner-take-all, so a global bias drives total domination rather than a graded abundance (the open frontier); one lattice (96²), seed-unioned for L1; the generation × flavour orthogonality is a reading, not scored.
 
 ## Setup
 

@@ -201,6 +201,49 @@ def _valence_by_dim(labels: np.ndarray, dim: np.ndarray) -> dict:
     return out
 
 
+def cell_flavours(labels: np.ndarray, ell: int, *,
+                  periodic: bool = True) -> dict:
+    """Flavour distribution over the ℓ-cells: their sector-composition.
+
+    A form's **flavour** is the set of sectors composing it — a domain (top
+    cell) carries one sector, a wall (2 sectors, a colour–anticolour pair),
+    a junction (``d+1`` sectors, a colour-singlet).  Returns a dict mapping
+    ``frozenset`` of sectors → count of ℓ-cells with that composition,
+    restricted to the canonical composition size ``d + 1 − ℓ`` (the generic
+    flavour of a ℓ-cell).  With ``P`` sectors the multiplet size is
+    ``C(P, d+1−ℓ)`` — the Pascal-triangle flavour spectrum.
+    """
+    d = labels.ndim
+    dim = local_dimension(labels)
+    want = d + 1 - ell
+    if ell == d:                                     # domains: per-sector
+        out = {}
+        for sector in np.unique(labels):
+            out[frozenset((int(sector),))] = _count_components(
+                labels == sector, periodic=periodic)
+        return out
+    mask = (dim == ell) & ~_dilate(dim < ell)
+    if not mask.any() or not _HAS_SCIPY:
+        return {}
+    labeled, n = _ndi.label(mask, structure=np.ones((3,) * d, dtype=int))
+    counts: dict = {}
+    for comp in range(1, n + 1):
+        footprint = _dilate(labeled == comp)
+        flav = frozenset(int(s) for s in np.unique(labels[footprint]))
+        if len(flav) == want:
+            counts[flav] = counts.get(flav, 0) + 1
+    return counts
+
+
+def flavour_entropy(counts: dict) -> float:
+    """Normalised Shannon entropy of a flavour distribution (1 = democratic)."""
+    v = np.array(list(counts.values()), dtype=float)
+    if v.sum() <= 0 or len(v) < 2:
+        return 1.0 if len(v) == 1 else 0.0
+    p = v / v.sum()
+    return float(-np.sum(p * np.log(p + 1e-12)) / np.log(len(v)))
+
+
 def scalar_sector_labels(field: np.ndarray, n_levels: int = 4) -> np.ndarray:
     """Sector labels for a scalar field by quantile level-banding.
 
