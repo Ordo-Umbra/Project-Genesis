@@ -147,6 +147,23 @@ reducing to the pair form at `O(c²)`, with a trimer floor of its own.
 matter sector — a charge-conjugate pair on a parameter-free exclusion floor —
 and the framework now *derives* the binding rather than dialing it.
 
+**And the forms carry flavour.**  *(Measured — `experiments/n3_flavour_structure.py`,
+3/3.)*  Beyond its generation (§2), a form carries a second quantum number: its
+**flavour**, the identity of the sectors that compose it — a domain is one
+sector (a bare colour), a wall two (a colour–anticolour pair, meson-like), a
+junction ``d+1`` (a colour-singlet triple, baryon-like).  The multiplet sizes
+are **Pascal's triangle**: with ``P`` sectors, generation ℓ realises exactly
+``C(P, d+1−ℓ)`` flavours (in 2-D: ``C(P,1)``, ``C(P,2)``, ``C(P,3)`` for
+domains, walls, junctions — measured all realised, `P = 4`: 4/6/4, `P = 5`:
+5/10/10).  Under the sector symmetry the multiplets are **democratic** (uniform,
+normalised entropy > 0.93), and the flavour distribution is a **conserved**
+label (stable as the field runs further).  So each form carries *two orthogonal
+quantum numbers at once* — generation × flavour, the structural echo of a
+quark's generation and its colour content.  A flavour *hierarchy* from breaking
+the sector symmetry stays open (the coarsening dynamics is winner-take-all, so a
+global bias dominates rather than grades), and the numerology — CKM, masses —
+is declined, as everywhere in this act: the **structure** is what is measured.
+
 ---
 
 ## 4. The forms gravitate — at a finite speed, with a merger of their own
@@ -275,6 +292,10 @@ apart plainly:
   claimed.
 - The natural pair has a parameter-free binding floor derived from the field's
   own free energy; identity can be measured, not just assigned.
+- **The forms carry flavour** — their sector-composition — with multiplet sizes
+  fixed by Pascal's triangle (`C(P, d+1−ℓ)` per generation), democratic under the
+  sector symmetry, and conserved: a second quantum number orthogonal to the
+  generation.
 - The forms gravitate at finite speed, drag, radiate quadrupole-led, and merge by
   plunge; a `±` pair on the exclusion floor is a persistent bound object.
 - Spin is a chiral term giving intrinsic precession `Ω = −λ`, carried by the 0D
@@ -289,10 +310,13 @@ apart plainly:
   different energies reproduce the *numerical proportions* of the real
   generations — is deliberately **not** made, and is a numerological stretch the
   program declines rather than a pending verdict.
-- **The pairs as quarks.**  That the charge-conjugate exclusion pairs *are* the
-  analogue of quark pairs, with the right multiplet structure, is a reading, not
-  a measurement.  The `N⋆ = 3` colour tie is measured; the flavour structure is
-  not.
+- **The flavour hierarchy and the CKM numbers.**  The flavour *structure* is now
+  measured (Pascal multiplets, democracy, conservation), but a flavour
+  *hierarchy* from breaking the sector symmetry is not — the coarsening dynamics
+  is winner-take-all, so a global bias dominates rather than grades; and no
+  numerical match to CKM mixing or quark masses is claimed (declined, not
+  pending).  The `N⋆ = 3` colour tie and the multiplet structure are measured;
+  the mass/mixing numbers are the numerology the program does not chase.
 - **Spin's higher-dimensional manifestations.**  The chiral term is the 2-D
   minimal one; the program's intuition that it is the shadow of a
   higher-dimensional structure (and that spin is quantised, not continuous) is
@@ -309,7 +333,7 @@ apart plainly:
 
 | File | What it adds |
 |---|---|
-| `dimensional_forms.py` | CW-census (any dimension): 0D/1D/2D(/3D) cells, Euler, junction valence, the Plateau structure |
+| `dimensional_forms.py` | CW-census (any dimension): cells, Euler, valence, the Plateau structure, the flavour multiplets |
 | `chiral_field.py` | The chiral spin term (CGL), precession `Ω = −λ`, vorticity |
 | `capacity_waves.py` | Finite-speed `κ` (telegrapher), retarded gravity, the exclusion contact terms |
 
@@ -320,6 +344,7 @@ apart plainly:
 | `n3_quark_generations.py` | 3/3 | forms as CW-cells; confined `2:3:1`; Euler-deconfinement |
 | `n3_form_abundances.py` | 3/3 | three families because space is 2-D (`d+1`); protected; heavy rarest |
 | `n3_3d_generations.py` | 3/3 | **four** families in 3-D (`min(P,d+1)`); Plateau `4/3/2/1`; Euler on `T³` |
+| `n3_flavour_structure.py` | 3/3 | flavour = sector-composition; Pascal multiplets `C(P,d+1−ℓ)`; democratic, conserved |
 | `n3_chiral_spin.py` | 3/3 | spin `Ω = −λ`, on the 0D forms; parity at `λ = 0` |
 | `n3_spinning_molecule.py` | 3/3 | a chiral drive lets the bound pair hold `Ω` (§5→§4 closed) |
 | `n3_exclusion_*` (five) | see doc | the derived, parameter-free pair-binding floor |
@@ -341,6 +366,7 @@ tessellates into a countable inventory of forms — three families because space
 is two-dimensional, their proportion fixed by topology and the heavy one rarest —
 binds them in conjugate pairs on a derived floor, gravitates them at a finite
 speed, and, with one parity-breaking term, spins the point-like ones and lets a
-bound pair hold that spin; the matter that intuition read backwards from quarks
-is, in its structure, now measured, and what stays declined is only its
-numerology.*
+bound pair hold that spin — each form carrying two orthogonal quantum numbers,
+its generation and its Pascal-sized flavour; the matter that intuition read
+backwards from quarks is, in its structure, now measured, and what stays
+declined is only its numerology.*
