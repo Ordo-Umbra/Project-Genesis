@@ -25,13 +25,24 @@ the field's own circulation torques the pair through the phase-current force
 ``q = 0`` is the achiral molecule (Z2) — no vortex, no circulation, no spin.
 The winding is an integer, so the field's angular momentum is **quantised**.
 
-Honest scope: the vortex is *pinned* to its form (imprinted each step, the
-amplitude co-evolving) rather than self-sustained by the bare CGL dynamics — a
-topological binding of a defect to matter, which the κ wells physically anchor
-(a vortex core sits at an amplitude minimum).  A fully emergent, CGL-sustained
-vortex is the deeper version; what is removed here is the rigid-rotation flow
-profile — the flow is now the real vortex circulation, and the torque the real
-phase-current force.
+The default vortex is *pinned* to its form (imprinted each step, the amplitude
+co-evolving) rather than self-sustained by the bare CGL dynamics — a topological
+binding of a defect to matter, which the κ wells physically anchor (a vortex
+core sits at an amplitude minimum).  What that mode removes is the
+rigid-rotation flow profile — the flow is now the real vortex circulation, and
+the torque the real phase-current force.
+
+The deeper, *self-sustained* version is here too: seed the vortices once and let
+the field co-evolve under the κ-detuned CGL with no re-imprinting
+(`evolve_seeded_field`, or `evolve_vortex_molecule(reimprint=False)`).  Then the
+integer winding is a **dynamically-conserved** topological charge (not imposed
+each step), the κ wells **pin** the core (a control in flat κ drifts), and a
+vortex–antivortex pair **annihilates** while like charges survive
+(`winding_number` reads the enclosed charge, tracker-free).  Measured honestly,
+that self-sustained field keeps its topology and stays matter-pinned, but its
+mechanical torque on the free masses is an order weaker than the re-imprinted
+drive (the field's circulation drains without the continual re-sharpening) — so
+a *strong* persistent orbital spin still needs the pinned mode.
 """
 
 from __future__ import annotations
@@ -42,7 +53,7 @@ from .capacity_gravity import capacity_free_energy, gaussian_load, relax_capacit
 from .capacity_waves import (_gaussian_load_and_grad, _relax_functional,
                              _smoothed_min, _smoothed_min_weight,
                              _solve_relaxed, step_capacity_wave)
-from .two_field import chiral_detuning, phase_current
+from .two_field import chiral_detuning, phase_current, step_chiral_detuned
 
 
 def imprint_vortices(shape, centers, charges, *, core: float = 3.0,
@@ -76,6 +87,59 @@ def field_angular_momentum(psi: np.ndarray, center) -> float:
     return float(np.sum(gx * jy - gy * jx))
 
 
+def winding_number(psi: np.ndarray, center, radius: int = 6) -> float:
+    """Integer phase winding on a square loop of half-side ``radius``.
+
+    The tracker-free topological charge enclosed by the loop: ``+1`` for a unit
+    vortex at the centre, ``0`` once the defect drifts out of (or annihilates
+    inside) the loop.  Robust where an amplitude-minimum tracker is not, because
+    it counts a conserved integer rather than locating a moving core.
+    """
+    n0, n1 = psi.shape
+    cx, cy = int(round(center[0])), int(round(center[1]))
+    r = int(radius)
+    pts = ([(cx - r, cy + t) for t in range(-r, r)]
+           + [(cx + t, cy + r) for t in range(-r, r)]
+           + [(cx + r, cy + t) for t in range(r, -r, -1)]
+           + [(cx + t, cy - r) for t in range(r, -r, -1)])
+    ph = [np.angle(psi[x % n0, y % n1]) for x, y in pts]
+    return float(np.sum(np.diff(np.unwrap(ph + [ph[0]]))) / (2.0 * np.pi))
+
+
+def evolve_seeded_field(shape, centers, charges, kappa, *,
+                        chiral: float = 0.0, detune_gamma: float = 0.8,
+                        kappa_baseline: float = 1.0, core: float = 3.0,
+                        dt: float = 0.1, steps: int = 2000,
+                        record_every: int = 100,
+                        winding_radius: int = 6) -> dict:
+    """Seed vortices ONCE, then co-evolve the field under the κ-detuned CGL.
+
+    No re-imprinting: after the single seed the field evolves only under
+    `step_chiral_detuned` (the detuning ``g`` frozen from the passed ``kappa``,
+    i.e. static matter).  This is the self-sustained test — the vortices are
+    kept (or lost) by the dynamics alone.  Pass ``kappa`` with wells to anchor
+    them, or a flat ``kappa`` (``= kappa_baseline``) as the un-pinned control.
+    Records, per centre, the enclosed winding; and the field's ``L`` about the
+    centroid of ``centers``, plus ``amp_min``.
+    """
+    shape = tuple(int(s) for s in shape)
+    g = chiral_detuning(kappa, detune_gamma=detune_gamma,
+                        kappa_baseline=kappa_baseline)
+    psi = imprint_vortices(shape, centers, charges, core=core, detune=g)
+    com = np.mean(np.asarray(centers, dtype=float), axis=0)
+    hist = {"time": [], "winding": [], "L_field": [], "amp_min": []}
+    for i in range(steps + 1):
+        if i % record_every == 0:
+            hist["time"].append(i * dt)
+            hist["winding"].append(
+                [winding_number(psi, c, winding_radius) for c in centers])
+            hist["L_field"].append(field_angular_momentum(psi, com))
+            hist["amp_min"].append(float(np.abs(psi).min()))
+        psi = step_chiral_detuned(psi, g, chiral=chiral, dt=dt)
+    hist["psi"] = psi
+    return hist
+
+
 def vortex_phase_force(loads, psi: np.ndarray, *, phase_chi: float) -> np.ndarray:
     """Footprint-averaged phase-current force ``F_i = χ·Σ ρ̂_i·j`` per mass."""
     j = phase_current(psi)
@@ -95,18 +159,29 @@ def evolve_vortex_molecule(positions, velocities, masses, *, shape,
                            record_every: int = 20,
                            vortex_charge: int = 0, phase_chi: float = 0.6,
                            core: float = 3.0, detune_gamma: float = 0.8,
+                           reimprint: bool = True, chiral_lambda: float = 0.0,
                            kappa_diffusion: float = 1.0,
                            kappa_recovery: float = 0.02,
                            kappa_consumption: float = 0.8,
                            kappa_baseline: float = 1.0) -> dict:
-    """Bound pair + a pinned vortex per mass; spin from the field's circulation.
+    """Bound pair + a vortex per mass; spin from the field's circulation.
 
     κ-gravity and the ``contact_full`` exclusion floor bind the pair (bitwise
     the retarded molecule when ``vortex_charge = 0`` or ``phase_chi = 0``); the
-    vortex-bearing ψ is imprinted at the masses each step (amplitude holed by
-    the κ detuning), and the pair feels only the phase-current force — **no
-    imposed rotation**.  Records positions, separation, ``omega`` (the pair's
-    rotation), ``L_field`` (the field's angular momentum), and amplitude bounds.
+    pair feels only the phase-current force — **no imposed rotation**.  Records
+    positions, separation, ``omega`` (the pair's rotation), ``L_field`` (the
+    field's angular momentum), ``winding`` (the enclosed charge at each mass),
+    and amplitude bounds.
+
+    Two modes for the vortex-bearing ψ:
+
+    - ``reimprint=True`` (default): ψ is re-imprinted at the masses every step
+      (amplitude holed by the κ detuning) — the *pinned* vortex, its circulation
+      continually re-sharpened.
+    - ``reimprint=False``: ψ is seeded ONCE and then co-evolves under the
+      κ-detuned CGL (`step_chiral_detuned`, precession ``chiral_lambda``) with
+      no re-imprinting — the *self-sustained* vortex, kept only by the dynamics
+      and anchored by the κ wells.
     """
     pos = np.asarray(positions, dtype=float).copy()
     vel = np.asarray(velocities, dtype=float).copy()
@@ -152,12 +227,20 @@ def evolve_vortex_molecule(positions, velocities, masses, *, shape,
             f = f + vortex_phase_force(loads, psi, phase_chi=phase_chi)
         return f
 
+    def advance_psi(p, kappa, psi):
+        # re-imprint the pinned vortex, or step the self-sustained one
+        if reimprint or psi is None:
+            return make_psi(p, kappa)
+        g = chiral_detuning(kappa, detune_gamma=detune_gamma,
+                            kappa_baseline=kappa_baseline)
+        return step_chiral_detuned(psi, g, chiral=chiral_lambda, dt=dt)
+
     kappa = relax_capacity(np.sum(loads_of(pos), axis=0), **fkw)
     kdot = np.zeros_like(kappa)
     psi = make_psi(pos, kappa)
     forces = forces_of(pos, kappa, psi)
     hist = {k: [] for k in ("time", "positions", "separation", "omega",
-                            "L_field", "amp_min")}
+                            "L_field", "amp_min", "winding")}
     for i in range(steps):
         if i % record_every == 0:
             com = np.average(pos, axis=0, weights=m)
@@ -168,12 +251,15 @@ def evolve_vortex_molecule(positions, velocities, masses, *, shape,
                 field_angular_momentum(psi, com) if psi is not None else 0.0)
             hist["amp_min"].append(float(np.abs(psi).min())
                                    if psi is not None else 1.0)
+            hist["winding"].append(
+                [winding_number(psi, pi) for pi in pos] if psi is not None
+                else [0.0] * len(m))
         acc = forces / m[:, None]
         vel_half = vel + 0.5 * acc * dt
         pos = pos + vel_half * dt
         kappa, kdot = step_capacity_wave(
             kappa, kdot, np.sum(loads_of(pos), axis=0), tau=tau, dt=dt, **fkw)
-        psi = make_psi(pos, kappa)
+        psi = advance_psi(pos, kappa, psi)
         forces = forces_of(pos, kappa, psi)
         acc = forces / m[:, None]
         vel = vel_half + 0.5 * acc * dt

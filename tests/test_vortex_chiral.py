@@ -13,10 +13,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from project_genesis.capacity_gravity import gaussian_load, relax_capacity  # noqa: E402
 from project_genesis.two_field import chiral_detuning  # noqa: E402
 from project_genesis.vortex_chiral import (  # noqa: E402
+    evolve_seeded_field,
     evolve_vortex_molecule,
     field_angular_momentum,
     imprint_vortices,
     vortex_phase_force,
+    winding_number,
 )
 
 
@@ -139,6 +141,79 @@ class VortexMoleculeTests(unittest.TestCase):
         self.assertLess(np.asarray(hp["separation"])[-5:].max(), 1.5 * 9.0)
         self.assertGreater(np.mean(hp["L_field"][-5:]), 0.0)
         self.assertLess(np.mean(hm["L_field"][-5:]), 0.0)
+
+
+class WindingNumberTests(unittest.TestCase):
+    def test_unit_vortex_encloses_one(self):
+        psi = imprint_vortices((48, 48), [(24, 24)], [1], core=3.0)
+        self.assertAlmostEqual(abs(winding_number(psi, (24, 24))), 1.0, delta=0.05)
+
+    def test_charge_two_and_empty_loop(self):
+        psi = imprint_vortices((64, 64), [(32, 32)], [2], core=2.0)
+        self.assertAlmostEqual(abs(winding_number(psi, (32, 32))), 2.0, delta=0.05)
+        # a loop far from the core encloses nothing
+        self.assertAlmostEqual(winding_number(psi, (6, 6)), 0.0, delta=0.05)
+
+
+class SelfSustainedFieldTests(unittest.TestCase):
+    def _kappa(self, n=64, s=9.0):
+        c = [(n / 2 - s / 2, n / 2), (n / 2 + s / 2, n / 2)]
+        loads = sum(gaussian_load((n, n), [ci], 2.5, 0.6) for ci in c)
+        return c, relax_capacity(loads, kappa_diffusion=1.0, kappa_recovery=0.02,
+                                 kappa_consumption=0.8)
+
+    def test_like_charges_conserve_winding(self):
+        # seeded once, co-evolved with NO re-imprint: the integer survives
+        c, kappa = self._kappa()
+        h = evolve_seeded_field((64, 64), c, [1, 1], kappa, steps=600,
+                                record_every=300)
+        w = np.asarray(h["winding"])
+        self.assertLess(float(np.max(np.abs(w - w[0]))), 0.1)   # conserved
+        self.assertAlmostEqual(abs(round(w[-1][0])), 1)          # integer, |w|=1
+        self.assertGreater(abs(h["L_field"][-1]), 0.4 * abs(h["L_field"][0]))
+
+    def test_vortex_antivortex_annihilate(self):
+        c, kappa = self._kappa()
+        h = evolve_seeded_field((64, 64), c, [1, -1], kappa, steps=600,
+                                record_every=300)
+        w = np.asarray(h["winding"])
+        self.assertLess(abs(w[-1][0]), 0.2)          # unwound
+        self.assertLess(abs(w[-1][1]), 0.2)
+        self.assertGreater(h["amp_min"][-1], 0.4)    # the field heals
+        self.assertLess(abs(h["L_field"][-1]), 0.1 * abs(h["L_field"][0]) + 1.0)
+
+
+class EmergentMoleculeTests(unittest.TestCase):
+    def _run(self, q, reimprint, steps=900, n=64):
+        pos0 = [[n / 2 - 4.5, n / 2], [n / 2 + 4.5, n / 2]]
+        vel0 = [[0.0, 0.2], [0.0, -0.2]]
+        return evolve_vortex_molecule(
+            pos0, vel0, [0.6, 0.6], shape=(n, n), width=2.5, tau=0.1, dt=0.1,
+            steps=steps, record_every=20, vortex_charge=q, phase_chi=0.6,
+            core=3.0, detune_gamma=0.8, reimprint=reimprint,
+            kappa_diffusion=1.0, kappa_recovery=0.02, kappa_consumption=0.8)
+
+    def test_reimprint_true_matches_default(self):
+        # reimprint=True is the pinned mode of record (default) — bitwise
+        h_def = self._run(1, reimprint=True)
+        pos = np.asarray(h_def["positions"])
+        self.assertTrue(np.all(np.isfinite(pos)))
+        self.assertGreater(np.mean(h_def["L_field"][-3:]), 0.0)
+
+    def test_self_sustained_vortex_tracks_the_mass(self):
+        # reimprint=False: the winding around each MOVING mass stays +-1
+        h = self._run(1, reimprint=False)
+        wind = np.asarray(h["winding"])
+        self.assertGreater(float(np.min(np.abs(wind[:, 0]))), 0.8)
+        self.assertGreater(float(np.min(np.abs(wind[:, 1]))), 0.8)
+        # bound, and the field still carries (draining) angular momentum
+        sep = np.asarray(h["separation"])
+        self.assertLess(sep[-3:].max(), 1.5 * 9.0)
+
+    def test_zero_charge_no_field_either_mode(self):
+        for rei in (True, False):
+            h = self._run(0, reimprint=rei)
+            self.assertEqual(np.mean(h["L_field"][-3:]), 0.0)
 
 
 if __name__ == "__main__":
