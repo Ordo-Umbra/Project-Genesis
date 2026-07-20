@@ -245,9 +245,29 @@ exclusion floor (`sep ≈ s⋆`) and the spin's sign following the coupling's.  
 first bound object in the program **turns**: derived-exclusion binding +
 finite-speed gravity + a chiral term assemble a persistent, spinning bound state
 — a form with a place in the census, a conjugate partner on a parameter-free
-floor, and a spin it can hold.  (The spin is driven here as a rotational drag
-toward the background rate, not yet a derived two-field coupling — the honest
-next rung.)
+floor, and a spin it can hold.
+
+**And the drive becomes the field.**  *(Measured — `experiments/n3_two_field_chiral.py`,
+3/3, `project_genesis/two_field.py`.)*  The spinning molecule's one caveat was
+that its drive was imposed — a rigid rotation at a free parameter `Ω_bg`.  The
+two-field instrument retires it: the complex chiral field ``ψ`` co-evolves on
+the same lattice as the telegrapher ``κ``, coupled both ways.  The same ``κ``
+wells that bind the pair **hole the chiral field** (detuning
+``g = γ(1 − κ/κ₀)``; ``|ψ|`` drops to ``0.55`` at the matter while the bulk
+stays ordered), and the field answers with a force of its own: the detuning
+sources a static phase dip at each well, the chiral term shears it into a
+phase current ``j = Im(ψ*∇ψ)``, and the pair feels a **bond-axis force exactly
+odd in ``λ``** (``F_r = ∓6.3×10⁻²`` at ``λ = ±0.2``, the ``λ = 0`` residual
+``85,000×`` smaller, the tangential component ``10⁴×`` below the radial) —
+*the chiral field presses on the bond but cannot itself turn it*, because a
+uniformly precessing bulk carries no mechanical current.  And the molecule's
+spin is now slaved to the field's **own measured precession**: the circulation
+drag runs at ``Ω_field`` read off the co-evolving ``ψ`` each step — no
+``Ω_bg`` anywhere, ``λ`` the only chiral input, ``λ = 0`` the achiral molecule
+with no special casing.  The pair turns at the rate and handedness it reads
+off the medium it swims in.  (The rigid-rotation *flow profile* remains the
+one modelling ansatz — converting internal precession into mechanical
+circulation needs a vorticity-bearing field; the next rung.)
 
 ---
 
@@ -303,6 +323,11 @@ apart plainly:
 - **The molecule spins**: with the chiral term, a bound `±` pair holds a
   persistent, bounded rotation where the achiral molecule drained (its `Z2`
   failure) — the loop from §5 back to §4 closed.
+- **The spin is slaved to the living field**: the chiral `ψ` co-evolves with
+  the telegrapher `κ` — the `κ` wells hole `ψ`, `ψ`'s phase current presses
+  the bond (radial, odd in `λ`, torque-free), and the molecule turns at the
+  field's own measured precession `Ω_field` — rate and handedness derived,
+  no `Ω_bg` parameter; `λ = 0` is the achiral molecule automatically.
 
 **Frontier (intuition the foundations now make testable, without a verdict).**
 - **The abundance *numbers*.**  The count and ordering of the families are now
@@ -320,8 +345,10 @@ apart plainly:
 - **Spin's higher-dimensional manifestations.**  The chiral term is the 2-D
   minimal one; the program's intuition that it is the shadow of a
   higher-dimensional structure (and that spin is quantised, not continuous) is
-  untested — as is the derived two-field chiral κ-gravity (the spinning molecule
-  is driven, not yet self-consistently coupled).
+  untested — as is the last imposed piece of the two-field molecule: the
+  rigid-rotation *flow profile* of the circulation (its rate and handedness
+  are now the field's own — measured; what remains is a chiral field that
+  itself carries mechanical angular momentum, i.e. vorticity).
 - **One number for criticality.**  Whether the collab's pattern-clarity `β` and
   Act I's `κ̂(scale)` are the same object, or one is a shadow of the other.
 
@@ -335,6 +362,7 @@ apart plainly:
 |---|---|
 | `dimensional_forms.py` | CW-census (any dimension): cells, Euler, valence, the Plateau structure, the flavour multiplets |
 | `chiral_field.py` | The chiral spin term (CGL), precession `Ω = −λ`, vorticity |
+| `two_field.py` | The two-field coupling: `ψ` co-evolves with `κ` — well detuning, the phase-current force, the self-consistent circulation |
 | `capacity_waves.py` | Finite-speed `κ` (telegrapher), retarded gravity, the exclusion contact terms |
 
 **Experiments (`experiments/`).**
@@ -347,6 +375,7 @@ apart plainly:
 | `n3_flavour_structure.py` | 3/3 | flavour = sector-composition; Pascal multiplets `C(P,d+1−ℓ)`; democratic, conserved |
 | `n3_chiral_spin.py` | 3/3 | spin `Ω = −λ`, on the 0D forms; parity at `λ = 0` |
 | `n3_spinning_molecule.py` | 3/3 | a chiral drive lets the bound pair hold `Ω` (§5→§4 closed) |
+| `n3_two_field_chiral.py` | 3/3 | `ψ` co-evolves with `κ`; the field presses the bond (radial, λ-odd); the spin is slaved to the field's own `Ω` |
 | `n3_exclusion_*` (five) | see doc | the derived, parameter-free pair-binding floor |
 | `n3_identity_generation / _invariance.py` | 2/3, 2/3 | identity measured from structure, pose-invariant |
 | `n3_kappa_lightcone.py` | 2/3 | causal cone `c_κ = √(D/τ)`; the propagating mass |
