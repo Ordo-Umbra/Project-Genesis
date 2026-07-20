@@ -75,6 +75,7 @@ project_genesis/
   dimensional_forms.py CW-census of the sector tessellation (any dimension): 0D/1D/2D(/3D) cells, Euler V−E+F(−C), junction valence, the Plateau structure, and the flavour (sector-composition) multiplets
   chiral_field.py      The chiral (parity-breaking) spin term: complex Ginzburg–Landau with coupling λ, intrinsic precession Ω=−λ, vorticity (spin density)
   two_field.py         The derived two-field coupling: the chiral ψ co-evolves with the telegrapher κ — κ wells detune ψ (matter holes the field), ψ's phase current presses on the masses (radial, odd in λ), and the molecule's spin is slaved to ψ's own measured precession (zero couplings = bitwise the retarded baseline)
+  vortex_chiral.py     The vorticity-bearing chiral field: a vortex pinned per form (integer winding), quantised field angular momentum L∝q, and a phase-current torque (same-sign vortices co-rotate, vortex–antivortex translate) — the molecule spins from its own circulation with no imposed drive
   network_server.py    WebSocket server for remote monitoring and control
   numba_kernels.py     Numba JIT-accelerated field evolution kernels
   render.py            Text-based slice rendering for terrain inspection
@@ -217,6 +218,7 @@ experiments/
   n3_3d_generations.py      Four generations in 3-D: the census's sharpest prediction — 3/3; families=min(P,d+1), the Plateau foam valences 4/3/2/1, Euler V−E+F−C=0 on T³
   n3_flavour_structure.py   Flavour structure: the forms' second quantum number (sector-composition) — 3/3; the multiplet sizes are Pascal's C(P,d+1−ℓ), democratic, conserved; no CKM-match claimed
   n3_two_field_chiral.py    The derived two-field coupling: ψ co-evolves with κ — 3/3; the field carries its spin while holed by the wells (Ω=−λ measured), the phase current presses the bond (radial, odd in λ, torque-free), and the molecule spins slaved to the field's own precession — no Ω_bg
+  n3_vortex_chiral.py       The vorticity-bearing chiral field — 3/3; a vortex pinned per form carries quantised angular momentum (L∝q), the phase-current force becomes a torque (same-sign vortices co-rotate, vortex–antivortex translate), and the molecule spins from its own circulation with no imposed rotation — the rigid-rotation flow-profile ansatz retired
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1443,6 +1445,18 @@ The spinning molecule left one named caveat: its drive was *imposed* — a rigid
 Reproduce with `python experiments/n3_two_field_chiral.py` (≈ 25 minutes; `--quick` for a smoke run); two-field checks (wells hole the field, the force's parity, Ω_field = −λ, zero-coupling = bitwise the retarded baseline, λ = 0 achiral automatically, the pair spins with the field's handedness) in `tests/test_two_field.py`.
 
 **Honest scope:** the spin's *rate and handedness* are now derived (read off the co-evolving field), and the field exerts its own measured force on the matter (C2) — but the circulation's rigid-rotation *flow profile* remains a modelling ansatz, the one imposed piece left: eliminating it needs a chiral field that carries mechanical angular momentum (vorticity), the next rung. The CGL reaction drives the medium, so the recorded energy is no longer a Lyapunov function once the chiral sector is active (that driven-ness is what a persistent spin costs); one operating point, the derived exclusion floor, equal masses.
+
+### The vorticity-bearing chiral field: spin from real circulation — 3/3
+
+The two-field molecule named its own last ansatz — the rigid-rotation *flow profile* — and named its cure: a uniformly precessing bulk carries no mechanical current (measured j = 0 there, which is exactly why the two-field force was radial), so a real torque needs a field that carries mechanical **angular momentum, i.e. vorticity**. `project_genesis/vortex_chiral.py` supplies it: each form carries a **vortex** pinned at its core, ψ = A(x)·exp(i·Σ q_k arg(x − x_k)), an integer winding q_k with the amplitude holed at the cores and by the κ wells (the same detuning). `experiments/n3_vortex_chiral.py`. **3/3 registered predictions land:**
+
+- **W1 ✓ The field carries mechanical angular momentum, quantised by the winding.** For a vortex pinned at a mass, L = Σ (x − x_cm) × j is zero at q = 0, sign-locked to the winding, antisymmetric, and climbs a monotone ladder in |q|: L = −20806/−5164/0/+5164/+20806 across q = −2…+2. An integer winding, not a tunable dial — the circulation is **quantised**.
+- **W2 ✓ The vortex force is a torque — the ansatz removed.** For a pair held on the floor, two same-sign vortices give a phase-current force **tangential** to the bond (F_t = 0.016 vs F_r ≈ 0), a net torque τ = +0.147 signed by q; the vortex–antivortex control (+1, −1) instead **translates**, the torque collapsing to +0.000. The point-vortex law — the mechanical current the uniformly precessing bulk lacked, so the internal spin can now become orbital.
+- **W3 ✓ The molecule spins from its own circulation — no imposed drive.** Releasing the bound pair with a pinned vortex per mass and *no* rotation drive at all (`circulation_coupling` is gone), each nonzero q holds a persistent late spin, sign following the winding (same-sign vortices co-rotate): late Ω = −0.0085/−0.0000/+0.0095 across q = −1/0/+1, slope +0.0090 through zero, every run bound on the floor (sep ≈ 8.5) with the field carrying real angular momentum (L_field = ∓8918/+8938). q = 0 is the achiral molecule (Z2) — no vortex, no circulation — and it drains (Ω = −0.00001).
+
+Reproduce with `python experiments/n3_vortex_chiral.py` (≈ 15 minutes; `--quick` for a smoke run); vortex checks (the core-holed imprint winds q times, angular momentum sign-locked to q, same-sign force a torque vs antivortex translation, the pair spins with the winding's sign while q = 0 drains) in `tests/test_vortex_chiral.py`.
+
+**Honest scope:** this retires the two-field run's last modelling ansatz — the rigid-rotation flow profile — by driving the spin from a real mechanical circulation: the field carries genuine angular momentum (W1) and the phase-current force is a genuine torque (W2), so the pair turns from its own vortices (W3). The remaining idealisation is that the vortex is **pinned** to its form — imprinted at the core each step, its amplitude co-evolving with (holed by) the κ wells — rather than self-sustained by the bare CGL dynamics; this is a topological binding of a defect to matter, which the κ wells physically anchor (a core sits at an amplitude minimum). A fully emergent, CGL-sustained vortex bound to matter is the deeper version and the open frontier. The phase force is booked as a force, not an energy gradient; one operating point, the derived exclusion floor, equal masses; a small initial kick so q = 0 shows the drain.
 
 ## Setup
 
