@@ -74,6 +74,7 @@ project_genesis/
   multiphase.py        Three-component Ψ∈ℂ³ sector field with 120° Y-junctions
   dimensional_forms.py CW-census of the sector tessellation (any dimension): 0D/1D/2D(/3D) cells, Euler V−E+F(−C), junction valence, the Plateau structure, and the flavour (sector-composition) multiplets
   chiral_field.py      The chiral (parity-breaking) spin term: complex Ginzburg–Landau with coupling λ, intrinsic precession Ω=−λ, vorticity (spin density)
+  two_field.py         The derived two-field coupling: the chiral ψ co-evolves with the telegrapher κ — κ wells detune ψ (matter holes the field), ψ's phase current presses on the masses (radial, odd in λ), and the molecule's spin is slaved to ψ's own measured precession (zero couplings = bitwise the retarded baseline)
   network_server.py    WebSocket server for remote monitoring and control
   numba_kernels.py     Numba JIT-accelerated field evolution kernels
   render.py            Text-based slice rendering for terrain inspection
@@ -215,6 +216,7 @@ experiments/
   n3_form_abundances.py     Form abundances: three generations because space is 2-D (families=d+1, palette-independent) — 3/3; topologically protected, heavy rarest; no numerical quark-match claimed
   n3_3d_generations.py      Four generations in 3-D: the census's sharpest prediction — 3/3; families=min(P,d+1), the Plateau foam valences 4/3/2/1, Euler V−E+F−C=0 on T³
   n3_flavour_structure.py   Flavour structure: the forms' second quantum number (sector-composition) — 3/3; the multiplet sizes are Pascal's C(P,d+1−ℓ), democratic, conserved; no CKM-match claimed
+  n3_two_field_chiral.py    The derived two-field coupling: ψ co-evolves with κ — 3/3; the field carries its spin while holed by the wells (Ω=−λ measured), the phase current presses the bond (radial, odd in λ, torque-free), and the molecule spins slaved to the field's own precession — no Ω_bg
 web_toy/
   index.html           Standalone in-browser URP toy (scalar field)
   su3.html             Three-component SU(3) sector toy with Y-junctions
@@ -1429,6 +1431,18 @@ So a form carries **two orthogonal quantum numbers at once**: its generation (di
 Reproduce with `python experiments/n3_flavour_structure.py` (≈ 8 minutes; `--quick` for a smoke run); flavour checks (domain/junction composition, entropy bounds) in `tests/test_dimensional_forms.py`.
 
 **Honest scope:** structure only — no CKM/mass match (declined, as with abundances); flavour is the sector-composition (generic size `d+1−ℓ` per generation, the non-generic 4-sector junction dropped); a flavour **hierarchy** from breaking the sector symmetry is *not* shown — Allen–Cahn is winner-take-all, so a global bias drives total domination rather than a graded abundance (the open frontier); one lattice (96²), seed-unioned for L1; the generation × flavour orthogonality is a reading, not scored.
+
+### The derived two-field coupling: the chiral field co-evolves with κ-gravity — 3/3
+
+The spinning molecule left one named caveat: its drive was *imposed* — a rigid background rotation at a free parameter Ω_bg, motivated by the CGL precession Ω = −λ but not derived from a living field. `project_genesis/two_field.py` retires the caveat: the complex chiral field ψ co-evolves on the same lattice as the telegrapher κ field, coupled both ways, and the molecule's spin is slaved to ψ's **own measured precession** — `experiments/n3_two_field_chiral.py`. **3/3 registered predictions land:**
+
+- **C1 ✓ The two fields co-evolve, healthy.** Across the λ scan the chiral field stays bounded (max|ψ| = 1.00) yet genuinely holed by the same κ wells that bind the pair (min|ψ| = 0.55–0.57 at the matter); the bulk precession *measured off the co-evolving field* matches the CGL law at every point (Ω_field = ±0.199/±0.099 vs −λ = ∓0.2/∓0.1); and the molecule stays bound on its derived floor at every λ — carrying the molecule does not break the field, carrying the field does not break the molecule.
+- **C2 ✓ The chiral field presses on matter — radially, odd in λ.** The detuning sources a static phase dip at each well, the chiral term shears it into a phase current j = Im(ψ*∇ψ), and a floor-bound pair feels it as a bond-axis force: F_r = −6.30/−3.37/0/+3.37/+6.30 ×10⁻² across λ = −0.2…+0.2 — monotone through zero, antisymmetric to within noise (the λ = 0 residual is 85,000× smaller), with the tangential component 10⁴× below the radial: **the field pushes the bond but cannot itself turn it** (a uniformly precessing bulk carries no mechanical current — measured j = 0 there — so no local coupling of this form converts internal precession into torque). The chiral field's own force on matter, parity-exact.
+- **C3 ✓ The molecule spins, slaved to the field.** With the circulation drag driven by the measured Ω_field — rate AND handedness now the field's own, no Ω_bg anywhere — the pair holds a persistent late spin at every nonzero λ (+0.0152/+0.0062/−0.0058/−0.0125 across λ = ∓0.2/∓0.1, sign(Ω) = −sign(λ) throughout, monotone through zero), while λ = 0 drains to rest (−0.00001) *with no special casing*: the field measures zero and the drive vanishes — the achiral molecule (Z2) recovered from the same code.
+
+Reproduce with `python experiments/n3_two_field_chiral.py` (≈ 25 minutes; `--quick` for a smoke run); two-field checks (wells hole the field, the force's parity, Ω_field = −λ, zero-coupling = bitwise the retarded baseline, λ = 0 achiral automatically, the pair spins with the field's handedness) in `tests/test_two_field.py`.
+
+**Honest scope:** the spin's *rate and handedness* are now derived (read off the co-evolving field), and the field exerts its own measured force on the matter (C2) — but the circulation's rigid-rotation *flow profile* remains a modelling ansatz, the one imposed piece left: eliminating it needs a chiral field that carries mechanical angular momentum (vorticity), the next rung. The CGL reaction drives the medium, so the recorded energy is no longer a Lyapunov function once the chiral sector is active (that driven-ness is what a persistent spin costs); one operating point, the derived exclusion floor, equal masses.
 
 ## Setup
 
