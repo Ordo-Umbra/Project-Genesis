@@ -344,6 +344,30 @@ the spin the matter carries, the precession the drive that keeps it turning.
 the wrong sign can unwind the vortex; and the CGL is a driven, non-equilibrium
 medium, so ``λ`` inputs the energy a persistent spin costs.)
 
+**And in 3-D, spin acquires a direction.**  *(Measured —
+`experiments/n3_vortex_3d.py`, 3/3, `project_genesis/vortex_chiral_3d.py`;
+field-level.)*  Everything so far was 2-D, where spin lived on a *point* vortex
+and its angular momentum was a scalar — a sign.  A complex field ``ψ: ℝ³ → ℂ``
+vanishes generically on **lines** (codimension 2), so in 3-D the defect is a
+vortex **line**, and the field's angular momentum ``L = Σ (x − c) × j`` is a
+genuine **3-vector aligned with the line**: measured over a centred sphere it
+points along the line for *every* orientation — the axes, the face- and
+body-diagonals, a skew direction — to align ``1.000`` with a direction-
+independent magnitude, and along a fixed axis it is a sign-locked, quantised
+ladder in the winding (``L_z = 0, ±23000, ±46000`` at ``q = 0, ±1, ±2``).  Spin
+now has a *direction* — rotate the line and its spin vector rotates with it.
+Seeded once and co-evolved under the ``κ``-detuned CGL with no re-imprinting, the
+line keeps both its integer winding *and* its axis (robust to a noisy seed, and
+— because a line ∥ an axis wraps a torus cycle — more stable than the 2-D point
+vortex, whose ``L`` drained); and matter enforces the same sign rule as in 2-D:
+two like lines survive on their wells while a line–antiline pair annihilates and
+the field heals.  Honest scope, and the reason this is a *rung* not the summit:
+this ``U(1)`` field carries an **integer / axial-vector** angular momentum — a
+spin-1-like, *bosonic* object.  A genuine **half-integer spinor** — the
+``SU(2)`` double cover, ``4π`` periodicity, the fermion the quark actually is —
+is a different field structure, and reaching it is the open frontier toward
+*fermionic* matter, not what a complex order parameter gives.
+
 ---
 
 ## 6. Where criticality sits in all of this
@@ -425,6 +449,14 @@ apart plainly:
   vortex without the precession is weak and draining, a precession without a
   vortex is torque-free.  The self-sustained *strong* spin — matter-bound charge,
   field-driven — closes the emergent boundary.
+- **In 3-D, spin is an axial vector** (3/3, field-level): the defect is a vortex
+  *line* and its angular momentum ``L`` is a 3-vector *aligned with the line* for
+  every orientation (magnitude direction-independent), a sign-locked quantised
+  ladder in the winding — spin has a *direction*.  Seeded once and co-evolved
+  under the CGL with no re-imprinting, the line keeps its winding and its axis
+  (noise-robust, and more stable than the 2-D point vortex because it wraps a
+  torus cycle), and matter enforces the same like-survive / unlike-annihilate
+  sign rule.  This is an integer / spin-1-like (bosonic) angular momentum.
 
 **Frontier (intuition the foundations now make testable, without a verdict).**
 - **The abundance *numbers*.**  The count and ordering of the families are now
@@ -439,14 +471,18 @@ apart plainly:
   numerical match to CKM mixing or quark masses is claimed (declined, not
   pending).  The `N⋆ = 3` colour tie and the multiplet structure are measured;
   the mass/mixing numbers are the numerology the program does not chase.
-- **Spin's higher-dimensional manifestations.**  The chiral term is the 2-D
-  minimal one; the program's intuition that it is the shadow of a
-  higher-dimensional structure (a genuine spinor, in 3-D or 4-D) is untested.  The
-  2-D story is now complete — a self-sustained field holds a strong, quantised-
-  handed spin bound to matter (the driven-vortex result, 3/3) — but whether the
-  chiral term is the shadow of a higher structure, and whether the compatibility
-  window between the field's chirality and the defect charge has a deeper meaning,
-  are the open threads.
+- **A half-integer spinor — fermionic matter.**  Spin is now a full axial vector
+  in 3-D (the vortex-line result, 3/3), but it is still an **integer / spin-1-
+  like** angular momentum: what a ``U(1)`` complex order parameter gives.  A
+  quark is a **half-integer spinor** — the ``SU(2)`` double cover, ``4π``
+  periodicity — which needs a *different* field structure (a nematic/director
+  with ``Z₂``, or a ``CP¹`` / two-component field).  Turning matter's spin into a
+  genuine spinor is the open frontier toward *fermionic* matter, and the natural
+  next rung after the field-level 3-D vector (the driven 3-D molecule — spin with
+  a direction bound and turning — is the intermediate step).
+- **The deeper meaning of the compatibility window.**  The self-sustained strong
+  spin lives in a window where the field's chirality and the defect charge agree;
+  whether that selection has a deeper structural meaning is an open thread.
 - **One number for criticality.**  Whether the collab's pattern-clarity `β` and
   Act I's `κ̂(scale)` are the same object, or one is a shadow of the other.
 
@@ -462,6 +498,7 @@ apart plainly:
 | `chiral_field.py` | The chiral spin term (CGL), precession `Ω = −λ`, vorticity |
 | `two_field.py` | The two-field coupling: `ψ` co-evolves with `κ` — well detuning, the phase-current force, the self-consistent circulation |
 | `vortex_chiral.py` | The vorticity-bearing field: a vortex pinned per form, quantised angular momentum, the phase-current *torque* — spin from real circulation; and the self-sustained mode (`winding_number`, `evolve_seeded_field`, `reimprint=False`, `chiral_lambda`): seed once and co-evolve the CGL, the winding a conserved topological charge, the field's precession regenerating a strong spin |
+| `vortex_chiral_3d.py` | 3-D spin: the vortex is a *line*, its angular momentum an axial *vector* aligned with the line (`vortex_line`, `line_angular_momentum`, `line_winding`, `evolve_seeded_line`) — quantised, conserved with its axis, integer/bosonic |
 | `capacity_waves.py` | Finite-speed `κ` (telegrapher), retarded gravity, the exclusion contact terms |
 
 **Experiments (`experiments/`).**
@@ -478,6 +515,7 @@ apart plainly:
 | `n3_vortex_chiral.py` | 3/3 | a vortex per form: quantised angular momentum; the phase-current *torque*; the molecule spins from its own circulation, no imposed drive |
 | `n3_emergent_vortex.py` | 2/3 | self-sustained (no re-imprint): the winding a dynamically-conserved charge, the wells pin the core (like-survive/unlike-annihilate) — but the strong spin drains away, an honest boundary |
 | `n3_driven_vortex.py` | 3/3 | the field's precession (`λ≠0`) regenerates the circulation: the self-sustained molecule spins at the pinned strength — handedness from the charge, strength from `|λ|`, both ingredients necessary — closing the emergent boundary |
+| `n3_vortex_3d.py` | 3/3 | 3-D spin is an axial *vector*: the defect is a line, `L` aligns with it at any orientation, quantised by winding; conserved with its axis under the self-sustained CGL; like-survive/unlike-annihilate (integer/bosonic; the spinor is the frontier) |
 | `n3_exclusion_*` (five) | see doc | the derived, parameter-free pair-binding floor |
 | `n3_identity_generation / _invariance.py` | 2/3, 2/3 | identity measured from structure, pose-invariant |
 | `n3_kappa_lightcone.py` | 2/3 | causal cone `c_κ = √(D/τ)`; the propagating mass |
