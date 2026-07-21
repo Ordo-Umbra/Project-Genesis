@@ -436,7 +436,34 @@ reads **integer, no-flip** from outside: a bound, spinning boson made of two
 topological fermions.  (Honest scope: the statistics are topological, not
 quantum — no anticommutation, no Pauli principle between identical composites;
 and the constituent count is put in by hand — no dynamical confinement selects
-2 or 3, though the ``N⋆ = 3`` sector story is the standing suggestion.)
+2 or 3, though the ``N⋆ = 3`` sector story is the standing suggestion — taken
+up next.)
+
+**And ``N⋆ = 3`` is why the count is three.**  *(Measured —
+`experiments/n3_junction_fermion.py`, 3/3.)*  The hadron experiment's named gap
+— nothing *selected* the constituent count — closes with a mechanism that is
+exact: **a spin defect's ``2π`` phase winding must pass through every phase
+sector once**, so with three sectors the elementary spin-½ defect *is* a
+trivalent, three-sector junction — the colour-singlet triple.  Everything
+measured is **emergent** (fields grown from noise, defects formed by the
+dynamics, never imprinted): every defect sits on a junction where all three
+``N⋆ = 3`` phase sectors meet and every junction sits on a defect (within a
+site, across seeds, defects in ``±`` pairs), each isolated defect's
+neighbourhood carrying the singlet ``1:1:1`` sector composition; read as a
+nematic, **every such junction is a spin-½** (``s = ±½``, the ``−1``/``+1``
+double cover) while two-sector *walls* carry none — the elementary fermion and
+the three-sector singlet are one object, so the baryon's "3" *is* ``N⋆``.  And
+three is selected uniquely: the defect forces all ``P`` phase sectors to meet
+(sector-valence ``= P``, measured for ``P = 3, 4, 5``), while the *matter*
+tessellation caps its generic junctions at the Plateau valence ``d + 1 = 3``
+regardless of ``P`` (``3.00/3.01/3.02`` measured) — the two structures coincide
+**only at ``P = 3``**: the three-sector world is the unique one whose own
+junctions can carry the elementary spin-½.  (Caught in the wild, too: tight
+``±½`` dipoles annihilating mid-flight — the ``½/−½`` meson channel of the
+spinor experiment, happening on its own.  Honest scope: the phase binning
+inherits ``N⋆ = 3`` from the program's sector results rather than deriving it
+afresh, and the hadron composites are still assembled at wells; hadrons
+*condensing* at the junctions of a living tessellation is the open rung.)
 
 ---
 
@@ -550,6 +577,14 @@ apart plainly:
   2-constituent composite exists as a *real molecule*, bound by ``κ``-gravity on
   the floor and spun by the self-sustained driven field, integer and no-flip
   from outside.  Hadron statistics from counting, with the program's own binding.
+- **``N⋆ = 3`` selects the count** (3/3): a spin defect's ``2π`` winding must
+  cross *every* phase sector, so the elementary spin-½ defect **is** a
+  trivalent three-sector junction (emergent, bijective, singlet ``1:1:1``
+  composition; walls carry no spin) — and the matter tessellation's Plateau cap
+  (``d + 1 = 3``, measured for ``P = 3, 4, 5``) means the two structures
+  coincide *only* at ``P = 3``.  The baryon's "3" is the sector count — a
+  fundamental (``N⋆``) bleeding through into a higher manifestation (the
+  constituent count).
 
 **Frontier (intuition the foundations now make testable, without a verdict).**
 - **The abundance *numbers*.**  The count and ordering of the families are now
@@ -594,7 +629,7 @@ apart plainly:
 | `two_field.py` | The two-field coupling: `ψ` co-evolves with `κ` — well detuning, the phase-current force, the self-consistent circulation |
 | `vortex_chiral.py` | The vorticity-bearing field: a vortex pinned per form, quantised angular momentum, the phase-current *torque* — spin from real circulation; and the self-sustained mode (`winding_number`, `evolve_seeded_field`, `reimprint=False`, `chiral_lambda`): seed once and co-evolve the CGL, the winding a conserved topological charge, the field's precession regenerating a strong spin |
 | `vortex_chiral_3d.py` | 3-D spin: the vortex is a *line*, its angular momentum an axial *vector* aligned with the line (`vortex_line`, `line_angular_momentum`, `line_winding`, `evolve_seeded_line`) — quantised, conserved with its axis, integer/bosonic; and the 3-D molecule (`line_phase_force`, `evolve_line_molecule`): a real vector torque the overdamped pair cannot turn |
-| `nematic_spinor.py` | Half-integer spin: a nematic director (`n̂ ≡ −n̂`, `RP¹`) and its ``±½`` disclinations — `disclination_strength` (`s = q/2`), `director_holonomy` (the ``4π`` double cover: ``2π → −1``) — the topological realisation of a spinor |
+| `nematic_spinor.py` | Half-integer spin: a nematic director (`n̂ ≡ −n̂`, `RP¹`) and its ``±½`` disclinations — `disclination_strength` (`s = q/2`), `director_holonomy` (the ``4π`` double cover: ``2π → −1``), `plaquette_winding` (the tracker-free defect map) — the topological realisation of a spinor |
 | `capacity_waves.py` | Finite-speed `κ` (telegrapher), retarded gravity, the exclusion contact terms |
 
 **Experiments (`experiments/`).**
@@ -615,6 +650,7 @@ apart plainly:
 | `n3_molecule_3d.py` | 2/3 | the 3-D molecule carries a real *vector* spin-torque (tangential, sign-locked, axis = the line) and holds its spin bound — but it is overdamped and cannot turn (the κ-molecule's `Q<½` back in 3-D), an honest negative |
 | `n3_spinor.py` | 3/3 | **half-integer spin**: a nematic ``±½`` disclination (`s = q/2`), the ``4π`` double cover (``2π`` flips the director, ``4π`` restores), conserved & fused (``½+½=1``) & bound to matter — the topological realisation of a spinor (not yet the Dirac field) |
 | `n3_hadron_spin.py` | 3/3 | **hadron-like composites**: total spin `s = n/2`, statistics alternate by count (1, 3 fermionic — quark/baryon-like; 2, 4 bosonic — meson-like), the ``½``'s confined inside; the meson-analog a real bound, spinning molecule, integer & no-flip outside |
+| `n3_junction_fermion.py` | 3/3 | **`N⋆ = 3` selects the count**: emergent spin defects *are* trivalent three-sector junctions (bijective, singlet `1:1:1`, every one a `±½` fermion; walls spinless); defect valence `= P` vs the matter tessellation's Plateau `3` — they coincide only at `P = 3` |
 | `n3_exclusion_*` (five) | see doc | the derived, parameter-free pair-binding floor |
 | `n3_identity_generation / _invariance.py` | 2/3, 2/3 | identity measured from structure, pose-invariant |
 | `n3_kappa_lightcone.py` | 2/3 | causal cone `c_κ = √(D/τ)`; the propagating mass |
