@@ -317,7 +317,32 @@ than the re-imprinted drive, and the field's ``L`` drains — so the pinned mode
 strong spin was, in part, the imprinting doing work.  A topological defect can
 bind to matter and keep its quantised charge under its own dynamics — the honest
 core of a *quantised, matter-bound* spin-analog; turning that bound charge into a
-*strong orbital* torque without re-sharpening is the open problem.
+*strong orbital* torque without re-sharpening is the open problem — closed next.
+
+**And the precession regenerates the spin — strongly.**  *(Measured —
+`experiments/n3_driven_vortex.py`, 3/3.)*  That open problem had a clear
+diagnosis: at ``λ = 0`` the self-sustained circulation *drains* for want of the
+re-sharpening the re-imprinting supplied.  The cure is the field's **own
+precession**: the CGL twist ``λ ≠ 0`` (precession ``Ω = −λ``) turns each vortex
+into a spiral source that continuously renews its azimuthal current.  Keep
+everything self-sustained — seed once, co-evolve, no re-imprinting, no imposed
+rotation (`evolve_vortex_molecule(reimprint=False, chiral_lambda=λ)`) — and the
+molecule now holds the **strong spin at the pinned strength and beyond**,
+growing with ``λ`` (``|Ω| = 0.010, 0.019, 0.022`` at ``λ = 0.1, 0.2, 0.3``,
+against the re-imprinted ``0.010`` and the ``λ = 0`` self-sustained ``0.002``),
+the winding preserved and the pair bound.  And the handedness and the strength
+**separate into two knobs**: ``+q`` and ``−q`` spin *oppositely* at the same
+drive (the sign is the topological charge's, independent of the sign of ``λ``),
+while the magnitude is the precession's (``|Ω| ∝ |λ|``).  Both ingredients are
+necessary — a vortex without the precession is the weak, draining ``λ = 0``
+spin; a precession without a vortex carries *no* torque at all (a winding-0
+field's phase-current force is exactly zero, the two-field ``C2`` result of a
+uniformly precessing bulk).  Only the two together spin it strongly.  So a
+self-sustained field *does* hold a strong, quantised-handed spin: the vortex is
+the spin the matter carries, the precession the drive that keeps it turning.
+(The strong-spin state lives in a chirality-compatibility window — a twist of
+the wrong sign can unwind the vortex; and the CGL is a driven, non-equilibrium
+medium, so ``λ`` inputs the energy a persistent spin costs.)
 
 ---
 
@@ -390,9 +415,16 @@ apart plainly:
   the integer winding is a dynamically-conserved topological charge (noise-robust),
   and the `κ` wells pin the core with a real selection rule (like charges survive
   and track their moving mass, a vortex–antivortex pair annihilates and heals) —
-  **but** the *strong* orbital spin does not follow: without the re-imprinting the
-  circulation drains and the torque is an order weaker, so the strong spin needed
-  the re-sharpening.
+  **but** the *strong* orbital spin did not follow at `λ = 0`: without the
+  re-imprinting the circulation drained and the torque was an order weaker.
+- **The field's own precession regenerates the strong spin** (3/3): give the
+  self-sustained field its CGL twist (`λ ≠ 0`) and the seeded-once, co-evolved
+  molecule spins at the pinned strength and beyond (`|Ω|` growing with `λ`), the
+  winding preserved — with the **handedness set by the vortex charge and the
+  strength by `|λ|`** (two independent knobs).  Both ingredients are necessary: a
+  vortex without the precession is weak and draining, a precession without a
+  vortex is torque-free.  The self-sustained *strong* spin — matter-bound charge,
+  field-driven — closes the emergent boundary.
 
 **Frontier (intuition the foundations now make testable, without a verdict).**
 - **The abundance *numbers*.**  The count and ordering of the families are now
@@ -407,14 +439,14 @@ apart plainly:
   numerical match to CKM mixing or quark masses is claimed (declined, not
   pending).  The `N⋆ = 3` colour tie and the multiplet structure are measured;
   the mass/mixing numbers are the numerology the program does not chase.
-- **Spin's higher-dimensional manifestations, and a self-sustained *strong*
-  drive.**  The chiral term is the 2-D minimal one; the program's intuition that
-  it is the shadow of a higher-dimensional structure is untested.  The
-  self-sustained vortex now keeps its quantised charge and pins to matter under
-  its own dynamics (measured, 2/3) — what remains open is turning that bound
-  charge into a *strong orbital* torque without the re-imprinting that re-sharpens
-  the circulation: the emergent field's spin is sign-locked but an order too weak,
-  its angular momentum draining.  A self-sustained strong drive is the open rung.
+- **Spin's higher-dimensional manifestations.**  The chiral term is the 2-D
+  minimal one; the program's intuition that it is the shadow of a
+  higher-dimensional structure (a genuine spinor, in 3-D or 4-D) is untested.  The
+  2-D story is now complete — a self-sustained field holds a strong, quantised-
+  handed spin bound to matter (the driven-vortex result, 3/3) — but whether the
+  chiral term is the shadow of a higher structure, and whether the compatibility
+  window between the field's chirality and the defect charge has a deeper meaning,
+  are the open threads.
 - **One number for criticality.**  Whether the collab's pattern-clarity `β` and
   Act I's `κ̂(scale)` are the same object, or one is a shadow of the other.
 
@@ -429,7 +461,7 @@ apart plainly:
 | `dimensional_forms.py` | CW-census (any dimension): cells, Euler, valence, the Plateau structure, the flavour multiplets |
 | `chiral_field.py` | The chiral spin term (CGL), precession `Ω = −λ`, vorticity |
 | `two_field.py` | The two-field coupling: `ψ` co-evolves with `κ` — well detuning, the phase-current force, the self-consistent circulation |
-| `vortex_chiral.py` | The vorticity-bearing field: a vortex pinned per form, quantised angular momentum, the phase-current *torque* — spin from real circulation; and the self-sustained mode (`winding_number`, `evolve_seeded_field`, `reimprint=False`): seed once and co-evolve the CGL, the winding a conserved topological charge |
+| `vortex_chiral.py` | The vorticity-bearing field: a vortex pinned per form, quantised angular momentum, the phase-current *torque* — spin from real circulation; and the self-sustained mode (`winding_number`, `evolve_seeded_field`, `reimprint=False`, `chiral_lambda`): seed once and co-evolve the CGL, the winding a conserved topological charge, the field's precession regenerating a strong spin |
 | `capacity_waves.py` | Finite-speed `κ` (telegrapher), retarded gravity, the exclusion contact terms |
 
 **Experiments (`experiments/`).**
@@ -445,6 +477,7 @@ apart plainly:
 | `n3_two_field_chiral.py` | 3/3 | `ψ` co-evolves with `κ`; the field presses the bond (radial, λ-odd); the spin is slaved to the field's own `Ω` |
 | `n3_vortex_chiral.py` | 3/3 | a vortex per form: quantised angular momentum; the phase-current *torque*; the molecule spins from its own circulation, no imposed drive |
 | `n3_emergent_vortex.py` | 2/3 | self-sustained (no re-imprint): the winding a dynamically-conserved charge, the wells pin the core (like-survive/unlike-annihilate) — but the strong spin drains away, an honest boundary |
+| `n3_driven_vortex.py` | 3/3 | the field's precession (`λ≠0`) regenerates the circulation: the self-sustained molecule spins at the pinned strength — handedness from the charge, strength from `|λ|`, both ingredients necessary — closing the emergent boundary |
 | `n3_exclusion_*` (five) | see doc | the derived, parameter-free pair-binding floor |
 | `n3_identity_generation / _invariance.py` | 2/3, 2/3 | identity measured from structure, pose-invariant |
 | `n3_kappa_lightcone.py` | 2/3 | causal cone `c_κ = √(D/τ)`; the propagating mass |

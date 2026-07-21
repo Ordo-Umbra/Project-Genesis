@@ -216,5 +216,54 @@ class EmergentMoleculeTests(unittest.TestCase):
             self.assertEqual(np.mean(h["L_field"][-3:]), 0.0)
 
 
+class DrivenVortexTests(unittest.TestCase):
+    """The self-sustained field with its own precession (λ ≠ 0) spins strongly."""
+
+    def _run(self, q, lam, steps=1200, n=64):
+        pos0 = [[n / 2 - 4.5, n / 2], [n / 2 + 4.5, n / 2]]
+        vel0 = [[0.0, 0.2], [0.0, -0.2]]
+        h = evolve_vortex_molecule(
+            pos0, vel0, [0.6, 0.6], shape=(n, n), width=2.5, tau=0.1, dt=0.1,
+            steps=steps, record_every=20, vortex_charge=q, phase_chi=0.6,
+            core=3.0, detune_gamma=0.8, reimprint=False, chiral_lambda=lam,
+            kappa_diffusion=1.0, kappa_recovery=0.02, kappa_consumption=0.8)
+        t = np.asarray(h["time"])
+        om = np.asarray(h["omega"])[t > 0.6 * t[-1]].mean()
+        wmin = float(np.min(np.abs(np.asarray(h["winding"]))))
+        sep = np.asarray(h["separation"])
+        return float(om), wmin, sep
+
+    def test_precession_gives_a_strong_self_sustained_spin(self):
+        # seeded once, co-evolved (no re-imprint): λ regenerates the circulation
+        om0, _, _ = self._run(1, 0.0)          # weak without the drive
+        om, wmin, sep = self._run(1, 0.2)      # strong with it
+        self.assertGreater(abs(om), 0.004)               # reaches the pinned bar
+        self.assertGreater(abs(om), 3.0 * abs(om0))      # far above λ = 0
+        self.assertGreater(wmin, 0.8)                    # winding preserved
+        self.assertLess(sep[-3:].max(), 1.5 * 9.0)       # bound
+
+    def test_charge_sets_handedness(self):
+        # +q and −q spin oppositely at the same drive (handedness = topology)
+        omp, _, _ = self._run(+1, 0.2)
+        omm, _, _ = self._run(-1, 0.2)
+        self.assertGreater(omp, 0.004)
+        self.assertLess(omm, -0.004)
+
+    def test_no_vortex_no_phase_force(self):
+        # precession without a vortex carries no torque: winding-0 field, no force
+        n = 48
+        centers, loads = _pair_loads(n=n)
+        kappa = relax_capacity(loads[0] + loads[1], kappa_diffusion=1.0,
+                               kappa_recovery=0.02, kappa_consumption=0.8)
+        g = chiral_detuning(kappa, detune_gamma=0.8)
+        f0 = vortex_phase_force(
+            loads, imprint_vortices((n, n), centers, [0, 0], core=3.0, detune=g),
+            phase_chi=0.6)
+        f1 = vortex_phase_force(
+            loads, imprint_vortices((n, n), centers, [1, 1], core=3.0, detune=g),
+            phase_chi=0.6)
+        self.assertLess(np.abs(f0).max(), 0.05 * np.abs(f1[:, 1]).max())
+
+
 if __name__ == "__main__":
     unittest.main()
