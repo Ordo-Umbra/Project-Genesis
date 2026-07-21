@@ -73,6 +73,24 @@ class FusionAndMatterTests(unittest.TestCase):
         self.assertLess(h2, -0.9)         # the −1 holonomy survives evolution
         self.assertGreater(h4, 0.9)
 
+    def test_composite_spin_is_additive_and_statistics_alternate(self):
+        # n half-constituents: far-field s = n/2; odd n flips (-1), even doesn't
+        n = (96, 96)
+        mid = 48.0
+        for n_c, want_flip in ((2, False), (3, True)):
+            r = 9.0 / (2.0 * np.sin(np.pi / n_c))
+            cs = [(mid + r * np.cos(2 * np.pi * k / n_c),
+                   mid + r * np.sin(2 * np.pi * k / n_c)) for k in range(n_c)]
+            psi = imprint_vortices(n, cs, [1] * n_c, core=3.0)
+            self.assertAlmostEqual(
+                disclination_strength(psi, (mid, mid), radius=28),
+                n_c / 2.0, delta=0.1)
+            h2, _ = director_holonomy(psi, (mid, mid), radius=28)
+            if want_flip:
+                self.assertLess(h2, -0.9)      # baryon-like: fermionic composite
+            else:
+                self.assertGreater(h2, 0.9)    # meson-like: bosonic composite
+
     def test_half_antihalf_annihilate(self):
         n = (64, 64)
         c0, c1 = (32, 27), (32, 37)

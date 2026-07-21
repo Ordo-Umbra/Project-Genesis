@@ -414,6 +414,30 @@ of a spinor.  It is **not** the full quantum Dirac field — no spin–statistic
 winding, the ``4π`` double cover, and the fusion rules are the measured content
 of "spin-½", and matter can now carry it.
 
+**And the pieces assemble into hadron-like composites.**  *(Measured —
+`experiments/n3_hadron_spin.py`, 3/3.)*  Put everything together — the derived
+exclusion floor to space the constituents, ``κ``-gravity to bind them, the
+driven chiral field to spin them, and the ``½`` disclination as their spin — and
+ask what composite objects come out.  The answer is the **meson/baryon
+statistics split, from nothing but additivity**: topological spin adds, so ``n``
+half-integer constituents carry total ``s = n/2``, and the far-field
+double-cover class alternates with the count — ``n = 1`` and ``3`` are
+**fermionic** composites (quark-like, baryon-like: the ``2π`` loop flips the
+director), ``n = 2`` and ``4`` are **bosonic** (meson-like: no flip) — exactly
+the statistics real hadrons get from counting their quarks.  The half-integer
+content is visible only *inside*: each constituent carries its own local ``½``
+(and its ``−1``) at the seed, and after co-evolution the total charge stays
+confined and conserved — the radial profile jumps to ``n/2`` across the
+constituent shell and is constant on every larger loop.  And the meson-analog is
+a *real dynamical object*: assembled as a molecule — bound by ``κ``-gravity on
+the derived floor, spun by the self-sustained driven field, no re-imprinting —
+it stays bound, keeps both constituent ``½``'s, holds a persistent spin, and
+reads **integer, no-flip** from outside: a bound, spinning boson made of two
+topological fermions.  (Honest scope: the statistics are topological, not
+quantum — no anticommutation, no Pauli principle between identical composites;
+and the constituent count is put in by hand — no dynamical confinement selects
+2 or 3, though the ``N⋆ = 3`` sector story is the standing suggestion.)
+
 ---
 
 ## 6. Where criticality sits in all of this
@@ -518,6 +542,14 @@ apart plainly:
   matter (fusing ``½ + ½ = 1``, annihilating ``½ − ½ → 0``).  This is the
   **topological** realisation of spin-½ (the ``SU(2)`` double cover), not yet the
   quantum Dirac field.
+- **The pieces make hadron-like composites** (3/3): ``n`` half-integer
+  constituents at derived-floor spacing carry total spin ``s = n/2`` with the
+  double-cover class alternating by count — **2 constituents make a boson
+  (meson-like), 3 make a fermion (baryon-like)** — the half-integer content
+  confined inside while only the composite spin shows outside; and the
+  2-constituent composite exists as a *real molecule*, bound by ``κ``-gravity on
+  the floor and spun by the self-sustained driven field, integer and no-flip
+  from outside.  Hadron statistics from counting, with the program's own binding.
 
 **Frontier (intuition the foundations now make testable, without a verdict).**
 - **The abundance *numbers*.**  The count and ordering of the families are now
@@ -582,6 +614,7 @@ apart plainly:
 | `n3_vortex_3d.py` | 3/3 | 3-D spin is an axial *vector*: the defect is a line, `L` aligns with it at any orientation, quantised by winding; conserved with its axis under the self-sustained CGL; like-survive/unlike-annihilate (integer/bosonic; the spinor is the frontier) |
 | `n3_molecule_3d.py` | 2/3 | the 3-D molecule carries a real *vector* spin-torque (tangential, sign-locked, axis = the line) and holds its spin bound — but it is overdamped and cannot turn (the κ-molecule's `Q<½` back in 3-D), an honest negative |
 | `n3_spinor.py` | 3/3 | **half-integer spin**: a nematic ``±½`` disclination (`s = q/2`), the ``4π`` double cover (``2π`` flips the director, ``4π`` restores), conserved & fused (``½+½=1``) & bound to matter — the topological realisation of a spinor (not yet the Dirac field) |
+| `n3_hadron_spin.py` | 3/3 | **hadron-like composites**: total spin `s = n/2`, statistics alternate by count (1, 3 fermionic — quark/baryon-like; 2, 4 bosonic — meson-like), the ``½``'s confined inside; the meson-analog a real bound, spinning molecule, integer & no-flip outside |
 | `n3_exclusion_*` (five) | see doc | the derived, parameter-free pair-binding floor |
 | `n3_identity_generation / _invariance.py` | 2/3, 2/3 | identity measured from structure, pose-invariant |
 | `n3_kappa_lightcone.py` | 2/3 | causal cone `c_κ = √(D/τ)`; the propagating mass |
