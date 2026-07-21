@@ -386,6 +386,34 @@ vector throughout, so the form *carries* a spin vector — it simply cannot turn
 it.  What overcame this drag in 2-D was a thinner medium; a 3-D molecule that
 genuinely rotates needs a higher ``Q`` or a different binding, the open rung.
 
+**And spin becomes half-integer — a spinor.**  *(Measured —
+`experiments/n3_spinor.py`, 3/3, `project_genesis/nematic_spinor.py`.)*  Every
+spin so far was **integer** — a ``U(1)`` complex order parameter, a boson.  A
+quark is a **half-integer spinor**: a ``2π`` rotation gives ``−1``, only ``4π``
+returns it — the ``SU(2)`` double cover of ``SO(3)``.  That is a *different*
+order parameter: a **nematic**, a headless director ``n̂ ≡ −n̂`` (space
+``RP¹``), whose defects are **±½ disclinations** — the director winds by only
+``π``, which no vector can do.  Carried by ``ψ = e^{2iθ}`` (the doubled angle),
+the director is ``θ = ½·arg ψ`` and a ``ψ``-vortex of charge ``q`` is a
+disclination of strength ``s = q/2`` — so the whole vortex machinery applies but
+the observable object is the double-valued director.  Three things, each
+measured.  The elementary defect is **half-integer**: ``s(q) = q/2`` exactly, so
+``q = ±1`` is a ``±½`` disclination (the director winds by ``±π``), impossible
+for a vector.  The **double cover** is explicit: transport the oriented director
+once (``2π``) around a ``½`` disclination and it **flips** (``n̂·n̂ = −1``, the
+spinor's minus sign), a second loop (``4π``) restores it (``+1``) — while an
+integer defect never flips.  And it is a real, conserved, additive charge on
+matter: pinned to a ``κ`` well and co-evolved under the CGL with no
+re-imprinting, the ``½`` keeps its strength *and* its ``−1`` holonomy; two
+``½``'s **fuse** to an integer, a ``½`` and a ``−½`` **annihilate** and the field
+heals.  Honest scope, and why this is a foundation not the finish: this is the
+**order-parameter (topological)** realisation of half-integer spin — a genuine
+``Z₂/RP¹`` double cover with ``π``-winding disclinations, the topological essence
+of a spinor.  It is **not** the full quantum Dirac field — no spin–statistics
+(anticommutation), no Dirac equation, no dynamical fermion — but the half-integer
+winding, the ``4π`` double cover, and the fusion rules are the measured content
+of "spin-½", and matter can now carry it.
+
 ---
 
 ## 6. Where criticality sits in all of this
@@ -482,6 +510,14 @@ apart plainly:
   floor — yet it is **overdamped**, twisting to a static angle instead of
   spinning (the κ-molecule's ``Q < ½`` returning in 3-D).  The 2-D vortex drive
   beat that drag; the thicker 3-D medium wins.
+- **Spin becomes half-integer — a spinor** (3/3): a nematic director field
+  (``n̂ ≡ −n̂``, ``RP¹``) has **±½ disclinations** — the director winds by ``π``,
+  ``s = q/2`` — and the *double cover* is explicit: a ``2π`` loop around a ``½``
+  disclination flips the oriented director (``−1``), ``4π`` restores it (an
+  integer defect never flips).  The ``½`` is a conserved, additive charge on
+  matter (fusing ``½ + ½ = 1``, annihilating ``½ − ½ → 0``).  This is the
+  **topological** realisation of spin-½ (the ``SU(2)`` double cover), not yet the
+  quantum Dirac field.
 
 **Frontier (intuition the foundations now make testable, without a verdict).**
 - **The abundance *numbers*.**  The count and ordering of the families are now
@@ -496,16 +532,17 @@ apart plainly:
   numerical match to CKM mixing or quark masses is claimed (declined, not
   pending).  The `N⋆ = 3` colour tie and the multiplet structure are measured;
   the mass/mixing numbers are the numerology the program does not chase.
-- **A half-integer spinor — fermionic matter.**  Spin is now a full axial vector
-  in 3-D (the vortex-line result, 3/3), but it is still an **integer / spin-1-
-  like** angular momentum: what a ``U(1)`` complex order parameter gives.  A
-  quark is a **half-integer spinor** — the ``SU(2)`` double cover, ``4π``
-  periodicity — which needs a *different* field structure (a nematic/director
-  with ``Z₂``, or a ``CP¹`` / two-component field).  Turning matter's spin into a
-  genuine spinor is the open frontier toward *fermionic* matter.  (The
-  intermediate rung — a 3-D molecule that *turns* — is itself open: the bound
-  pair carries a real vector spin-torque but is overdamped, `n3_molecule_3d`,
-  2/3; it needs a higher-``Q`` medium or a different binding first.)
+- **The quantum Dirac fermion — spin–statistics.**  Spin-½ is now realised
+  *topologically* — the nematic ``±½`` disclination, its ``4π`` double cover, on
+  matter (the spinor result, 3/3) — and spin as a full axial *vector* in 3-D (the
+  vortex-line result, 3/3).  What is *not* yet done is the full quantum fermion:
+  the **spin–statistics** connection (anticommutation, the Pauli exclusion of
+  identical half-integer excitations), a Dirac equation, a dynamical fermion
+  field.  The program already has a *derived* exclusion floor (the no-cloning
+  binding) and now a *topological* half-integer spin — tying those two into
+  genuine Fermi statistics is the open frontier toward truly fermionic matter.
+  (A subsidiary open rung: a 3-D molecule that actually *turns* — the bound pair
+  carries a real vector spin-torque but is overdamped, `n3_molecule_3d`, 2/3.)
 - **The deeper meaning of the compatibility window.**  The self-sustained strong
   spin lives in a window where the field's chirality and the defect charge agree;
   whether that selection has a deeper structural meaning is an open thread.
@@ -525,6 +562,7 @@ apart plainly:
 | `two_field.py` | The two-field coupling: `ψ` co-evolves with `κ` — well detuning, the phase-current force, the self-consistent circulation |
 | `vortex_chiral.py` | The vorticity-bearing field: a vortex pinned per form, quantised angular momentum, the phase-current *torque* — spin from real circulation; and the self-sustained mode (`winding_number`, `evolve_seeded_field`, `reimprint=False`, `chiral_lambda`): seed once and co-evolve the CGL, the winding a conserved topological charge, the field's precession regenerating a strong spin |
 | `vortex_chiral_3d.py` | 3-D spin: the vortex is a *line*, its angular momentum an axial *vector* aligned with the line (`vortex_line`, `line_angular_momentum`, `line_winding`, `evolve_seeded_line`) — quantised, conserved with its axis, integer/bosonic; and the 3-D molecule (`line_phase_force`, `evolve_line_molecule`): a real vector torque the overdamped pair cannot turn |
+| `nematic_spinor.py` | Half-integer spin: a nematic director (`n̂ ≡ −n̂`, `RP¹`) and its ``±½`` disclinations — `disclination_strength` (`s = q/2`), `director_holonomy` (the ``4π`` double cover: ``2π → −1``) — the topological realisation of a spinor |
 | `capacity_waves.py` | Finite-speed `κ` (telegrapher), retarded gravity, the exclusion contact terms |
 
 **Experiments (`experiments/`).**
@@ -543,6 +581,7 @@ apart plainly:
 | `n3_driven_vortex.py` | 3/3 | the field's precession (`λ≠0`) regenerates the circulation: the self-sustained molecule spins at the pinned strength — handedness from the charge, strength from `|λ|`, both ingredients necessary — closing the emergent boundary |
 | `n3_vortex_3d.py` | 3/3 | 3-D spin is an axial *vector*: the defect is a line, `L` aligns with it at any orientation, quantised by winding; conserved with its axis under the self-sustained CGL; like-survive/unlike-annihilate (integer/bosonic; the spinor is the frontier) |
 | `n3_molecule_3d.py` | 2/3 | the 3-D molecule carries a real *vector* spin-torque (tangential, sign-locked, axis = the line) and holds its spin bound — but it is overdamped and cannot turn (the κ-molecule's `Q<½` back in 3-D), an honest negative |
+| `n3_spinor.py` | 3/3 | **half-integer spin**: a nematic ``±½`` disclination (`s = q/2`), the ``4π`` double cover (``2π`` flips the director, ``4π`` restores), conserved & fused (``½+½=1``) & bound to matter — the topological realisation of a spinor (not yet the Dirac field) |
 | `n3_exclusion_*` (five) | see doc | the derived, parameter-free pair-binding floor |
 | `n3_identity_generation / _invariance.py` | 2/3, 2/3 | identity measured from structure, pose-invariant |
 | `n3_kappa_lightcone.py` | 2/3 | causal cone `c_κ = √(D/τ)`; the propagating mass |
