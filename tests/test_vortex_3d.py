@@ -13,8 +13,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from project_genesis.capacity_gravity import gaussian_load, relax_capacity  # noqa: E402
 from project_genesis.two_field import chiral_detuning, step_chiral_detuned  # noqa: E402
 from project_genesis.vortex_chiral_3d import (  # noqa: E402
+    evolve_line_molecule,
     evolve_seeded_line,
     line_angular_momentum,
+    line_phase_force,
     line_winding,
     vortex_line,
 )
@@ -96,6 +98,59 @@ class SelfSustainedLineTests(unittest.TestCase):
         self.assertLess(abs(line_winding(psi, c0, 2)), 0.2)     # unwound
         self.assertLess(abs(line_winding(psi, c1, 2)), 0.2)
         self.assertGreater(np.abs(psi).min(), 0.4)             # healed
+
+
+class MoleculeTests(unittest.TestCase):
+    """The 3-D molecule carries a real vector spin-torque but is overdamped."""
+
+    def _torque(self, axis, sepdir, charges, n=32, s=7.0):
+        mid = n / 2
+        d = np.zeros(3); d[sepdir] = s / 2
+        c0 = np.array([mid, mid, mid]) - d
+        c1 = np.array([mid, mid, mid]) + d
+        loads = [gaussian_load((n, n, n), [tuple(c0)], 2.5, 0.6),
+                 gaussian_load((n, n, n), [tuple(c1)], 2.5, 0.6)]
+        kappa = relax_capacity(loads[0] + loads[1], kappa_diffusion=1.0,
+                               kappa_recovery=0.02, kappa_consumption=0.8)
+        g = chiral_detuning(kappa, detune_gamma=0.8)
+        psi = (vortex_line((n, n, n), tuple(c0), axis, charges[0])
+               * vortex_line((n, n, n), tuple(c1), axis, charges[1])
+               * np.sqrt(np.clip(1.0 - g, 0.0, 1.0)))
+        F = line_phase_force(loads, psi, phase_chi=0.6)
+        com = 0.5 * (c0 + c1)
+        return np.cross(c0 - com, F[0]) + np.cross(c1 - com, F[1])
+
+    def test_torque_axis_follows_the_line_and_sign_locks(self):
+        tz = self._torque((0, 0, 1), 0, (1, 1))     # lines ∥ z, sep along x
+        tx = self._torque((1, 0, 0), 1, (1, 1))     # lines ∥ x, sep along y
+        # the torque points along the line direction, in each case
+        self.assertGreater(abs(tz[2]) / np.linalg.norm(tz), 0.9)
+        self.assertGreater(abs(tx[0]) / np.linalg.norm(tx), 0.9)
+        # sign-locked to the winding
+        tz_neg = self._torque((0, 0, 1), 0, (-1, -1))
+        self.assertLess(np.sign(tz[2]) * np.sign(tz_neg[2]), 0)
+
+    def test_antivortex_torque_is_null(self):
+        tz = self._torque((0, 0, 1), 0, (1, 1))
+        ta = self._torque((0, 0, 1), 0, (1, -1))
+        self.assertLess(np.linalg.norm(ta), 0.2 * np.linalg.norm(tz))
+
+    def test_bound_pair_is_overdamped_no_spin(self):
+        # the honest negative: driven, floor-bound, but it will not turn
+        n = 32; mid = n / 2; s = 7.0
+        pos = [[mid - s / 2, mid, mid], [mid + s / 2, mid, mid]]
+        vel = [[0, 0.2, 0], [0, -0.2, 0]]
+        h = evolve_line_molecule(pos, vel, [0.6, 0.6], shape=(n, n, n),
+            axis=(0, 0, 1), width=2.5, tau=0.1, dt=0.1, steps=800,
+            record_every=20, vortex_charge=1, phase_chi=0.6, core=3.0,
+            detune_gamma=0.8, reimprint=True, chiral_lambda=0.2,
+            kappa_diffusion=1.0, kappa_recovery=0.02, kappa_consumption=0.8)
+        t = np.asarray(h["time"])
+        omega_z = np.asarray(h["omega_vec"])[t > 0.6 * t[-1], 2].mean()
+        self.assertLess(abs(omega_z), 0.004)                  # overdamped: no spin
+        sep = np.asarray(h["separation"])
+        self.assertLess(sep[-3:].max(), 1.6 * s)              # but stays bound
+        self.assertGreater(np.mean([abs(w[0]) for w in h["winding"][-3:]]), 0.8)  # holds spin
 
 
 if __name__ == "__main__":

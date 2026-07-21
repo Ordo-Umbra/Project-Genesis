@@ -368,6 +368,24 @@ spin-1-like, *bosonic* object.  A genuine **half-integer spinor** — the
 is a different field structure, and reaching it is the open frontier toward
 *fermionic* matter, not what a complex order parameter gives.
 
+**But the 3-D molecule cannot turn.**  *(Measured — `experiments/n3_molecule_3d.py`,
+2/3, an honest negative.)*  Binding two such lines into a molecule (3-D
+``κ``-gravity + the derived exclusion floor, each mass threaded by a line) asks
+whether the bound object can *spin* now that its spin has a direction.  The
+torque is genuinely there and genuinely a **vector**: for a floor-bound pair the
+phase-current force is tangential to the bond, sign-locked to the winding, its
+axis the line's direction (lines ∥ ``ẑ`` give ``τ ∥ ẑ``, lines ∥ ``x̂`` give
+``τ ∥ x̂``, magnitude ``0.17``), the antivortex control null — the very mechanism
+that spun the 2-D molecule.  And yet, released, the pair **twists to a static
+few-degree angle and stops** (``|Ω| ≈ 0`` for both windings, an order below the
+2-D driven bar): it is **overdamped** — the ``κ``-drag that binds it dissipates
+the rotation faster than the drive builds it, the original κ-molecule's
+``Q < ½`` failure returning now that the medium is 3-D and the line threads its
+whole column.  The pair stays on its floor and keeps its winding and ``L``
+vector throughout, so the form *carries* a spin vector — it simply cannot turn
+it.  What overcame this drag in 2-D was a thinner medium; a 3-D molecule that
+genuinely rotates needs a higher ``Q`` or a different binding, the open rung.
+
 ---
 
 ## 6. Where criticality sits in all of this
@@ -457,6 +475,13 @@ apart plainly:
   (noise-robust, and more stable than the 2-D point vortex because it wraps a
   torus cycle), and matter enforces the same like-survive / unlike-annihilate
   sign rule.  This is an integer / spin-1-like (bosonic) angular momentum.
+- **The 3-D molecule carries a vector spin-torque but cannot turn** (2/3, an
+  honest negative): binding two lines into a molecule, the torque on the bond is
+  real and *vectorial* (tangential, sign-locked, its axis the line's direction,
+  the antivortex control null) and the pair holds its winding and ``L`` on the
+  floor — yet it is **overdamped**, twisting to a static angle instead of
+  spinning (the κ-molecule's ``Q < ½`` returning in 3-D).  The 2-D vortex drive
+  beat that drag; the thicker 3-D medium wins.
 
 **Frontier (intuition the foundations now make testable, without a verdict).**
 - **The abundance *numbers*.**  The count and ordering of the families are now
@@ -477,9 +502,10 @@ apart plainly:
   quark is a **half-integer spinor** — the ``SU(2)`` double cover, ``4π``
   periodicity — which needs a *different* field structure (a nematic/director
   with ``Z₂``, or a ``CP¹`` / two-component field).  Turning matter's spin into a
-  genuine spinor is the open frontier toward *fermionic* matter, and the natural
-  next rung after the field-level 3-D vector (the driven 3-D molecule — spin with
-  a direction bound and turning — is the intermediate step).
+  genuine spinor is the open frontier toward *fermionic* matter.  (The
+  intermediate rung — a 3-D molecule that *turns* — is itself open: the bound
+  pair carries a real vector spin-torque but is overdamped, `n3_molecule_3d`,
+  2/3; it needs a higher-``Q`` medium or a different binding first.)
 - **The deeper meaning of the compatibility window.**  The self-sustained strong
   spin lives in a window where the field's chirality and the defect charge agree;
   whether that selection has a deeper structural meaning is an open thread.
@@ -498,7 +524,7 @@ apart plainly:
 | `chiral_field.py` | The chiral spin term (CGL), precession `Ω = −λ`, vorticity |
 | `two_field.py` | The two-field coupling: `ψ` co-evolves with `κ` — well detuning, the phase-current force, the self-consistent circulation |
 | `vortex_chiral.py` | The vorticity-bearing field: a vortex pinned per form, quantised angular momentum, the phase-current *torque* — spin from real circulation; and the self-sustained mode (`winding_number`, `evolve_seeded_field`, `reimprint=False`, `chiral_lambda`): seed once and co-evolve the CGL, the winding a conserved topological charge, the field's precession regenerating a strong spin |
-| `vortex_chiral_3d.py` | 3-D spin: the vortex is a *line*, its angular momentum an axial *vector* aligned with the line (`vortex_line`, `line_angular_momentum`, `line_winding`, `evolve_seeded_line`) — quantised, conserved with its axis, integer/bosonic |
+| `vortex_chiral_3d.py` | 3-D spin: the vortex is a *line*, its angular momentum an axial *vector* aligned with the line (`vortex_line`, `line_angular_momentum`, `line_winding`, `evolve_seeded_line`) — quantised, conserved with its axis, integer/bosonic; and the 3-D molecule (`line_phase_force`, `evolve_line_molecule`): a real vector torque the overdamped pair cannot turn |
 | `capacity_waves.py` | Finite-speed `κ` (telegrapher), retarded gravity, the exclusion contact terms |
 
 **Experiments (`experiments/`).**
@@ -516,6 +542,7 @@ apart plainly:
 | `n3_emergent_vortex.py` | 2/3 | self-sustained (no re-imprint): the winding a dynamically-conserved charge, the wells pin the core (like-survive/unlike-annihilate) — but the strong spin drains away, an honest boundary |
 | `n3_driven_vortex.py` | 3/3 | the field's precession (`λ≠0`) regenerates the circulation: the self-sustained molecule spins at the pinned strength — handedness from the charge, strength from `|λ|`, both ingredients necessary — closing the emergent boundary |
 | `n3_vortex_3d.py` | 3/3 | 3-D spin is an axial *vector*: the defect is a line, `L` aligns with it at any orientation, quantised by winding; conserved with its axis under the self-sustained CGL; like-survive/unlike-annihilate (integer/bosonic; the spinor is the frontier) |
+| `n3_molecule_3d.py` | 2/3 | the 3-D molecule carries a real *vector* spin-torque (tangential, sign-locked, axis = the line) and holds its spin bound — but it is overdamped and cannot turn (the κ-molecule's `Q<½` back in 3-D), an honest negative |
 | `n3_exclusion_*` (five) | see doc | the derived, parameter-free pair-binding floor |
 | `n3_identity_generation / _invariance.py` | 2/3, 2/3 | identity measured from structure, pose-invariant |
 | `n3_kappa_lightcone.py` | 2/3 | causal cone `c_κ = √(D/τ)`; the propagating mass |

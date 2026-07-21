@@ -8,7 +8,7 @@ is a genuine **3-vector, aligned with the line** and quantised by the winding.
 Spin has acquired a *direction*: rotate the line and its spin vector rotates
 with it, pointing anywhere in space.
 
-This module is the field-level 3-D instrument (no molecule dynamics yet):
+This module is the 3-D instrument:
 
 - `vortex_line` imprints a straight line through a point along an arbitrary
   axis, winding ``q`` in the perpendicular plane;
@@ -18,7 +18,12 @@ This module is the field-level 3-D instrument (no molecule dynamics yet):
   (tracker-free, as in 2-D);
 - `evolve_seeded_line` co-evolves a seeded field under the κ-detuned CGL with
   **no re-imprinting** — the self-sustained test — so the winding's conservation
-  and the axis's stability are the dynamics', not an imposition.
+  and the axis's stability are the dynamics', not an imposition;
+- `line_phase_force` / `evolve_line_molecule` bind a pair, each threaded by a
+  line, and drive it — the field carries a real *vector* spin-torque (its axis
+  the line direction, sign the winding), but the bound object is **overdamped**
+  in 3-D (``Q < ½``, the original κ-molecule's failure returning now that the
+  medium is 3-D): it twists to a static torque-balanced angle and does not turn.
 
 Honest scope: this ``U(1)`` field carries an **integer / axial-vector** angular
 momentum — a spin-1-like (bosonic) object.  A genuine **half-integer spinor**
@@ -31,6 +36,10 @@ from __future__ import annotations
 
 import numpy as np
 
+from .capacity_gravity import gaussian_load, relax_capacity
+from .capacity_waves import (_gaussian_load_and_grad, _relax_functional,
+                             _smoothed_min, _smoothed_min_weight,
+                             _solve_relaxed, step_capacity_wave)
 from .two_field import chiral_detuning, step_chiral_detuned
 
 
@@ -155,5 +164,131 @@ def evolve_seeded_line(shape, center, normal, q, kappa, *,
             hist["align"].append(float(abs(L @ nhat) / (np.linalg.norm(L) + 1e-12)))
             hist["amp_min"].append(float(np.abs(psi).min()))
         psi = step_chiral_detuned(psi, g, chiral=chiral, dt=dt)
+    hist["psi"] = psi
+    return hist
+
+
+def line_phase_force(loads, psi, *, phase_chi: float) -> np.ndarray:
+    """Footprint-averaged phase-current force ``F_i = χ·Σ ρ̂_i·j`` per mass (3-D)."""
+    j = phase_current_3d(psi)
+    out = np.zeros((len(loads), 3))
+    for i, li in enumerate(loads):
+        tot = float(np.sum(li))
+        if tot == 0.0:
+            continue
+        for ax in range(3):
+            out[i, ax] = phase_chi * float(np.sum(li * j[ax])) / tot
+    return out
+
+
+def evolve_line_molecule(positions, velocities, masses, *, shape, axis=(0, 0, 1),
+                         width: float = 2.5, tau: float = 0.1, dt: float = 0.1,
+                         steps: int = 2000, record_every: int = 20,
+                         vortex_charge: int = 0, phase_chi: float = 0.6,
+                         core: float = 3.0, detune_gamma: float = 0.8,
+                         reimprint: bool = False, chiral_lambda: float = 0.0,
+                         kappa_diffusion: float = 1.0, kappa_recovery: float = 0.02,
+                         kappa_consumption: float = 0.8,
+                         kappa_baseline: float = 1.0) -> dict:
+    """A bound pair in 3-D, each threaded by a vortex LINE ∥ ``axis``; the spin
+    is an axial vector along the line.
+
+    κ-gravity and the ``contact_full`` exclusion floor bind the pair (the 3-D
+    analog of `vortex_chiral.evolve_vortex_molecule`); the vortex-line ψ is
+    seeded once and co-evolved under the κ-detuned CGL (``reimprint=False``, the
+    self-sustained mode, precession ``chiral_lambda``) or re-imprinted each step.
+    Records positions, separation, the field's ``L`` vector, the orbital angular-
+    velocity vector ``omega_vec`` (and its magnitude ``omega``), the winding
+    around each mass in the plane ⊥ ``axis``, and ``amp_min``.
+    """
+    shape = tuple(int(s) for s in shape)
+    pos = np.asarray(positions, dtype=float).copy()
+    vel = np.asarray(velocities, dtype=float).copy()
+    m = np.asarray(masses, dtype=float)
+    c = kappa_consumption
+    naxis = int(np.argmax(np.abs(axis)))
+    fkw = dict(kappa_diffusion=kappa_diffusion, kappa_recovery=kappa_recovery,
+               kappa_consumption=kappa_consumption, kappa_baseline=kappa_baseline)
+    st = {"k1": None, "k2": None}
+
+    def loads_of(p):
+        return [gaussian_load(shape, [tuple(pi)], width, mi) for pi, mi in zip(p, m)]
+
+    def seed_psi(p, kappa):
+        if not vortex_charge:
+            return None
+        g = chiral_detuning(kappa, detune_gamma=detune_gamma,
+                            kappa_baseline=kappa_baseline)
+        psi = np.ones(shape, dtype=complex)
+        for pi in p:
+            psi = psi * vortex_line(shape, tuple(pi), axis, vortex_charge, core=core)
+        return psi * np.sqrt(np.clip(1.0 - g, 0.0, 1.0))
+
+    def advance_psi(p, kappa, psi):
+        if reimprint or psi is None:
+            return seed_psi(p, kappa)
+        g = chiral_detuning(kappa, detune_gamma=detune_gamma,
+                            kappa_baseline=kappa_baseline)
+        return step_chiral_detuned(psi, g, chiral=chiral_lambda, dt=dt)
+
+    def forces_of(p, kappa, psi):
+        lg = [_gaussian_load_and_grad(shape, tuple(pi), width, mi)
+              for pi, mi in zip(p, m)]
+        loads = [x[0] for x in lg]
+        grad = [0.5 * (np.roll(kappa, -1, ax) - np.roll(kappa, 1, ax))
+                for ax in range(kappa.ndim)]
+        f = np.array([[-c * float(np.sum(li * kappa * gg)) for gg in grad]
+                      for li in loads])
+        s1, s2 = loads[0], loads[1]
+        dup = _smoothed_min(s1, s2, 1e-4)
+        k1 = _solve_relaxed(dup, st["k1"], **fkw)
+        k2 = _solve_relaxed(2.0 * dup, st["k2"], **fkw)
+        st["k1"], st["k2"] = k1, k2
+        w = c * (k1 * k1 - k2 * k2)
+        for i, (si, sj) in ((0, (s1, s2)), (1, (s2, s1))):
+            wi = w * _smoothed_min_weight(si, sj, 1e-4)
+            for ax in range(kappa.ndim):
+                f[i, ax] += float(np.sum(wi * lg[i][1][ax]))
+        if phase_chi and psi is not None:
+            f = f + line_phase_force(loads, psi, phase_chi=phase_chi)
+        return f
+
+    kappa = relax_capacity(np.sum(loads_of(pos), axis=0), **fkw)
+    kdot = np.zeros_like(kappa)
+    psi = seed_psi(pos, kappa)
+    forces = forces_of(pos, kappa, psi)
+    hist = {k: [] for k in ("time", "positions", "separation", "L",
+                            "winding", "amp_min")}
+    for i in range(steps):
+        if i % record_every == 0:
+            com = np.average(pos, axis=0, weights=m)
+            hist["time"].append(i * dt)
+            hist["positions"].append(pos.copy())
+            hist["separation"].append(float(np.linalg.norm(pos[0] - pos[1])))
+            hist["L"].append((line_angular_momentum(psi, com).tolist()
+                              if psi is not None else [0.0, 0.0, 0.0]))
+            hist["winding"].append(
+                [line_winding(psi, pi, naxis) for pi in pos]
+                if psi is not None else [0.0] * len(m))
+            hist["amp_min"].append(float(np.abs(psi).min())
+                                   if psi is not None else 1.0)
+        acc = forces / m[:, None]
+        vel_half = vel + 0.5 * acc * dt
+        pos = pos + vel_half * dt
+        kappa, kdot = step_capacity_wave(
+            kappa, kdot, np.sum(loads_of(pos), axis=0), tau=tau, dt=dt, **fkw)
+        psi = advance_psi(pos, kappa, psi)
+        forces = forces_of(pos, kappa, psi)
+        acc = forces / m[:, None]
+        vel = vel_half + 0.5 * acc * dt
+    # orbital angular-velocity vector from the bond: Ω = (b × ḃ)/|b|²
+    t = np.asarray(hist["time"])
+    P = np.asarray(hist["positions"])
+    b = P[:, 0, :] - P[:, 1, :]
+    bdot = np.gradient(b, t, axis=0)
+    omega_vec = np.cross(b, bdot) / (np.sum(b * b, axis=1)[:, None] + 1e-12)
+    hist["omega_vec"] = omega_vec.tolist()
+    hist["omega"] = np.linalg.norm(omega_vec, axis=1).tolist()
+    hist["final_positions"] = pos.copy()
     hist["psi"] = psi
     return hist
