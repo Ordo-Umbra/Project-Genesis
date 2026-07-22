@@ -1,0 +1,85 @@
+"""Checks for the condensation instruments (the reaction force and the gas)."""
+
+from __future__ import annotations
+
+import os
+import sys
+import unittest
+
+import numpy as np
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from project_genesis.capacity_gravity import gaussian_load, relax_capacity  # noqa: E402
+from project_genesis.condensation import (  # noqa: E402
+    amp_reaction_force,
+    condensation_run,
+    defect_positions,
+    grow_defect_gas,
+)
+from project_genesis.two_field import chiral_detuning  # noqa: E402
+from project_genesis.vortex_chiral import imprint_vortices  # noqa: E402
+
+
+class ReactionForceTests(unittest.TestCase):
+    def test_raw_force_points_toward_a_core(self):
+        # a mass at (32,32), a core at (40,32): the force should point +x
+        n = (64, 64)
+        psi = imprint_vortices(n, [(40, 32)], [1], core=3.0)
+        load = gaussian_load(n, [(32, 32)], 2.5, 0.6)
+        f = amp_reaction_force([load], psi, chi_amp=5.0)
+        self.assertGreater(f[0][0], 0.0)                 # toward the hole
+        self.assertLess(abs(f[0][1]), 0.2 * abs(f[0][0]))
+
+    def test_normalized_force_ignores_an_empty_well(self):
+        # an empty well (detuning envelope, no defect): the raw force pulls a
+        # neighbouring mass toward it; the normalised force does not — the
+        # selectivity that separates matter from fermion
+        n = (64, 64)
+        well = gaussian_load(n, [(40, 32)], 2.5, 1.0)
+        kappa = relax_capacity(well, kappa_diffusion=1.0, kappa_recovery=0.02,
+                               kappa_consumption=0.8)
+        g = chiral_detuning(kappa, detune_gamma=0.8)
+        psi = np.sqrt(np.clip(1.0 - g, 0.0, 1.0)).astype(complex)  # no core
+        load = gaussian_load(n, [(32, 32)], 2.5, 0.6)
+        raw = amp_reaction_force([load], psi, chi_amp=5.0)
+        norm = amp_reaction_force([load], psi, chi_amp=5.0, detune=g,
+                                  normalize=True)
+        self.assertGreater(raw[0][0], 1e-4)              # raw: pulled to well
+        self.assertLess(abs(norm[0][0]), 0.05 * abs(raw[0][0]))  # norm: blind
+
+    def test_normalized_force_still_sees_a_core(self):
+        # with a genuine core inside the well, the normalised force does pull
+        n = (64, 64)
+        well = gaussian_load(n, [(40, 32)], 2.5, 1.0)
+        kappa = relax_capacity(well, kappa_diffusion=1.0, kappa_recovery=0.02,
+                               kappa_consumption=0.8)
+        g = chiral_detuning(kappa, detune_gamma=0.8)
+        psi = imprint_vortices(n, [(40, 32)], [1], core=3.0, detune=g)
+        load = gaussian_load(n, [(32, 32)], 2.5, 0.6)
+        f = amp_reaction_force([load], psi, chi_amp=5.0, detune=g,
+                               normalize=True)
+        self.assertGreater(f[0][0], 1e-4)                # toward the core
+
+
+class GasAndRunTests(unittest.TestCase):
+    def test_gas_defects_come_in_balanced_pairs(self):
+        psi = grow_defect_gas((64, 64), np.zeros((64, 64)), steps=600, seed=7)
+        dfs = defect_positions(psi)
+        self.assertGreaterEqual(len(dfs), 2)
+        self.assertEqual(sum(q for _, q in dfs), 0)      # net zero on the torus
+
+    def test_condensation_run_records_and_stays_finite(self):
+        n = 48
+        h = condensation_run(
+            [[n / 2 - 4.5, n / 2], [n / 2 + 4.5, n / 2]],
+            [[0.0, 0.2], [0.0, -0.2]], [0.6, 0.6], shape=(n, n),
+            steps=200, record_every=20, pregrow_steps=200, seed=9,
+            phase_chi=0.6, chi_amp=5.0, normalize=True)
+        self.assertTrue(np.all(np.isfinite(np.asarray(h["separation"]))))
+        self.assertEqual(len(h["time"]), len(h["mass_defect_dist"]))
+        self.assertTrue(np.all(np.isfinite(np.asarray(h["final_positions"]))))
+
+
+if __name__ == "__main__":
+    unittest.main()

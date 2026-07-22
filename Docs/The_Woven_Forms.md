@@ -465,6 +465,29 @@ inherits ``N⋆ = 3`` from the program's sector results rather than deriving it
 afresh, and the hadron composites are still assembled at wells; hadrons
 *condensing* at the junctions of a living tessellation is the open rung.)
 
+**And here is where matter cannot yet gather its fermions.**  *(Measured —
+`experiments/n3_condensation_boundary.py`, 3/3 — a boundary, the headline a
+negative.)*  The last "assembled by hand" gap is **condensation**: can matter
+*collect* its spin-½ defects out of a noise-grown field, rather than have them
+imprinted?  Not yet — and the experiment maps exactly why, in three clean facts.
+Passive κ traps do **not** condense: with ψ grown from noise over the wells, the
+well occupancy stays at chance across every trap depth and coarsening time, with
+no survival enhancement — the dilute defect gas is **frozen**, nothing carries a
+defect across the lattice to a well (K1).  The obvious force fails the obvious
+way: the detuning energy (wells suppress ``|ψ|²``) implies a third-law reaction
+pulling a mass toward amplitude holes — but *every mass's own well is an
+amplitude hole*, so the raw force just **clumps** matter, collapsing a floor-
+bound pair through its own exclusion floor (K2).  What *does* work is
+**selectivity**: divide the wells' reversible envelope out (react to
+``|ψ|²/(1−g)``) and the force responds only to the *topological* core — a strong
+pull toward a fermion, essentially zero (``~10⁻¹⁸``) toward an empty well, where
+the raw force is fooled by both (K3).  So the handle exists; what is missing is a
+**current** to carry fermions to matter — defect transport, the frozen gas of
+K1.  The named candidate is the same ``λ ≠ 0`` precession that regenerated the
+driven spin (spiral-wave advection mobilises vortex cores): the honest next rung,
+and the point at which the whole chain — sector → fermion → composite — would
+finally run itself.
+
 ---
 
 ## 6. Where criticality sits in all of this
@@ -585,6 +608,12 @@ apart plainly:
   coincide *only* at ``P = 3``.  The baryon's "3" is the sector count — a
   fundamental (``N⋆``) bleeding through into a higher manifestation (the
   constituent count).
+- **The condensation boundary is mapped** (3/3, headline a negative): matter
+  cannot *yet* gather its fermions from a noise-grown gas to build a composite —
+  passive traps are frozen (no transport), the naive third-law force clumps
+  matter (every well is an amplitude hole), but the envelope-normalised force is
+  *selective* (it responds to the topological core, not an empty well).  The
+  handle exists; the missing piece is a transport current — the honest next rung.
 
 **Frontier (intuition the foundations now make testable, without a verdict).**
 - **The abundance *numbers*.**  The count and ordering of the families are now
@@ -630,6 +659,7 @@ apart plainly:
 | `vortex_chiral.py` | The vorticity-bearing field: a vortex pinned per form, quantised angular momentum, the phase-current *torque* — spin from real circulation; and the self-sustained mode (`winding_number`, `evolve_seeded_field`, `reimprint=False`, `chiral_lambda`): seed once and co-evolve the CGL, the winding a conserved topological charge, the field's precession regenerating a strong spin |
 | `vortex_chiral_3d.py` | 3-D spin: the vortex is a *line*, its angular momentum an axial *vector* aligned with the line (`vortex_line`, `line_angular_momentum`, `line_winding`, `evolve_seeded_line`) — quantised, conserved with its axis, integer/bosonic; and the 3-D molecule (`line_phase_force`, `evolve_line_molecule`): a real vector torque the overdamped pair cannot turn |
 | `nematic_spinor.py` | Half-integer spin: a nematic director (`n̂ ≡ −n̂`, `RP¹`) and its ``±½`` disclinations — `disclination_strength` (`s = q/2`), `director_holonomy` (the ``4π`` double cover: ``2π → −1``), `plaquette_winding` (the tracker-free defect map) — the topological realisation of a spinor |
+| `condensation.py` | The condensation instruments: `grow_defect_gas` (defects from noise), `amp_reaction_force` (the detuning's third-law force — raw clumps, envelope-normalised is selective), `condensation_run` (masses + a co-evolving gas) |
 | `capacity_waves.py` | Finite-speed `κ` (telegrapher), retarded gravity, the exclusion contact terms |
 
 **Experiments (`experiments/`).**
@@ -651,6 +681,7 @@ apart plainly:
 | `n3_spinor.py` | 3/3 | **half-integer spin**: a nematic ``±½`` disclination (`s = q/2`), the ``4π`` double cover (``2π`` flips the director, ``4π`` restores), conserved & fused (``½+½=1``) & bound to matter — the topological realisation of a spinor (not yet the Dirac field) |
 | `n3_hadron_spin.py` | 3/3 | **hadron-like composites**: total spin `s = n/2`, statistics alternate by count (1, 3 fermionic — quark/baryon-like; 2, 4 bosonic — meson-like), the ``½``'s confined inside; the meson-analog a real bound, spinning molecule, integer & no-flip outside |
 | `n3_junction_fermion.py` | 3/3 | **`N⋆ = 3` selects the count**: emergent spin defects *are* trivalent three-sector junctions (bijective, singlet `1:1:1`, every one a `±½` fermion; walls spinless); defect valence `= P` vs the matter tessellation's Plateau `3` — they coincide only at `P = 3` |
+| `n3_condensation_boundary.py` | 3/3 | the **condensation boundary** (headline a negative): matter cannot yet *gather* its fermions — passive traps frozen (K1), the naive force clumps (K2), but the envelope-normalised force is *selective* (K3); the missing piece is defect transport |
 | `n3_exclusion_*` (five) | see doc | the derived, parameter-free pair-binding floor |
 | `n3_identity_generation / _invariance.py` | 2/3, 2/3 | identity measured from structure, pose-invariant |
 | `n3_kappa_lightcone.py` | 2/3 | causal cone `c_κ = √(D/τ)`; the propagating mass |
