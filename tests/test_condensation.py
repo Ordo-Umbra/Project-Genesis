@@ -17,8 +17,20 @@ from project_genesis.condensation import (  # noqa: E402
     defect_positions,
     grow_defect_gas,
 )
-from project_genesis.two_field import chiral_detuning  # noqa: E402
+from project_genesis.nematic_spinor import (  # noqa: E402
+    director_holonomy,
+    disclination_strength,
+)
+from project_genesis.two_field import chiral_detuning, step_chiral_detuned  # noqa: E402
 from project_genesis.vortex_chiral import imprint_vortices  # noqa: E402
+
+
+def _grow(g, lam, seed, n, steps):
+    rng = np.random.default_rng(seed)
+    psi = 0.1 * (rng.standard_normal((n, n)) + 1j * rng.standard_normal((n, n)))
+    for _ in range(steps):
+        psi = step_chiral_detuned(psi, g, chiral=lam, dt=0.1)
+    return psi
 
 
 class ReactionForceTests(unittest.TestCase):
@@ -79,6 +91,45 @@ class GasAndRunTests(unittest.TestCase):
         self.assertTrue(np.all(np.isfinite(np.asarray(h["separation"]))))
         self.assertEqual(len(h["time"]), len(h["mass_defect_dist"]))
         self.assertTrue(np.all(np.isfinite(np.asarray(h["final_positions"]))))
+
+
+class TransportCurrentTests(unittest.TestCase):
+    """The λ precession is the transport current that carries fermions to matter."""
+
+    def _late_velocity(self, g, lam, seed, n=40, warm=600, meas=30):
+        # the direct transport-current metric: a relaxational (λ=0) field settles
+        # to rest, a λ>0 field keeps moving — mean ⟨|ψ_{t+1}−ψ_t|⟩ over a late window
+        psi = _grow(g, lam, seed, n, warm)
+        v = 0.0
+        for _ in range(meas):
+            nxt = step_chiral_detuned(psi, g, chiral=lam, dt=0.1)
+            v += float(np.mean(np.abs(nxt - psi)))
+            psi = nxt
+        return v / meas
+
+    def test_lambda_sustains_a_transport_current(self):
+        # a relaxational (λ=0) detuned CGL relaxes to rest; turning on λ switches
+        # on a persistent spiral current that grows with the drive
+        g = np.zeros((40, 40))
+        v0 = self._late_velocity(g, 0.0, 5)
+        v_half = self._late_velocity(g, 0.5, 5)
+        v1 = self._late_velocity(g, 1.0, 5)
+        self.assertLess(v0, 0.01)              # λ=0 settles to rest
+        self.assertGreater(v1, 0.02)           # λ=1 sustains a current
+        self.assertGreater(v1, 5.0 * v0)       # the current is switched on by λ
+        self.assertGreater(v_half, v0)         # and grows monotonically with λ
+        self.assertGreater(v1, v_half)
+
+    def test_a_trapped_core_reads_as_a_half_integer_fermion(self):
+        # what condenses is a fermion: a grown core reads s=±½ with the −1
+        # double-cover holonomy (the spinor signature), never imprinted
+        psi = _grow(np.zeros((64, 64)), 1.0, 3, 64, 1500)
+        dfs = defect_positions(psi)
+        self.assertTrue(dfs)
+        half = sum(abs(abs(disclination_strength(psi, p, radius=4)) - 0.5) <= 0.15
+                   and director_holonomy(psi, p, radius=4)[0] < -0.5
+                   for p, _ in dfs)
+        self.assertGreaterEqual(half, max(1, (2 * len(dfs)) // 3))
 
 
 if __name__ == "__main__":

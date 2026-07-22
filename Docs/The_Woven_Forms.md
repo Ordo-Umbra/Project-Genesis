@@ -484,9 +484,20 @@ pull toward a fermion, essentially zero (``~10⁻¹⁸``) toward an empty well, 
 the raw force is fooled by both (K3).  So the handle exists; what is missing is a
 **current** to carry fermions to matter — defect transport, the frozen gas of
 K1.  The named candidate is the same ``λ ≠ 0`` precession that regenerated the
-driven spin (spiral-wave advection mobilises vortex cores): the honest next rung,
-and the point at which the whole chain — sector → fermion → composite — would
-finally run itself.
+driven spin (spiral-wave advection mobilises vortex cores).
+
+**And that candidate closes the boundary** (`n3_condensation_transport`, 3/3).  A
+relaxational (``λ = 0``) detuned CGL settles to rest — its late-time field
+velocity ``⟨|ψ_{t+1} − ψ_t|⟩`` decays to ``~0`` — while a ``λ > 0`` field sustains
+a persistent spiral **current** that grows monotonically with ``λ`` (L1: velocity
+``0.0002 → 0.05 → 0.10`` for ``λ = 0/0.5/1``).  With the current on, the κ wells
+now **gather** fermions from the noise-grown gas above chance (L2: ``4/12`` wells
+occupied at ``λ = 1`` versus a flat-κ chance of ``0/12`` and the frozen gas's
+``1/12``), and what condenses is a genuine ``±½`` disclination with the ``−1``
+holonomy, singly per well (L3).  It is **partial** — about a third of the wells, a
+transport window bounded above by numerical stability (``λ ≳ 1.5`` overflows at
+``dt = 0.1``) — but K1's frozen boundary is lifted: matter gathers its fermions,
+and the whole chain — sector → fermion → composite — runs itself from noise.
 
 ---
 
@@ -613,7 +624,15 @@ apart plainly:
   passive traps are frozen (no transport), the naive third-law force clumps
   matter (every well is an amplitude hole), but the envelope-normalised force is
   *selective* (it responds to the topological core, not an empty well).  The
-  handle exists; the missing piece is a transport current — the honest next rung.
+  handle exists; the missing piece is a transport current.
+- **The transport current lifts the boundary** (3/3): the same ``λ ≠ 0``
+  precession that regenerated the driven spin *is* that current — a relaxational
+  ``λ = 0`` field settles to rest, a ``λ > 0`` field sustains a persistent spiral
+  current growing with ``λ`` (L1), and with it the κ wells **gather** fermions
+  from the noise-grown gas above chance (L2: ``4/12`` at ``λ = 1`` vs ``0/12``
+  chance), each a genuine ``±½`` with the ``−1`` holonomy, singly (L3).  Partial
+  (about a third of the wells, ``λ < 1.5`` for stability) — but matter now
+  gathers its fermions, and the chain sector → fermion → composite runs itself.
 
 **Frontier (intuition the foundations now make testable, without a verdict).**
 - **The abundance *numbers*.**  The count and ordering of the families are now
@@ -682,6 +701,7 @@ apart plainly:
 | `n3_hadron_spin.py` | 3/3 | **hadron-like composites**: total spin `s = n/2`, statistics alternate by count (1, 3 fermionic — quark/baryon-like; 2, 4 bosonic — meson-like), the ``½``'s confined inside; the meson-analog a real bound, spinning molecule, integer & no-flip outside |
 | `n3_junction_fermion.py` | 3/3 | **`N⋆ = 3` selects the count**: emergent spin defects *are* trivalent three-sector junctions (bijective, singlet `1:1:1`, every one a `±½` fermion; walls spinless); defect valence `= P` vs the matter tessellation's Plateau `3` — they coincide only at `P = 3` |
 | `n3_condensation_boundary.py` | 3/3 | the **condensation boundary** (headline a negative): matter cannot yet *gather* its fermions — passive traps frozen (K1), the naive force clumps (K2), but the envelope-normalised force is *selective* (K3); the missing piece is defect transport |
+| `n3_condensation_transport.py` | 3/3 | the **transport current** (the boundary lifted): the `λ≠0` precession *is* the current — `λ=0` relaxes to rest, `λ>0` sustains a persistent spiral current (L1); the κ wells now **gather** fermions from a noise-grown gas (`4/12` at `λ=1` vs `0/12` chance, L2), each a `±½` with the `−1` holonomy, singly (L3); partial (~⅓ the wells, `λ<1.5`) |
 | `n3_exclusion_*` (five) | see doc | the derived, parameter-free pair-binding floor |
 | `n3_identity_generation / _invariance.py` | 2/3, 2/3 | identity measured from structure, pose-invariant |
 | `n3_kappa_lightcone.py` | 2/3 | causal cone `c_κ = √(D/τ)`; the propagating mass |
