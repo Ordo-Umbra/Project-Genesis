@@ -43,6 +43,25 @@ def director_angle(psi: np.ndarray) -> np.ndarray:
     return 0.5 * np.angle(psi)
 
 
+def plaquette_winding(psi: np.ndarray) -> np.ndarray:
+    """Integer winding of ``arg ψ`` on each unit plaquette — the defect map.
+
+    Nonzero exactly at defect cores (``±1`` for elementary defects, i.e.
+    ``±½`` disclinations in the nematic reading); zero elsewhere.  Periodic;
+    the entry at ``(x, y)`` is the plaquette with lower-left corner ``(x, y)``.
+    """
+    th = np.angle(psi)
+
+    def wrap(d):
+        return (d + np.pi) % (2.0 * np.pi) - np.pi
+
+    d1 = wrap(np.roll(th, -1, 0) - th)
+    d2 = wrap(np.roll(np.roll(th, -1, 0), -1, 1) - np.roll(th, -1, 0))
+    d3 = wrap(np.roll(th, -1, 1) - np.roll(np.roll(th, -1, 0), -1, 1))
+    d4 = wrap(th - np.roll(th, -1, 1))
+    return np.round((d1 + d2 + d3 + d4) / (2.0 * np.pi)).astype(int)
+
+
 def _loop(center, radius, npts):
     th = np.linspace(0.0, 2.0 * np.pi, npts, endpoint=False)
     return th, center[0] + radius * np.cos(th), center[1] + radius * np.sin(th)

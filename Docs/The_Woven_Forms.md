@@ -414,6 +414,91 @@ of a spinor.  It is **not** the full quantum Dirac field — no spin–statistic
 winding, the ``4π`` double cover, and the fusion rules are the measured content
 of "spin-½", and matter can now carry it.
 
+**And the pieces assemble into hadron-like composites.**  *(Measured —
+`experiments/n3_hadron_spin.py`, 3/3.)*  Put everything together — the derived
+exclusion floor to space the constituents, ``κ``-gravity to bind them, the
+driven chiral field to spin them, and the ``½`` disclination as their spin — and
+ask what composite objects come out.  The answer is the **meson/baryon
+statistics split, from nothing but additivity**: topological spin adds, so ``n``
+half-integer constituents carry total ``s = n/2``, and the far-field
+double-cover class alternates with the count — ``n = 1`` and ``3`` are
+**fermionic** composites (quark-like, baryon-like: the ``2π`` loop flips the
+director), ``n = 2`` and ``4`` are **bosonic** (meson-like: no flip) — exactly
+the statistics real hadrons get from counting their quarks.  The half-integer
+content is visible only *inside*: each constituent carries its own local ``½``
+(and its ``−1``) at the seed, and after co-evolution the total charge stays
+confined and conserved — the radial profile jumps to ``n/2`` across the
+constituent shell and is constant on every larger loop.  And the meson-analog is
+a *real dynamical object*: assembled as a molecule — bound by ``κ``-gravity on
+the derived floor, spun by the self-sustained driven field, no re-imprinting —
+it stays bound, keeps both constituent ``½``'s, holds a persistent spin, and
+reads **integer, no-flip** from outside: a bound, spinning boson made of two
+topological fermions.  (Honest scope: the statistics are topological, not
+quantum — no anticommutation, no Pauli principle between identical composites;
+and the constituent count is put in by hand — no dynamical confinement selects
+2 or 3, though the ``N⋆ = 3`` sector story is the standing suggestion — taken
+up next.)
+
+**And ``N⋆ = 3`` is why the count is three.**  *(Measured —
+`experiments/n3_junction_fermion.py`, 3/3.)*  The hadron experiment's named gap
+— nothing *selected* the constituent count — closes with a mechanism that is
+exact: **a spin defect's ``2π`` phase winding must pass through every phase
+sector once**, so with three sectors the elementary spin-½ defect *is* a
+trivalent, three-sector junction — the colour-singlet triple.  Everything
+measured is **emergent** (fields grown from noise, defects formed by the
+dynamics, never imprinted): every defect sits on a junction where all three
+``N⋆ = 3`` phase sectors meet and every junction sits on a defect (within a
+site, across seeds, defects in ``±`` pairs), each isolated defect's
+neighbourhood carrying the singlet ``1:1:1`` sector composition; read as a
+nematic, **every such junction is a spin-½** (``s = ±½``, the ``−1``/``+1``
+double cover) while two-sector *walls* carry none — the elementary fermion and
+the three-sector singlet are one object, so the baryon's "3" *is* ``N⋆``.  And
+three is selected uniquely: the defect forces all ``P`` phase sectors to meet
+(sector-valence ``= P``, measured for ``P = 3, 4, 5``), while the *matter*
+tessellation caps its generic junctions at the Plateau valence ``d + 1 = 3``
+regardless of ``P`` (``3.00/3.01/3.02`` measured) — the two structures coincide
+**only at ``P = 3``**: the three-sector world is the unique one whose own
+junctions can carry the elementary spin-½.  (Caught in the wild, too: tight
+``±½`` dipoles annihilating mid-flight — the ``½/−½`` meson channel of the
+spinor experiment, happening on its own.  Honest scope: the phase binning
+inherits ``N⋆ = 3`` from the program's sector results rather than deriving it
+afresh, and the hadron composites are still assembled at wells; hadrons
+*condensing* at the junctions of a living tessellation is the open rung.)
+
+**And here is where matter cannot yet gather its fermions.**  *(Measured —
+`experiments/n3_condensation_boundary.py`, 3/3 — a boundary, the headline a
+negative.)*  The last "assembled by hand" gap is **condensation**: can matter
+*collect* its spin-½ defects out of a noise-grown field, rather than have them
+imprinted?  Not yet — and the experiment maps exactly why, in three clean facts.
+Passive κ traps do **not** condense: with ψ grown from noise over the wells, the
+well occupancy stays at chance across every trap depth and coarsening time, with
+no survival enhancement — the dilute defect gas is **frozen**, nothing carries a
+defect across the lattice to a well (K1).  The obvious force fails the obvious
+way: the detuning energy (wells suppress ``|ψ|²``) implies a third-law reaction
+pulling a mass toward amplitude holes — but *every mass's own well is an
+amplitude hole*, so the raw force just **clumps** matter, collapsing a floor-
+bound pair through its own exclusion floor (K2).  What *does* work is
+**selectivity**: divide the wells' reversible envelope out (react to
+``|ψ|²/(1−g)``) and the force responds only to the *topological* core — a strong
+pull toward a fermion, essentially zero (``~10⁻¹⁸``) toward an empty well, where
+the raw force is fooled by both (K3).  So the handle exists; what is missing is a
+**current** to carry fermions to matter — defect transport, the frozen gas of
+K1.  The named candidate is the same ``λ ≠ 0`` precession that regenerated the
+driven spin (spiral-wave advection mobilises vortex cores).
+
+**And that candidate closes the boundary** (`n3_condensation_transport`, 3/3).  A
+relaxational (``λ = 0``) detuned CGL settles to rest — its late-time field
+velocity ``⟨|ψ_{t+1} − ψ_t|⟩`` decays to ``~0`` — while a ``λ > 0`` field sustains
+a persistent spiral **current** that grows monotonically with ``λ`` (L1: velocity
+``0.0002 → 0.05 → 0.10`` for ``λ = 0/0.5/1``).  With the current on, the κ wells
+now **gather** fermions from the noise-grown gas above chance (L2: ``4/12`` wells
+occupied at ``λ = 1`` versus a flat-κ chance of ``0/12`` and the frozen gas's
+``1/12``), and what condenses is a genuine ``±½`` disclination with the ``−1``
+holonomy, singly per well (L3).  It is **partial** — about a third of the wells, a
+transport window bounded above by numerical stability (``λ ≳ 1.5`` overflows at
+``dt = 0.1``) — but K1's frozen boundary is lifted: matter gathers its fermions,
+and the whole chain — sector → fermion → composite — runs itself from noise.
+
 ---
 
 ## 6. Where criticality sits in all of this
@@ -518,6 +603,36 @@ apart plainly:
   matter (fusing ``½ + ½ = 1``, annihilating ``½ − ½ → 0``).  This is the
   **topological** realisation of spin-½ (the ``SU(2)`` double cover), not yet the
   quantum Dirac field.
+- **The pieces make hadron-like composites** (3/3): ``n`` half-integer
+  constituents at derived-floor spacing carry total spin ``s = n/2`` with the
+  double-cover class alternating by count — **2 constituents make a boson
+  (meson-like), 3 make a fermion (baryon-like)** — the half-integer content
+  confined inside while only the composite spin shows outside; and the
+  2-constituent composite exists as a *real molecule*, bound by ``κ``-gravity on
+  the floor and spun by the self-sustained driven field, integer and no-flip
+  from outside.  Hadron statistics from counting, with the program's own binding.
+- **``N⋆ = 3`` selects the count** (3/3): a spin defect's ``2π`` winding must
+  cross *every* phase sector, so the elementary spin-½ defect **is** a
+  trivalent three-sector junction (emergent, bijective, singlet ``1:1:1``
+  composition; walls carry no spin) — and the matter tessellation's Plateau cap
+  (``d + 1 = 3``, measured for ``P = 3, 4, 5``) means the two structures
+  coincide *only* at ``P = 3``.  The baryon's "3" is the sector count — a
+  fundamental (``N⋆``) bleeding through into a higher manifestation (the
+  constituent count).
+- **The condensation boundary is mapped** (3/3, headline a negative): matter
+  cannot *yet* gather its fermions from a noise-grown gas to build a composite —
+  passive traps are frozen (no transport), the naive third-law force clumps
+  matter (every well is an amplitude hole), but the envelope-normalised force is
+  *selective* (it responds to the topological core, not an empty well).  The
+  handle exists; the missing piece is a transport current.
+- **The transport current lifts the boundary** (3/3): the same ``λ ≠ 0``
+  precession that regenerated the driven spin *is* that current — a relaxational
+  ``λ = 0`` field settles to rest, a ``λ > 0`` field sustains a persistent spiral
+  current growing with ``λ`` (L1), and with it the κ wells **gather** fermions
+  from the noise-grown gas above chance (L2: ``4/12`` at ``λ = 1`` vs ``0/12``
+  chance), each a genuine ``±½`` with the ``−1`` holonomy, singly (L3).  Partial
+  (about a third of the wells, ``λ < 1.5`` for stability) — but matter now
+  gathers its fermions, and the chain sector → fermion → composite runs itself.
 
 **Frontier (intuition the foundations now make testable, without a verdict).**
 - **The abundance *numbers*.**  The count and ordering of the families are now
@@ -562,7 +677,8 @@ apart plainly:
 | `two_field.py` | The two-field coupling: `ψ` co-evolves with `κ` — well detuning, the phase-current force, the self-consistent circulation |
 | `vortex_chiral.py` | The vorticity-bearing field: a vortex pinned per form, quantised angular momentum, the phase-current *torque* — spin from real circulation; and the self-sustained mode (`winding_number`, `evolve_seeded_field`, `reimprint=False`, `chiral_lambda`): seed once and co-evolve the CGL, the winding a conserved topological charge, the field's precession regenerating a strong spin |
 | `vortex_chiral_3d.py` | 3-D spin: the vortex is a *line*, its angular momentum an axial *vector* aligned with the line (`vortex_line`, `line_angular_momentum`, `line_winding`, `evolve_seeded_line`) — quantised, conserved with its axis, integer/bosonic; and the 3-D molecule (`line_phase_force`, `evolve_line_molecule`): a real vector torque the overdamped pair cannot turn |
-| `nematic_spinor.py` | Half-integer spin: a nematic director (`n̂ ≡ −n̂`, `RP¹`) and its ``±½`` disclinations — `disclination_strength` (`s = q/2`), `director_holonomy` (the ``4π`` double cover: ``2π → −1``) — the topological realisation of a spinor |
+| `nematic_spinor.py` | Half-integer spin: a nematic director (`n̂ ≡ −n̂`, `RP¹`) and its ``±½`` disclinations — `disclination_strength` (`s = q/2`), `director_holonomy` (the ``4π`` double cover: ``2π → −1``), `plaquette_winding` (the tracker-free defect map) — the topological realisation of a spinor |
+| `condensation.py` | The condensation instruments: `grow_defect_gas` (defects from noise), `amp_reaction_force` (the detuning's third-law force — raw clumps, envelope-normalised is selective), `condensation_run` (masses + a co-evolving gas) |
 | `capacity_waves.py` | Finite-speed `κ` (telegrapher), retarded gravity, the exclusion contact terms |
 
 **Experiments (`experiments/`).**
@@ -582,6 +698,10 @@ apart plainly:
 | `n3_vortex_3d.py` | 3/3 | 3-D spin is an axial *vector*: the defect is a line, `L` aligns with it at any orientation, quantised by winding; conserved with its axis under the self-sustained CGL; like-survive/unlike-annihilate (integer/bosonic; the spinor is the frontier) |
 | `n3_molecule_3d.py` | 2/3 | the 3-D molecule carries a real *vector* spin-torque (tangential, sign-locked, axis = the line) and holds its spin bound — but it is overdamped and cannot turn (the κ-molecule's `Q<½` back in 3-D), an honest negative |
 | `n3_spinor.py` | 3/3 | **half-integer spin**: a nematic ``±½`` disclination (`s = q/2`), the ``4π`` double cover (``2π`` flips the director, ``4π`` restores), conserved & fused (``½+½=1``) & bound to matter — the topological realisation of a spinor (not yet the Dirac field) |
+| `n3_hadron_spin.py` | 3/3 | **hadron-like composites**: total spin `s = n/2`, statistics alternate by count (1, 3 fermionic — quark/baryon-like; 2, 4 bosonic — meson-like), the ``½``'s confined inside; the meson-analog a real bound, spinning molecule, integer & no-flip outside |
+| `n3_junction_fermion.py` | 3/3 | **`N⋆ = 3` selects the count**: emergent spin defects *are* trivalent three-sector junctions (bijective, singlet `1:1:1`, every one a `±½` fermion; walls spinless); defect valence `= P` vs the matter tessellation's Plateau `3` — they coincide only at `P = 3` |
+| `n3_condensation_boundary.py` | 3/3 | the **condensation boundary** (headline a negative): matter cannot yet *gather* its fermions — passive traps frozen (K1), the naive force clumps (K2), but the envelope-normalised force is *selective* (K3); the missing piece is defect transport |
+| `n3_condensation_transport.py` | 3/3 | the **transport current** (the boundary lifted): the `λ≠0` precession *is* the current — `λ=0` relaxes to rest, `λ>0` sustains a persistent spiral current (L1); the κ wells now **gather** fermions from a noise-grown gas (`4/12` at `λ=1` vs `0/12` chance, L2), each a `±½` with the `−1` holonomy, singly (L3); partial (~⅓ the wells, `λ<1.5`) |
 | `n3_exclusion_*` (five) | see doc | the derived, parameter-free pair-binding floor |
 | `n3_identity_generation / _invariance.py` | 2/3, 2/3 | identity measured from structure, pose-invariant |
 | `n3_kappa_lightcone.py` | 2/3 | causal cone `c_κ = √(D/τ)`; the propagating mass |
