@@ -77,6 +77,22 @@ def sourced_gas_step(psi: np.ndarray, g: np.ndarray, *, chiral: float = 0.0,
     return psi
 
 
+def inject_defect_pair(psi: np.ndarray, p1, p2) -> np.ndarray:
+    """Multiply ψ by the phase of a ``+1 / −1`` winding pair at ``p1`` and ``p2``.
+
+    A **cold** gas source: instead of the Langevin bath's indiscriminate heat
+    (which also nucleates integer ``s = ±1`` and clustered defects), this injects
+    the *fundamental spin-½ quantum* directly — each winding-1 core reads
+    ``s = ±½`` — cleanly and dilutely.  The dynamics carves the amplitude holes
+    at the winding centres within a few steps.  Positions are ``(row, col)``.
+    """
+    yy, xx = np.meshgrid(np.arange(psi.shape[0]), np.arange(psi.shape[1]),
+                         indexing="ij")
+    phase = (np.arctan2(yy - p1[0], xx - p1[1])
+             - np.arctan2(yy - p2[0], xx - p2[1]))
+    return psi * np.exp(1j * phase)
+
+
 def defect_positions(psi: np.ndarray) -> list:
     """``[(position, charge), …]`` from the plaquette winding (core centres)."""
     w = plaquette_winding(psi)

@@ -16,6 +16,7 @@ from project_genesis.condensation import (  # noqa: E402
     condensation_run,
     defect_positions,
     grow_defect_gas,
+    inject_defect_pair,
     sourced_gas_step,
 )
 from project_genesis.nematic_spinor import (  # noqa: E402
@@ -159,6 +160,24 @@ class GasSourceTests(unittest.TestCase):
         # well above threshold the bath boils into a dense gas; the un-sourced
         # gas coarsens to a sparse floor
         self.assertGreater(density(1.0), 10 * max(density(0.0), 1))
+
+    def test_cold_source_injects_a_clean_half_integer_pair(self):
+        # the cold source multiplies in a +1/−1 winding pair; after the field
+        # relaxes it is a clean, net-zero pair of s=±½ disclinations — the
+        # fundamental spin-½ quantum, no integer (winding-2) defect
+        n = 48
+        g = np.zeros((n, n))
+        psi = np.ones((n, n), dtype=complex)
+        psi = inject_defect_pair(psi, (24.0, 16.0), (24.0, 32.0))
+        for _ in range(40):
+            psi = step_chiral_detuned(psi, g, chiral=0.0, dt=0.1)
+        dfs = defect_positions(psi)
+        self.assertEqual(len(dfs), 2)                    # exactly a pair
+        self.assertEqual(sum(q for _, q in dfs), 0)      # net-zero on the torus
+        self.assertEqual(sorted(q for _, q in dfs), [-1, 1])   # a +1/−1 pair
+        for pos, _ in dfs:
+            s = disclination_strength(psi, pos, radius=4)
+            self.assertLessEqual(abs(abs(s) - 0.5), 0.15)      # each a genuine ±½
 
 
 class TransportCurrentTests(unittest.TestCase):

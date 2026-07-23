@@ -534,6 +534,24 @@ threshold — the honest new boundary, and a **"cold" source** (replenishing cle
 of tension the whole matter picture keeps finding: each rung lifts one boundary and
 names the next.
 
+**And the cold source shows the tradeoff is fundamental** (`n3_cold_source`, 2/3,
+headline a negative).  Build that cold source — inject the *fundamental spin-½
+quantum*, clean winding-``±1`` pairs (`inject_defect_pair`, each ``→ s = ±½``),
+dilutely instead of the hot bath's boil — and it *is* pure (C1: ``82%`` ``±½`` vs
+the hot bath's ``47%``) and selective/local (C2: well occupancy ``0.34`` vs a far
+ambient ``0.10``).  But it is **not persistent** (C3, the fail): the clean, dilute
+supply *self-annihilates* before it can keep the traps fed, so the well's *clean-½
+occupancy* (occupancy × purity — the time it holds one genuine ``±½``) is ``0.28``,
+which does **not** beat the hot bath's ``0.40``.  Deepen the well to raise
+occupancy and clustering returns; every knob — source rate, locality, well depth —
+trades purity for persistence.  The honest reading: neither a hot nor a cold
+*memoryless* source holds a clean single ``±½`` more than ``~40%`` of the time, and
+the missing ingredient is not a cleverer source but a **single-occupancy lock** — a
+well that retains exactly one ``½`` against annihilation and excludes a second (the
+no-cloning **exclusion floor**, here as a trap).  The cold-source rung converges
+with the locked-ground-state rung the self-assembly named: *they are the same
+rung*.  The matter picture has walked itself to a single, sharply-stated frontier.
+
 ---
 
 ## 6. Where criticality sits in all of this
@@ -684,6 +702,15 @@ apart plainly:
   (G2).  But the dense bath also nucleates integer/clustered defects, so what's
   held is a clean ``±½`` only ``~47%`` of the time (G3, fail) — persistence and
   purity trade off; a *cold* source is the next rung.
+- **The cold source shows the tradeoff is fundamental** (2/3, headline a negative):
+  inject the clean spin-½ quantum (winding-``±1`` pairs) dilutely and it *is* pure
+  (C1, ``82%`` vs the hot bath's ``47%``) and local (C2, occ ``0.34`` vs ambient
+  ``0.10``), but *not* persistent (C3, fail): the dilute clean supply
+  self-annihilates before feeding the traps, so its clean-½ occupancy ``0.28``
+  does not beat the hot bath's ``0.40``.  No *memoryless* source holds a clean
+  single ``±½`` more than ``~40%`` of the time — the fix is a **single-occupancy
+  lock** (the exclusion floor as a trap), so the cold-source and locked-ground-state
+  rungs are one.
 
 **Frontier (intuition the foundations now make testable, without a verdict).**
 - **The abundance *numbers*.**  The count and ordering of the families are now
@@ -755,6 +782,7 @@ apart plainly:
 | `n3_condensation_transport.py` | 3/3 | the **transport current** (the boundary lifted): the `λ≠0` precession *is* the current — `λ=0` relaxes to rest, `λ>0` sustains a persistent spiral current (L1); the κ wells now **gather** fermions from a noise-grown gas (`4/12` at `λ=1` vs `0/12` chance, L2), each a `±½` with the `−1` holonomy, singly (L3); partial (~⅓ the wells, `λ<1.5`) |
 | `n3_self_assembly.py` | 3/3 | **self-assembly**: the selective force + the transport current in one co-evolution — masses bind at the derived floor (S1, `6/6`), a mass gathers & holds a `±½` from the noise-grown gas (S2, `6/6`; frozen control `4/6`), the catch reads `s=±½` with the `−1` holonomy (S3, `6/6`), nothing imprinted; two honest boundaries — the hold is intermittent (`~60%`) and transport isn't cleanly isolated (capture-and-hold grabs born-near defects) |
 | `n3_gas_source.py` | 2/3 | the **gas source** (transience lifted, purity the new boundary): a Langevin bath replenishes the coarsening gas above a threshold — steady density (G1, `~30` vs `~2`), the κ well occupied `0.85` vs `0.08` while empty space stays empty (ambient `0.03`) — persistent & selective (G2); but the dense bath nucleates integer/clustered defects, so what's held is a clean `±½` only `~47%` of the time (G3, fail) — persistence vs purity, a *cold* source next |
+| `n3_cold_source.py` | 2/3 | the **cold source** (the tradeoff is fundamental, headline a negative): inject clean winding-`±1` = `s=±½` pairs dilutely — pure (C1, `82%` vs hot `47%`) and local (C2, occ `0.34` vs ambient `0.10`), but not persistent (C3, fail): the dilute clean supply self-annihilates, clean-½ occupancy `0.28` < hot `0.40`. No memoryless source holds a clean single `±½` > `~40%` of the time — the fix is a single-occupancy **lock** (the exclusion floor as a trap); cold-source & locked-ground-state are one rung |
 | `n3_exclusion_*` (five) | see doc | the derived, parameter-free pair-binding floor |
 | `n3_identity_generation / _invariance.py` | 2/3, 2/3 | identity measured from structure, pose-invariant |
 | `n3_kappa_lightcone.py` | 2/3 | causal cone `c_κ = √(D/τ)`; the propagating mass |
