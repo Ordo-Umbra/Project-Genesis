@@ -552,6 +552,26 @@ no-cloning **exclusion floor**, here as a trap).  The cold-source rung converges
 with the locked-ground-state rung the self-assembly named: *they are the same
 rung*.  The matter picture has walked itself to a single, sharply-stated frontier.
 
+**And that frontier closes the loop** (`n3_single_occupancy`, 1/3, headline a
+negative).  The hot bath's impurity is diagnosed as ``~87%`` **clustering** (the
+well is a *sink*, not a single trap), and since same-sign ``½``'s already repel,
+the clustering is *opposite-sign* annihilation — so the lock is **charge
+polarization**: a source + sink (feed one sign into matter, drain its
+anti-particle), a battery/electrode that removes annihilation so like-charge
+(Pauli) repulsion can exclude the second.  It works *partway* — clean-single-``½``
+rises from ``0.07`` to ``0.24`` (L1 ✓, ``~3×``) — but never completes (L3, caps at
+``~¼``), and even a singly-occupied well reads a clean ``±½`` only ``~⅔`` of the
+time (L2, ``0.65``), because a **free** gas ``½`` carries only soft ``~1/r``
+repulsion, not the hard, parameter-free exclusion floor the program **derived**
+(`n3_exclusion`) — and imposing that floor crudely at the field level backfires,
+destroying the gas.  Only *bound* structures carry the derived floor (two masses
+cannot approach within ``s⋆``; a free defect can).  So the resolution is the loop
+closing on itself: **Pauli single-occupancy is a property of *bound* fermions
+carrying the no-cloning floor** — the self-assembly molecule, not a free gas
+defect.  The whole matter arc — exclusion floor → spin → transport → gathering →
+binding → persistence → purity → single-occupancy — resolves to one statement: *a
+fermion is single-occupancy matter when it is bound and carries the derived floor.*
+
 ---
 
 ## 6. Where criticality sits in all of this
@@ -711,6 +731,15 @@ apart plainly:
   single ``±½`` more than ``~40%`` of the time — the fix is a **single-occupancy
   lock** (the exclusion floor as a trap), so the cold-source and locked-ground-state
   rungs are one.
+- **The single-occupancy lock closes the loop** (1/3, headline a negative): the
+  hot bath's impurity is ``~87%`` clustering, so the lock is charge polarization (a
+  source+sink removing annihilation so like-charge Pauli repulsion excludes a
+  second).  It helps ``~3×`` (clean-single-½ ``0.07 → 0.24``, L1 ✓) but never
+  completes (L3, caps ``~¼``) and even a lone occupant reads clean only ``~⅔`` (L2)
+  — a **free** ``½`` carries soft ``~1/r`` repulsion, not the hard derived floor
+  ``s⋆`` that only *bound* structures carry.  Resolution: Pauli single-occupancy is
+  a property of **bound** fermions carrying the no-cloning floor — closing the loop
+  to `n3_exclusion` and the self-assembly molecule.
 
 **Frontier (intuition the foundations now make testable, without a verdict).**
 - **The abundance *numbers*.**  The count and ordering of the families are now
@@ -783,6 +812,7 @@ apart plainly:
 | `n3_self_assembly.py` | 3/3 | **self-assembly**: the selective force + the transport current in one co-evolution — masses bind at the derived floor (S1, `6/6`), a mass gathers & holds a `±½` from the noise-grown gas (S2, `6/6`; frozen control `4/6`), the catch reads `s=±½` with the `−1` holonomy (S3, `6/6`), nothing imprinted; two honest boundaries — the hold is intermittent (`~60%`) and transport isn't cleanly isolated (capture-and-hold grabs born-near defects) |
 | `n3_gas_source.py` | 2/3 | the **gas source** (transience lifted, purity the new boundary): a Langevin bath replenishes the coarsening gas above a threshold — steady density (G1, `~30` vs `~2`), the κ well occupied `0.85` vs `0.08` while empty space stays empty (ambient `0.03`) — persistent & selective (G2); but the dense bath nucleates integer/clustered defects, so what's held is a clean `±½` only `~47%` of the time (G3, fail) — persistence vs purity, a *cold* source next |
 | `n3_cold_source.py` | 2/3 | the **cold source** (the tradeoff is fundamental, headline a negative): inject clean winding-`±1` = `s=±½` pairs dilutely — pure (C1, `82%` vs hot `47%`) and local (C2, occ `0.34` vs ambient `0.10`), but not persistent (C3, fail): the dilute clean supply self-annihilates, clean-½ occupancy `0.28` < hot `0.40`. No memoryless source holds a clean single `±½` > `~40%` of the time — the fix is a single-occupancy **lock** (the exclusion floor as a trap); cold-source & locked-ground-state are one rung |
+| `n3_single_occupancy.py` | 1/3 | the **single-occupancy lock** (closes the loop, headline a negative): the bath's impurity is `~87%` clustering, so the lock is charge polarization (source+sink; like-charge Pauli repulsion excludes a second) — helps `~3×` (clean-single-½ `0.07 → 0.24`, L1 ✓) but never completes (L3, caps `~¼`) and a lone occupant reads clean only `~⅔` (L2). A **free** `½` carries soft `~1/r` repulsion, not the hard derived floor `s⋆` that only bound structures carry — so Pauli single-occupancy is a property of **bound** fermions carrying the no-cloning floor; loop closed to `n3_exclusion` |
 | `n3_exclusion_*` (five) | see doc | the derived, parameter-free pair-binding floor |
 | `n3_identity_generation / _invariance.py` | 2/3, 2/3 | identity measured from structure, pose-invariant |
 | `n3_kappa_lightcone.py` | 2/3 | causal cone `c_κ = √(D/τ)`; the propagating mass |
