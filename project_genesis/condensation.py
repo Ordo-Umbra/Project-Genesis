@@ -91,7 +91,7 @@ def condensation_run(positions, velocities, masses, *, shape,
                      pregrow_steps: int = 800, seed: int = 0,
                      phase_chi: float = 0.6, chi_amp: float = 0.0,
                      normalize: bool = False, chiral_lambda: float = 0.0,
-                     detune_gamma: float = 0.8,
+                     detune_gamma: float = 0.8, record_snapshots: bool = False,
                      kappa_diffusion: float = 1.0, kappa_recovery: float = 0.02,
                      kappa_consumption: float = 0.8,
                      kappa_baseline: float = 1.0) -> dict:
@@ -101,7 +101,9 @@ def condensation_run(positions, velocities, masses, *, shape,
     from noise under the masses' initial detuning, then co-evolves with their
     motion; the masses optionally feel the phase-current force and the
     (raw or normalised) amplitude-reaction force.  Records per-record times,
-    positions, separations, mass→nearest-defect distances, and defect counts.
+    positions, separations, mass→nearest-defect distances, and defect counts;
+    with ``record_snapshots=True`` also the ψ field at each record time (so a
+    captured core's spinor signature can be read at the moment of capture).
     """
     shape = tuple(int(s) for s in shape)
     pos = np.asarray(positions, dtype=float).copy()
@@ -159,6 +161,8 @@ def condensation_run(positions, velocities, masses, *, shape,
     forces = forces_of(pos, kappa, g, psi)
     hist = {k: [] for k in ("time", "positions", "separation",
                             "mass_defect_dist", "n_defects")}
+    if record_snapshots:
+        hist["psi_snapshots"] = []
     for i in range(steps):
         if i % record_every == 0:
             dfs = defect_positions(psi)
@@ -167,6 +171,8 @@ def condensation_run(positions, velocities, masses, *, shape,
             hist["separation"].append(float(np.linalg.norm(pos[0] - pos[1])))
             hist["mass_defect_dist"].append([nearest(pi, dfs) for pi in pos])
             hist["n_defects"].append(len(dfs))
+            if record_snapshots:
+                hist["psi_snapshots"].append(psi.copy())
         acc = forces / m[:, None]
         vel_half = vel + 0.5 * acc * dt
         pos = pos + vel_half * dt
