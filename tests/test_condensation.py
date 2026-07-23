@@ -93,6 +93,38 @@ class GasAndRunTests(unittest.TestCase):
         self.assertTrue(np.all(np.isfinite(np.asarray(h["final_positions"]))))
 
 
+class SelfAssemblyTests(unittest.TestCase):
+    """A molecule co-evolved with the gas: it binds, and ψ can be snapshotted."""
+
+    def test_record_snapshots_returns_the_field_at_each_record(self):
+        n = 48
+        h = condensation_run(
+            [[n / 2 - 5, n / 2], [n / 2 + 5, n / 2]],
+            [[0.0, 0.0], [0.0, 0.0]], [0.6, 0.6], shape=(n, n),
+            steps=120, record_every=40, pregrow_steps=100, seed=3,
+            phase_chi=0.3, chi_amp=2.0, normalize=True, chiral_lambda=0.5,
+            record_snapshots=True)
+        snaps = h["psi_snapshots"]
+        self.assertEqual(len(snaps), len(h["time"]))          # one per record
+        self.assertEqual(snaps[0].shape, (n, n))
+        self.assertTrue(np.iscomplexobj(snaps[0]))
+
+    def test_masses_bind_near_the_derived_floor(self):
+        # started beyond the floor, κ-gravity + the derived exclusion pull the
+        # pair inward to a bound separation (neither escaped nor collapsed)
+        n = 48
+        sep0 = 12.0
+        h = condensation_run(
+            [[n / 2 - sep0 / 2, n / 2], [n / 2 + sep0 / 2, n / 2]],
+            [[0.0, 0.0], [0.0, 0.0]], [0.6, 0.6], shape=(n, n),
+            steps=500, record_every=50, pregrow_steps=60, seed=1,
+            phase_chi=0.0, chi_amp=0.0, chiral_lambda=0.0)
+        final = float(np.linalg.norm(h["final_positions"][0]
+                                     - h["final_positions"][1]))
+        self.assertLess(final, sep0 - 1.0)      # pulled inward from the start
+        self.assertGreater(final, 3.0)          # bound, not collapsed
+
+
 class TransportCurrentTests(unittest.TestCase):
     """The λ precession is the transport current that carries fermions to matter."""
 
