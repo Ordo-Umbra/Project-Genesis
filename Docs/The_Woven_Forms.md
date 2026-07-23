@@ -499,6 +499,24 @@ transport window bounded above by numerical stability (``λ ≳ 1.5`` overflows 
 ``dt = 0.1``) — but K1's frozen boundary is lifted: matter gathers its fermions,
 and the whole chain — sector → fermion → composite — runs itself from noise.
 
+**And the two dynamical halves assemble a molecule** (`n3_self_assembly`, 3/3).
+Put the mass-side *selective* reaction force (the boundary's K3 — a mass holds a
+topological core while ignoring a fellow mass) and the field-side *transport*
+current into a single co-evolution, and a molecule assembles itself from noise:
+two masses released *beyond* the floor **bind** at the derived exclusion spacing
+(S1: ``6/6`` seeds, ``s⋆ ≈ 8.5``, a little tighter when a core is caught between
+them); a mass **gathers** a ``±½`` out of the noise-grown gas and holds it while
+bound (S2: ``6/6``); and the catch reads ``s = ±½`` with the ``−1`` holonomy (S3:
+``6/6``) — gas grown, binding derived, nothing imprinted.  Two honest boundaries
+remain: the hold is *imperfect* (a mass holds its fermion for ``~60%`` of the run,
+the defect wandering in and out — an intermittent bond, not a locked ground
+state), and transport is *not cleanly isolated* (the frozen ``λ = 0`` control
+still captures ``4/6``, because capture-and-hold grabs born-*near* defects without
+transport — so transport's gather-from-afar is a modest edge at this density).  A
+locked decorated ground state and a replenished gas source are the next rungs; but
+the object of Act III — a bound composite carrying a spin-½, assembled from noise
+— now exists.
+
 ---
 
 ## 6. Where criticality sits in all of this
@@ -633,6 +651,14 @@ apart plainly:
   chance), each a genuine ``±½`` with the ``−1`` holonomy, singly (L3).  Partial
   (about a third of the wells, ``λ < 1.5`` for stability) — but matter now
   gathers its fermions, and the chain sector → fermion → composite runs itself.
+- **A molecule assembles itself from noise** (3/3): the mass-side selective force
+  and the field-side transport current in one co-evolution — two masses bind at
+  the derived floor (S1, ``6/6``), a mass gathers and holds a ``±½`` from the
+  noise-grown gas (S2, ``6/6``; frozen control ``4/6``), the catch reads
+  ``s = ±½`` with the ``−1`` holonomy (S3, ``6/6``), nothing imprinted.  Two
+  honest boundaries: the hold is intermittent (``~60%`` of the run, not a locked
+  bond), and transport is not cleanly isolated (capture-and-hold grabs born-near
+  defects without it) — a locked ground state and a gas source are the next rungs.
 
 **Frontier (intuition the foundations now make testable, without a verdict).**
 - **The abundance *numbers*.**  The count and ordering of the families are now
@@ -702,6 +728,7 @@ apart plainly:
 | `n3_junction_fermion.py` | 3/3 | **`N⋆ = 3` selects the count**: emergent spin defects *are* trivalent three-sector junctions (bijective, singlet `1:1:1`, every one a `±½` fermion; walls spinless); defect valence `= P` vs the matter tessellation's Plateau `3` — they coincide only at `P = 3` |
 | `n3_condensation_boundary.py` | 3/3 | the **condensation boundary** (headline a negative): matter cannot yet *gather* its fermions — passive traps frozen (K1), the naive force clumps (K2), but the envelope-normalised force is *selective* (K3); the missing piece is defect transport |
 | `n3_condensation_transport.py` | 3/3 | the **transport current** (the boundary lifted): the `λ≠0` precession *is* the current — `λ=0` relaxes to rest, `λ>0` sustains a persistent spiral current (L1); the κ wells now **gather** fermions from a noise-grown gas (`4/12` at `λ=1` vs `0/12` chance, L2), each a `±½` with the `−1` holonomy, singly (L3); partial (~⅓ the wells, `λ<1.5`) |
+| `n3_self_assembly.py` | 3/3 | **self-assembly**: the selective force + the transport current in one co-evolution — masses bind at the derived floor (S1, `6/6`), a mass gathers & holds a `±½` from the noise-grown gas (S2, `6/6`; frozen control `4/6`), the catch reads `s=±½` with the `−1` holonomy (S3, `6/6`), nothing imprinted; two honest boundaries — the hold is intermittent (`~60%`) and transport isn't cleanly isolated (capture-and-hold grabs born-near defects) |
 | `n3_exclusion_*` (five) | see doc | the derived, parameter-free pair-binding floor |
 | `n3_identity_generation / _invariance.py` | 2/3, 2/3 | identity measured from structure, pose-invariant |
 | `n3_kappa_lightcone.py` | 2/3 | causal cone `c_κ = √(D/τ)`; the propagating mass |
