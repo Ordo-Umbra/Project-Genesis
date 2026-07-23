@@ -16,6 +16,7 @@ from project_genesis.condensation import (  # noqa: E402
     condensation_run,
     defect_positions,
     grow_defect_gas,
+    sourced_gas_step,
 )
 from project_genesis.nematic_spinor import (  # noqa: E402
     director_holonomy,
@@ -123,6 +124,41 @@ class SelfAssemblyTests(unittest.TestCase):
                                      - h["final_positions"][1]))
         self.assertLess(final, sep0 - 1.0)      # pulled inward from the start
         self.assertGreater(final, 3.0)          # bound, not collapsed
+
+
+class GasSourceTests(unittest.TestCase):
+    """A Langevin bath replenishes the coarsening gas — a gas source."""
+
+    def test_zero_source_is_a_plain_detuned_step(self):
+        # source_amp=0 must reduce exactly to the un-sourced CGL step
+        rng = np.random.default_rng(0)
+        psi = 0.2 * (rng.standard_normal((32, 32))
+                     + 1j * rng.standard_normal((32, 32)))
+        g = np.zeros((32, 32))
+        a = sourced_gas_step(psi, g, chiral=0.5, dt=0.1, source_amp=0.0)
+        b = step_chiral_detuned(psi, g, chiral=0.5, dt=0.1)
+        self.assertTrue(np.allclose(a, b))
+
+    def test_source_holds_density_above_the_coarsening_floor(self):
+        # the un-sourced gas coarsens (few defects); the sourced bath replenishes
+        # pairs and holds a much denser steady gas
+        n = 48
+        g = np.zeros((n, n))
+
+        def density(eta):
+            rng = np.random.default_rng(4)
+            psi = 0.1 * (rng.standard_normal((n, n))
+                         + 1j * rng.standard_normal((n, n)))
+            for _ in range(500):
+                psi = step_chiral_detuned(psi, g, chiral=0.5, dt=0.1)
+            for _ in range(500):
+                psi = sourced_gas_step(psi, g, chiral=0.5, dt=0.1,
+                                       source_amp=eta, rng=rng)
+            return len(defect_positions(psi))
+
+        # well above threshold the bath boils into a dense gas; the un-sourced
+        # gas coarsens to a sparse floor
+        self.assertGreater(density(1.0), 10 * max(density(0.0), 1))
 
 
 class TransportCurrentTests(unittest.TestCase):

@@ -55,6 +55,28 @@ def grow_defect_gas(shape, g, *, steps: int = 800, dt: float = 0.1,
     return psi
 
 
+def sourced_gas_step(psi: np.ndarray, g: np.ndarray, *, chiral: float = 0.0,
+                     dt: float = 0.1, source_amp: float = 0.0,
+                     rng=None) -> np.ndarray:
+    """One κ-detuned CGL step plus a **Langevin gas source**.
+
+    Adds a bath of amplitude ``source_amp`` (``η``) that continuously nucleates
+    fluctuations — ``η·√dt·(ξ + iξ')`` per step, the standard Langevin scaling.
+    An un-sourced (``η = 0``) gas coarsens: defect pairs annihilate and the
+    density decays.  Above a threshold in ``η`` the bath replenishes pairs as
+    fast as they annihilate, holding a *steady* defect gas — a gas *source* — so
+    a trap stays occupied indefinitely.  It is a threshold (a Kibble–Zurek-like
+    picture): below ``η_c`` the field orders and the gas coarsens away; well
+    above it the field boils into a dense turbulent bath (and the amplitude
+    degrades).  ``rng`` is a ``numpy`` Generator (required when ``η > 0``).
+    """
+    psi = step_chiral_detuned(psi, g, chiral=chiral, dt=dt)
+    if source_amp and rng is not None:
+        psi = psi + source_amp * np.sqrt(dt) * (
+            rng.standard_normal(psi.shape) + 1j * rng.standard_normal(psi.shape))
+    return psi
+
+
 def defect_positions(psi: np.ndarray) -> list:
     """``[(position, charge), …]`` from the plaquette winding (core centres)."""
     w = plaquette_winding(psi)

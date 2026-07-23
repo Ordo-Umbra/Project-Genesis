@@ -517,6 +517,23 @@ locked decorated ground state and a replenished gas source are the next rungs; b
 the object of Act III — a bound composite carrying a spin-½, assembled from noise
 — now exists.
 
+**And a gas source makes the decoration persistent** (`n3_gas_source`, 2/3).  The
+intermittent hold's cause was that the noise-grown gas is *sparse* and coarsens —
+a trap is only occasionally within reach of a defect.  Add a **Langevin bath** (a
+noise term ``η·√dt·(ξ + iξ')`` in the κ-detuned CGL, `sourced_gas_step`) and, above
+a threshold, the gas holds a *steady* density (G1: ``~30`` defects vs the un-sourced
+``~2``), so the κ well is occupied ``0.85`` of the time (vs ``0.08`` un-sourced)
+while empty reference points stay at ``0.03`` — the intermittent hold lifted to a
+**persistent, selective** decoration (G2).  But the dense replenished bath also
+nucleates *integer* (``s = ±1``) and *clustered* defects, so what the well holds
+reads a clean ``±½`` only ``~47%`` of the time (G3, a fail): the sparse gas was
+*pure but transient* (transport read ``80–100%`` ``±½``), the sourced gas is
+*persistent but impure*.  Persistence and purity trade off across the same boiling
+threshold — the honest new boundary, and a **"cold" source** (replenishing clean
+``½``'s without boiling to integer defects) is the next rung.  It is the same shape
+of tension the whole matter picture keeps finding: each rung lifts one boundary and
+names the next.
+
 ---
 
 ## 6. Where criticality sits in all of this
@@ -659,6 +676,14 @@ apart plainly:
   honest boundaries: the hold is intermittent (``~60%`` of the run, not a locked
   bond), and transport is not cleanly isolated (capture-and-hold grabs born-near
   defects without it) — a locked ground state and a gas source are the next rungs.
+- **A gas source makes the decoration persistent** (2/3): a Langevin bath
+  (``η·√dt`` noise in the CGL) replenishes the coarsening gas above a threshold —
+  a steady density (G1, ``~30`` vs ``~2`` defects) holds the κ well occupied
+  ``0.85`` of the time (vs ``0.08``) while empty space stays empty (ambient
+  ``0.03``): the intermittent hold lifted to a *persistent, selective* decoration
+  (G2).  But the dense bath also nucleates integer/clustered defects, so what's
+  held is a clean ``±½`` only ``~47%`` of the time (G3, fail) — persistence and
+  purity trade off; a *cold* source is the next rung.
 
 **Frontier (intuition the foundations now make testable, without a verdict).**
 - **The abundance *numbers*.**  The count and ordering of the families are now
@@ -729,6 +754,7 @@ apart plainly:
 | `n3_condensation_boundary.py` | 3/3 | the **condensation boundary** (headline a negative): matter cannot yet *gather* its fermions — passive traps frozen (K1), the naive force clumps (K2), but the envelope-normalised force is *selective* (K3); the missing piece is defect transport |
 | `n3_condensation_transport.py` | 3/3 | the **transport current** (the boundary lifted): the `λ≠0` precession *is* the current — `λ=0` relaxes to rest, `λ>0` sustains a persistent spiral current (L1); the κ wells now **gather** fermions from a noise-grown gas (`4/12` at `λ=1` vs `0/12` chance, L2), each a `±½` with the `−1` holonomy, singly (L3); partial (~⅓ the wells, `λ<1.5`) |
 | `n3_self_assembly.py` | 3/3 | **self-assembly**: the selective force + the transport current in one co-evolution — masses bind at the derived floor (S1, `6/6`), a mass gathers & holds a `±½` from the noise-grown gas (S2, `6/6`; frozen control `4/6`), the catch reads `s=±½` with the `−1` holonomy (S3, `6/6`), nothing imprinted; two honest boundaries — the hold is intermittent (`~60%`) and transport isn't cleanly isolated (capture-and-hold grabs born-near defects) |
+| `n3_gas_source.py` | 2/3 | the **gas source** (transience lifted, purity the new boundary): a Langevin bath replenishes the coarsening gas above a threshold — steady density (G1, `~30` vs `~2`), the κ well occupied `0.85` vs `0.08` while empty space stays empty (ambient `0.03`) — persistent & selective (G2); but the dense bath nucleates integer/clustered defects, so what's held is a clean `±½` only `~47%` of the time (G3, fail) — persistence vs purity, a *cold* source next |
 | `n3_exclusion_*` (five) | see doc | the derived, parameter-free pair-binding floor |
 | `n3_identity_generation / _invariance.py` | 2/3, 2/3 | identity measured from structure, pose-invariant |
 | `n3_kappa_lightcone.py` | 2/3 | causal cone `c_κ = √(D/τ)`; the propagating mass |
