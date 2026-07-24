@@ -253,10 +253,25 @@ transplant (`n3_criticality_transplant.py`) made the programme's first
 criticality exactly when maintaining order costs capacity*, verified by
 toggling that condition on a Hopfield network (no lattice, learned couplings),
 with the S-compass trajectory taxonomy reading identically on both substrates.
-The early numerical stand-ins (0.22, β = 0.09) were exploration scaffolding;
-the direction of the programme is the capacity law itself — dynamical,
-self-orienting, substrate-portable — and its meeting point with learning
-systems.
+A **third** substrate now carries the same verdict — the mean-field Kuramoto
+oscillator population (`n3_kuramoto_transplant.py`, 3/3): no lattice, no
+memories, a continuous order parameter, and yet the same level crossing under
+the same toggle (a synchronised rhythm is scarcity-proof; a rhythm held against
+noise is pushed to criticality as capacity binds), with the capacity law and
+taxonomy imported verbatim so the reuse is a fact about the code. Lattice
+field, attractor network, oscillator population — three disjoint structures,
+one funding-structure law.
+And where that law meets *external ground truth* — a real learner, not a
+lattice — it now carries a **paired, powered significance**: the
+regenerating-capacity optimiser's edge over plain SGD, long "within noise" on
+the scarcity benchmark, is real, scarcity-graded, and `p < 0.001` once the
+already-paired runs are analysed paired instead of unpaired
+(`n3_scarcity_power.py`) — with the honest boundary equally measured (given the
+same buffer, plain replay still beats it under scarcity). The early numerical
+stand-ins (0.22, β = 0.09) were exploration scaffolding; the direction of the
+programme is the capacity law itself — dynamical, self-orienting,
+substrate-portable — and its meeting point with learning systems, now a
+measured advantage with a measured edge.
 
 ---
 
