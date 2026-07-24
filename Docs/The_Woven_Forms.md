@@ -828,10 +828,34 @@ apart plainly:
   a per-step re-imprint).  The honest control seals it: under the *same* pin an
   integer pair braids to ``+1`` and a *double* ``½`` braid to ``+1`` — the pin
   **transports** the winding, the exchange sign still comes from the braid
-  *geometry*, not the pin.  What remains is genuinely the quantum step: a
-  self-consistent (solved) gauge field and **Fock-space anticommutation** — a
-  classical order parameter with a background phase-anchor is not yet an operator
-  algebra ``{ψ, ψ†}``.
+  *geometry*, not the pin.  And the phase-template caveat itself is now
+  **closed** by the real field (`n3_gauge_field.py`, 3/3): couple the vortex to a
+  genuine **U(1) gauge field** (the abelian Higgs / Ginzburg–Landau model,
+  `gauged_vortex.py`) and solve both self-consistently, and the winding is
+  anchored by a physical, quantised, gauge-invariant **magnetic flux** — the
+  gauge field carries ``Φ = 2π·q`` per winding (``q = 1, 2, 3`` measured; ``0``
+  with the gauge field off, G1), screens the global vortex's log-divergent
+  energy into a **finite-energy soliton** (G2), and its observables are
+  **gauge-invariant** to machine precision (G3, which a fixed phase template is
+  not).  The vortex is a genuine gauged particle.  And the **statistical phase**
+  itself is now measured on that gauge field (`n3_ab_statistics.py`, 3/3): the
+  exchange sign is realised as an **Aharonov–Bohm** holonomy.  The Wilson loop of
+  the self-consistent gauge field is the enclosed flux ``Φ = 2π·q``; a *unit*
+  charge encircling gets ``+1`` (Dirac), a *half* charge ``(−1)^q`` (AB1).  So
+  the flux–charge composite (charge 1, flux ``Φ``) exchanges — half a braid,
+  each charge seeing half the partner's flux — with statistical phase
+  ``θ = Φ/2 = πq``, making **one flux quantum a fermion** (``q=1 → −1``), two a
+  boson (``q=2 → +1``): **Wilczek statistical transmutation**, the gauge field
+  turning a topological winding into a dynamical exchange statistic (AB2).  And
+  the three determinations coincide: the Aharonov–Bohm gauge phase, the
+  *topological* braid exchange sign, and the *geometric* ``2π`` self-rotation
+  holonomy are one and the same ``(−1)^{2s}`` for every ``q`` (AB3) — spin,
+  statistics, and gauge, one sign.  What remains is now singular: **Fock-space
+  anticommutation** — the operator algebra ``{ψ, ψ†}`` and a many-body Pauli
+  principle between identical *quanta*, with the flux–charge binding enforced by
+  a *dynamically-solved* Chern–Simons term rather than read off.  A classical,
+  self-consistent gauge theory with the fermion's statistics realised as a
+  gauge holonomy is in hand; **second quantisation** is the standing frontier.
   (A subsidiary open rung: a 3-D molecule that actually *turns* — the bound pair
   carries a real vector spin-torque but is overdamped, `n3_molecule_3d`, 2/3.)
 - **The deeper meaning of the compatibility window.**  The self-sustained strong
@@ -855,6 +879,7 @@ apart plainly:
 | `vortex_chiral_3d.py` | 3-D spin: the vortex is a *line*, its angular momentum an axial *vector* aligned with the line (`vortex_line`, `line_angular_momentum`, `line_winding`, `evolve_seeded_line`) — quantised, conserved with its axis, integer/bosonic; and the 3-D molecule (`line_phase_force`, `evolve_line_molecule`): a real vector torque the overdamped pair cannot turn |
 | `nematic_spinor.py` | Half-integer spin: a nematic director (`n̂ ≡ −n̂`, `RP¹`) and its ``±½`` disclinations — `disclination_strength` (`s = q/2`), `director_holonomy` (the ``4π`` double cover: ``2π → −1``), `plaquette_winding` (the tracker-free defect map) — the topological realisation of a spinor |
 | `spin_statistics.py` | The exchange sign: `braid_positions` / `exchange_holonomy` (braid two disclinations, read the centre-winding and the sign ``(−1)^k``) and `self_rotation_sign` — the *statistics* half of spin–statistics and its connection to the spin (``(−1)^{2s}`` on both sides). Also the **dynamical** braid: `gaussian_wells`, `transport_defect` (adiabatic well-transport with a speed limit), `dynamical_braid` (co-evolved κ-pinned braid, no re-imprint; ``phase_pin`` adds the phase-anchoring cure that completes it) |
+| `gauged_vortex.py` | The self-consistent gauge field (abelian Higgs / Ginzburg–Landau): `seed_vortices`, `plaquette_flux` / `local_flux`, `covariant_laplacian`, `energy`, `relax` (gradient-flow ψ and the U(1) links; ``gauge_on=False`` = the global-vortex control), `gauge_transform` — the vortex as a gauged particle: quantised flux, London screening, gauge invariance.  Also `wilson_loop` / `ab_phase` — the Aharonov–Bohm holonomy and the flux–charge composite's statistical phase |
 | `condensation.py` | The condensation instruments: `grow_defect_gas` (defects from noise), `amp_reaction_force` (the detuning's third-law force — raw clumps, envelope-normalised is selective), `condensation_run` (masses + a co-evolving gas) |
 | `capacity_waves.py` | Finite-speed `κ` (telegrapher), retarded gravity, the exclusion contact terms |
 
@@ -879,6 +904,8 @@ apart plainly:
 | `n3_exchange_statistics.py` | 3/3 | **the exchange sign**: braiding two identical ``½`` disclinations reads ``−1`` (antisymmetric — the *statistics* half of spin–statistics), ``(−1)^{2s}`` across charges, and it **equals** the ``2π`` self-rotation holonomy — the spin–statistics *connection* measured (double braid / far field / no-swap / ``½,−½`` all ``+1``); topological (Finkelstein–Rubinstein), not Fock-space anticommutation |
 | `n3_dynamical_braid.py` | 3/3 | **the exchange sign under genuine dynamics**: a κ-pinned ``½`` co-evolved (no re-imprint) keeps its winding + ``−1`` holonomy (D2) and is *transported* with winding conserved **adiabatically, with a measured speed limit** (D1 — κ pins amplitude, not phase); the two-body braid realises the fermionic sign *partway* (D3, sign ``−0.77``, cores surviving ``92%``) — the amplitude-vs-phase pinning boundary, whose cure (phase-anchoring) is the bridge to a dynamical fermion |
 | `n3_phase_pinned_braid.py` | 3/3 | **phase-aware pinning closes the D3 boundary**: a weak, local, gauge-like phase-anchor completes the two-body braid — the fermionic ``−1`` clean from co-evolution (sign ``−0.99``, ``100%`` survival) above ``η⋆ ≈ 0.2`` (P1/P2); and the honest control (P3) — integer → ``+1``, double braid → ``+1`` under the same pin — proves the pin *transports* winding, the sign is the braid's geometry, not the pin's. Still classical, not Fock-space anticommutation |
+| `n3_gauge_field.py` | 3/3 | **the self-consistent gauge field**: couple the vortex to a real U(1) gauge field (abelian Higgs) and solve both — the winding is anchored by a quantised, gauge-invariant magnetic flux ``Φ = 2π·q`` (G1, ``0`` gauge-off), the global vortex's log-divergent energy screened into a **finite-energy soliton** (G2), observables gauge-invariant to machine precision (G3). The phase-template caveat closed with the real field; the vortex is a gauged particle. Classical gauge theory — Fock-space anticommutation + the AB/Chern–Simons statistical phase remain the frontier |
+| `n3_ab_statistics.py` | 3/3 | **statistics as a gauge holonomy (Aharonov–Bohm)**: the Wilson loop of the self-consistent gauge field = the flux ``Φ = 2π·q`` — a unit charge encircling → ``+1`` (Dirac), a ½ charge → ``(−1)^q`` (AB1); so the flux–charge composite exchanges with phase ``Φ/2 = πq``, **one flux quantum → a fermion** (Wilczek transmutation, AB2); and the AB gauge phase = the topological braid sign = the ``2π`` spin rotation, one ``(−1)^{2s}`` three ways (AB3). Classical abelian statistical phase — Fock ``{ψ,ψ†}`` anticommutation the frontier |
 | `n3_junction_fermion.py` | 3/3 | **`N⋆ = 3` selects the count**: emergent spin defects *are* trivalent three-sector junctions (bijective, singlet `1:1:1`, every one a `±½` fermion; walls spinless); defect valence `= P` vs the matter tessellation's Plateau `3` — they coincide only at `P = 3` |
 | `n3_condensation_boundary.py` | 3/3 | the **condensation boundary** (headline a negative): matter cannot yet *gather* its fermions — passive traps frozen (K1), the naive force clumps (K2), but the envelope-normalised force is *selective* (K3); the missing piece is defect transport |
 | `n3_condensation_transport.py` | 3/3 | the **transport current** (the boundary lifted): the `λ≠0` precession *is* the current — `λ=0` relaxes to rest, `λ>0` sustains a persistent spiral current (L1); the κ wells now **gather** fermions from a noise-grown gas (`4/12` at `λ=1` vs `0/12` chance, L2), each a `±½` with the `−1` holonomy, singly (L3); partial (~⅓ the wells, `λ<1.5`) |
