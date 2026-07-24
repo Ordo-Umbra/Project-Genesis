@@ -59,6 +59,8 @@ __all__ = [
     "relax",
     "gauge_transform",
     "zero_links",
+    "wilson_loop",
+    "ab_phase",
 ]
 
 
@@ -193,3 +195,40 @@ def gauge_transform(psi: np.ndarray, theta, alpha: np.ndarray) -> tuple:
     theta_g = [theta[0] + alpha - np.roll(alpha, -1, 0),
                theta[1] + alpha - np.roll(alpha, -1, 1)]
     return psi_g, theta_g
+
+
+def wilson_loop(theta, center, half_width: float) -> tuple:
+    """The gauge holonomy of a square loop — the Aharonov–Bohm phase.
+
+    Parallel-transports a *unit* test charge around a square loop of half-width
+    ``half_width`` about ``center`` by multiplying the U(1) link variables along
+    the perimeter: the accumulated phase (the Wilson loop) is ``∮A·dl``, which by
+    lattice Stokes equals the **enclosed magnetic flux** ``Φ``.  Returns
+    ``(holonomy, loop_value)`` with ``holonomy`` the unwrapped angle (``≈ 2π·q``
+    for a winding-``q`` vortex) and ``loop_value = e^{iΦ}``.  The loop is assumed
+    to sit inside the lattice (it must not wrap the torus).
+    """
+    tx, ty = theta
+    cx, cy = int(round(center[0])), int(round(center[1]))
+    r = int(round(half_width))
+    x0, x1, y0, y1 = cx - r, cx + r, cy - r, cy + r
+    holonomy = (float(tx[x0:x1, y0].sum()) + float(ty[x1, y0:y1].sum())
+                - float(tx[x0:x1, y1].sum()) - float(ty[x0, y0:y1].sum()))
+    return holonomy, complex(np.exp(1j * holonomy))
+
+
+def ab_phase(theta, center, radius: float, charge: float = 1.0) -> complex:
+    """The Aharonov–Bohm phase ``e^{iQΦ}`` a charge ``Q`` accrues encircling the
+    flux.
+
+    ``Φ`` is the holonomy ``∮A·dl`` of the self-consistent gauge field, taken as
+    the enclosed flux through a disk of ``radius`` (:func:`local_flux` — a
+    circular Wilson loop, robust to the loop shape; the square
+    :func:`wilson_loop` is the same holonomy by Stokes but more corner-sensitive
+    at small size).  A *unit* charge around one flux quantum (``Φ = 2π``) gets
+    ``e^{2πi} = 1`` (Dirac); a **half** charge gets ``e^{iπ} = −1`` — the flux
+    quantum is visible to a fractional charge as a sign, the Aharonov–Bohm root
+    of statistics.
+    """
+    holonomy = local_flux(theta, center, radius)
+    return complex(np.exp(1j * charge * holonomy))
