@@ -55,6 +55,44 @@ def grow_defect_gas(shape, g, *, steps: int = 800, dt: float = 0.1,
     return psi
 
 
+def sourced_gas_step(psi: np.ndarray, g: np.ndarray, *, chiral: float = 0.0,
+                     dt: float = 0.1, source_amp: float = 0.0,
+                     rng=None) -> np.ndarray:
+    """One κ-detuned CGL step plus a **Langevin gas source**.
+
+    Adds a bath of amplitude ``source_amp`` (``η``) that continuously nucleates
+    fluctuations — ``η·√dt·(ξ + iξ')`` per step, the standard Langevin scaling.
+    An un-sourced (``η = 0``) gas coarsens: defect pairs annihilate and the
+    density decays.  Above a threshold in ``η`` the bath replenishes pairs as
+    fast as they annihilate, holding a *steady* defect gas — a gas *source* — so
+    a trap stays occupied indefinitely.  It is a threshold (a Kibble–Zurek-like
+    picture): below ``η_c`` the field orders and the gas coarsens away; well
+    above it the field boils into a dense turbulent bath (and the amplitude
+    degrades).  ``rng`` is a ``numpy`` Generator (required when ``η > 0``).
+    """
+    psi = step_chiral_detuned(psi, g, chiral=chiral, dt=dt)
+    if source_amp and rng is not None:
+        psi = psi + source_amp * np.sqrt(dt) * (
+            rng.standard_normal(psi.shape) + 1j * rng.standard_normal(psi.shape))
+    return psi
+
+
+def inject_defect_pair(psi: np.ndarray, p1, p2) -> np.ndarray:
+    """Multiply ψ by the phase of a ``+1 / −1`` winding pair at ``p1`` and ``p2``.
+
+    A **cold** gas source: instead of the Langevin bath's indiscriminate heat
+    (which also nucleates integer ``s = ±1`` and clustered defects), this injects
+    the *fundamental spin-½ quantum* directly — each winding-1 core reads
+    ``s = ±½`` — cleanly and dilutely.  The dynamics carves the amplitude holes
+    at the winding centres within a few steps.  Positions are ``(row, col)``.
+    """
+    yy, xx = np.meshgrid(np.arange(psi.shape[0]), np.arange(psi.shape[1]),
+                         indexing="ij")
+    phase = (np.arctan2(yy - p1[0], xx - p1[1])
+             - np.arctan2(yy - p2[0], xx - p2[1]))
+    return psi * np.exp(1j * phase)
+
+
 def defect_positions(psi: np.ndarray) -> list:
     """``[(position, charge), …]`` from the plaquette winding (core centres)."""
     w = plaquette_winding(psi)
@@ -91,7 +129,7 @@ def condensation_run(positions, velocities, masses, *, shape,
                      pregrow_steps: int = 800, seed: int = 0,
                      phase_chi: float = 0.6, chi_amp: float = 0.0,
                      normalize: bool = False, chiral_lambda: float = 0.0,
-                     detune_gamma: float = 0.8,
+                     detune_gamma: float = 0.8, record_snapshots: bool = False,
                      kappa_diffusion: float = 1.0, kappa_recovery: float = 0.02,
                      kappa_consumption: float = 0.8,
                      kappa_baseline: float = 1.0) -> dict:
@@ -101,7 +139,9 @@ def condensation_run(positions, velocities, masses, *, shape,
     from noise under the masses' initial detuning, then co-evolves with their
     motion; the masses optionally feel the phase-current force and the
     (raw or normalised) amplitude-reaction force.  Records per-record times,
-    positions, separations, mass→nearest-defect distances, and defect counts.
+    positions, separations, mass→nearest-defect distances, and defect counts;
+    with ``record_snapshots=True`` also the ψ field at each record time (so a
+    captured core's spinor signature can be read at the moment of capture).
     """
     shape = tuple(int(s) for s in shape)
     pos = np.asarray(positions, dtype=float).copy()
@@ -159,6 +199,8 @@ def condensation_run(positions, velocities, masses, *, shape,
     forces = forces_of(pos, kappa, g, psi)
     hist = {k: [] for k in ("time", "positions", "separation",
                             "mass_defect_dist", "n_defects")}
+    if record_snapshots:
+        hist["psi_snapshots"] = []
     for i in range(steps):
         if i % record_every == 0:
             dfs = defect_positions(psi)
@@ -167,6 +209,8 @@ def condensation_run(positions, velocities, masses, *, shape,
             hist["separation"].append(float(np.linalg.norm(pos[0] - pos[1])))
             hist["mass_defect_dist"].append([nearest(pi, dfs) for pi in pos])
             hist["n_defects"].append(len(dfs))
+            if record_snapshots:
+                hist["psi_snapshots"].append(psi.copy())
         acc = forces / m[:, None]
         vel_half = vel + 0.5 * acc * dt
         pos = pos + vel_half * dt

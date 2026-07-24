@@ -499,6 +499,96 @@ transport window bounded above by numerical stability (``λ ≳ 1.5`` overflows 
 ``dt = 0.1``) — but K1's frozen boundary is lifted: matter gathers its fermions,
 and the whole chain — sector → fermion → composite — runs itself from noise.
 
+**And the two dynamical halves assemble a molecule** (`n3_self_assembly`, 3/3).
+Put the mass-side *selective* reaction force (the boundary's K3 — a mass holds a
+topological core while ignoring a fellow mass) and the field-side *transport*
+current into a single co-evolution, and a molecule assembles itself from noise:
+two masses released *beyond* the floor **bind** at the derived exclusion spacing
+(S1: ``6/6`` seeds, ``s⋆ ≈ 8.5``, a little tighter when a core is caught between
+them); a mass **gathers** a ``±½`` out of the noise-grown gas and holds it while
+bound (S2: ``6/6``); and the catch reads ``s = ±½`` with the ``−1`` holonomy (S3:
+``6/6``) — gas grown, binding derived, nothing imprinted.  Two honest boundaries
+remain: the hold is *imperfect* (a mass holds its fermion for ``~60%`` of the run,
+the defect wandering in and out — an intermittent bond, not a locked ground
+state), and transport is *not cleanly isolated* (the frozen ``λ = 0`` control
+still captures ``4/6``, because capture-and-hold grabs born-*near* defects without
+transport — so transport's gather-from-afar is a modest edge at this density).  A
+locked decorated ground state and a replenished gas source are the next rungs; but
+the object of Act III — a bound composite carrying a spin-½, assembled from noise
+— now exists.
+
+**And a gas source makes the decoration persistent** (`n3_gas_source`, 2/3).  The
+intermittent hold's cause was that the noise-grown gas is *sparse* and coarsens —
+a trap is only occasionally within reach of a defect.  Add a **Langevin bath** (a
+noise term ``η·√dt·(ξ + iξ')`` in the κ-detuned CGL, `sourced_gas_step`) and, above
+a threshold, the gas holds a *steady* density (G1: ``~30`` defects vs the un-sourced
+``~2``), so the κ well is occupied ``0.85`` of the time (vs ``0.08`` un-sourced)
+while empty reference points stay at ``0.03`` — the intermittent hold lifted to a
+**persistent, selective** decoration (G2).  But the dense replenished bath also
+nucleates *integer* (``s = ±1``) and *clustered* defects, so what the well holds
+reads a clean ``±½`` only ``~47%`` of the time (G3, a fail): the sparse gas was
+*pure but transient* (transport read ``80–100%`` ``±½``), the sourced gas is
+*persistent but impure*.  Persistence and purity trade off across the same boiling
+threshold — the honest new boundary, and a **"cold" source** (replenishing clean
+``½``'s without boiling to integer defects) is the next rung.  It is the same shape
+of tension the whole matter picture keeps finding: each rung lifts one boundary and
+names the next.
+
+**And the cold source shows the tradeoff is fundamental** (`n3_cold_source`, 2/3,
+headline a negative).  Build that cold source — inject the *fundamental spin-½
+quantum*, clean winding-``±1`` pairs (`inject_defect_pair`, each ``→ s = ±½``),
+dilutely instead of the hot bath's boil — and it *is* pure (C1: ``82%`` ``±½`` vs
+the hot bath's ``47%``) and selective/local (C2: well occupancy ``0.34`` vs a far
+ambient ``0.10``).  But it is **not persistent** (C3, the fail): the clean, dilute
+supply *self-annihilates* before it can keep the traps fed, so the well's *clean-½
+occupancy* (occupancy × purity — the time it holds one genuine ``±½``) is ``0.28``,
+which does **not** beat the hot bath's ``0.40``.  Deepen the well to raise
+occupancy and clustering returns; every knob — source rate, locality, well depth —
+trades purity for persistence.  The honest reading: neither a hot nor a cold
+*memoryless* source holds a clean single ``±½`` more than ``~40%`` of the time, and
+the missing ingredient is not a cleverer source but a **single-occupancy lock** — a
+well that retains exactly one ``½`` against annihilation and excludes a second (the
+no-cloning **exclusion floor**, here as a trap).  The cold-source rung converges
+with the locked-ground-state rung the self-assembly named: *they are the same
+rung*.  The matter picture has walked itself to a single, sharply-stated frontier.
+
+**And that frontier closes the loop** (`n3_single_occupancy`, 1/3, headline a
+negative).  The hot bath's impurity is diagnosed as ``~87%`` **clustering** (the
+well is a *sink*, not a single trap), and since same-sign ``½``'s already repel,
+the clustering is *opposite-sign* annihilation — so the lock is **charge
+polarization**: a source + sink (feed one sign into matter, drain its
+anti-particle), a battery/electrode that removes annihilation so like-charge
+(Pauli) repulsion can exclude the second.  It works *partway* — clean-single-``½``
+rises from ``0.07`` to ``0.24`` (L1 ✓, ``~3×``) — but never completes (L3, caps at
+``~¼``), and even a singly-occupied well reads a clean ``±½`` only ``~⅔`` of the
+time (L2, ``0.65``), because a **free** gas ``½`` carries only soft ``~1/r``
+repulsion, not the hard, parameter-free exclusion floor the program **derived**
+(`n3_exclusion`) — and imposing that floor crudely at the field level backfires,
+destroying the gas.  Only *bound* structures carry the derived floor (two masses
+cannot approach within ``s⋆``; a free defect can).  So the resolution is the loop
+closing on itself: **Pauli single-occupancy is a property of *bound* fermions
+carrying the no-cloning floor** — the self-assembly molecule, not a free gas
+defect.  The whole matter arc — exclusion floor → spin → transport → gathering →
+binding → persistence → purity → single-occupancy — resolves to one statement: *a
+fermion is single-occupancy matter when it is bound and carries the derived floor.*
+
+**And the chiral leaning sorts matter by handedness** (`n3_chirality`, 3/3).  The
+same ``λ`` that gave the driven spin its handedness and drove the transport current
+turns out to *sort matter*: a same-charge vortex pair (two ``½``'s that repel, so
+they cannot annihilate) **orbits** under ``λ`` with a sense that *is* a handedness —
+absent at ``λ = 0`` (parity holds), growing with ``|λ|`` (``0° → 9° → 18°`` for
+``λ = 0/0.6/1``, X1), reversing under ``λ → −λ`` (CP-like) *and* with the charge
+sign (``+½`` ``+18°`` vs ``−½`` ``−18°``, X2) — so matter and antimatter are wound
+*oppositely* by the one leaning.  And it cascades: a pair bound in a matter well
+inherits the *same* handedness, confined to wind many times faster (``±454°``, X3).
+Since ``λ``'s sign is a single fixed choice for the whole lattice, all matter of a
+given charge shares *one* handedness — the **homochirality root** (why one hand
+runs from the field up through the bound structure).  Honest scope: this is
+handedness, **not baryogenesis** — the closed torus keeps the net count
+charge-balanced and the transverse *drift* is charge-blind, so a matter *excess*
+needs an open system with charge-dependent removal (the named frontier); what the
+leaning delivers is the *handedness*, universally.
+
 ---
 
 ## 6. Where criticality sits in all of this
@@ -633,6 +723,48 @@ apart plainly:
   chance), each a genuine ``±½`` with the ``−1`` holonomy, singly (L3).  Partial
   (about a third of the wells, ``λ < 1.5`` for stability) — but matter now
   gathers its fermions, and the chain sector → fermion → composite runs itself.
+- **A molecule assembles itself from noise** (3/3): the mass-side selective force
+  and the field-side transport current in one co-evolution — two masses bind at
+  the derived floor (S1, ``6/6``), a mass gathers and holds a ``±½`` from the
+  noise-grown gas (S2, ``6/6``; frozen control ``4/6``), the catch reads
+  ``s = ±½`` with the ``−1`` holonomy (S3, ``6/6``), nothing imprinted.  Two
+  honest boundaries: the hold is intermittent (``~60%`` of the run, not a locked
+  bond), and transport is not cleanly isolated (capture-and-hold grabs born-near
+  defects without it) — a locked ground state and a gas source are the next rungs.
+- **A gas source makes the decoration persistent** (2/3): a Langevin bath
+  (``η·√dt`` noise in the CGL) replenishes the coarsening gas above a threshold —
+  a steady density (G1, ``~30`` vs ``~2`` defects) holds the κ well occupied
+  ``0.85`` of the time (vs ``0.08``) while empty space stays empty (ambient
+  ``0.03``): the intermittent hold lifted to a *persistent, selective* decoration
+  (G2).  But the dense bath also nucleates integer/clustered defects, so what's
+  held is a clean ``±½`` only ``~47%`` of the time (G3, fail) — persistence and
+  purity trade off; a *cold* source is the next rung.
+- **The cold source shows the tradeoff is fundamental** (2/3, headline a negative):
+  inject the clean spin-½ quantum (winding-``±1`` pairs) dilutely and it *is* pure
+  (C1, ``82%`` vs the hot bath's ``47%``) and local (C2, occ ``0.34`` vs ambient
+  ``0.10``), but *not* persistent (C3, fail): the dilute clean supply
+  self-annihilates before feeding the traps, so its clean-½ occupancy ``0.28``
+  does not beat the hot bath's ``0.40``.  No *memoryless* source holds a clean
+  single ``±½`` more than ``~40%`` of the time — the fix is a **single-occupancy
+  lock** (the exclusion floor as a trap), so the cold-source and locked-ground-state
+  rungs are one.
+- **The single-occupancy lock closes the loop** (1/3, headline a negative): the
+  hot bath's impurity is ``~87%`` clustering, so the lock is charge polarization (a
+  source+sink removing annihilation so like-charge Pauli repulsion excludes a
+  second).  It helps ``~3×`` (clean-single-½ ``0.07 → 0.24``, L1 ✓) but never
+  completes (L3, caps ``~¼``) and even a lone occupant reads clean only ``~⅔`` (L2)
+  — a **free** ``½`` carries soft ``~1/r`` repulsion, not the hard derived floor
+  ``s⋆`` that only *bound* structures carry.  Resolution: Pauli single-occupancy is
+  a property of **bound** fermions carrying the no-cloning floor — closing the loop
+  to `n3_exclusion` and the self-assembly molecule.
+- **The chiral leaning sorts matter by handedness** (3/3): a same-charge vortex
+  pair orbits under ``λ`` with a sense that *is* a handedness — none at ``λ = 0``
+  (parity), growing with ``|λ|`` (``0°/9°/18°``, X1), flipping with ``sign λ`` and
+  with the charge sign (``+½ +18°`` vs ``−½ −18°``, X2) so matter and antimatter are
+  wound oppositely; and a **bound** composite inherits the *same* handedness (winds
+  many times faster, X3).  ``λ``'s single sign winds all matter of a charge one way
+  — the **homochirality root**.  Honest scope: handedness, **not baryogenesis** (the
+  torus keeps the count balanced; the drift is charge-blind).
 
 **Frontier (intuition the foundations now make testable, without a verdict).**
 - **The abundance *numbers*.**  The count and ordering of the families are now
@@ -702,6 +834,11 @@ apart plainly:
 | `n3_junction_fermion.py` | 3/3 | **`N⋆ = 3` selects the count**: emergent spin defects *are* trivalent three-sector junctions (bijective, singlet `1:1:1`, every one a `±½` fermion; walls spinless); defect valence `= P` vs the matter tessellation's Plateau `3` — they coincide only at `P = 3` |
 | `n3_condensation_boundary.py` | 3/3 | the **condensation boundary** (headline a negative): matter cannot yet *gather* its fermions — passive traps frozen (K1), the naive force clumps (K2), but the envelope-normalised force is *selective* (K3); the missing piece is defect transport |
 | `n3_condensation_transport.py` | 3/3 | the **transport current** (the boundary lifted): the `λ≠0` precession *is* the current — `λ=0` relaxes to rest, `λ>0` sustains a persistent spiral current (L1); the κ wells now **gather** fermions from a noise-grown gas (`4/12` at `λ=1` vs `0/12` chance, L2), each a `±½` with the `−1` holonomy, singly (L3); partial (~⅓ the wells, `λ<1.5`) |
+| `n3_self_assembly.py` | 3/3 | **self-assembly**: the selective force + the transport current in one co-evolution — masses bind at the derived floor (S1, `6/6`), a mass gathers & holds a `±½` from the noise-grown gas (S2, `6/6`; frozen control `4/6`), the catch reads `s=±½` with the `−1` holonomy (S3, `6/6`), nothing imprinted; two honest boundaries — the hold is intermittent (`~60%`) and transport isn't cleanly isolated (capture-and-hold grabs born-near defects) |
+| `n3_gas_source.py` | 2/3 | the **gas source** (transience lifted, purity the new boundary): a Langevin bath replenishes the coarsening gas above a threshold — steady density (G1, `~30` vs `~2`), the κ well occupied `0.85` vs `0.08` while empty space stays empty (ambient `0.03`) — persistent & selective (G2); but the dense bath nucleates integer/clustered defects, so what's held is a clean `±½` only `~47%` of the time (G3, fail) — persistence vs purity, a *cold* source next |
+| `n3_cold_source.py` | 2/3 | the **cold source** (the tradeoff is fundamental, headline a negative): inject clean winding-`±1` = `s=±½` pairs dilutely — pure (C1, `82%` vs hot `47%`) and local (C2, occ `0.34` vs ambient `0.10`), but not persistent (C3, fail): the dilute clean supply self-annihilates, clean-½ occupancy `0.28` < hot `0.40`. No memoryless source holds a clean single `±½` > `~40%` of the time — the fix is a single-occupancy **lock** (the exclusion floor as a trap); cold-source & locked-ground-state are one rung |
+| `n3_chirality.py` | 3/3 | the **chirality cascade**: the chiral leaning `λ` sorts matter by handedness — a same-charge pair orbits with a sense that *is* a handedness, none at `λ=0` (parity), growing with `|λ|` (`0°/9°/18°`, X1), flipping with `sign λ` and with charge (`+½ +18°` vs `−½ −18°` — matter/antimatter wound oppositely, X2), and a bound composite inherits the same hand (`±454°`, X3). `λ`'s one sign = one handedness for all matter of a charge: the homochirality root. Scope: handedness, not baryogenesis (torus keeps the count balanced) |
+| `n3_single_occupancy.py` | 1/3 | the **single-occupancy lock** (closes the loop, headline a negative): the bath's impurity is `~87%` clustering, so the lock is charge polarization (source+sink; like-charge Pauli repulsion excludes a second) — helps `~3×` (clean-single-½ `0.07 → 0.24`, L1 ✓) but never completes (L3, caps `~¼`) and a lone occupant reads clean only `~⅔` (L2). A **free** `½` carries soft `~1/r` repulsion, not the hard derived floor `s⋆` that only bound structures carry — so Pauli single-occupancy is a property of **bound** fermions carrying the no-cloning floor; loop closed to `n3_exclusion` |
 | `n3_exclusion_*` (five) | see doc | the derived, parameter-free pair-binding floor |
 | `n3_identity_generation / _invariance.py` | 2/3, 2/3 | identity measured from structure, pose-invariant |
 | `n3_kappa_lightcone.py` | 2/3 | causal cone `c_κ = √(D/τ)`; the propagating mass |

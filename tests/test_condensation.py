@@ -16,6 +16,8 @@ from project_genesis.condensation import (  # noqa: E402
     condensation_run,
     defect_positions,
     grow_defect_gas,
+    inject_defect_pair,
+    sourced_gas_step,
 )
 from project_genesis.nematic_spinor import (  # noqa: E402
     director_holonomy,
@@ -91,6 +93,91 @@ class GasAndRunTests(unittest.TestCase):
         self.assertTrue(np.all(np.isfinite(np.asarray(h["separation"]))))
         self.assertEqual(len(h["time"]), len(h["mass_defect_dist"]))
         self.assertTrue(np.all(np.isfinite(np.asarray(h["final_positions"]))))
+
+
+class SelfAssemblyTests(unittest.TestCase):
+    """A molecule co-evolved with the gas: it binds, and ψ can be snapshotted."""
+
+    def test_record_snapshots_returns_the_field_at_each_record(self):
+        n = 48
+        h = condensation_run(
+            [[n / 2 - 5, n / 2], [n / 2 + 5, n / 2]],
+            [[0.0, 0.0], [0.0, 0.0]], [0.6, 0.6], shape=(n, n),
+            steps=120, record_every=40, pregrow_steps=100, seed=3,
+            phase_chi=0.3, chi_amp=2.0, normalize=True, chiral_lambda=0.5,
+            record_snapshots=True)
+        snaps = h["psi_snapshots"]
+        self.assertEqual(len(snaps), len(h["time"]))          # one per record
+        self.assertEqual(snaps[0].shape, (n, n))
+        self.assertTrue(np.iscomplexobj(snaps[0]))
+
+    def test_masses_bind_near_the_derived_floor(self):
+        # started beyond the floor, κ-gravity + the derived exclusion pull the
+        # pair inward to a bound separation (neither escaped nor collapsed)
+        n = 48
+        sep0 = 12.0
+        h = condensation_run(
+            [[n / 2 - sep0 / 2, n / 2], [n / 2 + sep0 / 2, n / 2]],
+            [[0.0, 0.0], [0.0, 0.0]], [0.6, 0.6], shape=(n, n),
+            steps=500, record_every=50, pregrow_steps=60, seed=1,
+            phase_chi=0.0, chi_amp=0.0, chiral_lambda=0.0)
+        final = float(np.linalg.norm(h["final_positions"][0]
+                                     - h["final_positions"][1]))
+        self.assertLess(final, sep0 - 1.0)      # pulled inward from the start
+        self.assertGreater(final, 3.0)          # bound, not collapsed
+
+
+class GasSourceTests(unittest.TestCase):
+    """A Langevin bath replenishes the coarsening gas — a gas source."""
+
+    def test_zero_source_is_a_plain_detuned_step(self):
+        # source_amp=0 must reduce exactly to the un-sourced CGL step
+        rng = np.random.default_rng(0)
+        psi = 0.2 * (rng.standard_normal((32, 32))
+                     + 1j * rng.standard_normal((32, 32)))
+        g = np.zeros((32, 32))
+        a = sourced_gas_step(psi, g, chiral=0.5, dt=0.1, source_amp=0.0)
+        b = step_chiral_detuned(psi, g, chiral=0.5, dt=0.1)
+        self.assertTrue(np.allclose(a, b))
+
+    def test_source_holds_density_above_the_coarsening_floor(self):
+        # the un-sourced gas coarsens (few defects); the sourced bath replenishes
+        # pairs and holds a much denser steady gas
+        n = 48
+        g = np.zeros((n, n))
+
+        def density(eta):
+            rng = np.random.default_rng(4)
+            psi = 0.1 * (rng.standard_normal((n, n))
+                         + 1j * rng.standard_normal((n, n)))
+            for _ in range(500):
+                psi = step_chiral_detuned(psi, g, chiral=0.5, dt=0.1)
+            for _ in range(500):
+                psi = sourced_gas_step(psi, g, chiral=0.5, dt=0.1,
+                                       source_amp=eta, rng=rng)
+            return len(defect_positions(psi))
+
+        # well above threshold the bath boils into a dense gas; the un-sourced
+        # gas coarsens to a sparse floor
+        self.assertGreater(density(1.0), 10 * max(density(0.0), 1))
+
+    def test_cold_source_injects_a_clean_half_integer_pair(self):
+        # the cold source multiplies in a +1/−1 winding pair; after the field
+        # relaxes it is a clean, net-zero pair of s=±½ disclinations — the
+        # fundamental spin-½ quantum, no integer (winding-2) defect
+        n = 48
+        g = np.zeros((n, n))
+        psi = np.ones((n, n), dtype=complex)
+        psi = inject_defect_pair(psi, (24.0, 16.0), (24.0, 32.0))
+        for _ in range(40):
+            psi = step_chiral_detuned(psi, g, chiral=0.0, dt=0.1)
+        dfs = defect_positions(psi)
+        self.assertEqual(len(dfs), 2)                    # exactly a pair
+        self.assertEqual(sum(q for _, q in dfs), 0)      # net-zero on the torus
+        self.assertEqual(sorted(q for _, q in dfs), [-1, 1])   # a +1/−1 pair
+        for pos, _ in dfs:
+            s = disclination_strength(psi, pos, radius=4)
+            self.assertLessEqual(abs(abs(s) - 0.5), 0.15)      # each a genuine ±½
 
 
 class TransportCurrentTests(unittest.TestCase):
