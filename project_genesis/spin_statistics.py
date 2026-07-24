@@ -198,12 +198,26 @@ def transport_defect(shape, start, end, charge: int, *, width: float = 5.0,
             "speed": float(speed), "sub": sub, "updates": updates}
 
 
+def _phase_mask(shape, centers, mask_width: float) -> np.ndarray:
+    """A [0, 1] envelope peaked at ``centers`` (where the phase pin acts)."""
+    shape = tuple(int(s) for s in shape)
+    grids = np.meshgrid(*[np.arange(s) for s in shape], indexing="ij")
+    m = np.zeros(shape)
+    for cx, cy in centers:
+        dx = ((grids[0] - cx + shape[0] / 2) % shape[0]) - shape[0] / 2
+        dy = ((grids[1] - cy + shape[1] / 2) % shape[1]) - shape[1] / 2
+        m = np.maximum(m, np.exp(-(dx * dx + dy * dy)
+                                 / (2.0 * mask_width * mask_width)))
+    return m
+
+
 def dynamical_braid(shape, mid, half_sep: float, charges, *, turns: float = 0.5,
                     width: float = 5.0, depth: float = 0.9,
                     detune_gamma: float = 0.85, core: float = 3.0,
                     dt: float = 0.08, delta: float = 0.3, sub: int = 90,
                     relax: int = 600, arc_sign: float = 1.0,
-                    region: int = 40) -> dict:
+                    region: int = 40, phase_pin: float = 0.0,
+                    mask_width: float = 6.0) -> dict:
     """Braid two co-evolved defects on moving κ wells (no re-imprint).
 
     Seeds the pair pinned to κ wells at ``mid ± half_sep``, relaxes, then rotates
@@ -213,6 +227,14 @@ def dynamical_braid(shape, mid, half_sep: float, charges, *, turns: float = 0.5,
     plaquette-winding defect count in the central ``region``.  Returns the centre
     winding ``k`` and sign, the survival trajectory, and the fraction of the
     braid over which both cores kept their winding.
+
+    ``phase_pin > 0`` adds **phase-aware pinning**: a restoring force of rate
+    ``phase_pin`` toward the winding template ``|ψ|·e^{iθ_target}`` (the current
+    amplitude, the wells' phase), localised by a ``mask_width`` envelope at the
+    wells.  It anchors the *phase winding* to the moving well — the ingredient
+    the amplitude-only κ well lacks — while the field still co-evolves under the
+    CGL between applications (it is a finite-rate force, not a per-step reset).
+    ``phase_pin = 0`` is the amplitude-only braid (the D3 boundary), unchanged.
     """
     shape = tuple(int(s) for s in shape)
     mid = (float(mid[0]), float(mid[1]))
@@ -241,10 +263,18 @@ def dynamical_braid(shape, mid, half_sep: float, charges, *, turns: float = 0.5,
     survived = 0
     for i in range(n_pos + 1):
         frac = i / n_pos
-        g = chiral_detuning(gaussian_wells(shape, wells(frac), width, depth),
+        cs = wells(frac)
+        g = chiral_detuning(gaussian_wells(shape, cs, width, depth),
                             detune_gamma=detune_gamma)
+        if phase_pin > 0.0:
+            theta_target = np.angle(imprint_vortices(shape, cs, list(charges),
+                                                     core=core))
+            mask = _phase_mask(shape, cs, mask_width)
         for _ in range(sub):
             psi = step_chiral_detuned(psi, g, dt=dt)
+            if phase_pin > 0.0:
+                target = np.abs(psi) * np.exp(1j * theta_target)
+                psi = psi + dt * phase_pin * mask * (target - psi)
         v = float(np.angle(psi[pc]))
         acc += (v - prev + np.pi) % (2.0 * np.pi) - np.pi
         prev = v
