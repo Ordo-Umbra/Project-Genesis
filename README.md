@@ -123,6 +123,7 @@ tests/                 633 checks across the engine, instruments, and physics
   test_gauge_topology.py
   test_hopfield_substrate.py
   test_kuramoto_substrate.py
+  test_scarcity_power.py
   test_instanton_scales.py
   test_sector_field_4d.py
   test_memory_corpus.py
@@ -198,7 +199,8 @@ experiments/
   n3_constructive_kappa.py  Constructive-load κ: the per-parameter building/breaking distinction, tested — a registered negative with its mechanism (function-space is next)
   n3_functional_kappa.py    Function-space κ: damage measured on prior function, consolidation in the law — protection AND composability, first variant to hold both
   n3_combined_benchmark.py  The combined benchmark: composability + protection in one sequence, vs plain SGD, standard κ, and rehearsal at equal information
-  n3_scarcity_benchmark.py  The scarcity-scaled benchmark: trunk width as the capacity dial — the margin trends right but stays within noise
+  n3_scarcity_benchmark.py  The scarcity-scaled benchmark: trunk width as the capacity dial — the margin trends right but stays within noise (unpaired)
+  n3_scarcity_power.py  The scarcity power test: the SAME paired runs, analysed paired and powered — the unpaired error bar was the artifact; functional κ's advantage over plain SGD is real, significant, and scarcity-graded, with the rehearsal boundary named
   n3_growth_factor.py       The growth factor: perturbations in the κ cosmology — scale-dependent growth (the theory's GR departure) and Λ freeze-out, measured
   n3_growth_spectrum.py     The growth spectrum: S(λ) is band-passed (footprint UV wall, screening IR wall) — the knee needs bigger boxes, quantified
   n3_screening_knee.py      The screening knee: the field's own dial moves the knee into the window — 3/3, and matter screens gravity (the loaded Debye law, measured)
@@ -1191,7 +1193,19 @@ The registered follow-up to F3: a single sequence demanding composability *and* 
 
 ### The scarcity-scaled benchmark: width as the capacity dial — 1/3
 
-The G1 follow-up (`experiments/n3_scarcity_benchmark.py`): the combined sequence rerun with the trunk width swept 48 → 8. **1/3 registered predictions land**: functional κ stays within noise of rehearsal everywhere (H2 ✓), but the functional-vs-plain margin, though correctly signed and monotone in scarcity (`+0.001` at hidden=48 → `+0.010` at hidden=8), never reaches significance (H1 ✗, H3 ✗) — and naive rehearsal leads slightly at starved widths. **The arc's closing sentence, earned:** on this task family, at every capacity tested, the function-space capacity law is a well-behaved equal of the best baselines — its measured phenomenology (dial, crossover, amplification, consolidation) all real, its engineering advantage still unproven. Larger substrates with real datasets are where that question now lives.
+The G1 follow-up (`experiments/n3_scarcity_benchmark.py`): the combined sequence rerun with the trunk width swept 48 → 8. **1/3 registered predictions land**: functional κ stays within noise of rehearsal everywhere (H2 ✓), but the functional-vs-plain margin, though correctly signed and monotone in scarcity (`+0.001` at hidden=48 → `+0.010` at hidden=8), never reaches significance (H1 ✗, H3 ✗) — and naive rehearsal leads slightly at starved widths. That "within noise" reading, it turned out, was a **statistical artifact**, and the power test below corrects it: the margin is real, the error bar was wrong. What survives unchanged is the honest boundary — naive rehearsal, given the same information, leads at starved widths.
+
+### The scarcity power test: the capacity law's advantage, paired and powered — 3/3
+
+The scarcity benchmark's "within noise" verdict used the **wrong error bar**. Every optimizer in `one_run` trains on the *same data seed* — the runs are **paired** — yet the benchmark compared them with the *unpaired* error `√(se_f² + se_p²)`, discarding a functional-vs-plain correlation of `≈ 0.9` and inflating the noise ~2.8×. `experiments/n3_scarcity_power.py` re-analyses the *same* pre-registered design the way the pairing demands — paired differences, a paired t-test and percentile-bootstrap CI, a paired effect size, and enough seeds (20) to resolve a ~0.01 effect — and tests the scarcity grading paired too (width does not change the data draw, so the narrow- and wide-trunk margins are themselves paired across seeds). Three predictions, stated first; **3/3 land**:
+
+- **Q1 ✓ The advantage is real.** At the scarce trunk (hidden = 8), functional κ − plain SGD = `+0.0112` (95% bootstrap CI `[+0.0061, +0.0160]`, **paired t = 4.33, p = 0.0004, Cohen's dₙ = 0.97**) — a significant, large effect exactly where the unpaired 6-seed test read `1.5σ` and called it noise. Same runs, correct error bar (paired SE `0.0026` vs unpaired `0.0072`).
+- **Q2 ✓ It is scarcity-graded.** The paired margin at hidden = 8 exceeds the one at hidden = 48 by `+0.0096` (paired difference-of-differences, **t = 2.89, p = 0.009**) — the advantage grows as capacity binds, the law's own signature, now significant rather than a comparison of two noisy point estimates.
+- **Q3 ✓ The rehearsal boundary, an honest negative.** Given the *same* stored buffer, naive replay beats functional κ under scarcity: functional κ − rehearsal = `−0.0110` (**paired t = −4.40, p = 0.0003**). The capacity response does not win on scarce-regime accuracy against direct replay of the same information — the boundary the whole learning thread keeps finding, now measured with a sign and a p-value.
+
+**What this establishes:** the programme's most falsifiable claim — that the regenerating-capacity law helps a *real* learner — moves from "trends right but within noise" to a **paired, powered, scarcity-graded significance over plain SGD**, lifted by the correct statistic on the existing pre-registered design rather than by hunting a favourable regime (the runs were always paired; the unpaired error bar was the artifact). And the boundary it does *not* cross is named and quantified: against equal-information replay, the capacity response loses under scarcity — its case must rest on axes this benchmark does not measure (it stores exemplars but never replays them: one prior-gradient probe per step, not a growing replay pass). Reproduce with `python experiments/n3_scarcity_power.py` (≈ 15 minutes at 20 seeds; `--quick` for a 3-width, 10-seed scan).
+
+**Honest scope:** one miniature task family, one harsh operating point (c = 4), width the single scarcity dial; the paired t-test assumes approximately-normal per-seed differences (the bootstrap CI is the distribution-free check reported alongside); rehearsal is the naive one-pass schedule. This is a significance and a bound on one benchmark, not a claim about deep networks — but "not yet significant" is no longer the honest state of the claim.
 
 ### The growth factor: cosmological perturbations in the κ cosmology — frontier #1's first numbers (2/3)
 
