@@ -701,6 +701,19 @@ apart plainly:
   2-constituent composite exists as a *real molecule*, bound by ``κ``-gravity on
   the floor and spun by the self-sustained driven field, integer and no-flip
   from outside.  Hadron statistics from counting, with the program's own binding.
+- **Two identical ½-spinors are antisymmetric under exchange** (3/3): the
+  *statistics* half of spin–statistics, the piece the hadron result named as
+  open.  Braiding two identical ``½`` disclinations about their midpoint reads a
+  genuine ``−1`` (their internal configuration winds by ``π``) — the exchange
+  antisymmetry — while an integer defect reads ``+1`` and an ``s = 3/2`` pair
+  ``−1`` again: the exchange sign is ``(−1)^{2s}``.  And it **equals the ``2π``
+  self-rotation** director holonomy for every charge — spin and statistics the
+  *same* sign on one field, the spin–statistics *connection* measured, not
+  assumed.  Controls fix the ``−1`` as specifically a single exchange of
+  identicals: a double braid, the far field (fusion), a no-swap loop, and a
+  ``½/−½`` pair are all ``+1``.  Honest scope: the topological
+  (Finkelstein–Rubinstein) exchange sign of classical defects — not yet
+  Fock-space anticommutation (`n3_exchange_statistics.py`).
 - **``N⋆ = 3`` selects the count** (3/3): a spin defect's ``2π`` winding must
   cross *every* phase sector, so the elementary spin-½ defect **is** a
   trivalent three-sector junction (emergent, bijective, singlet ``1:1:1``
@@ -779,17 +792,27 @@ apart plainly:
   numerical match to CKM mixing or quark masses is claimed (declined, not
   pending).  The `N⋆ = 3` colour tie and the multiplet structure are measured;
   the mass/mixing numbers are the numerology the program does not chase.
-- **The quantum Dirac fermion — spin–statistics.**  Spin-½ is now realised
+- **The quantum Dirac fermion — spin–statistics.**  Spin-½ is realised
   *topologically* — the nematic ``±½`` disclination, its ``4π`` double cover, on
   matter (the spinor result, 3/3) — and spin as a full axial *vector* in 3-D (the
-  vortex-line result, 3/3).  What is *not* yet done is the full quantum fermion:
-  the **spin–statistics** connection (anticommutation, the Pauli exclusion of
-  identical half-integer excitations), a Dirac equation, a dynamical fermion
-  field.  The program already has a *derived* exclusion floor (the no-cloning
-  binding) and now a *topological* half-integer spin — tying those two into
-  genuine Fermi statistics is the open frontier toward truly fermionic matter.
+  vortex-line result, 3/3).  The **exchange half** of spin–statistics is now
+  *also* measured (`n3_exchange_statistics.py`, 3/3): braiding two identical
+  ``½`` disclinations reads a genuine ``−1`` — they are **antisymmetric under
+  exchange** — and that sign *equals* their ``2π`` self-rotation holonomy, the
+  spin–statistics *connection* made concrete on the field's own disclinations
+  (``+1`` for the integer boson, ``−1`` again for ``s = 3/2``; the double braid,
+  the far field, and a ``½/−½`` pair all ``+1``).  What is *still* not done is
+  the full quantum fermion: **Fock-space anticommutation** (an operator algebra
+  ``{ψ, ψ†}`` and a many-body Pauli principle between identical *excitations*, as
+  opposed to the topological exchange sign of classical defects), a Dirac
+  equation, a dynamical fermion field.  The program now has a *derived* exclusion
+  floor (the no-cloning binding), a *topological* half-integer spin, *and* the
+  topological exchange sign that ties spin to statistics — the remaining frontier
+  is lifting that geometric ``−1`` to a genuine quantum-field anticommutator.
   (A subsidiary open rung: a 3-D molecule that actually *turns* — the bound pair
-  carries a real vector spin-torque but is overdamped, `n3_molecule_3d`, 2/3.)
+  carries a real vector spin-torque but is overdamped, `n3_molecule_3d`, 2/3;
+  and a *dynamical* braid — κ-pinned cores co-evolved rather than the kinematic
+  imprint — is the natural strengthening of the exchange result.)
 - **The deeper meaning of the compatibility window.**  The self-sustained strong
   spin lives in a window where the field's chirality and the defect charge agree;
   whether that selection has a deeper structural meaning is an open thread.
@@ -810,6 +833,7 @@ apart plainly:
 | `vortex_chiral.py` | The vorticity-bearing field: a vortex pinned per form, quantised angular momentum, the phase-current *torque* — spin from real circulation; and the self-sustained mode (`winding_number`, `evolve_seeded_field`, `reimprint=False`, `chiral_lambda`): seed once and co-evolve the CGL, the winding a conserved topological charge, the field's precession regenerating a strong spin |
 | `vortex_chiral_3d.py` | 3-D spin: the vortex is a *line*, its angular momentum an axial *vector* aligned with the line (`vortex_line`, `line_angular_momentum`, `line_winding`, `evolve_seeded_line`) — quantised, conserved with its axis, integer/bosonic; and the 3-D molecule (`line_phase_force`, `evolve_line_molecule`): a real vector torque the overdamped pair cannot turn |
 | `nematic_spinor.py` | Half-integer spin: a nematic director (`n̂ ≡ −n̂`, `RP¹`) and its ``±½`` disclinations — `disclination_strength` (`s = q/2`), `director_holonomy` (the ``4π`` double cover: ``2π → −1``), `plaquette_winding` (the tracker-free defect map) — the topological realisation of a spinor |
+| `spin_statistics.py` | The exchange sign: `braid_positions` / `exchange_holonomy` (braid two disclinations, read the centre-winding and the sign ``(−1)^k``) and `self_rotation_sign` — the *statistics* half of spin–statistics and its connection to the spin (``(−1)^{2s}`` on both sides) |
 | `condensation.py` | The condensation instruments: `grow_defect_gas` (defects from noise), `amp_reaction_force` (the detuning's third-law force — raw clumps, envelope-normalised is selective), `condensation_run` (masses + a co-evolving gas) |
 | `capacity_waves.py` | Finite-speed `κ` (telegrapher), retarded gravity, the exclusion contact terms |
 
@@ -831,6 +855,7 @@ apart plainly:
 | `n3_molecule_3d.py` | 2/3 | the 3-D molecule carries a real *vector* spin-torque (tangential, sign-locked, axis = the line) and holds its spin bound — but it is overdamped and cannot turn (the κ-molecule's `Q<½` back in 3-D), an honest negative |
 | `n3_spinor.py` | 3/3 | **half-integer spin**: a nematic ``±½`` disclination (`s = q/2`), the ``4π`` double cover (``2π`` flips the director, ``4π`` restores), conserved & fused (``½+½=1``) & bound to matter — the topological realisation of a spinor (not yet the Dirac field) |
 | `n3_hadron_spin.py` | 3/3 | **hadron-like composites**: total spin `s = n/2`, statistics alternate by count (1, 3 fermionic — quark/baryon-like; 2, 4 bosonic — meson-like), the ``½``'s confined inside; the meson-analog a real bound, spinning molecule, integer & no-flip outside |
+| `n3_exchange_statistics.py` | 3/3 | **the exchange sign**: braiding two identical ``½`` disclinations reads ``−1`` (antisymmetric — the *statistics* half of spin–statistics), ``(−1)^{2s}`` across charges, and it **equals** the ``2π`` self-rotation holonomy — the spin–statistics *connection* measured (double braid / far field / no-swap / ``½,−½`` all ``+1``); topological (Finkelstein–Rubinstein), not Fock-space anticommutation |
 | `n3_junction_fermion.py` | 3/3 | **`N⋆ = 3` selects the count**: emergent spin defects *are* trivalent three-sector junctions (bijective, singlet `1:1:1`, every one a `±½` fermion; walls spinless); defect valence `= P` vs the matter tessellation's Plateau `3` — they coincide only at `P = 3` |
 | `n3_condensation_boundary.py` | 3/3 | the **condensation boundary** (headline a negative): matter cannot yet *gather* its fermions — passive traps frozen (K1), the naive force clumps (K2), but the envelope-normalised force is *selective* (K3); the missing piece is defect transport |
 | `n3_condensation_transport.py` | 3/3 | the **transport current** (the boundary lifted): the `λ≠0` precession *is* the current — `λ=0` relaxes to rest, `λ>0` sustains a persistent spiral current (L1); the κ wells now **gather** fermions from a noise-grown gas (`4/12` at `λ=1` vs `0/12` chance, L2), each a `±½` with the `−1` holonomy, singly (L3); partial (~⅓ the wells, `λ<1.5`) |
