@@ -809,10 +809,21 @@ apart plainly:
   floor (the no-cloning binding), a *topological* half-integer spin, *and* the
   topological exchange sign that ties spin to statistics — the remaining frontier
   is lifting that geometric ``−1`` to a genuine quantum-field anticommutator.
+  That geometric ``−1`` is now shown to be **dynamically meaningful**, not an
+  imprint artefact (`n3_dynamical_braid.py`, 3/3): a ``½`` pinned to a κ well and
+  co-evolved under the CGL keeps its winding *and* its ``−1`` holonomy (D2), and
+  is *transported* by a moving well with its winding conserved — **adiabatically,
+  with a measured speed limit** (D1: below a critical well speed the winding
+  follows, above it the vacated core heals before the winding migrates, because
+  the κ well pins *amplitude*, not phase).  Braiding two co-evolved ``½``'s
+  realises the fermionic sign *partway* (D3: sign ``−0.77``, the cores surviving
+  ``92%`` of the braid) — an honest boundary whose mechanism *is* the
+  amplitude-vs-phase gap that separates a topological-defect spinor from a true
+  dynamical fermion: **phase-aware pinning** (a term anchoring the winding, not
+  just the amplitude) is the named cure and the bridge toward the Fock-space
+  anticommutator.
   (A subsidiary open rung: a 3-D molecule that actually *turns* — the bound pair
-  carries a real vector spin-torque but is overdamped, `n3_molecule_3d`, 2/3;
-  and a *dynamical* braid — κ-pinned cores co-evolved rather than the kinematic
-  imprint — is the natural strengthening of the exchange result.)
+  carries a real vector spin-torque but is overdamped, `n3_molecule_3d`, 2/3.)
 - **The deeper meaning of the compatibility window.**  The self-sustained strong
   spin lives in a window where the field's chirality and the defect charge agree;
   whether that selection has a deeper structural meaning is an open thread.
@@ -833,7 +844,7 @@ apart plainly:
 | `vortex_chiral.py` | The vorticity-bearing field: a vortex pinned per form, quantised angular momentum, the phase-current *torque* — spin from real circulation; and the self-sustained mode (`winding_number`, `evolve_seeded_field`, `reimprint=False`, `chiral_lambda`): seed once and co-evolve the CGL, the winding a conserved topological charge, the field's precession regenerating a strong spin |
 | `vortex_chiral_3d.py` | 3-D spin: the vortex is a *line*, its angular momentum an axial *vector* aligned with the line (`vortex_line`, `line_angular_momentum`, `line_winding`, `evolve_seeded_line`) — quantised, conserved with its axis, integer/bosonic; and the 3-D molecule (`line_phase_force`, `evolve_line_molecule`): a real vector torque the overdamped pair cannot turn |
 | `nematic_spinor.py` | Half-integer spin: a nematic director (`n̂ ≡ −n̂`, `RP¹`) and its ``±½`` disclinations — `disclination_strength` (`s = q/2`), `director_holonomy` (the ``4π`` double cover: ``2π → −1``), `plaquette_winding` (the tracker-free defect map) — the topological realisation of a spinor |
-| `spin_statistics.py` | The exchange sign: `braid_positions` / `exchange_holonomy` (braid two disclinations, read the centre-winding and the sign ``(−1)^k``) and `self_rotation_sign` — the *statistics* half of spin–statistics and its connection to the spin (``(−1)^{2s}`` on both sides) |
+| `spin_statistics.py` | The exchange sign: `braid_positions` / `exchange_holonomy` (braid two disclinations, read the centre-winding and the sign ``(−1)^k``) and `self_rotation_sign` — the *statistics* half of spin–statistics and its connection to the spin (``(−1)^{2s}`` on both sides). Also the **dynamical** braid: `gaussian_wells`, `transport_defect` (adiabatic well-transport with a speed limit), `dynamical_braid` (co-evolved κ-pinned braid, no re-imprint) |
 | `condensation.py` | The condensation instruments: `grow_defect_gas` (defects from noise), `amp_reaction_force` (the detuning's third-law force — raw clumps, envelope-normalised is selective), `condensation_run` (masses + a co-evolving gas) |
 | `capacity_waves.py` | Finite-speed `κ` (telegrapher), retarded gravity, the exclusion contact terms |
 
@@ -856,6 +867,7 @@ apart plainly:
 | `n3_spinor.py` | 3/3 | **half-integer spin**: a nematic ``±½`` disclination (`s = q/2`), the ``4π`` double cover (``2π`` flips the director, ``4π`` restores), conserved & fused (``½+½=1``) & bound to matter — the topological realisation of a spinor (not yet the Dirac field) |
 | `n3_hadron_spin.py` | 3/3 | **hadron-like composites**: total spin `s = n/2`, statistics alternate by count (1, 3 fermionic — quark/baryon-like; 2, 4 bosonic — meson-like), the ``½``'s confined inside; the meson-analog a real bound, spinning molecule, integer & no-flip outside |
 | `n3_exchange_statistics.py` | 3/3 | **the exchange sign**: braiding two identical ``½`` disclinations reads ``−1`` (antisymmetric — the *statistics* half of spin–statistics), ``(−1)^{2s}`` across charges, and it **equals** the ``2π`` self-rotation holonomy — the spin–statistics *connection* measured (double braid / far field / no-swap / ``½,−½`` all ``+1``); topological (Finkelstein–Rubinstein), not Fock-space anticommutation |
+| `n3_dynamical_braid.py` | 3/3 | **the exchange sign under genuine dynamics**: a κ-pinned ``½`` co-evolved (no re-imprint) keeps its winding + ``−1`` holonomy (D2) and is *transported* with winding conserved **adiabatically, with a measured speed limit** (D1 — κ pins amplitude, not phase); the two-body braid realises the fermionic sign *partway* (D3, sign ``−0.77``, cores surviving ``92%``) — the amplitude-vs-phase pinning boundary, whose cure (phase-anchoring) is the bridge to a dynamical fermion |
 | `n3_junction_fermion.py` | 3/3 | **`N⋆ = 3` selects the count**: emergent spin defects *are* trivalent three-sector junctions (bijective, singlet `1:1:1`, every one a `±½` fermion; walls spinless); defect valence `= P` vs the matter tessellation's Plateau `3` — they coincide only at `P = 3` |
 | `n3_condensation_boundary.py` | 3/3 | the **condensation boundary** (headline a negative): matter cannot yet *gather* its fermions — passive traps frozen (K1), the naive force clumps (K2), but the envelope-normalised force is *selective* (K3); the missing piece is defect transport |
 | `n3_condensation_transport.py` | 3/3 | the **transport current** (the boundary lifted): the `λ≠0` precession *is* the current — `λ=0` relaxes to rest, `λ>0` sustains a persistent spiral current (L1); the κ wells now **gather** fermions from a noise-grown gas (`4/12` at `λ=1` vs `0/12` chance, L2), each a `±½` with the `−1` holonomy, singly (L3); partial (~⅓ the wells, `λ<1.5`) |

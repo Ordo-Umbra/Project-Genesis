@@ -56,8 +56,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from .vortex_chiral import imprint_vortices
-from .nematic_spinor import director_holonomy
+from .vortex_chiral import imprint_vortices, winding_number
+from .nematic_spinor import director_holonomy, plaquette_winding
+from .two_field import chiral_detuning, step_chiral_detuned
 
 
 def braid_positions(mid, half_sep: float, turns: float, arc_sign: float,
@@ -117,3 +118,145 @@ def self_rotation_sign(shape, center, charge: int, *, core: float = 3.0,
                            [int(charge)], core=core)
     h2, _ = director_holonomy(psi, tuple(center), radius=radius)
     return float(h2)
+
+
+# ---------------------------------------------------------------------------
+# The dynamical braid: co-evolved (not imprinted) defects on moving κ wells
+# ---------------------------------------------------------------------------
+#
+# The exchange sign above is *kinematic*: the field is re-imprinted at every
+# braid step, so the winding is imposed, not carried.  The dynamical question is
+# whether a defect that co-evolves under the κ-detuned CGL — pinned to a κ well
+# but never re-imprinted — keeps its winding as the well is moved, so that the
+# braid, and its −1, are realised by the dynamics.  The honest finding (see
+# `n3_dynamical_braid.py`): the κ well pins the defect's *amplitude*, not its
+# phase winding, so transport is **adiabatic with a speed limit** — below a
+# critical well speed the winding follows, above it the vacated core heals
+# (unwinds) before the winding can migrate.  Single-defect transport is clean;
+# a full two-body braid is at the edge of amplitude-only pinning.
+
+
+def gaussian_wells(shape, centers, width: float, depth: float,
+                   baseline: float = 1.0) -> np.ndarray:
+    """A capacity field ``κ`` with Gaussian dips (holes) at ``centers``.
+
+    ``κ = baseline·(1 − depth·Σ_k exp(−r_k²/2w²))`` (periodic distance).  A deep,
+    moderately tight well pins a defect's core (an amplitude hole) with a steep
+    enough gradient to drag it; too wide/shallow and the pin is too weak to
+    transport the winding.
+    """
+    shape = tuple(int(s) for s in shape)
+    grids = np.meshgrid(*[np.arange(s) for s in shape], indexing="ij")
+    kappa = np.full(shape, float(baseline))
+    for cx, cy in centers:
+        dx = ((grids[0] - cx + shape[0] / 2) % shape[0]) - shape[0] / 2
+        dy = ((grids[1] - cy + shape[1] / 2) % shape[1]) - shape[1] / 2
+        kappa -= baseline * depth * np.exp(-(dx * dx + dy * dy)
+                                           / (2.0 * width * width))
+    return kappa
+
+
+def transport_defect(shape, start, end, charge: int, *, width: float = 5.0,
+                     depth: float = 0.9, detune_gamma: float = 0.85,
+                     core: float = 3.0, dt: float = 0.08, speed: float = 0.05,
+                     relax: int = 600, radius: int = 6) -> dict:
+    """Drag one defect along a straight line by a moving κ well, co-evolving.
+
+    Seeds a charge-``charge`` vortex pinned to a well at ``start``, relaxes, then
+    steps the well to ``end`` at ``speed`` lattice-units per unit time while the
+    field evolves only under `step_chiral_detuned` (no re-imprint).  Returns the
+    enclosed winding at the start and end and whether it was conserved — the
+    adiabatic-transport test.
+    """
+    shape = tuple(int(s) for s in shape)
+    start = np.asarray(start, float)
+    end = np.asarray(end, float)
+    dist = float(np.hypot(*(end - start)))
+    unit = (end - start) / max(dist, 1e-9)
+    # steps of the well between field updates, chosen so the well advances
+    # `speed·(sub·dt)` per update; use a fixed small displacement per update
+    delta = 0.25
+    updates = max(1, int(dist / delta))
+    sub = max(1, int(round(delta / (speed * dt))))
+
+    kappa = gaussian_wells(shape, [tuple(start)], width, depth)
+    g = chiral_detuning(kappa, detune_gamma=detune_gamma)
+    psi = imprint_vortices(shape, [tuple(start)], [int(charge)], core=core,
+                           detune=g)
+    for _ in range(relax):
+        psi = step_chiral_detuned(psi, g, dt=dt)
+    w_start = winding_number(psi, tuple(start), radius)
+    for i in range(1, updates + 1):
+        pos = start + unit * (dist * i / updates)
+        g = chiral_detuning(gaussian_wells(shape, [tuple(pos)], width, depth),
+                            detune_gamma=detune_gamma)
+        for _ in range(sub):
+            psi = step_chiral_detuned(psi, g, dt=dt)
+    w_end = winding_number(psi, tuple(end), radius)
+    return {"w_start": float(w_start), "w_end": float(w_end),
+            "conserved": bool(abs(abs(w_end) - abs(w_start)) < 0.5),
+            "speed": float(speed), "sub": sub, "updates": updates}
+
+
+def dynamical_braid(shape, mid, half_sep: float, charges, *, turns: float = 0.5,
+                    width: float = 5.0, depth: float = 0.9,
+                    detune_gamma: float = 0.85, core: float = 3.0,
+                    dt: float = 0.08, delta: float = 0.3, sub: int = 90,
+                    relax: int = 600, arc_sign: float = 1.0,
+                    region: int = 40) -> dict:
+    """Braid two co-evolved defects on moving κ wells (no re-imprint).
+
+    Seeds the pair pinned to κ wells at ``mid ± half_sep``, relaxes, then rotates
+    the two wells about ``mid`` by ``turns`` full turns while the field evolves
+    under the κ-detuned CGL, accumulating the winding of ``arg ψ`` at the braid
+    centre (the exchange-sign observable) and tracking core survival via the
+    plaquette-winding defect count in the central ``region``.  Returns the centre
+    winding ``k`` and sign, the survival trajectory, and the fraction of the
+    braid over which both cores kept their winding.
+    """
+    shape = tuple(int(s) for s in shape)
+    mid = (float(mid[0]), float(mid[1]))
+    n_pos = max(1, int(turns * 2.0 * np.pi * half_sep / delta))
+    n0, n1 = shape
+    pc = (int(round(mid[0])) % n0, int(round(mid[1])) % n1)
+    n_seed = abs(int(charges[0]))
+
+    def wells(frac):
+        ang = arc_sign * 2.0 * np.pi * turns * frac
+        return [(mid[0] + half_sep * np.cos(np.pi + ang),
+                 mid[1] + half_sep * np.sin(np.pi + ang)),
+                (mid[0] + half_sep * np.cos(ang),
+                 mid[1] + half_sep * np.sin(ang))]
+
+    cs = wells(0.0)
+    g = chiral_detuning(gaussian_wells(shape, cs, width, depth),
+                        detune_gamma=detune_gamma)
+    psi = imprint_vortices(shape, cs, list(charges), core=core, detune=g)
+    for _ in range(relax):
+        psi = step_chiral_detuned(psi, g, dt=dt)
+
+    prev = float(np.angle(psi[pc]))
+    acc = 0.0
+    survival = []
+    survived = 0
+    for i in range(n_pos + 1):
+        frac = i / n_pos
+        g = chiral_detuning(gaussian_wells(shape, wells(frac), width, depth),
+                            detune_gamma=detune_gamma)
+        for _ in range(sub):
+            psi = step_chiral_detuned(psi, g, dt=dt)
+        v = float(np.angle(psi[pc]))
+        acc += (v - prev + np.pi) % (2.0 * np.pi) - np.pi
+        prev = v
+        w = plaquette_winding(psi)
+        cx, cy = int(mid[0]), int(mid[1])
+        pos_cores = int((w[cx - region:cx + region,
+                           cy - region:cy + region] > 0).sum())
+        alive = pos_cores >= 2 * n_seed
+        survived += int(alive)
+        if i % max(1, n_pos // 10) == 0:
+            survival.append(pos_cores)
+    k = acc / (2.0 * np.pi)
+    return {"k": float(k), "sign": float(np.cos(np.pi * k)),
+            "survival": survival, "survived_fraction": survived / (n_pos + 1),
+            "n_pos": n_pos, "steps": n_pos * sub}
