@@ -66,6 +66,7 @@ project_genesis/
   instanton_scales.py  Peak-height instanton sizes (BPST/CP), CP gradient flow with measured D, the matched-scale (s=λ/ρ̄) comparison
   sector_field_4d.py   4-D CP² sector field: composite U(1) f_{μν}, second-Chern charge (c₁∪c₁ exact on fluxes), d-generic Metropolis + gradient flow
   hopfield_substrate.py  Second substrate for the criticality law: thermal Hopfield network, ΔC/ΔI/κ readings, S-compass trajectory taxonomy
+  kuramoto_substrate.py  Third substrate for the criticality law: mean-field Kuramoto oscillators (synchronisation transition), ΔC/ΔI/activity readings — the capacity law, S-functional, and taxonomy imported verbatim from hopfield_substrate
   continual_learning.py  κ-as-soil for weights: numpy MLP, capacity-gated SGD (per-parameter regenerating plasticity), task generators
   capacity_gravity.py  κ as gravity: load masses, relaxed capacity wells, the free energy F[κ], screening-length instruments
   capacity_dynamics.py Self-gravitating masses in the κ-field: overdamped/inertial/cosmological (FLRW) evolution, stress-energy, Friedmann-from-action
@@ -121,6 +122,7 @@ tests/                 633 checks across the engine, instruments, and physics
   test_continual_learning.py
   test_gauge_topology.py
   test_hopfield_substrate.py
+  test_kuramoto_substrate.py
   test_instanton_scales.py
   test_sector_field_4d.py
   test_memory_corpus.py
@@ -190,6 +192,7 @@ experiments/
   n3_4d_sector_bridge.py    The like-for-like bridge: a 4-D sector field, so both κ̂'s share operator, dimension, and flow clock — and where they cross
   n3_kappa_deflation.py     The deflation test: sweep the t²E = c reading convention and watch the 0.22 — is Act I's constant a number or a convention?
   n3_criticality_transplant.py  The criticality transplant: "scarcity pushes S to criticality" tested on a Hopfield network — the condition toggled, not assumed
+  n3_kuramoto_transplant.py  The Kuramoto transplant: the same law on a third, structurally-independent substrate — mean-field oscillators (no lattice, no memories, continuous order parameter) — 3/3, the level crossing returns under the noise-repair toggle and the S-compass `diverging` band again brackets the scarce optimum
   n3_continual_learning.py  The capacity law meets external ground truth: the persistence↔plasticity dial on real learning, with controls and a fair baseline
   n3_curriculum_order.py    Curriculum order under the capacity law: foundations-first vs composite-first on compositional tasks — and the protection↔composability dial
   n3_constructive_kappa.py  Constructive-load κ: the per-parameter building/breaking distinction, tested — a registered negative with its mechanism (function-space is next)
@@ -1101,6 +1104,19 @@ The design toggles the mechanism's condition instead of assuming it. The sector 
 Reproduce with `python experiments/n3_criticality_transplant.py` (≈ 3 minutes). `--quick` for a smaller scan.
 
 **Honest scope:** one loading (P/N), one recovery rate, one drive strength; `T_c` is a finite-size crossing; the structured threshold and weight `w` are stated conventions fixed before the scan. Two substrates make a transplant, not universality — the next substrates (a driven network of coupled maps; a continual-learning system, where the same κ law meets external benchmarks) are where this either becomes a law or finds its edges.
+
+### The Kuramoto transplant: the same law on a third, structurally-independent substrate
+
+The Hopfield transplant's own honest scope named the next step — *"the next substrates (a driven network of coupled maps …)"*. `project_genesis/kuramoto_substrate.py` + `experiments/n3_kuramoto_transplant.py` take it: the **mean-field Kuramoto model**, a population of phase oscillators pulling toward a common rhythm. It shares *nothing* structural with the first two substrates — no lattice geometry, no learned memories, no discrete states (the order parameter is continuous), and its own textbook order–disorder transition (synchrony switches on below a critical spread of natural frequencies). The capacity law, the S-functional, and the S-compass taxonomy are **imported unchanged from the Hopfield module** (a test asserts they are the same Python objects), so "one law across substrates" is a fact about the code, not a claim in prose. The disorder knob is the frequency spread `γ` (the temperature analogue); the same three-condition toggle applies, with continuous phase **noise** — a rhythm held against perturbation — as the driven condition.
+
+- **The anatomy transplants a third time.** The synchronisation transition sits at `γ_c ≈ 1.1` (the coherence `r = ΔI` falls through ½) and the distinction reading ΔC — effective-frequency **cluster entropy** — peaks at `γ ≈ 1.06`, in the critical neighbourhood: the ΔC-peak-at-criticality shape yet again, now from a locked core coexisting with drifting oscillators. The toggle is clean: the deep-locked phase's load is `0.0000` undriven (a rhythm that just rotates pays nothing) vs `0.137` under the noise drive.
+- **Undriven (a freely-rotating rhythm is free): no relocation ✓,** for both the activity load and the ΔC-load falsifier — `γ⋆(c)` stays at the ordered end for every consumption.
+- **Driven (order costs per step): the relocation returns ✓ — as a level crossing.** `γ⋆(c)` sits at the synchronised end at low `c`, then jumps `0.10 → 0.87` (the critical neighbourhood) as capacity binds — the same two-maxima level crossing, on oscillators.
+- **One taxonomy, a third time.** Along the driven disorder-increasing trajectory the substrate turns `diverging` (ΔC↑, ΔI↓) over `γ ≈ [0.4, 0.8]`, and the scarce optimum again lands at the edge of that band — the same coincidence the Hopfield transplant found.
+
+**What this establishes:** the relocation law now reads identically on a lattice field, an attractor network, and an oscillator population — three substrates with disjoint structure, one funding-structure mechanism: *scarcity evicts ordered optima exactly when maintaining order costs capacity.* This is a second independent confirmation, not a proof of universality, and the honest object remains the law itself — but it no longer looks like a property of any one substrate. 3/3 predictions land; reproduce with `python experiments/n3_kuramoto_transplant.py` (≈ 1 minute; `--quick` for a smaller scan).
+
+**Honest scope:** one coupling `K`, one recovery rate, one noise strength, one frequency distribution (Gaussian, for a clean toggle; Lorentzian is available); `γ_c` is a finite-size `r = ½` crossing; the entrainment tolerance, ΔC's fixed frequency bins, and the weight `w` are stated conventions fixed before the scan, the c-ladder applied post-hoc. The remaining substrate frontier is the same one the Hopfield section named: a continual-learning system, where the κ law meets external ground truth (below).
 
 ### Continual learning under the capacity law: the dial meets external ground truth
 
