@@ -923,8 +923,11 @@ apart plainly:
 | `n3_kappa_molecule.py` | 2/3 | the first persistent bound object; achiral, cannot spin |
 
 **Documents.**  `Deriving_The_Exclusion_Coefficient.md` (the pair-binding
-derivation, Parts I–V); this file (the Act III synthesis); `The_Complete_Arc.md`
-(Acts I–II above it).
+derivation, Parts I–V); **`The_Gauged_Fermion.md`** (the fermion arc as one
+finished chain — spin → composites → exchange sign → dynamics → gauge field →
+Aharonov–Bohm, the `(−1)^{2s}` measured three ways, and the second-quantisation
+boundary stated precisely); this file (the Act III synthesis);
+`The_Complete_Arc.md` (Acts I–II above it).
 
 ---
 
