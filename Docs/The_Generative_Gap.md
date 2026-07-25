@@ -103,6 +103,18 @@ Read in order, the measurements are one long accounting of that asymmetry.
   is not a bare constant; it is what the gap looks like when capacity is
   paid in full.
 
+- **The gap has a scaling dimension.** Measured on nested regions
+  (`n3_area_law`), distinction is **volume-law** (`n_C = 2.00`) while
+  integration is **area-law** (`n_I = 0.96`): the shortfall is *exactly one
+  dimension* — the field distinguishes over the volume and can only integrate
+  over the surface, which is the holographic scaling the URP corpus asserts as
+  the gap's geometric consequence. And it is **capacity-invariant**: the
+  registered hypothesis that scarcity *forces* the area law was refuted —
+  `n_I` moves by 0.04 while the coherence length collapses 12 → 2. The same
+  signature the capacity cliff shows: the separation cannot be bought.
+  (Honest scope: classically an area law is *expected* for finite correlation
+  length; the exact one-dimension gap and its invariance are the content.)
+
 The through-line, stated once: **the field can always distinguish more than
 it can integrate, and the shortfall is exactly the capacity it lacks.**
 Everywhere we look, ΔC leads and κ·ΔI lags — and where capacity craters, the
