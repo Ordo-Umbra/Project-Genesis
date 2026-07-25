@@ -284,6 +284,8 @@ measured advantage with a measured edge.
 | `The_Measured_Bridge.md` | **Act I** capstone — the gap → `κ` in the SU(3) vacuum |
 | `The_Emergent_Cosmos.md` | **Act II** capstone — `κ` as gravity, matter, cosmos (12 links + the frontier) |
 | `Capacity_As_Gravity.md` | the running κ-gravity derivation |
+| `The_Woven_Forms.md` | **Act III** capstone — the field's matter: forms, pairs, flavour, spin |
+| `The_Gauged_Fermion.md` | the **fermion arc** capstone — spin, statistics, and the gauge field: one `(−1)^{2s}` measured three ways, and the second-quantisation boundary |
 | `The_Complete_Arc.md` | *this document* — the whole program, both acts, the bridge |
 
 **Modules** (`project_genesis/`): `multiphase.py` (the κ dynamics),
