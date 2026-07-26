@@ -2,6 +2,14 @@
 
 Project Genesis turns the **Universal Recursion Principle (URP)** from prose and equations into **running, falsifiable code** — a simulation laboratory where the theory's central claims can be built, measured, and given honest verdicts.
 
+> **New here? Start with [`Docs/The_Principle.md`](Docs/The_Principle.md)** — a
+> short, from-zero statement of the theory: what it claims, what has been
+> measured, what is proposed but untested, what it explicitly declines, and what
+> would refute it. Every claim is tagged with its standing. It is organised by
+> the logic of the theory rather than the order of discovery, and it is meant to
+> be evaluable in half an hour without reading anything else. This README is the
+> detailed record behind it.
+
 ## What this project is (and is not)
 
 The URP proposes that sufficiently expressive recursive systems — physical, biological, cognitive — evolve by climbing a single scalar functional
@@ -98,6 +106,7 @@ Docs/
   The_Measured_Bridge.md     Closing synthesis: ordinals→functors→instantons as one chain, κ≈0.22 in the 4-D vacuum
   Capacity_As_Gravity.md     κ as the framework's gravity: a universal, mass-sourced, √(D/r)-screened attraction
   The_Emergent_Cosmos.md     Capstone (Act II): κ→gravity→matter→structure→cosmos, with toolkit map and frontiers
+  The_Principle.md           **Start here** — the theory from zero: principle, consequences, measured/framework/declined tiers, the selection argument, and what would refute it
   The_Complete_Arc.md        Top-level synthesis: the whole program — both acts, the one-κ frontier, the honest boundaries
   Deriving_The_Exclusion_Coefficient.md  The pair-binding derivation (Parts I–V): no-cloning as a parameter-free degeneracy pressure
   The_Woven_Forms.md         Capstone (Act III): the field's matter — dimensional forms (2:3:1), natural pairs, finite-speed gravity, chiral spin; measured vs. vision
