@@ -1981,9 +1981,20 @@ Interactive sliders make the distinction/integration trade-off tangible: **raise
 
 A second page, `web_toy/su3.html`, runs the **three-component SU(3) sector model** (`multiphase` above) live: three R/G/B colours competing, forming domains with genuine **120° Y-junctions** that coarsen over time, with a live junction count and S-functional. The two pages cross-link so you can directly compare the scalar (layered, no junctions) and three-component (true triple junctions) models — the comparison *is* the lesson.
 
+A third page, `web_toy/generations3d.html`, takes the same sector model into **three dimensions** and classifies cells by codimension: where *m* sectors meet is a codimension-(m−1) object, so m=2 is a wall, m=3 a triple *line*, and m=4 a quadruple *point*. That is why it defaults to a **four-colour** palette — a genuine 0-cell in 3-D needs four sectors, which is the same `d+1` counting the generation argument uses. Set the palette to 3 and the point class is empty by construction; the page says so rather than reporting zeros.
+
+It is deliberately honest about its own limits, because they are real and were measured rather than assumed:
+
+- The **γ slider is the load-bearing knob.** Only `γ > 1` makes the single-sector corners the minima of `Σ(¼η⁴ − ½η²) + γ·Σ_{a<b}η_a²η_b²`, which is what creates walls. At `γ = 0.5` the potential collapses *exactly* to `¼|η|⁴ − ½|η|²` — fully O(n)-symmetric, ground state the whole sphere, no distinct phases at all. Slide it there and the structure dies; that identity is the difference between a multiphase field and a Heisenberg one.
+- **3-D has no steady state at browser-sized lattices.** Measured at N = 24–32: any bath below ≈0.35 coarsens to a single domain, anything above ≈0.5 is lattice-scale mush, and there is no window in between. So the page runs a finite-lifetime coarsening run and reseeds, instead of pretending to persistence it does not have.
+- **Run-to-run spread is large and set by the initial draw, not the bath.** At fixed noise, four seeds gave domain scales from 1.2 to full monopoly, and the same pattern held at noise 0.005 and 0.05. Why the initial condition selects the branch so strongly is *not* currently understood — watch several runs, not one.
+- The curvature colour scale is normalised by a smoothed 95th percentile, not the maximum: `κ = |∇²s|/|∇s|` has a vanishing denominator exactly *on* the wall it is colouring, and the max runs 30–80× the median, which is enough for one outlier to wash the whole field flat.
+
+`window.__probe()` exposes the field state so the page can be checked against the NumPy kernel in `project_genesis/multiphase.py` rather than eyeballed.
+
 ```bash
 # any static file server, or literally just double-click the files:
-python -m http.server -d web_toy 8000   # then open http://localhost:8000 (and /su3.html)
+python -m http.server -d web_toy 8000   # then open http://localhost:8000 (also /su3.html, /generations3d.html)
 ```
 
 ## Web Viewer

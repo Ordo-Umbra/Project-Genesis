@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>3D Generations — Cells &amp; Curvature</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #0a0c10; color: #c9d4e3; }
+  header { padding: 12px 14px 6px; border-bottom: 1px solid #1a2230; }
+  h1 { font-size: 16px; font-weight: 650; }
+  .sub { color: #7d8aa0; font-size: 12px; margin-top: 2px; }
+  .wrap { display: flex; flex-wrap: wrap; gap: 12px; padding: 10px 12px 20px; }
+  .stage { flex: 1 1 300px; min-width: 260px; }
+  #c { width: 100%; height: min(70vw, 420px); display: block; background: #111;
+       border: 1px solid #2a3548; border-radius: 8px; touch-action: none; }
+  .panel { width: min(300px, 94vw); display: flex; flex-direction: column; gap: 8px; }
+  .card { background: #121820; border: 1px solid #1c2736; border-radius: 7px; padding: 9px 11px; }
+  .card h2 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+             color: #7a8ba0; margin-bottom: 6px; }
+  .row { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 12px; }
+  .row label { color: #aab6c8; min-width: 52px; }
+  .row input[type=range] { flex: 1; accent-color: #3b82c4; }
+  .val { min-width: 42px; text-align: right; font-variant-numeric: tabular-nums; }
+  button { background: #1a2433; color: #d7e2f1; border: 1px solid #2a3a50;
+           border-radius: 5px; padding: 5px 10px; font-size: 12px; }
+  button.primary { background: #2b6cb0; border-color: #3b82c4; }
+  .btns { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+  .metrics { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; font-size: 12px; }
+  .metrics .k { color: #8a98ad; }
+  .metrics .v { text-align: right; font-variant-numeric: tabular-nums; }
+  .bars .bar-row { display: flex; align-items: center; gap: 6px; margin: 4px 0; font-size: 11.5px; }
+  .bar-row .nm { width: 92px; }
+  .bar-bg { flex: 1; height: 11px; background: #0c1118; border-radius: 3px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width .12s linear; }
+  .bar-row .ct { width: 46px; text-align: right; font-variant-numeric: tabular-nums; }
+  .note { font-size: 11px; color: #9aa8bd; line-height: 1.45; }
+  .note b { color: #c9d4e3; font-weight: 600; }
+  .warn { color: #fbbf24; }
+  .bad { color: #f87171; }
+  .ok { color: #7dd3a0; }
+  .legend { display: flex; gap: 8px; font-size: 10px; margin-top: 4px; color: #8a98ad; }
+  .legend span { display: flex; align-items: center; gap: 3px; }
+  .sw { width: 10px; height: 10px; border-radius: 2px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>3D Generations + Curvature</h1>
+  <div class="sub">Multiphase sector field · cells classified by codimension · mean-curvature colour on walls</div>
+</header>
+
+<div class="wrap">
+  <div class="stage">
+    <canvas id="c" width="420" height="420"></canvas>
+  </div>
+
+  <div class="panel">
+    <div class="card">
+      <h2>Cell inventory</h2>
+      <div class="bars">
+        <div class="bar-row"><span class="nm" style="color:#f472b6">0-cell · point</span>
+          <div class="bar-bg"><div class="bar-fill" id="b0" style="background:#f472b6;width:0%"></div></div>
+          <span class="ct" id="n0">0</span></div>
+        <div class="bar-row"><span class="nm" style="color:#fbbf24">1-cell · line</span>
+          <div class="bar-bg"><div class="bar-fill" id="b1" style="background:#fbbf24;width:0%"></div></div>
+          <span class="ct" id="n1">0</span></div>
+        <div class="bar-row"><span class="nm" style="color:#5eead4">2-cell · wall</span>
+          <div class="bar-bg"><div class="bar-fill" id="b2" style="background:#5eead4;width:0%"></div></div>
+          <span class="ct" id="n2">0</span></div>
+        <div class="bar-row"><span class="nm" style="color:#94a3b8">3-cell · bulk</span>
+          <div class="bar-bg"><div class="bar-fill" id="b3" style="background:#64748b;width:0%"></div></div>
+          <span class="ct" id="n3">0</span></div>
+      </div>
+      <div class="note" id="cellnote" style="margin-top:6px"></div>
+    </div>
+
+    <div class="card">
+      <h2>Status</h2>
+      <div class="metrics">
+        <div class="k">step</div><div class="v" id="st">0</div>
+        <div class="k">sectors alive</div><div class="v" id="sa">–</div>
+        <div class="k">domain scale &#8467;</div><div class="v" id="ell">–</div>
+        <div class="k">&#10216;|&#954;|&#10217; wall</div><div class="v" id="mk">–</div>
+        <div class="k">&#954; scale (p95)</div><div class="v" id="kp">–</div>
+        <div class="k">points drawn</div><div class="v" id="sp">0</div>
+      </div>
+      <div class="note" id="health" style="margin-top:6px"></div>
+    </div>
+
+    <div class="card">
+      <h2>Controls</h2>
+      <div class="btns">
+        <button class="primary" id="play">Pause</button>
+        <button id="reset">Reset</button>
+        <button id="mode">Mode: curv</button>
+        <button id="auto">Auto-reseed: on</button>
+      </div>
+      <div class="row">
+        <label>&#947;</label>
+        <input id="gamma" type="range" min="0.5" max="2.5" step="0.05" value="1.5">
+        <span class="val" id="vg">1.50</span>
+      </div>
+      <div class="row">
+        <label>palette</label>
+        <input id="pal" type="range" min="2" max="5" step="1" value="4">
+        <span class="val" id="vp">4</span>
+      </div>
+      <div class="row">
+        <label>box N</label>
+        <input id="nn" type="range" min="16" max="40" step="4" value="32">
+        <span class="val" id="vnn">32</span>
+      </div>
+      <div class="row">
+        <label>noise</label>
+        <input id="noise" type="range" min="0" max="0.70" step="0.01" value="0.03">
+        <span class="val" id="vn">0.030</span>
+      </div>
+      <div class="row">
+        <label>speed</label>
+        <input id="spd" type="range" min="1" max="6" step="1" value="2">
+        <span class="val" id="vs">2</span>
+      </div>
+      <div class="row">
+        <label>show</label>
+        <input id="show" type="range" min="0" max="3" step="1" value="1">
+        <span class="val" id="vshow">0&#8211;1</span>
+      </div>
+      <div class="legend">
+        <span><div class="sw" style="background:#ef4444"></div>high &#954;</span>
+        <span><div class="sw" style="background:#3b82f6"></div>flat</span>
+      </div>
+    </div>
+
+    <div class="card note">
+      <b>&#947; is the load-bearing knob.</b> The free energy is
+      &#931;(&#188;&#951;&#8308; &#8722; &#189;&#951;&#178;) + &#947;&#183;&#931;<sub>a&lt;b</sub>&#951;<sub>a</sub>&#178;&#951;<sub>b</sub>&#178;.
+      Only &#947; &gt; 1 makes the single-sector corners the minima, which is what
+      creates walls. At <b>&#947; = 0.5</b> the potential collapses to
+      &#188;|&#951;|&#8308; &#8722; &#189;|&#951;|&#178; &#8212; fully O(n) symmetric, ground state the whole
+      sphere, <i>no distinct phases at all</i>. Slide it there and watch the
+      structure die.
+      <br><br>
+      <b>3-D has no steady state.</b> Measured at N = 24&#8211;32: any bath below
+      &#8776;0.35 coarsens to a single domain, anything above &#8776;0.5 is
+      lattice-scale mush, and there is no window between. So this is a
+      coarsening run with a finite informative lifetime &#8212; hence the reseed.
+      Run-to-run spread is large and is set by the initial draw, not by the
+      bath: at a fixed noise, four seeds gave domain scales from 1.2 to full
+      monopoly, and the pattern was the same at noise 0.005 and 0.05. Watch a
+      few runs, not one.
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------------------------------------------------------------- state
+  var N = 32, K = 4;
+  var NN, SIZE;
+  var phi, phi2, form, sector, curv, margin;
+
+  var step = 0, running = true, mode = 2;
+  var noiseAmp = 0.03, speed = 2, showMax = 1, gamma = 1.5;
+  var autoReseed = true, reseeds = 0;
+  var kScale = 1.0;                 // EMA-smoothed colour normalisation
+  var counts = [0, 0, 0, 0], alive = 0;
+
+  var DT = 0.06;
+  var SQDT = Math.sqrt(DT);
+
+  function allocate() {
+    NN = N * N;
+    SIZE = N * N * N;
+    phi = new Float32Array(K * SIZE);
+    phi2 = new Float32Array(K * SIZE);
+    form = new Uint8Array(SIZE);
+    sector = new Uint8Array(SIZE);
+    curv = new Float32Array(SIZE);
+    margin = new Float32Array(SIZE);
+  }
+
+  function idx(x, y, z) { return z * NN + y * N + x; }
+
+  // Gaussian noise (Box-Muller with one cached spare).  The original used
+  // (Math.random() - 0.5), which is neither zero-variance-calibrated nor
+  // scaled by sqrt(dt), so the "noise" slider was not a temperature.
+  var spare = null;
+  function gauss() {
+    if (spare !== null) { var s = spare; spare = null; return s; }
+    var u, v, r;
+    do { u = 2 * Math.random() - 1; v = 2 * Math.random() - 1; r = u * u + v * v; }
+    while (r === 0 || r >= 1);
+    var f = Math.sqrt(-2 * Math.log(r) / r);
+    spare = v * f;
+    return u * f;
+  }
+
+  function seed() {
+    for (var i = 0; i < SIZE; i++) {
+      var s = 0, k;
+      for (k = 0; k < K; k++) {
+        var val = Math.random() - 0.5;
+        phi[k * SIZE + i] = val;
+        s += val * val;
+      }
+      // Normalise onto the unit sphere, not 1/0.7 of it: starting outside the
+      // well makes the first few steps a stiff collapse rather than dynamics.
+      var n = Math.sqrt(s) + 1e-8;
+      for (k = 0; k < K; k++) phi[k * SIZE + i] /= n;
+    }
+    step = 0;
+    kScale = 1.0;
+  }
+
+  // ------------------------------------------------------------- dynamics
+  // Vector Allen-Cahn, matching project_genesis.multiphase.step_multiphase:
+  //
+  //   f(eta)      = sum_a (eta_a^4/4 - eta_a^2/2) + gamma * sum_{a<b} eta_a^2 eta_b^2
+  //   df/d eta_a  = eta_a^3 - eta_a + 2*gamma*eta_a*(sum_b eta_b^2 - eta_a^2)
+  //   d_t eta_a   = lap(eta_a) - df/d eta_a
+  //
+  // The cross term is what distinguishes the sectors.  Dropping it -- i.e.
+  // writing eta_a * (1 - sum_b eta_b^2), which is the 2*gamma = 1 case --
+  // gives exactly the O(K)-symmetric potential |eta|^4/4 - |eta|^2/2, whose
+  // ground state is a connected sphere.  With no barrier between "sectors"
+  // there are no walls, coarsening is unopposed, and the palette collapses to
+  // one member within a few hundred steps.
+  function evolve() {
+    var twoG = 2.0 * gamma;
+    for (var z = 0; z < N; z++) {
+      var zp = ((z + 1) % N) * NN, zm = ((z - 1 + N) % N) * NN, z0 = z * NN;
+      for (var y = 0; y < N; y++) {
+        var yp = ((y + 1) % N) * N, ym = ((y - 1 + N) % N) * N, y0 = y * N;
+        for (var x = 0; x < N; x++) {
+          var xp = (x + 1) % N, xm = (x - 1 + N) % N;
+          var i = z0 + y0 + x;
+          var ss = 0, k, v;
+          for (k = 0; k < K; k++) { v = phi[k * SIZE + i]; ss += v * v; }
+          for (k = 0; k < K; k++) {
+            var b = k * SIZE;
+            v = phi[b + i];
+            var lap = phi[b + z0 + y0 + xp] + phi[b + z0 + y0 + xm] +
+                      phi[b + z0 + yp + x] + phi[b + z0 + ym + x] +
+                      phi[b + zp + y0 + x] + phi[b + zm + y0 + x] - 6 * v;
+            var df = v * v * v - v + twoG * v * (ss - v * v);
+            var nv = v + DT * (lap - df);
+            if (noiseAmp > 0) nv += noiseAmp * SQDT * gauss();
+            phi2[b + i] = nv;
+          }
+        }
+      }
+    }
+    var t = phi; phi = phi2; phi2 = t;
+    step++;
+  }
+
+  // --------------------------------------------------------- classification
+  // A site where m distinct sectors meet is a codimension-(m-1) object.  In
+  // three dimensions:
+  //   m = 1  ->  3-cell, bulk
+  //   m = 2  ->  2-cell, wall            (a surface)
+  //   m = 3  ->  1-cell, triple line     (a curve, NOT a point)
+  //   m = 4  ->  0-cell, quadruple point
+  // So a genuine 0-cell in 3-D needs FOUR sectors.  With a three-colour
+  // palette the highest junction available is the triple line, and calling it
+  // a "0-cell" (as a 2-D-derived rule does) mislabels a curve as a point --
+  // its count then scales like N rather than staying N-independent.
+  // This is the same d+1 counting the framework predicts for generations:
+  // three families in 2-D, four in 3-D.
+  function classify() {
+    var seen = new Uint8Array(K);
+    var c = [0, 0, 0, 0];
+    var i, k;
+
+    for (i = 0; i < SIZE; i++) {
+      var best = 0, bv = phi[i];
+      for (k = 1; k < K; k++) {
+        var v = phi[k * SIZE + i];
+        if (v > bv) { bv = v; best = k; }
+      }
+      sector[i] = best;
+    }
+
+    var alivemask = new Uint8Array(K);
+    for (i = 0; i < SIZE; i++) alivemask[sector[i]] = 1;
+    alive = 0;
+    for (k = 0; k < K; k++) alive += alivemask[k];
+
+    for (var z = 0; z < N; z++) {
+      var zp = ((z + 1) % N) * NN, zm = ((z - 1 + N) % N) * NN, z0 = z * NN;
+      for (var y = 0; y < N; y++) {
+        var yp = ((y + 1) % N) * N, ym = ((y - 1 + N) % N) * N, y0 = y * N;
+        for (var x = 0; x < N; x++) {
+          var xp = (x + 1) % N, xm = (x - 1 + N) % N;
+          i = z0 + y0 + x;
+          for (k = 0; k < K; k++) seen[k] = 0;
+          seen[sector[i]] = 1;
+          seen[sector[z0 + y0 + xp]] = 1;
+          seen[sector[z0 + y0 + xm]] = 1;
+          seen[sector[z0 + yp + x]] = 1;
+          seen[sector[z0 + ym + x]] = 1;
+          seen[sector[zp + y0 + x]] = 1;
+          seen[sector[zm + y0 + x]] = 1;
+          var m = 0;
+          for (k = 0; k < K; k++) m += seen[k];
+          // codimension m-1 -> cell dimension 3-(m-1) = 4-m, clamped to [0,3]
+          var f = 4 - m;
+          if (f < 0) f = 0;
+          if (f > 3) f = 3;
+          form[i] = f;
+          c[f]++;
+        }
+      }
+    }
+    counts = c;
+    return c;
+  }
+
+  // ------------------------------------------------------------- curvature
+  // kappa = |lap s| / |grad s| with s = phi_(1) - phi_(2), the margin between
+  // the winning and runner-up sectors.  s has a V-shaped minimum *at* the wall
+  // centre, so |grad s| passes through zero exactly on the surface we want to
+  // colour -- the raw ratio therefore diverges on the wall, not off it.
+  // Measured on the original: max kappa over wall sites runs 30-80x the
+  // median (worst observed 312 vs 4.1).  Normalising the colour map by that
+  // max sends essentially every other site to t ~ 0, which is why the field
+  // reads uniformly blue and flips scale from frame to frame.
+  //
+  // Two fixes: floor the gradient at a fraction of the field scale so kappa
+  // stays a curvature rather than a singularity, and normalise the colour by
+  // a high percentile (EMA-smoothed) instead of the maximum.
+  var GRAD_FLOOR = 0.02;
+
+  function estimateCurvature() {
+    var i, k;
+    for (i = 0; i < SIZE; i++) {
+      var a1 = -Infinity, a2 = -Infinity;
+      for (k = 0; k < K; k++) {
+        var v = phi[k * SIZE + i];
+        if (v > a1) { a2 = a1; a1 = v; } else if (v > a2) { a2 = v; }
+      }
+      margin[i] = a1 - a2;
+    }
+
+    var sumAbs = 0, nWall = 0;
+    var samples = [];
+    for (var z = 0; z < N; z++) {
+      var zp = ((z + 1) % N) * NN, zm = ((z - 1 + N) % N) * NN, z0 = z * NN;
+      for (var y = 0; y < N; y++) {
+        var yp = ((y + 1) % N) * N, ym = ((y - 1 + N) % N) * N, y0 = y * N;
+        for (var x = 0; x < N; x++) {
+          var xp = (x + 1) % N, xm = (x - 1 + N) % N;
+          i = z0 + y0 + x;
+          var sxp = margin[z0 + y0 + xp], sxm = margin[z0 + y0 + xm];
+          var syp = margin[z0 + yp + x], sym = margin[z0 + ym + x];
+          var szp = margin[zp + y0 + x], szm = margin[zm + y0 + x];
+          var s = margin[i];
+          var lapS = sxp + sxm + syp + sym + szp + szm - 6 * s;
+          var gx = 0.5 * (sxp - sxm), gy = 0.5 * (syp - sym), gz = 0.5 * (szp - szm);
+          var gmag = Math.sqrt(gx * gx + gy * gy + gz * gz);
+          if (gmag < GRAD_FLOOR) gmag = GRAD_FLOOR;
+          var kappa = Math.abs(lapS) / gmag;
+          curv[i] = kappa;
+          if (form[i] <= 2) { sumAbs += kappa; nWall++; samples.push(kappa); }
+        }
+      }
+    }
+
+    if (samples.length) {
+      samples.sort(function (a, b) { return a - b; });
+      var p95 = samples[Math.min(samples.length - 1,
+                                 Math.floor(0.95 * samples.length))];
+      // EMA so the colour scale cannot jump on a single frame's outlier.
+      kScale = kScale * 0.85 + Math.max(p95, 1e-3) * 0.15;
+    }
+    return nWall > 0 ? sumAbs / nWall : 0;
+  }
+
+  // ----------------------------------------------------------------- render
+  var canvas = document.getElementById("c");
+  var ctx = canvas.getContext("2d", { alpha: false });
+  var cw = 0, ch = 0;
+
+  function sizeCanvas() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    var rect = canvas.getBoundingClientRect();
+    var w = Math.max(200, Math.floor(rect.width * dpr));
+    var h = Math.max(200, Math.floor(rect.height * dpr));
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+    cw = w; ch = h;
+  }
+  window.addEventListener("resize", sizeCanvas);
+  sizeCanvas();
+
+  var yaw = 0.55, pitch = 0.32, dist = 2.15;
+  var drag = false, lx = 0, ly = 0;
+
+  canvas.addEventListener("pointerdown", function (e) {
+    drag = true; lx = e.clientX; ly = e.clientY;
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener("pointermove", function (e) {
+    if (!drag) return;
+    yaw += (e.clientX - lx) * 0.01;
+    pitch = Math.max(-1.2, Math.min(1.2, pitch + (e.clientY - ly) * 0.01));
+    lx = e.clientX; ly = e.clientY;
+  });
+  function endDrag(e) {
+    drag = false;
+    if (e && e.pointerId !== undefined && canvas.hasPointerCapture &&
+        canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
+  }
+  // pointercancel matters on touch: without it a cancelled gesture leaves
+  // drag latched and the model keeps spinning under the next stray move.
+  canvas.addEventListener("pointerup", endDrag);
+  canvas.addEventListener("pointercancel", endDrag);
+  canvas.addEventListener("lostpointercapture", function () { drag = false; });
+  canvas.addEventListener("wheel", function (e) {
+    e.preventDefault();
+    dist = Math.max(1.2, Math.min(4.5, dist + e.deltaY * 0.003));
+  }, { passive: false });
+
+  var SECTOR_COL = [[244, 114, 182], [94, 234, 212], [251, 191, 36],
+                    [129, 140, 248], [163, 230, 53]];
+  var FORM_COL = [[244, 114, 182], [251, 191, 36], [94, 234, 212], [100, 116, 139]];
+
+  function kappaColor(k) {
+    var t = Math.min(1, k / (kScale + 1e-8));
+    var r = Math.min(255, Math.floor(80 + t * 175));
+    var g = Math.min(255, Math.floor(120 + (1 - Math.abs(t - 0.5) * 2) * 100));
+    var b = Math.min(255, Math.floor(220 * (1 - t)));
+    return [r, g, b];
+  }
+
+  var pts = [];
+  function draw() {
+    var W = cw, H = ch;
+    ctx.fillStyle = "#0d1117";
+    ctx.fillRect(0, 0, W, H);
+
+    var cy = Math.cos(yaw), sy = Math.sin(yaw);
+    var cp = Math.cos(pitch), sp = Math.sin(pitch);
+    var scale = Math.min(W, H) * 0.44;
+    var ox = W * 0.5, oy = H * 0.5;
+
+    pts.length = 0;
+    for (var z = 0; z < N; z++) {
+      for (var y = 0; y < N; y++) {
+        for (var x = 0; x < N; x++) {
+          var i = idx(x, y, z);
+          var f = form[i];
+          if (mode === 2) { if (f > 2) continue; }
+          else if (mode === 1) { if (f > showMax) continue; }
+
+          var X = (x + 0.5) / N - 0.5, Y = (y + 0.5) / N - 0.5, Z = (z + 0.5) / N - 0.5;
+          var x1 = X * cy - Z * sy;
+          var z1 = X * sy + Z * cy;
+          var y1 = Y * cp - z1 * sp;
+          var z2 = Y * sp + z1 * cp;
+          var d = dist + z2;
+          if (d < 0.12) continue;
+          var inv = 1.0 / d;
+          pts.push({ px: ox + x1 * inv * scale * dist,
+                     py: oy - y1 * inv * scale * dist,
+                     z: z2, f: f, sec: sector[i], k: curv[i] });
+        }
+      }
+    }
+    pts.sort(function (a, b) { return a.z - b.z; });
+
+    for (var p = 0; p < pts.length; p++) {
+      var o = pts[p], r, g, b, a, rad, col;
+      if (mode === 0) {
+        col = SECTOR_COL[o.sec % SECTOR_COL.length];
+        r = col[0]; g = col[1]; b = col[2]; a = 0.75; rad = 2.1;
+      } else if (mode === 1) {
+        col = FORM_COL[o.f];
+        r = col[0]; g = col[1]; b = col[2];
+        if (o.f === 0) { a = 0.95; rad = 3.6; }
+        else if (o.f === 1) { a = 0.80; rad = 2.6; }
+        else if (o.f === 2) { a = 0.35; rad = 1.7; }
+        else { a = 0.10; rad = 1.3; }
+      } else {
+        col = kappaColor(o.k);
+        r = col[0]; g = col[1]; b = col[2];
+        a = o.f === 0 ? 0.95 : (o.f === 1 ? 0.85 : 0.55);
+        rad = o.f === 0 ? 3.6 : (o.f === 1 ? 2.7 : 1.9);
+      }
+      ctx.beginPath();
+      ctx.arc(o.px, o.py, rad, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(" + r + "," + g + "," + b + "," + a + ")";
+      ctx.fill();
+    }
+    $("sp").textContent = pts.length;
+  }
+
+  // --------------------------------------------------------------- readouts
+  function $(id) { return document.getElementById(id); }
+
+  function updateBars(c) {
+    var m = Math.max(c[0], c[1], c[2], c[3], 1);
+    for (var i = 0; i < 4; i++) {
+      $("b" + i).style.width = (100 * c[i] / m) + "%";
+      $("n" + i).textContent = c[i];
+    }
+    var note;
+    if (K < 4) {
+      note = "<span class='warn'>Palette " + K + " in 3-D: a 0-cell needs " +
+             "four sectors meeting, so the point class is empty by " +
+             "construction.</span>";
+    } else if (c[0] === 0) {
+      note = "No quadruple points yet &#8212; they are codimension 3, so they " +
+             "are rare and do not scale with the box.";
+    } else {
+      note = "wall : line : point = " +
+             (c[2] / c[0]).toFixed(1) + " : " +
+             (c[1] / c[0]).toFixed(1) + " : 1";
+    }
+    $("cellnote").innerHTML = note;
+  }
+
+  function updateHealth() {
+    // Measure the domain scale rather than assuming the sqrt(t) coarsening
+    // law: with a noise bath the field reaches a steady state and the scale
+    // plateaus, so sqrt(t) would keep growing and cry saturation forever.
+    // Volume per unit wall area is a length, and it is what actually sets
+    // whether the box still holds more than one domain.
+    var wallSites = counts[0] + counts[1] + counts[2];
+    var ell = wallSites > 0 ? SIZE / wallSites : N;
+    $("ell").textContent = ell.toFixed(1) + " / " + N;
+    $("sa").textContent = alive + " / " + K;
+    var msg;
+    if (alive <= 1) {
+      msg = "<span class='bad'>Palette collapsed to one sector.</span> " +
+            "Curvature-driven coarsening in 3-D is monotone &#8212; it always " +
+            "ends here. " + (autoReseed ? "Reseeding." : "Reset to watch it again.");
+    } else if (gamma <= 1.0) {
+      msg = "<span class='warn'>&#947; &#8804; 1:</span> the sector corners are " +
+            "not minima, so there are no walls &#8212; what you see is an " +
+            "argmax slice of a continuously degenerate field.";
+    } else if (ell < 1.5) {
+      msg = "<span class='warn'>Fine-grained:</span> domains are about one " +
+            "lattice unit across, so the cell counts are measuring lattice " +
+            "texture rather than a tessellation. Some initial conditions land " +
+            "here and stay; reseed for a different draw.";
+    } else if (ell > N * 0.4) {
+      msg = "<span class='warn'>Box saturated:</span> the domain scale is a " +
+            "sizeable fraction of the lattice, so what you are watching is " +
+            "boundary-limited, not physical. Raise N or reset.";
+    } else {
+      msg = "<span class='ok'>Coarsening:</span> distinct phases, domain scale " +
+            "still well inside the box.";
+    }
+    if (reseeds > 0) msg += " <span style='color:#7d8aa0'>(run " + (reseeds + 1) + ")</span>";
+    $("health").innerHTML = msg;
+  }
+
+  // ---------------------------------------------------------------- controls
+  $("play").onclick = function () {
+    running = !running;
+    $("play").textContent = running ? "Pause" : "Play";
+  };
+  $("reset").onclick = function () { seed(); reseeds = 0; };
+  $("auto").onclick = function () {
+    autoReseed = !autoReseed;
+    $("auto").textContent = "Auto-reseed: " + (autoReseed ? "on" : "off");
+  };
+  $("mode").onclick = function () {
+    mode = (mode + 1) % 3;
+    var names = ["sector", "forms", "curv"];
+    $("mode").textContent = "Mode: " + names[mode];
+  };
+  $("gamma").oninput = function () {
+    gamma = +$("gamma").value; $("vg").textContent = gamma.toFixed(2);
+  };
+  $("pal").oninput = function () {
+    K = +$("pal").value; $("vp").textContent = K;
+    allocate(); seed();
+  };
+  $("nn").oninput = function () {
+    N = +$("nn").value; $("vnn").textContent = N;
+    allocate(); seed();
+  };
+  $("noise").oninput = function () {
+    noiseAmp = +$("noise").value; $("vn").textContent = noiseAmp.toFixed(3);
+  };
+  $("spd").oninput = function () { speed = +$("spd").value; $("vs").textContent = speed; };
+  $("show").oninput = function () {
+    showMax = +$("show").value;
+    $("vshow").textContent = ["0 only", "0–1", "0–2", "all"][showMax];
+  };
+
+  // -------------------------------------------------------------------- loop
+  // classify/estimateCurvature run every frame that evolve() ran, so form,
+  // curv and sector are never stale relative to phi.  (Skipping them on odd
+  // frames while still stepping the field draws last frame's geometry over
+  // this frame's positions.)
+  function loop() {
+    if (running) {
+      for (var s = 0; s < speed; s++) evolve();
+      updateBars(classify());
+      $("mk").textContent = estimateCurvature().toFixed(2);
+      $("kp").textContent = kScale.toFixed(2);
+      $("st").textContent = step;
+      updateHealth();
+      // A 3-D multiphase field has no steady state at these box sizes: below
+      // a noise of ~0.35 it coarsens monotonically to a single domain, above
+      // ~0.5 it goes straight to lattice-scale mush, with no window between.
+      // So the honest design is a finite-lifetime coarsening run that restarts,
+      // not a pretence of persistence.
+      if (alive <= 1 && autoReseed) { seed(); reseeds++; }
+    }
+    sizeCanvas();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  // Test hook.  Everything above lives in a closure, so an automated check
+  // (headless Chromium, say) has no way to see whether the field is actually
+  // doing what the readouts claim.  This exposes the state the readouts are
+  // derived from, so the page can be validated against the NumPy reference
+  // kernel in project_genesis/multiphase.py rather than eyeballed.
+  window.__probe = function () {
+    var s = 0;
+    for (var i = 0; i < SIZE; i++) {
+      var t = 0;
+      for (var k = 0; k < K; k++) { var v = phi[k * SIZE + i]; t += v * v; }
+      s += Math.sqrt(t);
+    }
+    return { N: N, K: K, gamma: gamma, noiseAmp: noiseAmp, DT: DT, SQDT: SQDT,
+             speed: speed, step: step, meanPhi: s / SIZE, counts: counts,
+             alive: alive, reseeds: reseeds };
+  };
+
+  allocate();
+  seed();
+  for (var i = 0; i < 40; i++) evolve();
+  classify();
+  estimateCurvature();
+  updateBars(counts);
+  updateHealth();
+  loop();
+})();
+</script>
+</body>
+</html>
