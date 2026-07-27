@@ -44,6 +44,7 @@ __all__ = [
     "multiplicity_batch",
     "window_features",
     "run_ensemble",
+    "relaxation_time",
     "kaplan_meier",
     "split_hazard",
     "spearman_r",
@@ -171,10 +172,29 @@ FEATURE_NAMES = ("ell", "maxfrac", "imbalance", "junction", "grad")
 # the ensemble run
 # --------------------------------------------------------------------------
 
+def relaxation_time(amplitude, frac: float = 0.95) -> int:
+    """Steps for the field amplitude to reach ``frac`` of its plateau.
+
+    The simulation has no seconds, so a step count is meaningless on its own.
+    This is the system's fastest intrinsic clock — how long the field takes to
+    climb into its own wells from a random start — and every other time here
+    is worth quoting as a multiple of it.
+    """
+    a = np.asarray(amplitude, dtype=float)
+    if a.size == 0:
+        return 0
+    plateau = float(a[-max(1, a.size // 8):].mean())
+    if plateau <= 0:
+        return 0
+    reached = np.nonzero(a >= frac * plateau)[0]
+    return int(reached[0]) + 1 if reached.size else int(a.size)
+
+
 def run_ensemble(n_runs: int, n_palette: int, size: int, steps: int, *,
                  ndim: int = 3, gamma: float = 1.5, dt: float = 0.06,
                  noise: float = 0.02, seed: int = 0, early: int = 60,
                  death_frac: float = 0.95, sample: int = 10,
+                 capture=None, track_amplitude: bool = False,
                  progress=None) -> dict:
     """Evolve ``n_runs`` replicas together; record when each one dies.
 
@@ -194,14 +214,21 @@ def run_ensemble(n_runs: int, n_palette: int, size: int, steps: int, *,
     death = np.full(int(n_runs), -1, dtype=int)
     features = None
     trace_t, trace_alive = [], []
+    capture_steps = sorted({int(c) for c in capture}) if capture else []
+    captured, amplitude = {}, []
 
     for t in range(1, int(steps) + 1):
         fields = step_batch(fields, gamma=gamma, dt=dt, ndim=ndim)
         if noise:
             fields = fields + noise * sqdt * rng.standard_normal(fields.shape)
 
+        if track_amplitude:
+            amplitude.append(float(np.sqrt((fields ** 2).sum(axis=1)).mean()))
+
         if t == int(early):
             features = window_features(fields, n_palette, ndim)
+        if capture_steps and t in capture_steps:
+            captured[t] = window_features(fields, n_palette, ndim)
 
         if t % int(sample) == 0 or t == int(steps):
             labels = sector_labels_batch(fields)
@@ -213,7 +240,9 @@ def run_ensemble(n_runs: int, n_palette: int, size: int, steps: int, *,
             trace_alive.append(int((death < 0).sum()))
             if progress is not None:
                 progress(t, int((death < 0).sum()))
-            if (death >= 0).all():
+            # Only stop early when nothing else still needs collecting.
+            if (death >= 0).all() and not track_amplitude \
+                    and (not capture_steps or t >= capture_steps[-1]):
                 break
 
     if features is None:                      # early > steps
@@ -223,6 +252,8 @@ def run_ensemble(n_runs: int, n_palette: int, size: int, steps: int, *,
             "censored": death < 0,
             "steps": int(steps),
             "features": features,
+            "captured": captured,
+            "amplitude": np.asarray(amplitude),
             "trace_t": np.asarray(trace_t),
             "trace_alive": np.asarray(trace_alive)}
 

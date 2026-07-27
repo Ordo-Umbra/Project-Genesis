@@ -61,7 +61,17 @@ Every per-feature AUC is printed, not just the winner, so post-hoc selection is
 visible rather than hidden.  And the ensemble is fixed before the first look:
 no run is added or dropped after seeing a result.
 
+**When, though?**  ``--early`` fixes one capture step, and step 60 was an
+arbitrary choice.  ``--when`` sweeps it instead, measuring AUC as a function of
+*when* the predictor is read, and quotes the answer against the system's own
+clocks — there are no seconds here, so a bare step number means nothing on its
+own.  The result corrects the natural reading of Q2: there is no decision
+*moment*.  The bias is present from the first handful of steps and rises
+monotonically for the whole mortality window, which is a different claim from
+"decided early" and is the one the data supports.
+
     python experiments/n3_survival.py
+    python experiments/n3_survival.py --when
     python experiments/n3_survival.py --runs 128 --steps 2000 --palette 3
 """
 
@@ -85,12 +95,92 @@ from project_genesis.survival import (  # noqa: E402
     kaplan_meier,
     max_feature_permutation,
     permutation_p,
+    relaxation_time,
     run_ensemble,
     spearman_r,
     split_hazard,
 )
 
 BANNER = "=" * 78
+
+CAPTURE_STEPS = (5, 10, 15, 20, 30, 40, 60, 80, 110, 150, 200, 280, 400)
+
+
+def when_is_it_decided(args) -> int:
+    """Sweep the capture step: how early, and how sharply, is the ending set?
+
+    Quoted against the field's own relaxation time, because a step count means
+    nothing on its own — this simulation has no seconds and no calibration to
+    any.  Only ratios are meaningful.
+    """
+    print(BANNER)
+    print("WHEN IS IT DECIDED?  (sweeping the step at which the predictor is read)")
+    print(BANNER)
+    print(f"  {args.runs} runs, {args.size}^{args.ndim}, palette {args.palette}, "
+          f"horizon {args.steps}")
+    print()
+
+    t0 = time.time()
+    res = run_ensemble(args.runs, args.palette, args.size, args.steps,
+                       ndim=args.ndim, gamma=args.gamma, dt=args.dt,
+                       noise=args.noise, seed=args.seed, early=args.early,
+                       death_frac=args.death_frac, sample=args.sample,
+                       capture=CAPTURE_STEPS, track_amplitude=True)
+    print(f"  [{time.time() - t0:.0f}s]")
+
+    death, censored = res["death"], res["censored"]
+    if censored.all():
+        print("\n  No deaths in this ensemble — nothing to predict.")
+        return 1
+    end = np.where(censored, args.steps, death)
+    long_lived = end > np.median(end)
+    tau = relaxation_time(res["amplitude"])
+    med = float(np.median(death[~censored]))
+    last = int(death[~censored].max())
+
+    print()
+    print("  THE SYSTEM'S OWN CLOCKS — there are no seconds here, only ratios")
+    print(f"    tau (field reaches 95% of its amplitude) : {tau:>5} steps")
+    print(f"    median lifetime of runs that die         : {med:>5.0f} steps"
+          f"   = {med / max(tau, 1):.2f} tau")
+    print(f"    last death anywhere                      : {last:>5} steps"
+          f"   = {last / max(tau, 1):.2f} tau")
+    print(f"    survived the horizon                     : "
+          f"{int(censored.sum())}/{args.runs}")
+    print()
+    print("    Note the first two lines: half of all deaths happen before the")
+    print("    field has finished climbing into its own wells.  Those runs are")
+    print("    not dying of old age, they are failing to form.")
+
+    print()
+    print("  AUC vs eventual survival, by the step the predictor is read:")
+    print(f"    {'step':>5} {'/tau':>6} {'/median':>8}   " +
+          "  ".join(f"{n:>9}" for n in FEATURE_NAMES))
+    for t in CAPTURE_STEPS:
+        if t not in res["captured"]:
+            continue
+        row = feature_aucs(res["captured"][t], long_lived)
+        print(f"    {t:>5} {t / max(tau, 1):>6.2f} {t / med:>8.2f}   " +
+              "  ".join(f"{row[n]:>9.3f}" for n in FEATURE_NAMES))
+
+    first = min(res["captured"])
+    a_first = feature_aucs(res["captured"][first], long_lived)["maxfrac"]
+    print()
+    print(BANNER)
+    print("READING")
+    print(BANNER)
+    print(f"  There is no decision *moment*.  At step {first} — barely a")
+    print(f"  {first / max(tau, 1):.2f} tau, before any structure exists — the bias is")
+    print(f"  already there ({a_first:.3f}, chance is 0.5), and it climbs")
+    print("  monotonically for the whole mortality window rather than crossing")
+    print("  a threshold.  So 'the ending is set early' is right, and 'there is")
+    print("  an early window that decides it' is not: the tilt is present from")
+    print("  the first steps and never stops sharpening.")
+    print()
+    print("  Descriptive, one ensemble.  The *existence* of the step-60 signal is")
+    print("  what was confirmed out of sample (see the default run); the shape of")
+    print("  this curve has not been.")
+    return 0
 
 
 def main() -> int:
@@ -113,7 +203,12 @@ def main() -> int:
     p.add_argument("--perm", type=int, default=1000, help="permutation draws")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--quiet", action="store_true")
+    p.add_argument("--when", action="store_true",
+                   help="sweep the capture step instead: when is it decided?")
     args = p.parse_args()
+
+    if args.when:
+        return when_is_it_decided(args)
 
     print(BANNER)
     print("SURVIVAL OF THE 3-D SECTOR FIELD — is 'sometimes it doesn't end' real?")

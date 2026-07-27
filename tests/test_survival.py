@@ -21,6 +21,7 @@ from project_genesis.survival import (
     max_feature_permutation,
     multiplicity_batch,
     permutation_p,
+    relaxation_time,
     roc_auc,
     run_ensemble,
     sector_labels_batch,
@@ -290,3 +291,53 @@ def test_confirm_feature_is_direction_free():
     values = labels.astype(float) * -1.0
     obs, _, p = confirm_feature(values, labels, n_perm=200, seed=0)
     assert obs == pytest.approx(1.0)
+
+
+# ------------------------------------------------------- when is it decided
+
+def test_relaxation_time_finds_the_knee_of_a_rising_curve():
+    amp = 1.0 - np.exp(-np.arange(600) / 100.0)
+    tau = relaxation_time(amp, frac=0.95)
+    assert 250 < tau < 350          # -ln(0.05) * 100 ~= 300
+
+
+def test_relaxation_time_of_a_flat_curve_is_immediate():
+    assert relaxation_time(np.ones(200)) == 1
+
+
+def test_relaxation_time_handles_an_empty_trace():
+    assert relaxation_time(np.array([])) == 0
+
+
+def test_capture_returns_features_at_each_requested_step():
+    res = run_ensemble(4, 3, 6, 40, ndim=3, noise=0.0, seed=0, early=10,
+                       sample=10, capture=(5, 15, 30))
+    assert sorted(res["captured"]) == [5, 15, 30]
+    for t, feats in res["captured"].items():
+        assert set(feats) == set(FEATURE_NAMES)
+        assert feats["maxfrac"].shape == (4,)
+
+
+def test_capture_does_not_disturb_the_default_feature_window():
+    common = dict(ndim=3, noise=0.0, seed=5, early=20, sample=10)
+    plain = run_ensemble(4, 3, 6, 40, **common)
+    with_cap = run_ensemble(4, 3, 6, 40, capture=(5, 15), **common)
+    for name in FEATURE_NAMES:
+        assert np.allclose(plain["features"][name], with_cap["features"][name])
+
+
+def test_amplitude_tracking_is_opt_in_and_one_value_per_step():
+    off = run_ensemble(3, 3, 6, 25, ndim=3, noise=0.0, seed=1, early=10, sample=10)
+    assert off["amplitude"].size == 0
+    on = run_ensemble(3, 3, 6, 25, ndim=3, noise=0.0, seed=1, early=10,
+                      sample=10, track_amplitude=True)
+    assert on["amplitude"].shape == (25,)
+    assert np.isfinite(on["amplitude"]).all()
+
+
+def test_early_exit_waits_for_the_last_capture_step():
+    """All-dead used to break the loop; captures scheduled later must still land."""
+    res = run_ensemble(3, 2, 6, 60, ndim=3, noise=0.0, seed=2, early=5,
+                       sample=5, death_frac=0.0, capture=(5, 50))
+    assert (res["death"] > 0).all()          # everything died immediately
+    assert sorted(res["captured"]) == [5, 50]
