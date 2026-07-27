@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Observer Trial — randomised, sham-controlled</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #0a0c10;
+         color: #c9d4e3; padding: 14px; }
+  h1 { font-size: 17px; font-weight: 650; }
+  .sub { color: #7d8aa0; font-size: 12px; margin: 3px 0 12px; }
+  .wrap { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+  canvas { width: min(420px, 92vw); height: min(420px, 92vw); background: #111;
+           border: 1px solid #2a3548; border-radius: 8px; display: block; }
+  .panel { width: min(340px, 94vw); display: flex; flex-direction: column; gap: 10px; }
+  .card { background: #121820; border: 1px solid #1c2736; border-radius: 7px;
+          padding: 11px 13px; }
+  .card h2 { font-size: 10px; text-transform: uppercase; letter-spacing: .08em;
+             color: #7a8ba0; margin-bottom: 7px; }
+  .cue { font-size: 26px; font-weight: 700; text-align: center; padding: 14px 0;
+         border-radius: 7px; letter-spacing: .04em; }
+  .cue.attend { background: #14342a; color: #6ee7b7; border: 1px solid #1f5d48; }
+  .cue.ignore { background: #37231f; color: #fca5a5; border: 1px solid #6b3630; }
+  .cue.idle   { background: #161d27; color: #7d8aa0; border: 1px solid #26313f; }
+  .metrics { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px;
+             font-size: 12.5px; }
+  .metrics .k { color: #8a98ad; }
+  .metrics .v { text-align: right; font-variant-numeric: tabular-nums; }
+  button { background: #1a2433; color: #d7e2f1; border: 1px solid #2a3a50;
+           border-radius: 5px; padding: 7px 12px; font-size: 12.5px; }
+  button.primary { background: #2b6cb0; border-color: #3b82c4; }
+  button:disabled { opacity: .45; }
+  .btns { display: flex; gap: 7px; flex-wrap: wrap; }
+  .note { font-size: 11.5px; color: #9aa8bd; line-height: 1.5; }
+  .note b { color: #c9d4e3; }
+  .warn { color: #fbbf24; }
+  .bar { height: 7px; background: #0c1118; border-radius: 4px; overflow: hidden;
+         margin-top: 7px; }
+  .bar > div { height: 100%; background: #3b82c4; width: 0%; }
+  textarea { width: 100%; height: 90px; background: #0c1118; color: #8fa3bb;
+             border: 1px solid #26313f; border-radius: 5px; font-size: 10.5px;
+             font-family: ui-monospace, monospace; padding: 6px; }
+</style>
+</head>
+<body>
+
+<h1>Observer Trial</h1>
+<div class="sub">Randomised, sham-controlled, fixed step budget · outcome scored by code</div>
+
+<div class="wrap">
+  <canvas id="c" width="420" height="420"></canvas>
+
+  <div class="panel">
+    <div class="card">
+      <h2>This trial</h2>
+      <div class="cue idle" id="cue">press Start</div>
+      <div class="bar"><div id="prog"></div></div>
+    </div>
+
+    <div class="card">
+      <h2>Session</h2>
+      <div class="metrics">
+        <div class="k">trial</div><div class="v" id="tn">0 / 0</div>
+        <div class="k">step</div><div class="v" id="st">0</div>
+        <div class="k">completed</div><div class="v" id="done">0</div>
+        <div class="k">sham so far</div><div class="v" id="nsham">0</div>
+      </div>
+      <div class="note" style="margin-top:8px">
+        Outcomes are hidden until the session ends. Seeing the running total is
+        how a stopping rule gets broken.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Run</h2>
+      <div class="btns">
+        <button class="primary" id="start">Start session</button>
+        <button id="abort" disabled>Abort</button>
+        <button id="save" disabled>Download log</button>
+      </div>
+      <div class="metrics" style="margin-top:9px">
+        <div class="k">trials (total)</div>
+        <div class="v"><input id="ntrials" type="number" value="84" min="4"
+             style="width:70px;background:#0c1118;color:#c9d4e3;border:1px solid #26313f;
+                    border-radius:4px;padding:2px 5px;text-align:right"></div>
+        <div class="k">steps per trial</div>
+        <div class="v"><input id="budget" type="number" value="900" min="100"
+             style="width:70px;background:#0c1118;color:#c9d4e3;border:1px solid #26313f;
+                    border-radius:4px;padding:2px 5px;text-align:right"></div>
+      </div>
+    </div>
+
+    <div class="card note">
+      <b>What each part is for.</b><br>
+      <b>Fixed budget</b> — every trial runs exactly the same number of steps, so
+      attention cannot change how much computation happens. On the old viewer it
+      could, by 4.7×, purely through frame-rate throttling.<br><br>
+      <b>Randomised cue</b> — the computer assigns ATTEND or IGNORE. You comply.
+      Choosing is how condition gets correlated with how promising a run looked.<br><br>
+      <b>Sham trials</b> — a quarter of trials replay a run recorded before the
+      session started. The pixels look live; the outcome is already fixed. An
+      effect that shows up in sham trials is in the observing, not the field.<br><br>
+      <b>Hidden totals</b> — you cannot watch the score and stop when it looks
+      good, which is the most reliable way to manufacture a result.<br><br>
+      <span class="warn">Analyse with:</span>
+      <code>python experiments/n3_observer.py --log trials.json</code>
+    </div>
+
+    <div class="card">
+      <h2>Log</h2>
+      <textarea id="out" readonly placeholder="appears when the session ends"></textarea>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- field kernel: same rule as project_genesis/multiphase.step_multiphase
+  var N = 16, K = 4, NN = N * N, SIZE = N * N * N;
+  var DT = 0.06, SQDT = Math.sqrt(DT), GAMMA = 1.5, NOISE = 0.02;
+  var DEATH_FRAC = 0.95;
+
+  var phi = new Float32Array(K * SIZE), phi2 = new Float32Array(K * SIZE);
+  var sector = new Uint8Array(SIZE);
+
+  var spare = null;
+  function gauss() {
+    if (spare !== null) { var s = spare; spare = null; return s; }
+    var u, v, r;
+    do { u = 2 * Math.random() - 1; v = 2 * Math.random() - 1; r = u * u + v * v; }
+    while (r === 0 || r >= 1);
+    var f = Math.sqrt(-2 * Math.log(r) / r);
+    spare = v * f;
+    return u * f;
+  }
+
+  function seed() {
+    for (var i = 0; i < SIZE; i++) {
+      var s = 0, k;
+      for (k = 0; k < K; k++) {
+        var val = Math.random() - 0.5;
+        phi[k * SIZE + i] = val; s += val * val;
+      }
+      var n = Math.sqrt(s) + 1e-8;
+      for (k = 0; k < K; k++) phi[k * SIZE + i] /= n;
+    }
+  }
+
+  function evolve() {
+    var twoG = 2.0 * GAMMA;
+    for (var z = 0; z < N; z++) {
+      var zp = ((z + 1) % N) * NN, zm = ((z - 1 + N) % N) * NN, z0 = z * NN;
+      for (var y = 0; y < N; y++) {
+        var yp = ((y + 1) % N) * N, ym = ((y - 1 + N) % N) * N, y0 = y * N;
+        for (var x = 0; x < N; x++) {
+          var xp = (x + 1) % N, xm = (x - 1 + N) % N;
+          var i = z0 + y0 + x, ss = 0, k, v;
+          for (k = 0; k < K; k++) { v = phi[k * SIZE + i]; ss += v * v; }
+          for (k = 0; k < K; k++) {
+            var b = k * SIZE; v = phi[b + i];
+            var lap = phi[b + z0 + y0 + xp] + phi[b + z0 + y0 + xm] +
+                      phi[b + z0 + yp + x] + phi[b + z0 + ym + x] +
+                      phi[b + zp + y0 + x] + phi[b + zm + y0 + x] - 6 * v;
+            var df = v * v * v - v + twoG * v * (ss - v * v);
+            phi2[b + i] = v + DT * (lap - df) + NOISE * SQDT * gauss();
+          }
+        }
+      }
+    }
+    var t = phi; phi = phi2; phi2 = t;
+  }
+
+  function maxFraction() {
+    var counts = new Int32Array(K), i, k;
+    for (i = 0; i < SIZE; i++) {
+      var best = 0, bv = phi[i];
+      for (k = 1; k < K; k++) { var v = phi[k * SIZE + i]; if (v > bv) { bv = v; best = k; } }
+      sector[i] = best; counts[best]++;
+    }
+    var m = 0;
+    for (k = 0; k < K; k++) if (counts[k] > m) m = counts[k];
+    return m / SIZE;
+  }
+
+  // ---- rendering (deliberately decoupled: it may stutter, physics may not)
+  var canvas = document.getElementById("c");
+  var ctx = canvas.getContext("2d", { alpha: false });
+  var COL = [[244,114,182],[94,234,212],[251,191,36],[129,140,248]];
+  var yaw = 0.6, pitch = 0.3, dist = 2.2;
+
+  function draw() {
+    var W = canvas.width, H = canvas.height;
+    ctx.fillStyle = "#0d1117"; ctx.fillRect(0, 0, W, H);
+    var cy = Math.cos(yaw), sy = Math.sin(yaw);
+    var cp = Math.cos(pitch), sp = Math.sin(pitch);
+    var scale = Math.min(W, H) * 0.44, ox = W * 0.5, oy = H * 0.5;
+    var pts = [];
+    for (var z = 0; z < N; z++) for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) {
+      var i = z * NN + y * N + x;
+      // draw only near-wall sites so structure is visible rather than a solid block
+      var s = sector[i], edge = false;
+      if (sector[z*NN + y*N + ((x+1)%N)] !== s) edge = true;
+      else if (sector[z*NN + ((y+1)%N)*N + x] !== s) edge = true;
+      else if (sector[((z+1)%N)*NN + y*N + x] !== s) edge = true;
+      if (!edge) continue;
+      var X = (x + .5)/N - .5, Y = (y + .5)/N - .5, Z = (z + .5)/N - .5;
+      var x1 = X*cy - Z*sy, z1 = X*sy + Z*cy;
+      var y1 = Y*cp - z1*sp, z2 = Y*sp + z1*cp;
+      var d = dist + z2; if (d < 0.12) continue;
+      var inv = 1/d;
+      pts.push({px: ox + x1*inv*scale*dist, py: oy - y1*inv*scale*dist, z: z2, s: s});
+    }
+    pts.sort(function (a, b) { return a.z - b.z; });
+    for (var p = 0; p < pts.length; p++) {
+      var o = pts[p], c = COL[o.s % COL.length];
+      ctx.beginPath(); ctx.arc(o.px, o.py, 2.4, 0, 6.2832);
+      ctx.fillStyle = "rgba(" + c[0] + "," + c[1] + "," + c[2] + ",0.8)";
+      ctx.fill();
+    }
+  }
+  (function render() { draw(); yaw += 0.0016; requestAnimationFrame(render); })();
+
+  // ---- protocol
+  var $ = function (id) { return document.getElementById(id); };
+  var trials = [], plan = [], idx = -1, budget = 900, running = false;
+  var stepsDone = 0, died = false, deathStep = -1, shamOutcome = null;
+  var shamPool = [];
+
+  function assignPlan(n) {
+    // Condition and sham assignment come from their own draws, made before any
+    // trial runs, so nothing about a trial can feed back into its own label.
+    var out = [];
+    for (var i = 0; i < n; i++) {
+      out.push({ attend: Math.random() < 0.5, sham: (i % 4) === 0 });
+    }
+    return out;
+  }
+
+  function recordShamPool(n) {
+    // Pre-record outcomes with nobody watching any particular trial. A sham
+    // trial later replays one of these: its result was fixed in advance.
+    shamPool = [];
+    for (var i = 0; i < n; i++) {
+      seed();
+      var dstep = -1;
+      for (var t = 1; t <= budget; t++) {
+        evolve();
+        if (t % 10 === 0 && dstep < 0 && maxFraction() > DEATH_FRAC) { dstep = t; break; }
+      }
+      shamPool.push({ died: dstep > 0, deathStep: dstep });
+    }
+  }
+
+  function beginTrial() {
+    idx++;
+    if (idx >= plan.length) { endSession(); return; }
+    var pl = plan[idx];
+    stepsDone = 0; died = false; deathStep = -1;
+    shamOutcome = pl.sham ? shamPool[idx % shamPool.length] : null;
+    seed();
+    $("cue").className = "cue " + (pl.attend ? "attend" : "ignore");
+    $("cue").textContent = pl.attend ? "ATTEND" : "LOOK AWAY";
+    $("tn").textContent = (idx + 1) + " / " + plan.length;
+    running = true;
+  }
+
+  function finishTrial() {
+    running = false;
+    var pl = plan[idx];
+    var survived = pl.sham ? !shamOutcome.died : !died;
+    var dstep = pl.sham ? shamOutcome.deathStep : deathStep;
+    trials.push({ trial: idx + 1, attend: pl.attend, sham: pl.sham,
+                  survived: survived, deathStep: dstep, budget: budget });
+    $("done").textContent = trials.length;
+    $("nsham").textContent = trials.filter(function (t) { return t.sham; }).length;
+    $("cue").className = "cue idle";
+    $("cue").textContent = "…";
+    setTimeout(beginTrial, 700);
+  }
+
+  var acc = 0, lastNow = null;
+  setInterval(function () {
+    var now = (window.performance || Date).now();
+    if (lastNow === null) lastNow = now;
+    var el = Math.min((now - lastNow) * 1e-3, 5.0);
+    lastNow = now;
+    if (!running) return;
+
+    // Wall-clock budget: the same number of steps happens per real second
+    // whether this tab is in front, behind, or hidden.
+    acc += el * 120;
+    var n = Math.floor(acc); acc -= n;
+    if (n > 900) { n = 900; acc = 0; }
+    for (var s = 0; s < n && stepsDone < budget; s++) {
+      evolve(); stepsDone++;
+      if (stepsDone % 10 === 0 && !died && maxFraction() > DEATH_FRAC) {
+        died = true; deathStep = stepsDone;
+      }
+    }
+    $("st").textContent = stepsDone;
+    $("prog").style.width = (100 * stepsDone / budget) + "%";
+    if (stepsDone >= budget) finishTrial();
+  }, 33);
+
+  function endSession() {
+    running = false;
+    $("cue").className = "cue idle";
+    $("cue").textContent = "session complete";
+    $("abort").disabled = true;
+    $("save").disabled = false;
+    $("start").disabled = false;
+    var blob = { meta: { N: N, K: K, gamma: GAMMA, noise: NOISE, dt: DT,
+                         budget: budget, deathFrac: DEATH_FRAC,
+                         generated: new Date().toISOString() },
+                 trials: trials };
+    $("out").value = JSON.stringify(blob, null, 1);
+    window.__log = blob;
+  }
+
+  $("start").onclick = function () {
+    trials = []; idx = -1;
+    budget = Math.max(100, +$("budget").value | 0);
+    var n = Math.max(4, +$("ntrials").value | 0);
+    plan = assignPlan(n);
+    $("done").textContent = "0"; $("nsham").textContent = "0";
+    $("out").value = "";
+    $("start").disabled = true; $("abort").disabled = false; $("save").disabled = true;
+    $("cue").className = "cue idle";
+    $("cue").textContent = "recording sham pool…";
+    setTimeout(function () {
+      recordShamPool(Math.max(4, Math.ceil(n / 4)));
+      beginTrial();
+    }, 30);
+  };
+
+  $("abort").onclick = function () {
+    running = false; plan = [];
+    $("cue").className = "cue idle"; $("cue").textContent = "aborted";
+    $("start").disabled = false; $("abort").disabled = true;
+    $("save").disabled = trials.length === 0;
+  };
+
+  $("save").onclick = function () {
+    var blob = new Blob([$("out").value || JSON.stringify(window.__log)],
+                        { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "trials.json";
+    a.click();
+  };
+
+  seed();
+  maxFraction();
+})();
+</script>
+</body>
+</html>
