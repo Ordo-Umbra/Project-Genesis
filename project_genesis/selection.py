@@ -45,13 +45,17 @@ __all__ = [
 
 
 def evolve_palette(n_palette: int, size: int, steps: int, rng, *,
-                   noise: float = 0.0, gamma: float = 1.5, dt: float = 0.1):
+                   noise: float = 0.0, gamma: float = 1.5, dt: float = 0.1,
+                   ndim: int = 2):
     """Evolve a ``P``-component sector field from noise; return the field.
 
     ``noise > 0`` drives the field (a bath that keeps it from freezing), so
     "still generating structure" is a meaningful question at late time.
+    ``ndim`` selects the spatial dimension — the whole measurement chain is
+    dimension-generic, which is what lets the selection be tested for
+    *dimension-robustness* rather than assumed from one lattice.
     """
-    fields = rng.uniform(0, 1, (int(n_palette), size, size))
+    fields = rng.uniform(0, 1, (int(n_palette),) + (size,) * int(ndim))
     for _ in range(steps):
         fields = step_multiphase(fields, gamma=gamma, dt=dt)
         if noise:

@@ -50,9 +50,28 @@ so the optimum is genuinely interior rather than an artifact of one measure, and
 and these measures* — it does not establish that our universe is the attractor of
 reality, only that this corner is what survives here.
 
+**Dimension-robustness (``--ndim 3``).**  A selection argument built on one
+lattice invites the obvious objection that the winner is an artifact of the
+dimension.  It is not — but it *weakens*, and the weakening is the informative
+part.  The competing hypothesis is that the selected palette tracks the Plateau
+valence, ``P = d + 1``, which would predict **four** kinds in three-dimensional
+space and so conflict with the three of QCD.  Measured, that is **ruled out**:
+``P = 3`` wins in 3-D as well.  But the full-palette locus changes dimension —
+in 2-D four domains meeting at a point is non-generic (measure zero), while in
+3-D it is merely rare — so ``P = 4``'s integration rises ~55× and the picture
+degrades:
+
+    2-D:  3/3    margin 88×    monopoly clean
+    3-D:  2/3    margin  4×    monopoly FAILS (P=4 only 5.6× below P=3)
+
+So the selection is dimension-robust in its *winner* and not in its *strength*.
+In 3-D it clears its own falsifier (3×) by very little.  Anyone weighing this
+argument should weigh the 3-D number, not the 2-D one.
+
 Usage::
 
     python experiments/n3_selection_sweep.py --output-dir artifacts/n3_selection
+    python experiments/n3_selection_sweep.py --ndim 3      # the harder test
     python experiments/n3_selection_sweep.py --quick
 """
 
@@ -84,7 +103,7 @@ def sweep(args):
             rng = np.random.default_rng(args.seed + 101 * s)
             fields = evolve_palette(p, args.size, args.steps, rng,
                                     noise=args.noise, gamma=args.gamma,
-                                    dt=args.dt)
+                                    dt=args.dt, ndim=args.ndim)
             m = measure_window(fields, p, args.window, rng, noise=args.noise,
                                gamma=args.gamma, dt=args.dt)
             for k in acc:
@@ -256,6 +275,9 @@ def main():
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--palettes", type=int, nargs="+", default=[2, 3, 4, 5, 6])
     p.add_argument("--size", type=int, default=96)
+    p.add_argument("--ndim", type=int, default=2, choices=[2, 3],
+                   help="Spatial dimension. The selection claim is that the "
+                        "winner is dimension-robust (NOT P = d+1).")
     p.add_argument("--steps", type=int, default=900)
     p.add_argument("--window", type=int, default=60)
     p.add_argument("--n-seeds", type=int, default=4)
@@ -272,6 +294,11 @@ def main():
     p.add_argument("--no-figure", action="store_true")
     p.add_argument("--quick", action="store_true")
     args = p.parse_args()
+    if args.ndim == 3 and args.size > 44:
+        args.size = 40          # 3-D lattices are expensive
+        args.steps = min(args.steps, 400)
+        args.window = min(args.window, 30)
+        args.n_seeds = min(args.n_seeds, 2)
     if args.quick:
         args.size = 64
         args.steps = 500
@@ -279,8 +306,8 @@ def main():
         args.n_seeds = 2
 
     os.makedirs(args.output_dir, exist_ok=True)
-    print("the selection sweep: run the alternatives on one instrument",
-          flush=True)
+    print(f"the selection sweep ({args.ndim}-D): run the alternatives on one "
+          "instrument", flush=True)
     rows = sweep(args)
     lines, n_land = summarise(rows, args)
     text = "\n".join(lines)
