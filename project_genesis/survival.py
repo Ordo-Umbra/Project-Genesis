@@ -195,6 +195,7 @@ def run_ensemble(n_runs: int, n_palette: int, size: int, steps: int, *,
                  noise: float = 0.02, seed: int = 0, early: int = 60,
                  death_frac: float = 0.95, sample: int = 10,
                  capture=None, track_amplitude: bool = False,
+                 diffusion_of_step=None, late_frac: float = 0.34,
                  progress=None) -> dict:
     """Evolve ``n_runs`` replicas together; record when each one dies.
 
@@ -217,8 +218,19 @@ def run_ensemble(n_runs: int, n_palette: int, size: int, steps: int, *,
     capture_steps = sorted({int(c) for c in capture}) if capture else []
     captured, amplitude = {}, []
 
+    # Late-window accumulators, one running sum per replica.  "Late" is the
+    # last `late_frac` of the horizon, so a schedule is judged on where it
+    # ends up rather than on the transient it started with.
+    late_start = int(steps * (1.0 - float(late_frac)))
+    churn_sum = np.zeros(int(n_runs))
+    integ_sum = np.zeros(int(n_runs))
+    ell_sum = np.zeros(int(n_runs))
+    late_n = 0
+    prev_labels = None
+
     for t in range(1, int(steps) + 1):
-        fields = step_batch(fields, gamma=gamma, dt=dt, ndim=ndim)
+        d_t = 1.0 if diffusion_of_step is None else float(diffusion_of_step(t))
+        fields = step_batch(fields, diffusion=d_t, gamma=gamma, dt=dt, ndim=ndim)
         if noise:
             fields = fields + noise * sqdt * rng.standard_normal(fields.shape)
 
@@ -233,6 +245,23 @@ def run_ensemble(n_runs: int, n_palette: int, size: int, steps: int, *,
         if t % int(sample) == 0 or t == int(steps):
             labels = sector_labels_batch(fields)
             frac = _sector_fractions(labels, n_palette)
+
+            if t > late_start:
+                R = int(n_runs)
+                flat = labels.reshape(R, -1)
+                if prev_labels is not None:
+                    churn_sum += (flat != prev_labels).mean(axis=1)
+                    m = multiplicity_batch(labels, n_palette, ndim).reshape(R, -1)
+                    # integration = full-palette junction density, the same
+                    # quantity selection.py scores: structure binding every
+                    # sector at once, not merely any boundary.
+                    integ_sum += (m == int(n_palette)).mean(axis=1)
+                    wall = (m >= 2).sum(axis=1)
+                    ell_sum += np.where(wall > 0, flat.shape[1] / np.maximum(wall, 1),
+                                        float(size))
+                    late_n += 1
+                prev_labels = flat
+
             dead_now = frac.max(axis=1) > float(death_frac)
             newly = dead_now & (death < 0)
             death[newly] = t
@@ -241,7 +270,7 @@ def run_ensemble(n_runs: int, n_palette: int, size: int, steps: int, *,
             if progress is not None:
                 progress(t, int((death < 0).sum()))
             # Only stop early when nothing else still needs collecting.
-            if (death >= 0).all() and not track_amplitude \
+            if (death >= 0).all() and not track_amplitude and t > late_start \
                     and (not capture_steps or t >= capture_steps[-1]):
                 break
 
@@ -254,6 +283,10 @@ def run_ensemble(n_runs: int, n_palette: int, size: int, steps: int, *,
             "features": features,
             "captured": captured,
             "amplitude": np.asarray(amplitude),
+            "late_churn": churn_sum / late_n if late_n else np.zeros(int(n_runs)),
+            "late_integration": integ_sum / late_n if late_n else np.zeros(int(n_runs)),
+            "late_ell": ell_sum / late_n if late_n else np.zeros(int(n_runs)),
+            "late_samples": late_n,
             "trace_t": np.asarray(trace_t),
             "trace_alive": np.asarray(trace_alive)}
 
