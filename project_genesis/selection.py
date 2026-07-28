@@ -35,6 +35,7 @@ from .multiphase import (
     resolved_palette_junction_density,
     sector_labels,
     step_multiphase,
+    step_multiphase_kappa,
 )
 
 __all__ = [
@@ -42,7 +43,106 @@ __all__ = [
     "measure_window",
     "selection_score",
     "normalise",
+    "make_stepper",
+    "evolve_palette_gated",
+    "measure_window_gated",
 ]
+
+
+def make_stepper(consumption=None, *, gamma: float = 1.5, dt: float = 0.1,
+                 baseline: float = 1.0, recovery: float = 0.1,
+                 kappa_diffusion: float = 0.5):
+    """Return ``(step, init_kappa)`` for either the plain or capacity-gated law.
+
+    ``consumption is None`` gives the plain vector Allen-Cahn used everywhere
+    else in the sweep — **no capacity field at all**.  A number turns on the
+    URP capacity law from :func:`~project_genesis.multiphase.step_multiphase_kappa`,
+
+        ∂_t η_a = κ·D·∇²η_a − ∂f/∂η_a
+        ∂_t κ   = D_κ·∇²κ + r·(κ₀ − κ) − c·(Σ_b |∇η_b|²)·κ
+
+    with ``c = consumption`` the knob that decides whether the budget binds:
+    at ``c = 0`` capacity is free and stays at κ₀ everywhere, and as ``c``
+    grows, holding structure costs capacity where structure is densest.
+
+    Both paths return the same ``(fields, kappa)`` shape so a sweep can run one
+    code path across the whole capacity axis — including the ``c = None`` arm,
+    which is the control that has no capacity in it whatsoever.
+    """
+    if consumption is None:
+        def step(fields, kappa):
+            return step_multiphase(fields, gamma=gamma, dt=dt), kappa
+
+        return step, (lambda shape: None)
+
+    def step(fields, kappa):
+        return step_multiphase_kappa(
+            fields, kappa, gamma=gamma, dt=dt,
+            kappa_baseline=baseline, kappa_recovery=recovery,
+            kappa_consumption=float(consumption),
+            kappa_diffusion=kappa_diffusion)
+
+    return step, (lambda shape: np.full(shape, float(baseline)))
+
+
+def evolve_palette_gated(n_palette: int, size: int, steps: int, rng, *,
+                         consumption=None, noise: float = 0.0,
+                         gamma: float = 1.5, dt: float = 0.1, ndim: int = 2,
+                         baseline: float = 1.0, recovery: float = 0.1):
+    """Evolve under either law; return ``(fields, kappa)``.
+
+    ``consumption=None`` reproduces :func:`evolve_palette` exactly (no capacity
+    field), so the capacity sweep's control arm is the published experiment
+    rather than a re-implementation of it.
+    """
+    step, init = make_stepper(consumption, gamma=gamma, dt=dt,
+                              baseline=baseline, recovery=recovery)
+    spatial = (int(size),) * int(ndim)
+    fields = rng.uniform(0, 1, (int(n_palette),) + spatial)
+    kappa = init(spatial)
+    for _ in range(steps):
+        fields, kappa = step(fields, kappa)
+        if noise:
+            fields = fields + noise * rng.standard_normal(fields.shape) * np.sqrt(dt)
+    return fields, kappa
+
+
+def measure_window_gated(fields, kappa, n_palette: int, window: int, rng, *,
+                         consumption=None, noise: float = 0.0,
+                         gamma: float = 1.5, dt: float = 0.1,
+                         baseline: float = 1.0, recovery: float = 0.1) -> dict:
+    """:func:`measure_window` under either law, plus the realised capacity.
+
+    ``kappa_mean`` is the *measured* abundance, not the nominal setting — a
+    capacity sweep that did not actually move capacity would make any null
+    result meaningless, so the manipulation is reported rather than assumed.
+    """
+    step, _ = make_stepper(consumption, gamma=gamma, dt=dt,
+                           baseline=baseline, recovery=recovery)
+    labels = sector_labels(fields)
+    churn, integ, dist, guarded, scales, resolved, kmean = [], [], [], [], [], [], []
+    for _ in range(window):
+        fields, kappa = step(fields, kappa)
+        if noise:
+            fields = fields + noise * rng.standard_normal(fields.shape) * np.sqrt(dt)
+        new = sector_labels(fields)
+        churn.append(float((new != labels).mean()))
+        labels = new
+        integ.append(float(full_palette_junction_density(labels, int(n_palette))))
+        g = resolved_palette_junction_density(labels, int(n_palette))
+        guarded.append(g["density"])
+        scales.append(g["scale"])
+        resolved.append(g["resolved"])
+        dist.append(float(_total_gradient_energy(fields).mean()))
+        kmean.append(1.0 if kappa is None else float(np.mean(kappa)))
+    return {"distinction": float(np.mean(dist)),
+            "integration": float(np.mean(integ)),
+            "integration_guarded": float(np.mean(guarded)),
+            "domain_scale": float(np.mean(scales)),
+            "resolved": bool(np.mean(resolved) >= 0.5),
+            "churn": float(np.mean(churn)),
+            "kappa_mean": float(np.mean(kmean)),
+            "sectors_alive": int(len(np.unique(labels)))}
 
 
 def evolve_palette(n_palette: int, size: int, steps: int, rng, *,
