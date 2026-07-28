@@ -32,6 +32,7 @@ import numpy as np
 from .multiphase import (
     _total_gradient_energy,
     full_palette_junction_density,
+    resolved_palette_junction_density,
     sector_labels,
     step_multiphase,
 )
@@ -75,6 +76,7 @@ def measure_window(fields, n_palette: int, window: int, rng, *,
     """
     labels = sector_labels(fields)
     churn, integ, dist = [], [], []
+    guarded, scales, resolved = [], [], []
     for _ in range(window):
         fields = step_multiphase(fields, gamma=gamma, dt=dt)
         if noise:
@@ -83,9 +85,19 @@ def measure_window(fields, n_palette: int, window: int, rng, *,
         churn.append(float((new != labels).mean()))
         labels = new
         integ.append(float(full_palette_junction_density(labels, int(n_palette))))
+        # The same quantity with the texture guard applied.  Reported
+        # alongside rather than instead of, so the effect of the guard on the
+        # published numbers is visible rather than silently folded in.
+        g = resolved_palette_junction_density(labels, int(n_palette))
+        guarded.append(g["density"])
+        scales.append(g["scale"])
+        resolved.append(g["resolved"])
         dist.append(float(_total_gradient_energy(fields).mean()))
     return {"distinction": float(np.mean(dist)),
             "integration": float(np.mean(integ)),
+            "integration_guarded": float(np.mean(guarded)),
+            "domain_scale": float(np.mean(scales)),
+            "resolved": bool(np.mean(resolved) >= 0.5),
             "churn": float(np.mean(churn)),
             "sectors_alive": int(len(np.unique(labels)))}
 

@@ -219,6 +219,21 @@ This corner is not chosen by fitting — it is what is left standing.
 **This is the falsifiable core.** Another palette scoring within 3× on the joint
 criterion sinks it.
 
+*One audit, because this measure is load-bearing.* The integration axis is
+full-palette junction density, and that measure has a known failure mode: once
+domains shrink to the lattice, every neighbourhood contains every sector for
+the trivial reason that neighbouring cells are uncorrelated, so a field that
+binds **nothing** scores near-maximally. It was caught in `n3_expansion`, where
+the most fragmented configuration in a sweep scored the *highest* integration.
+The measure now carries a guard — a majority filter plus a resolved-domain-scale
+flag — and the sweep above was re-run with it. **[measured]** Every palette is
+resolved in both dimensions; the guard moves the numbers by less than 25% and
+changes no ranking. In 2-D it *strengthens* the result (the joint margin goes
+88× → 272×, because `P = 4`'s small integration was itself partly texture). In
+3-D `P = 3` still wins, and the `P = 3`:`P = 4` integration ratio moves 5.6× →
+6.4× — still short of the 10× the monopoly claim asks for. **So the 3-D
+weakening recorded below is real, not an artifact of the measure.**
+
 ---
 
 ## 7. What this is not

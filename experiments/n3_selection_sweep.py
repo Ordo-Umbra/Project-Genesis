@@ -98,7 +98,8 @@ def sweep(args):
     rows = []
     for p in args.palettes:
         acc = {"distinction": 0.0, "integration": 0.0, "churn": 0.0,
-               "sectors_alive": 0.0}
+               "sectors_alive": 0.0, "integration_guarded": 0.0,
+               "domain_scale": 0.0}
         for s in range(args.n_seeds):
             rng = np.random.default_rng(args.seed + 101 * s)
             fields = evolve_palette(p, args.size, args.steps, rng,
@@ -110,10 +111,16 @@ def sweep(args):
                 acc[k] += m[k] / args.n_seeds
         acc["P"] = p
         acc["score"] = selection_score(acc["integration"], acc["churn"])
+        acc["score_guarded"] = selection_score(acc["integration_guarded"],
+                                               acc["churn"])
+        acc["resolved"] = acc["domain_scale"] >= 2.5
         rows.append(acc)
         print(f"  P={p}: distinction={acc['distinction']:.4f}  "
               f"integration={acc['integration']:.5f}  churn={acc['churn']:.4f}  "
-              f"alive={acc['sectors_alive']:.1f}  score={acc['score']:.3e}",
+              f"alive={acc['sectors_alive']:.1f}  score={acc['score']:.3e}  "
+              f"| guarded={acc['integration_guarded']:.5f} "
+              f"scale={acc['domain_scale']:.2f} "
+              f"{'resolved' if acc['resolved'] else 'UNRESOLVED'}",
               flush=True)
     return rows
 
@@ -205,6 +212,69 @@ def summarise(rows, args):
         "coarse stand-in for open-endedness (a driven field's late-time "
         "activity), not a proof of unbounded growth. 2-D, one lattice, one "
         "operating point, seed-averaged.")
+
+    # ---------------------------------------------------------- texture guard
+    lines.append("")
+    lines.append("=" * 74)
+    lines.append("REGRESSION CHECK: does the texture guard change any of this?")
+    lines.append("=" * 74)
+    lines.append(
+        "n3_expansion found that `full_palette_junction_density` counts "
+        "lattice-scale texture as binding: once domains shrink to the grid, "
+        "every neighbourhood contains every sector for the trivial reason that "
+        "neighbouring cells are uncorrelated. Measured there, the *most "
+        "fragmented* arm in the sweep scored the *highest* integration. That "
+        "measure is the one this experiment rests on, so it is re-run with the "
+        "guard applied (majority filter + a resolved-domain-scale flag) and "
+        "both numbers reported. Pre-registered: **the conclusion is unchanged** "
+        "— every palette is resolved, the guarded integration still peaks at "
+        "P = %d, and the guarded joint score still selects it. Falsifier: any "
+        "palette reading UNRESOLVED, or the guarded winner differing from the "
+        "raw one, would mean the published numbers were partly texture."
+        % args.expected)
+    lines.append("")
+    hdr = f"  {'P':>3} {'scale':>7} {'resolved':>9} {'integration':>12} {'guarded':>11} {'ratio':>7}"
+    lines.append(hdr)
+    for r in rows:
+        ratio = (r["integration_guarded"] / r["integration"]
+                 if r["integration"] > 0 else float("nan"))
+        lines.append(
+            f"  {r['P']:>3} {r['domain_scale']:>7.2f} "
+            f"{'yes' if r['resolved'] else 'NO':>9} "
+            f"{r['integration']:>12.5f} {r['integration_guarded']:>11.5f} "
+            f"{ratio:>7.2f}")
+    lines.append("")
+    unresolved = [r["P"] for r in rows if not r["resolved"]]
+    gi = [r["integration_guarded"] for r in rows]
+    gs = [r["score_guarded"] for r in rows]
+    ps_all = [r["P"] for r in rows]
+    g_best_i = ps_all[int(np.argmax(gi))]
+    g_best_s = ps_all[int(np.argmax(gs))]
+    rest_g = [v for pp, v in zip(ps_all, gs) if pp != g_best_s]
+    g_margin = (max(gs) / max(max(rest_g), 1e-30)) if rest_g else float("inf")
+    guard_ok = (not unresolved and g_best_i == best_i and g_best_s == best_s)
+    if guard_ok:
+        lines.append(
+            f"PREDICTION HELD — every palette is resolved, and the guard moves "
+            f"nothing: integration still peaks at P = {g_best_i} and the "
+            f"guarded joint score still selects P = {g_best_s} "
+            f"(by {g_margin:.0f}x). The published result is not an artifact of "
+            f"the texture failure mode. The guard is now on the measure, so a "
+            f"future operating point that *does* drift to lattice scale will "
+            f"say so instead of scoring well.")
+    elif unresolved:
+        lines.append(
+            f"PREDICTION FAILED — palette(s) {unresolved} are UNRESOLVED "
+            f"(domain scale below 2.5). Their integration numbers are counting "
+            f"texture and should not be used. This is exactly the condition "
+            f"n3_expansion exposed, and it means the sweep at this operating "
+            f"point cannot support the claim as stated.")
+    else:
+        lines.append(
+            f"PREDICTION FAILED — the guard changes the winner: raw integration "
+            f"peaks at P = {best_i} but guarded peaks at P = {g_best_i}; raw "
+            f"joint selects P = {best_s} but guarded selects P = {g_best_s}. "
+            f"The published numbers were partly texture.")
     return lines, n_land
 
 
