@@ -97,9 +97,28 @@ ones that can be integrated** — not the ones that are most articulate.
 **Three is special.** **[measured]** Only a three-fold junction can carry a
 complete palette at once. With two kinds you cannot form such a junction at all;
 with four or more you form *more* junctions but essentially none that bind
-everything. And this selection is **invisible when capacity is abundant** — it
-appears only when a capacity budget binds. Three sectors is not a constant put
-in by hand; it is what scarcity selects.
+everything. Three sectors is not a constant put in by hand.
+
+*Correction — this was overclaimed here, and the correction matters.* An
+earlier version of this section said the selection is "invisible when capacity
+is abundant" and "appears only when a capacity budget binds." **That is
+false**, it contradicted §2 of this same document, and it has now been measured
+directly. **[measured]** Running the palette sweep across the capacity axis —
+from the published arm that has *no capacity field at all*, through free
+capacity, to a budget so tight that mean κ falls by 98% — the peak stays at
+`P = 3` at **every** level, and among the arms where the measurement is valid
+the margin does not depend on capacity. Where scarcity does change the margin,
+it *destroys* the selection rather than revealing it, and most of that change
+is the field fragmenting to lattice scale rather than binding responding to
+scarcity.
+
+So the honest statement is the one §2 already made: **the selection is
+geometric, and capacity-invariant.** In two dimensions a generic vertex is
+three-fold — Plateau's law — so a junction can carry the whole palette only at
+`P = 3`. That is a real and sharp result, and it is *not* evidence that the
+capacity principle is doing work here: a plain multiphase field with no κ
+selects three just as sharply. The evidence for substrate-independent capacity
+dynamics is §5, not this.
 
 **Matter is the cells of a tessellation.** **[measured]** Held near its critical
 point, the field partitions space into domains, walls, and junctions — a
@@ -219,6 +238,21 @@ This corner is not chosen by fitting — it is what is left standing.
 **This is the falsifiable core.** Another palette scoring within 3× on the joint
 criterion sinks it.
 
+*One audit, because this measure is load-bearing.* The integration axis is
+full-palette junction density, and that measure has a known failure mode: once
+domains shrink to the lattice, every neighbourhood contains every sector for
+the trivial reason that neighbouring cells are uncorrelated, so a field that
+binds **nothing** scores near-maximally. It was caught in `n3_expansion`, where
+the most fragmented configuration in a sweep scored the *highest* integration.
+The measure now carries a guard — a majority filter plus a resolved-domain-scale
+flag — and the sweep above was re-run with it. **[measured]** Every palette is
+resolved in both dimensions; the guard moves the numbers by less than 25% and
+changes no ranking. In 2-D it *strengthens* the result (the joint margin goes
+88× → 272×, because `P = 4`'s small integration was itself partly texture). In
+3-D `P = 3` still wins, and the `P = 3`:`P = 4` integration ratio moves 5.6× →
+6.4× — still short of the 10× the monopoly claim asks for. **So the 3-D
+weakening recorded below is real, not an artifact of the measure.**
+
 ---
 
 ## 7. What this is not
@@ -254,6 +288,7 @@ Every claim above is a file you can run.
 ```
 python experiments/n3_selection_sweep.py       # §6, the selection argument
 python experiments/n3_capacity_separation.py   # §2, the cliff
+python experiments/n3_capacity_gating.py       # §3, the correction (geometry, not scarcity)
 python experiments/n3_area_law.py              # §2, the scaling dimension
 python experiments/n3_exchange_statistics.py   # §3, the exchange sign
 python experiments/n3_ab_statistics.py         # §3, spin = statistics = gauge
@@ -269,7 +304,7 @@ lock the central claims so they cannot drift silently.
 
 **What would refute the whole thing:** a palette other than three scoring
 comparably on the joint criterion (§6); a capacity sweep that moves the
-integrated fraction (§2); or an integration measure that scales with volume
+integrated fraction (§2 — run, and it does not); or an integration measure that scales with volume
 rather than surface (§2). Those are the load-bearing measurements. The rest is
 consequence.
 

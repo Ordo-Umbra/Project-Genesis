@@ -394,6 +394,93 @@ def full_palette_junction_density(labels: np.ndarray, n_palette: int) -> float:
     return float(np.mean((bits == full) & (distinct >= 3)))
 
 
+def domain_scale(labels: np.ndarray) -> float:
+    """Volume per unit wall area — the mean domain size, in lattice units.
+
+    ``1.0`` means every site borders a different sector: there is no
+    tessellation, only texture.  Used to decide whether a junction count is
+    measuring anything.
+    """
+    bits = _neighbourhood_label_bits(labels)
+    wall = int(np.sum(_popcount(bits) >= 2))
+    return float(labels.size) / wall if wall else float(labels.size)
+
+
+def majority_filter(labels: np.ndarray, n_palette: int, passes: int = 1) -> np.ndarray:
+    """Replace each cell by the commonest sector in its 3^d neighbourhood.
+
+    Isolated cells — the signature of a field disordered at lattice scale —
+    do not survive a majority vote.  Domain walls and the junctions between
+    genuine domains do, because there the majority genuinely is the domain.
+    Resolution is preserved (this filters, it does not downsample), so the
+    junction geometry is unchanged wherever a domain structure exists at all.
+    """
+    out = labels
+    for _ in range(int(passes)):
+        counts = np.zeros((int(n_palette),) + out.shape, dtype=np.int16)
+        for k in range(int(n_palette)):
+            eq = (out == k).astype(np.int16)
+            acc = eq.copy()
+            for off in _neighbour_offsets(out.ndim):
+                shifted = eq
+                for axis, delta in enumerate(off):
+                    if delta:
+                        shifted = np.roll(shifted, -delta, axis=axis)
+                acc = acc + shifted
+            counts[k] = acc
+        out = np.argmax(counts, axis=0).astype(labels.dtype)
+    return out
+
+
+def resolved_palette_junction_density(
+    labels: np.ndarray,
+    n_palette: int,
+    *,
+    passes: int = 1,
+    min_scale: float = 2.5,
+) -> dict:
+    """Full-palette junction density, with a guard against lattice-scale texture.
+
+    :func:`full_palette_junction_density` asks whether a neighbourhood contains
+    every sector at once.  That question presumes domains large enough for a
+    junction to *mean* something.  When the domain scale falls to the lattice,
+    every neighbourhood contains every sector for the trivial reason that
+    neighbouring cells are uncorrelated — and the measure then reports a very
+    high "integration" for a field that binds nothing at all.
+
+    Measured instance: in ``n3_expansion`` the fastest de Sitter arm scored the
+    *highest* raw integration in the sweep (0.0276) at a domain scale of 1.68,
+    while the well-resolved arms scored ~0.  The raw measure ranked the most
+    fragmented configuration first.
+
+    Two corrections, and it is worth being clear which one carries the weight:
+
+    - the labels are majority-filtered first, which removes isolated cells
+      without touching genuine domain geometry.  On a *fully* disordered
+      four-sector field this is only a partial fix — measured, the raw density
+      is 0.997 and one filter pass brings it to 0.641, two to 0.281.  Random
+      labels stay fairly random under a mode filter.  So the filter helps, and
+      it is not sufficient on its own;
+    - the domain scale is therefore reported alongside, and ``resolved`` is
+      False below ``min_scale``.  **This flag is the real guard.**  A number
+      from an unresolved field should be discarded, not corrected.
+
+    On a field with genuine domains the filter is a no-op: measured on a
+    four-block partition, raw and guarded densities agree to four decimals.
+
+    Returns ``density`` (guarded), ``raw`` (unguarded, for comparison),
+    ``scale`` and ``resolved``.
+    """
+    scale = domain_scale(labels)
+    raw = full_palette_junction_density(labels, n_palette)
+    smoothed = majority_filter(labels, n_palette, passes=passes)
+    guarded = full_palette_junction_density(smoothed, n_palette)
+    return {"density": guarded,
+            "raw": raw,
+            "scale": scale,
+            "resolved": bool(scale >= float(min_scale))}
+
+
 def topological_s_functional(
     fields: np.ndarray,
     *,
