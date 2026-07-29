@@ -144,6 +144,28 @@ Aharonov–Bohm holonomy. **Spin, statistics, and gauge give one number, measure
 three independent ways.** The constituent count of a composite is fixed at three
 by the same `N⋆ = 3`: a spin defect's winding must cross every sector.
 
+*Dimensional audit — half of this is 3-D and half is planar.* **[measured]**
+Every module above represents the director as `θ = ½·arg ψ`, and a complex phase
+is a point on a circle, so they describe a director confined to a plane: order
+parameter space `RP¹`, where `π₁ = Z`. A director free to point anywhere lives
+on `RP²`, where `π₁ = **Z/2**` — only two classes. Run on a real
+three-component director, with the plane-confinement as the only difference
+between arms: seeded identically off the symmetric saddle, the **integer** line
+escapes along its own axis and ends non-singular (core `|n_z|` 0.66 → **0.98**),
+while the **half-integer** line pushes the same tilt back out and stays singular
+(0.66 → **0.02**). That asymmetry is `π₁(RP²) = Z/2`, measured rather than
+cited.
+
+So: **the ½ defect is a genuine, protected, singular object in three
+dimensions** — there is a 3-D spinor, the exchange sign needs exactly two
+classes and `Z/2` supplies exactly two, and the 4π double cover was always a
+`π₁(SO(3)) = Z/2` fact independent of the order parameter's dimension. What does
+*not* survive is the integer-graded ladder: in `RP²`, `+½` and `−½` are the
+**same class**, a half-line is its own antiparticle, and there is no signed
+winding to count. **The "winding must cross every sector" argument for the
+constituent count is therefore a planar argument and does not transfer as
+written.** It needs restating in `Z/2` terms or marking as 2-D.
+
 ---
 
 ## 4. What follows: gravity and cosmos
