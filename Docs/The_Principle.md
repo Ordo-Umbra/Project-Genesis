@@ -193,6 +193,37 @@ is imported as literally the same code object in each. All three show the same
 level crossing under the same toggle: order that is *free* is scarcity-proof;
 order that must be *maintained* is driven to the edge.
 
+**[measured, and it narrows the claim]** An audit of the units
+(`n3_crossing_prediction`) establishes what that agreement is and is not.
+
+- The consumption `c` and the recovery rate `r` are **one parameter**, not two:
+  the capacity law depends only on `u = c/r`. Every `c` the transplants quote is
+  really `c/r`, and `r` is the axis's unit.
+- The mechanism's condition needs no toggle. Eviction happens **iff** the
+  capacity floor the load permits, `1/(1 + u·L_o)`, falls below the crossing
+  capacity `κ_o⋆` fixed by the measured curves. The published four-condition
+  result is a comparison of two numbers.
+- Where the relocation is a single jump it **is** exactly the two-point
+  competition the mechanism describes — integration funding decaying past the
+  distinction gap — to **0.1%** on the Hopfield network.
+- But it is not always a single jump. Under a flat load the optimum walks the
+  upper convex hull of the `(ΔI, ΔC)` cloud; that hull has two vertices on the
+  Hopfield network and **three** on the driven oscillators, which stop at an
+  intermediate partially-synchronised state first.
+- And the oscillators' load is **mostly the drive**. The injected phase noise
+  contributes `σ√dt` per step to the measured activity, and the ordered phase's
+  reading is `1.004×` that floor as `dt → 0`: `activity` never subtracts the
+  perturbation, where the Hopfield query drive explicitly does. Between the two
+  points that matter the load ratio is `ρ ≈ 1.0`, against `34` on the network.
+
+So the third substrate agrees on the **verdict** while differing on the
+**mechanism**: a uniform tax that costs the integration-funded optimum its lead
+because `ΔI_o > ΔI_⋆`, not a differential tax on order. Two substrates carry the
+mechanism, not three, and **where** the crossing sits is not established in any
+substrate-independent variable. `1/3` registered predictions held. The fix is
+specific — the oscillator load should exclude the drive's own contribution —
+and until it does, *one law across three substrates* overstates this.
+
 **[measured]** Where the law meets external ground truth — a learning system —
 capacity-gated plasticity beats plain SGD on a compositional task sequence,
 paired and powered (`p < 0.001`), and the advantage is scarcity-graded. Its
@@ -296,6 +327,7 @@ python experiments/n3_kappa_gravity.py         # §4, gravity
 python experiments/n3_boundary_gravity.py      # §4, the negative
 python experiments/n3_criticality_transplant.py  # §5, substrate independence
 python experiments/n3_kuramoto_transplant.py     # §5, the third substrate
+python experiments/n3_crossing_prediction.py     # §5, the units audit of both
 ```
 
 Each prints its own pre-registered predictions, its verdict, and its honest
