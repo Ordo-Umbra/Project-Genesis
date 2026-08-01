@@ -324,10 +324,26 @@ And the reason is structural, not a tuning failure. In 17 of 31 Hopfield arms
 the causal ΔC peaks at the **cold end**: in the ordered phase the dynamics are
 near-deterministic, so distinct microstates stay distinct and every sample
 resolves as its own causal state. **Causal distinguishability is maximal
-exactly where URP needs ΔC to be minimal.** Nor is there a horizon that fixes
-it — at one relaxation time both substrates read a saturated `ΔC = 1.000`
-everywhere, and on the oscillators the curve's *shape* inverts between
-`τ = 150` and `τ = 400` steps rather than converging.
+exactly where URP needs ΔC to be minimal.**
+
+Nor is there a horizon that escapes it. There are three regimes and none of
+them is usable:
+
+| horizon | what the reading does |
+|---|---|
+| short (`τ = 1` relaxation) | saturates at `ΔC = 1.000` on the whole scan — no shape at all |
+| intermediate (`τ = 5`) | saturates on the *disordered half*; the "peak" is a tie-break among ceiling points |
+| long (`τ = 20–40`) | peaks at the cold end, or the shape inverts outright |
+
+The intermediate case is the one most likely to be mistaken for success, and
+it is worth being precise about. On the oscillators at `τ = 5`, all nine arms
+report the peak inside the critical window — but the measured curve is
+`ΔC = 0.355, 0.595, 1.000, 1.000, 1.000, 1.000, 1.000` across `γ`, with all
+twenty sampled states resolving as distinct causal states everywhere from
+`γ = 0.87` up. The argmax is picking whichever tied ceiling point comes first.
+`n3_causal_delta_c` now reports the saturated fraction and marks such arms
+`TIE` rather than counting them as landing in the window; without that the
+table reads as a clean pass.
 
 Any construction of the form *"states differ if their futures differ"* inherits
 this, because determinism is what makes futures differ reliably. Recovering the

@@ -222,17 +222,28 @@ def critical_x(rows, x_key):
     return float("nan")
 
 
-def reading(rows, x_key, window):
+def reading(rows, x_key, window, *, tol: float = 1e-6):
+    """Anatomy of one scan — plus whether the reading is pinned at its ceiling.
+
+    ``saturated`` and ``peak_is_tie`` exist because a ΔC that has hit 1.0 over
+    part of the scan carries no shape information there: every sampled state is
+    resolving as its own causal state, and ``argmax`` is then picking whichever
+    tied point comes first. Without this an arm reads "peak inside the critical
+    window" and looks like a success when it is an artefact of the tie.
+    """
     x = np.array([r[x_key] for r in rows])
     dc = np.array([r["delta_c"] for r in rows])
     x_peak = float(x[int(np.argmax(dc))])
     x_c = critical_x(rows, x_key)
     e = chord_excess(rows)
+    n_at_max = int(np.count_nonzero(dc >= dc.max() - tol))
     return {"x_peak": x_peak, "x_c": x_c,
             "in_window": bool(np.isfinite(x_c)
                               and abs(x_peak - x_c) <= window * x_c),
             "hull": hull_size(rows), "excess": e["excess"],
-            "excess_frac": e["excess_frac"], "dc_max": float(dc.max())}
+            "excess_frac": e["excess_frac"], "dc_max": float(dc.max()),
+            "saturated": float(np.mean(dc >= 1.0 - tol)),
+            "peak_is_tie": bool(n_at_max > 1), "n_at_max": n_at_max}
 
 
 def main() -> int:
@@ -296,17 +307,20 @@ def main() -> int:
         print(f"{kind.upper()} — causal ΔC across the free statistical choices")
         print(BANNER)
         print(f"  {'tau/τ':>4} {'R':>4} {'conf':>5} {'hull':>5} {'E/gap':>8} "
-              f"{'ΔC max':>7} {'x⋆':>6} {'x_c':>6} {'in win':>7}")
+              f"{'ΔC max':>7} {'sat':>5} {'x⋆':>6} {'x_c':>6} {'in win':>9}")
         for (scale, rep, conf) in combos:
             tau = max(1, int(round(scale * RELAX[kind])))
             rows = scan(kind, cfg, args.seed, args.n_states, tau, rep, conf)
             r = reading(rows, xk, args.critical_window)
             arms[f"{kind} tau={scale:g} R={rep} conf={conf}"] = {
                 **r, "kind": kind, "tau_steps": tau}
+            verdict = ("TIE" if r["peak_is_tie"]
+                       else ("yes" if r["in_window"] else "NO"))
             print(f"  {scale:>4g} {rep:>4} {conf:>5.2f} {r['hull']:>5} "
                   f"{r['excess_frac']:>8.3f} {r['dc_max']:>7.3f} "
+                  f"{r['saturated']:>5.0%} "
                   f"{r['x_peak']:>6.2f} {r['x_c']:>6.2f} "
-                  f"{'yes' if r['in_window'] else 'NO':>7}")
+                  f"{verdict:>9}")
         print()
     print(f"  [{time.time() - t0:.0f}s]")
 
@@ -337,7 +351,8 @@ def main() -> int:
     print(BANNER)
     print("Q2  IS THE PEAK ROBUST WHERE THE THRESHOLD PEAK WAS NOT?")
     print(BANNER)
-    out = [k for k, v in arms.items() if not v["in_window"]]
+    out = [k for k, v in arms.items()
+           if not v["in_window"] or v["peak_is_tie"]]
     print(f"  arms with the ΔC peak inside the critical window: "
           f"{len(arms) - len(out)}/{len(arms)}")
     for k in out:
