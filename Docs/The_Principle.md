@@ -329,21 +329,23 @@ exactly where URP needs ΔC to be minimal.**
 Nor is there a horizon that escapes it. There are three regimes and none of
 them is usable:
 
-| horizon | what the reading does |
-|---|---|
-| short (`τ = 1` relaxation) | saturates at `ΔC = 1.000` on the whole scan — no shape at all |
-| intermediate (`τ = 5`) | saturates on the *disordered half*; the "peak" is a tie-break among ceiling points |
-| long (`τ = 20–40`) | peaks at the cold end, or the shape inverts outright |
+| horizon | what the reading does | scan at ceiling |
+|---|---|---|
+| short (`τ = 1` relaxation) | no shape at all | **100%** |
+| intermediate (`τ = 5`) | "peak" is a tie-break among ceiling points | **62–69%** |
+| long (`τ = 20–40`) | peaks at the cold end, or the shape inverts | — |
 
-The intermediate case is the one most likely to be mistaken for success, and
-it is worth being precise about. On the oscillators at `τ = 5`, all nine arms
-report the peak inside the critical window — but the measured curve is
-`ΔC = 0.355, 0.595, 1.000, 1.000, 1.000, 1.000, 1.000` across `γ`, with all
-twenty sampled states resolving as distinct causal states everywhere from
-`γ = 0.87` up. The argmax is picking whichever tied ceiling point comes first.
-`n3_causal_delta_c` now reports the saturated fraction and marks such arms
-`TIE` rather than counting them as landing in the window; without that the
-table reads as a clean pass.
+The intermediate case is the one most likely to be mistaken for success. On the
+oscillators at `τ = 5` all nine arms report the peak inside the critical
+window, which reads as a clean pass. But the measured curve is
+`ΔC = 0.355, 0.595, 1.000, 1.000, 1.000, 1.000, 1.000` across `γ` — every one
+of the twenty sampled states resolving as a distinct causal state from
+`γ = 0.87` up — so the argmax is picking whichever tied ceiling point comes
+first. `n3_causal_delta_c` now reports the saturated fraction per arm and marks
+these `TIE` instead of counting them as landing in the window. With the
+diagnostic in place **all 18 completed oscillator arms are `TIE`**: not one of
+them carries a usable peak, where before the diagnostic nine of them looked
+like successes.
 
 Any construction of the form *"states differ if their futures differ"* inherits
 this, because determinism is what makes futures differ reliably. Recovering the
