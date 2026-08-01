@@ -390,6 +390,38 @@ anything above: ΔC still has no derived value and the retraction stands. What
 it changes is the *kind* of object the gap is. A choice with a coordinate can be
 stated, compared between observers, and quotiented; a choice without one cannot.
 
+**[measured — the same audit, aimed at the one agent-facing instrument]**
+`trajectory_label` sorts a step in `(ΔC, ΔI)` into `expanding` /
+`consolidating` / `diverging` / `contracting` / `steady`, and the identical
+taxonomy is read on LLM session traces in the sibling repo. Both transplants use
+it to report a `diverging` band — "the compass's hallucination trajectory" — and
+place the capacity-starved optimum inside it. It takes a `deadband`, published
+at `0.01`, which nothing derives. `n3_label_stability` sweeps it. `2/3` held:
+
+- **The labels move.** Only `27%` (network) and `17%` (oscillators) of steps
+  keep the same label across the sweep, so the constant is a parameter of the
+  reading, not a formality.
+- **But monotonically.** Widening the deadband only ever converts `diverging`
+  steps into `steady` ones — never the reverse — so it behaves as a sensitivity
+  dial. A flag raised at a wide deadband is a fortiori raised at a narrow one.
+- **And `0.01` is knife-edge on one substrate.** It survives `20×` downward on
+  both, but only `5×` up on the network and **`1.0×` up on the oscillators** —
+  the very next setting moves the band.
+
+The useful part is that **presence and extent come apart**. The `diverging`
+regime is present at *every* deadband tested on both substrates, while its
+**onset** takes three distinct values on the oscillators. So the two questions
+one would actually ask of a running agent have different answers: *is this
+trajectory diverging?* is robust; *when did it start?* is not. Reporting the
+flag is defensible; reporting where it began requires reporting the deadband
+with it.
+
+This is the third instrument in a row where a confident-looking reading turned
+out to rest on an underived constant, and the second where the failure was the
+*statistic* rather than the phenomenon. The transferable discipline — sweep the
+convention, and separate the claim that survives from the one that does not — is
+at this point better established than any particular substrate result.
+
 *Scope, stated because it is a real limit on the above.* The Hopfield sweep
 covers `31` of `36` arms and every value of each free choice; the missing five
 are the most expensive corner. On the oscillators only the `τ = 1` block
@@ -506,6 +538,7 @@ python experiments/n3_kuramoto_repair.py         # §5, the drive-free load
 python experiments/n3_anatomy.py                 # §5, is the destination real?
 python experiments/n3_causal_delta_c.py          # §5, a DC with no cut (negative)
 python experiments/n3_convention_manifold.py     # §5, does the gap have a coordinate?
+python experiments/n3_label_stability.py         # §5, the compass's own deadband
 ```
 
 Each prints its own pre-registered predictions, its verdict, and its honest
