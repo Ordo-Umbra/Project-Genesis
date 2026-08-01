@@ -266,16 +266,40 @@ What did not repair is the **destination**. The route is set by the `(ΔI, ΔC)`
 cloud, which no choice of load metric can move; correcting the load made the
 oscillators' walk *longer* — four stops rather than three — because taxing the
 ordered phase harder evicts it earlier, onto a state only part-way to the ΔC
-peak. The oscillator population has a viable partially-synchronised state
-carrying substantial coherence **and** near-peak distinction; the Hopfield
-network has no analogue. That is anatomy, not convention, and it survives the
-fix.
+peak.
 
-The honest statement therefore splits in two: *the condition for eviction is
-substrate-independent across all three; where the optimum lands is not.* Only
-the Hopfield network relocates in a single jump onto the maximum-distinction
-state, and **where** the crossing sits is still not established in any
-substrate-independent variable.
+**[measured — and it retracts the reading above]** That was written here as
+*anatomy, not convention*, on the reasoning that a load metric cannot move the
+cloud. The reasoning has a hole: the cloud is not raw data either. **ΔC is
+itself a convention on both substrates** — a structured-overlap threshold on the
+network (published `0.3`), a fixed frequency-bin width and entrainment tolerance
+on the oscillators (published `0.4` / `0.3`) — and none of those numbers is
+derived from anything. `n3_anatomy` sweeps each substrate's own ΔC convention
+across a range a reader would accept without argument. `2/3` held:
+
+- **The route is not a property of either substrate.** Both hulls flip between
+  two and three vertices inside their own sweeps. "The network crosses once and
+  the oscillators walk" was a statement about the dictionaries.
+- **The eviction condition is untouched**, in `16/16` arms. The capacity floor
+  sits orders of magnitude below `κ_o⋆` everywhere, so this was never a close
+  call a convention could tip. Everything above about the *condition* stands.
+- **The critical neighbourhood does not fully survive.** The ΔC peak slides
+  monotonically with the network's threshold — `T⋆ = 1.20 → 0.70` across
+  `0.15 → 0.50` — and leaves the published `±35%·T_c` window at the two most
+  permissive settings. One of those, `0.20`, is `3.5σ` above chance overlap for
+  `N = 300`: strict enough that its failure is not an artefact of an absurd
+  setting.
+
+So the claim survives at one resolution and not at the next two. **Does a
+relocation happen?** Yes, and convention-independently. **Does it reach
+criticality?** At the published conventions yes, but the ΔC peak's location is
+a function of an underived threshold, so this is not established in general.
+**Which state, by which route?** Not established at all.
+
+That is a narrower result than §5 has claimed at any point, and it is the one
+the measurements support. The next thing worth doing is not another substrate:
+it is a principled ΔC — a distinction reading whose scale comes from the
+substrate rather than from a chosen cut.
 
 **[measured]** Where the law meets external ground truth — a learning system —
 capacity-gated plasticity beats plain SGD on a compositional task sequence,
@@ -382,6 +406,7 @@ python experiments/n3_criticality_transplant.py  # §5, substrate independence
 python experiments/n3_kuramoto_transplant.py     # §5, the third substrate
 python experiments/n3_crossing_prediction.py     # §5, the units audit of both
 python experiments/n3_kuramoto_repair.py         # §5, the drive-free load
+python experiments/n3_anatomy.py                 # §5, is the destination real?
 ```
 
 Each prints its own pre-registered predictions, its verdict, and its honest
