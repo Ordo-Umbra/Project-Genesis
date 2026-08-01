@@ -361,6 +361,35 @@ formulated, not a defect in three experiments. What is unaffected is the
 eviction *condition*, which survived every convention sweep in `16/16` arms;
 what is blocked is anything depending on ΔC's shape.
 
+**[measured — the gap has a coordinate]** If the choice cannot be removed, the
+next question is whether it is *structured*: do the admissible ΔC conventions
+move the reading along one axis, or in many independent directions?
+`n3_convention_manifold` tests this, and it is testable because the convention
+changes **only** ΔC — ΔI and the load come off the same trajectories — so a
+family of conventions gives a family of curves over one fixed scan with
+everything else identical. `2/3` held:
+
+- **On the oscillators the consequence is invariant.** Across all nine
+  combinations of two unrelated knobs — entrainment tolerance and frequency bin
+  width — the ΔC peak spans `0.192`, exactly one scan grid step. Two independent
+  conventions do not move it at all.
+- **On the network it is monotone in the cut.** The peak slides
+  `T⋆ = 1.10 → 0.70` as the threshold tightens, and the leading curve-shape axis
+  is perfectly monotone in the knob (`Spearman = +1.000`).
+- **The registered bar was `r² ≥ 0.80` and the network gave `0.756`**, so Q1 is
+  recorded as failed. But the second axis adds `+0.014`, and by rank rather than
+  linear fit the shape axis and the knob are the *same* predictor of the peak —
+  `Spearman = −0.906` for both. `r²` is a linear statistic and `argmax` is not a
+  linear functional of a grid-quantised curve, so what failed is the estimator.
+  Registered as a failure regardless.
+
+So the freedom in ΔC is not an open set. It is **one interpretable knob** —
+resolution — with two independent conventions on one substrate collapsing onto
+it and the second direction adding nothing on either. That does not repair
+anything above: ΔC still has no derived value and the retraction stands. What
+it changes is the *kind* of object the gap is. A choice with a coordinate can be
+stated, compared between observers, and quotiented; a choice without one cannot.
+
 *Scope, stated because it is a real limit on the above.* The Hopfield sweep
 covers `31` of `36` arms and every value of each free choice; the missing five
 are the most expensive corner. On the oscillators only the `τ = 1` block
@@ -476,6 +505,7 @@ python experiments/n3_crossing_prediction.py     # §5, the units audit of both
 python experiments/n3_kuramoto_repair.py         # §5, the drive-free load
 python experiments/n3_anatomy.py                 # §5, is the destination real?
 python experiments/n3_causal_delta_c.py          # §5, a DC with no cut (negative)
+python experiments/n3_convention_manifold.py     # §5, does the gap have a coordinate?
 ```
 
 Each prints its own pre-registered predictions, its verdict, and its honest
