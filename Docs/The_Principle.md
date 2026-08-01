@@ -301,6 +301,56 @@ the measurements support. The next thing worth doing is not another substrate:
 it is a principled ΔC — a distinction reading whose scale comes from the
 substrate rather than from a chosen cut.
 
+**[measured, a negative — and it may be a constraint rather than a gap]**
+`causal_state.py` and `n3_causal_delta_c` attempt exactly that, via the
+causal-state construction: two states are the same state when the dynamics
+cannot tell their futures apart, with "cannot tell apart" calibrated against
+the spread of a *single* state's own replicates. Nothing is thresholded; the
+resolution comes from the system's own stochasticity.
+
+It is a correct instrument. Against ground truth — `k` genuinely distinct
+attractors — it recovers `k` exactly for `k = 1, 2, 3, 5`, and **the count does
+not move with the noise amplitude** (`0.1 → 2.0`), which is precisely the
+failure mode that contaminated the oscillator load reading.
+
+It is also **worse than what it replaces**, on the same sweep design:
+
+| across the free choices | threshold ΔC | causal ΔC |
+|---|---|---|
+| hull sizes | `{2, 3}` | `{2, 3, 4, 5, 6, 7}` |
+| arms with the ΔC peak in the critical window | 5/7 | 5/31 |
+
+And the reason is structural, not a tuning failure. In 17 of 31 Hopfield arms
+the causal ΔC peaks at the **cold end**: in the ordered phase the dynamics are
+near-deterministic, so distinct microstates stay distinct and every sample
+resolves as its own causal state. **Causal distinguishability is maximal
+exactly where URP needs ΔC to be minimal.** Nor is there a horizon that fixes
+it — at one relaxation time both substrates read a saturated `ΔC = 1.000`
+everywhere, and on the oscillators the curve's *shape* inverts between
+`τ = 150` and `τ = 400` steps rather than converging.
+
+Any construction of the form *"states differ if their futures differ"* inherits
+this, because determinism is what makes futures differ reliably. Recovering the
+quantity URP actually wants — diversity of *structured* states — would require
+counting distinguishable **macro**states, which needs a coarse-graining, which
+is the chosen cut this was meant to eliminate. The loop closes.
+
+So the honest reading is stronger than "this attempt failed": distinction
+requires committing to *which differences count as differences*, and the
+dynamics alone will not supply that commitment. On present evidence the
+arbitrariness in ΔC looks **irreducible** — a constraint on the principle as
+formulated, not a defect in three experiments. What is unaffected is the
+eviction *condition*, which survived every convention sweep in `16/16` arms;
+what is blocked is anything depending on ΔC's shape.
+
+*Scope, stated because it is a real limit on the above.* The Hopfield sweep
+covers `31` of `36` arms and every value of each free choice; the missing five
+are the most expensive corner. On the oscillators only the `τ = 1` block
+(`9/9` arms) completed, supplemented by the direct horizon probe recorded in
+the experiment. Repeated interruptions of long runs in the execution
+environment, not a design choice, are why — and the qualitative conclusion is
+carried by both substrates while the formal oscillator sweep is not complete.
+
 **[measured]** Where the law meets external ground truth — a learning system —
 capacity-gated plasticity beats plain SGD on a compositional task sequence,
 paired and powered (`p < 0.001`), and the advantage is scarcity-graded. Its
@@ -407,6 +457,7 @@ python experiments/n3_kuramoto_transplant.py     # §5, the third substrate
 python experiments/n3_crossing_prediction.py     # §5, the units audit of both
 python experiments/n3_kuramoto_repair.py         # §5, the drive-free load
 python experiments/n3_anatomy.py                 # §5, is the destination real?
+python experiments/n3_causal_delta_c.py          # §5, a DC with no cut (negative)
 ```
 
 Each prints its own pre-registered predictions, its verdict, and its honest
