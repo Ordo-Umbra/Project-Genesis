@@ -247,6 +247,12 @@ def main() -> int:
     p.add_argument("--confidences", type=float, nargs="+",
                    default=[0.90, 0.95, 0.99])
     p.add_argument("--seed", type=int, default=31337)
+    p.add_argument("--substrates", nargs="+", default=["hopfield", "kuramoto"],
+                   choices=["hopfield", "kuramoto"],
+                   help="Run one substrate at a time. The Hopfield arms at "
+                        "large tau are ~8 min each (Glauber is a per-spin "
+                        "Python loop); the oscillator arms are vectorised and "
+                        "cheap, so splitting them lets the cheap half finish.")
     p.add_argument("--output-dir", type=Path, default=None)
     p.add_argument("--quick", action="store_true")
     args = p.parse_args()
@@ -282,7 +288,10 @@ def main() -> int:
     arms = {}
     combos = [(t, r, c) for t in args.tau_scales for r in args.replicates
               for c in args.confidences]
-    for kind, cfg, xk in (("hopfield", hop, "T"), ("kuramoto", kur, "gamma")):
+    todo = [(k, c, x) for k, c, x in (("hopfield", hop, "T"),
+                                      ("kuramoto", kur, "gamma"))
+            if k in args.substrates]
+    for kind, cfg, xk in todo:
         print(BANNER)
         print(f"{kind.upper()} — causal ΔC across the free statistical choices")
         print(BANNER)
