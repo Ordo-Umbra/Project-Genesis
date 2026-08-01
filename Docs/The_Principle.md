@@ -216,13 +216,44 @@ order that must be *maintained* is driven to the edge.
   perturbation, where the Hopfield query drive explicitly does. Between the two
   points that matter the load ratio is `ρ ≈ 1.0`, against `34` on the network.
 
-So the third substrate agrees on the **verdict** while differing on the
-**mechanism**: a uniform tax that costs the integration-funded optimum its lead
-because `ΔI_o > ΔI_⋆`, not a differential tax on order. Two substrates carry the
-mechanism, not three, and **where** the crossing sits is not established in any
-substrate-independent variable. `1/3` registered predictions held. The fix is
-specific — the oscillator load should exclude the drive's own contribution —
-and until it does, *one law across three substrates* overstates this.
+So on the published reading the third substrate agrees on the **verdict** while
+differing on the **mechanism**: a uniform tax that costs the integration-funded
+optimum its lead because `ΔI_o > ΔI_⋆`, not a differential tax on order. `1/3`
+registered predictions held.
+
+**[measured, and it repairs half of that]** The last bullet named a specific
+fix, and `n3_kuramoto_repair` carried it out. `simulate` now also reports
+`repair_rate` — the spread of the *deterministic* phase velocity,
+`std_i(v_i − ⟨v⟩)` with `v_i = ω_i + K·r·sin(ψ − θ_i)` — which contains none of
+the injected noise and, being a rate rather than a per-step displacement,
+carries no `dt`. `activity` is unchanged and bit-identical, so the three
+published results remain reproducible as stated. On the corrected reading
+(`2/3` held):
+
+- It measures the system, not the apparatus. Across a 16× change in the
+  integrator's step `repair_rate` moves **7.8%** where `activity` moves
+  **4.4×** — and a deterministic locked rhythm still pays nothing, so the
+  toggle the transplant design needs survives.
+- The load profile is **not** flat after all: `ρ = 1.70`, against `1.04` for
+  the contaminated reading. The differential tax the mechanism describes is
+  genuinely present here; the noise floor was hiding it.
+- So the **condition** does transplant to all three substrates. Order that must
+  be maintained pays, and scarcity evicts it.
+
+What did not repair is the **destination**. The route is set by the `(ΔI, ΔC)`
+cloud, which no choice of load metric can move; correcting the load made the
+oscillators' walk *longer* — four stops rather than three — because taxing the
+ordered phase harder evicts it earlier, onto a state only part-way to the ΔC
+peak. The oscillator population has a viable partially-synchronised state
+carrying substantial coherence **and** near-peak distinction; the Hopfield
+network has no analogue. That is anatomy, not convention, and it survives the
+fix.
+
+The honest statement therefore splits in two: *the condition for eviction is
+substrate-independent across all three; where the optimum lands is not.* Only
+the Hopfield network relocates in a single jump onto the maximum-distinction
+state, and **where** the crossing sits is still not established in any
+substrate-independent variable.
 
 **[measured]** Where the law meets external ground truth — a learning system —
 capacity-gated plasticity beats plain SGD on a compositional task sequence,
@@ -328,6 +359,7 @@ python experiments/n3_boundary_gravity.py      # §4, the negative
 python experiments/n3_criticality_transplant.py  # §5, substrate independence
 python experiments/n3_kuramoto_transplant.py     # §5, the third substrate
 python experiments/n3_crossing_prediction.py     # §5, the units audit of both
+python experiments/n3_kuramoto_repair.py         # §5, the drive-free load
 ```
 
 Each prints its own pre-registered predictions, its verdict, and its honest
