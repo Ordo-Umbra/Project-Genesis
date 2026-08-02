@@ -12,7 +12,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
 
     steps:
       - name: Checkout repository
@@ -28,11 +28,22 @@ jobs:
         timeout-minutes: 10
         run: python -m pip install -r requirements.txt
 
-      # The suite runs real simulations, not mocks: ~1100 tests taking ~13 min
-      # of genuine computation locally. At a 15 min cap it was passing at 86%
+      # The suite runs real simulations, not mocks: 1184 tests taking ~15 min
+      # of genuine computation on the runner. At a 15 min cap it passed at 86%
       # of budget with no headroom, so ordinary runner variance failed it
-      # (run 30679105296). Raised rather than thinned -- the tests that cost
-      # the time are the ensemble and substrate ones that catch real errors.
+      # (run 30679105296); an 18 min cap left it at 82% (14m42s, run
+      # 30753076719) -- the same shape of problem, because the suite grows
+      # every time a claim gets audited and nothing ever shrinks it.
+      #
+      # So this cap is now sized as a hang-detector rather than a performance
+      # budget: ~2x the observed runtime. A timeout should tell us something
+      # is stuck, not that the runner had a slow morning. Raised rather than
+      # thinned -- the tests that cost the time are the ensemble and substrate
+      # ones that catch real errors, and they are the reason to have CI.
+      #
+      # If this needs raising again, that is the signal to split the job by
+      # test directory and run the halves in parallel, not to keep buying
+      # minutes.
       - name: Run test suite
-        timeout-minutes: 18
+        timeout-minutes: 30
         run: python -m unittest discover -s tests -v
