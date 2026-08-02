@@ -170,8 +170,8 @@ texture guard confirms are genuine tilings:
 
 | junction test | P=2 | P=3 | P=4 | P=5 | P=6 | winner |
 |---|---|---|---|---|---|---|
-| `>= 3` (published) | 0 | **0.0286** | 0.0032 | 0.0002 | 0 | `P=3` |
-| `>= 4` (`d+1`) | 0 | **0** | **0.0032** | 0.0002 | 0 | **`P=4`** |
+| `>= 3` (published) | 0 | **0.0290** | 0.0021 | 0.0002 | 0 | `P=3` |
+| `>= 4` (`d+1`) | 0 | **0** | **0.0021** | 0.0002 | 0 | **`P=4`** |
 
 `P = 3` falls to *identically* zero, because a three-colour palette cannot form
 a four-fold vertex at all. So `d+1` is right and is now **measured rather than
