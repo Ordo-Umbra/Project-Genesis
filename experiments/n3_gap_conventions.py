@@ -87,6 +87,8 @@ from project_genesis.area_law import (  # noqa: E402
     scaling_exponent,
 )
 from project_genesis.multiphase import _total_gradient_energy  # noqa: E402
+from project_genesis.robustness import spread  # noqa: E402
+from project_genesis.robustness import cancellation as _cancellation  # noqa: E402
 from n3_area_law import grow  # noqa: E402
 
 BANNER = "=" * 78
@@ -180,42 +182,22 @@ def calibrate(args, halves, floor):
     return float(np.mean(biases))
 
 
-def spread(vals):
-    v = [x for x in vals if np.isfinite(x)]
-    return float(max(v) - min(v)) if v else float("nan")
+def cancellation(rows, floor: float = 0.02) -> dict:
+    """The audit's own diagnostic, applied to a (n_C, n_I, gap) sweep.
 
-
-def cancellation(rows, floor=0.02) -> dict:
-    """How much of the parts' motion the difference actually cancels.
-
-    The five previous audits scored the ordinal claim as "the difference moved
-    less than the tolerance". That bar passes for two very different reasons and
-    does not distinguish them:
-
-    - **cancellation** — both parts move and the difference moves less than
-      either, because the convention enters both and subtracts out. This is the
-      claim.
-    - **nothing moved** — the convention has little grip on either part, so the
-      difference is small for want of anything to cancel. This is not evidence
-      of anything, and neither is the case where only *one* part responds: then
-      ``gap = n_C − n_I`` inherits that part's motion exactly, by arithmetic,
-      and no measurement has taken place.
-
-    So the honest statistic is the spread of the difference against the
-    *smaller* of the two part-spreads, and it is only meaningful when that
-    smaller spread is itself above ``floor`` — i.e. when both parts are
-    genuinely responsive to the convention. ``exercised`` records that
-    precondition; without it ``ratio`` is reported but means nothing.
+    A thin adapter over `robustness.cancellation`, which is where the reasoning
+    lives. It is a shared module rather than a local helper because the failure
+    it detects is not specific to this measurement: every robustness claim in
+    the programme has the same shape, and six of them were scored with a bar
+    that cannot tell a measurement from an identity.
     """
-    s_c = spread([r["n_C"] for r in rows])
-    s_i = spread([r["n_I_raw"] for r in rows])
-    s_g = spread([r["gap_raw"] for r in rows])
-    lo, hi = min(s_c, s_i), max(s_c, s_i)
-    return {"n_C": s_c, "n_I": s_i, "gap": s_g,
-            "exercised": bool(lo > floor),
-            "ratio_vs_smaller": float(s_g / lo) if lo > 0 else float("inf"),
-            "ratio_vs_larger": float(s_g / hi) if hi > 0 else float("inf"),
-            "cancels": bool(lo > floor and s_g < lo)}
+    c = _cancellation([r["n_C"] for r in rows],
+                      [r["n_I_raw"] for r in rows], floor=floor)
+    return {"n_C": c["spread_a"], "n_I": c["spread_b"],
+            "gap": c["spread_difference"],
+            "exercised": c["exercised"], "cancels": c["cancels"],
+            "ratio_vs_smaller": c["ratio_vs_smaller"],
+            "ratio_vs_larger": c["ratio_vs_larger"]}
 
 
 def main() -> int:

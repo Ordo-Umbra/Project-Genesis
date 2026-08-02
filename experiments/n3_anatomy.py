@@ -164,6 +164,14 @@ def arm(rows_d, rows_u, x_key, weight, recovery, u_max, window):
     in_window = bool(np.isfinite(x_c) and abs(x_peak - x_c) <= window * x_c)
     return {**a, "kappa_star": k_d, "floor": f_d,
             "evicted": bool(np.isfinite(m_d["c_evict"])),
+            # The verdict alone cannot be re-scored later: "evicted in 16/16
+            # arms" counts settings, and says nothing about how nearly any of
+            # them failed. `c_evict` is the distance to that failure, so it is
+            # recorded alongside the boolean it decides. (Added when
+            # `n3_robustness_retrospective` tried to check the margin behind
+            # this claim and found only the conclusion had been kept.)
+            "c_evict": float(m_d["c_evict"]),
+            "kappa_evict": float(m_d.get("kappa_evict", float("nan"))),
             "floor_undriven": f_u, "kappa_star_undriven": k_u,
             "evicted_undriven": bool(
                 np.isfinite(measured_crossing(rows_u, x_key=x_key,

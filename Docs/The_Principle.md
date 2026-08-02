@@ -131,6 +131,40 @@ that bar without distinguishing them. `cancellation()` now separates the cases,
 and applied here it reports **not exercised** on all three sweeps rather than a
 pass on all three.
 
+**[measured — the bar re-applied to the earlier audits, and it acquits most of
+them]** If the bar was blind, the six claims scored against it needed
+re-checking, so `n3_robustness_retrospective` re-scores the published sweeps
+with instruments that ask *how close did this come to breaking, in units of how
+much the sweep moved things*. Three claim-shapes, three diagnostics
+(`project_genesis.robustness`). The result was largely **not** what was
+predicted — `1/3`:
+
+| claim | shape | headroom | verdict |
+|---|---|---|---|
+| §2 gap, fitting window | difference | ratio `1.77` | not exercised |
+| §2 gap, noise floor (both sweeps) | difference | `n_C` pinned | not exercised |
+| §2/§3 `P = 3`, 2-D | ranking | `2.79×` | **exercised — held** |
+| §2/§3 `P = 3`, 3-D | ranking | `0.68×` | **exercised — held** |
+| §5 eviction, oscillators | boolean | `2.79×` | **exercised — held** |
+| §5 eviction, network | boolean | `−0.08×` | see §5 |
+
+So the blind spot is real but **local to §2's gap**. The `P = 3` cliff was
+predicted to be *structural* — rivals identically zero, hence unflippable, hence
+a categorical claim filed as a robustness one. That is wrong. The rivals are
+live: as the probe widens, `P = 4` closes on `P = 3` from `45.5×` to `16.6×` in
+the plane, and harder in space. The ranking survived a convention that genuinely
+threatened it, which is the strong version of the result and was already the
+honest reading. Same for the eviction condition on the oscillator substrate.
+
+*One methodological correction, found by checking rather than by reasoning.*
+The first run of that experiment measured leads **additively** and reported the
+wrong rival. On densities spanning orders of magnitude the smallest *difference*
+sits at the tightest probe — where the rivals are exactly zero and the winner is
+merely small — so it reads as a near miss when the winner is in fact infinitely
+ahead. Scored as a ratio, the rival that is actually closing is a different one.
+The published analysis quotes a margin for exactly this reason; the diagnostic
+now matches it.
+
 ---
 
 ## 3. What follows: structure
@@ -190,9 +224,11 @@ And the ranking is what carries: `argmax = P = 3` at *every* radius while the
 margin moves across `∞ → 45.5 → 16.6`. The magnitude is a location and it
 drifts; the ranking is a comparison and it does not — the same split found in
 every audit of §5, now on the claim the document rests on. (This case meets the
-precondition §2 added afterwards: widening the probe moves the winning density
-*and* the runner-up, so the ranking's survival is a measurement rather than an
-identity. Not every case does.)
+precondition §2 added afterwards, and has since been measured against it:
+widening the probe moves the winning density *and* the runner-up, and the
+ranking survived with a headroom of `2.79×` in the plane and `0.68×` in space —
+`P = 4` genuinely closing, not a rival pinned at zero. The survival is a
+measurement, not an identity. Not every case is.)
 
 **Matter is the cells of a tessellation.** **[measured]** Held near its critical
 point, the field partitions space into domains, walls, and junctions — a
@@ -381,6 +417,19 @@ across a range a reader would accept without argument. `2/3` held:
 - **The eviction condition is untouched**, in `16/16` arms. The capacity floor
   sits orders of magnitude below `κ_o⋆` everywhere, so this was never a close
   call a convention could tip. Everything above about the *condition* stands.
+  **[amended — an undeclared ceiling decides this]** `evicted` is
+  `isfinite(c_evict)`, and `c_evict` is found on a search ladder running to
+  `c = 1e5` — `2000×` past the `c_max = 50` the same run declares as its
+  scarcity range. The two ceilings disagree. Against the ladder all `16`
+  arms pass with room to spare; against the declared budget the Hopfield arm
+  at `threshold = 0.50` does not, needing `c = 59.7`. The ΔC convention moves
+  the eviction consumption over `7.3 → 59.7`, an `8×` range that the boolean
+  hides. The oscillators are unaffected — they evict at `c ≈ 0.1`, two decades
+  inside any ceiling. *The condition is not refuted; it is underdetermined,
+  because nothing in the experiment says which ceiling the claim is about.*
+  The arm's `c_evict` is now recorded alongside the verdict, which it was not
+  before: the original stored the conclusion and discarded the distance to it,
+  so the claim could not be re-checked even in principle.
 - **The critical neighbourhood does not fully survive.** The ΔC peak slides
   monotonically with the network's threshold — `T⋆ = 1.20 → 0.70` across
   `0.15 → 0.50` — and leaves the published `±35%·T_c` window at the two most
@@ -675,10 +724,11 @@ python experiments/n3_anatomy.py                 # §5, is the destination real?
 python experiments/n3_causal_delta_c.py          # §5, a DC with no cut (negative)
 python experiments/n3_convention_manifold.py     # §5, does the gap have a coordinate?
 python experiments/n3_label_stability.py         # §5, the compass's own deadband
+python experiments/n3_robustness_retrospective.py --from RESULTS  # all, was any of it tested?
 ```
 
 Each prints its own pre-registered predictions, its verdict, and its honest
-scope — including when the prediction failed. 1184 test functions in `tests/`
+scope — including when the prediction failed. 1226 test functions in `tests/`
 lock the central claims so they cannot drift silently. (That number was `872`
 from the day this file was written until it was counted again — a stale figure
 in a document about auditing stale figures.)
