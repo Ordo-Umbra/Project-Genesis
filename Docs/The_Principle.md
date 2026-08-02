@@ -87,6 +87,50 @@ because it is underfunded; it never had the option.
 *(Honest note: for a classical field an area law is expected. The content is the
 exact one-dimension gap and its invariance, not the existence of an area law.)*
 
+**[measured — the only load-bearing claim here that came out of its convention
+sweep with nothing added to it]** Both of §2's measurements have now been swept
+for hidden conventions,
+because the rest of this document is a list of readings that turned out to
+depend on constants nobody derived. The gap has two such constants: the
+**fitting window** (four nested regions spanning a factor of two) and the
+**noise floor** subtracted from the correlation kernel. `n3_gap_conventions`
+moves both.
+
+| convention swept | `n_C` | `n_I` | gap |
+|---|---|---|---|
+| fitting window — 5 ladders, incl. sub-ranges and shifted | `0.046` | `0.017` | `0.029` |
+| noise-floor band — 4 defensible bands | `0.000` | `0.015` | `0.015` |
+| noise-floor magnitude — `0×` to `2×`, `0×` = no floor at all | `0.000` | `0.096` | `0.096` |
+
+Every entry is a full spread, not an error bar. The largest motion under any
+convention swept is `0.096` — **38% of the tolerance the original experiment
+set for itself**, and it is the case where the noise-floor correction is
+dropped entirely, which no reader would ask for. At the published conventions:
+`n_C = 1.99`, `n_I = 0.95` after a calibrated instrument bias of `+0.12`, gap
+`1.04`. The one-dimension gap is a fact about the field, full stop.
+
+**And the audit found something it was not looking for.** The prediction being
+tested was the split that had held in five previous audits — *locations move
+under a convention change, differences of co-measured quantities do not,
+because the compared readings share the distortion and it cancels*. The window
+was chosen as the common-mode case (both exponents fitted on the same regions)
+and the floor as the differential one (`n_C` is gradient energy and never
+touches the kernel). Neither test ran. `n_I` barely responds to the window, and
+`n_C` cannot respond to the floor **at all** — so in the floor sweeps the gap's
+spread equals `n_I`'s to fourteen decimal places, which is not a result but a
+subtraction. *A difference whose parts do not both move is not protected by
+being a difference; it inherits the fragile part exactly.*
+
+That is a real limit on a rule this programme has been leaning on, and the
+sharpened version is: **prefer differences over quantities that share the
+convention you are worried about — and check that both of them actually respond
+to it.** The second clause was implicit and is doing more work than the first.
+It also indicts the bar: "the difference moved less than the tolerance" passes
+both when cancellation happens and when nothing moved, and five audits scored
+that bar without distinguishing them. `cancellation()` now separates the cases,
+and applied here it reports **not exercised** on all three sweeps rather than a
+pass on all three.
+
 ---
 
 ## 3. What follows: structure
@@ -145,7 +189,10 @@ come out of a convention sweep wider than it went in.
 And the ranking is what carries: `argmax = P = 3` at *every* radius while the
 margin moves across `∞ → 45.5 → 16.6`. The magnitude is a location and it
 drifts; the ranking is a comparison and it does not — the same split found in
-every audit of §5, now on the claim the document rests on.
+every audit of §5, now on the claim the document rests on. (This case meets the
+precondition §2 added afterwards: widening the probe moves the winning density
+*and* the runner-up, so the ranking's survival is a measurement rather than an
+identity. Not every case does.)
 
 **Matter is the cells of a tessellation.** **[measured]** Held near its critical
 point, the field partitions space into domains, walls, and junctions — a
@@ -615,6 +662,7 @@ python experiments/n3_capacity_separation.py   # §2, the cliff
 python experiments/n3_junction_scale.py        # §2/§3, at what scale is 3 special?
 python experiments/n3_capacity_gating.py       # §3, the correction (geometry, not scarcity)
 python experiments/n3_area_law.py              # §2, the scaling dimension
+python experiments/n3_gap_conventions.py       # §2, which conventions the gap survives
 python experiments/n3_exchange_statistics.py   # §3, the exchange sign
 python experiments/n3_ab_statistics.py         # §3, spin = statistics = gauge
 python experiments/n3_kappa_gravity.py         # §4, gravity
@@ -630,8 +678,10 @@ python experiments/n3_label_stability.py         # §5, the compass's own deadba
 ```
 
 Each prints its own pre-registered predictions, its verdict, and its honest
-scope — including when the prediction failed. 872 checks in `tests/`
-lock the central claims so they cannot drift silently.
+scope — including when the prediction failed. 1184 test functions in `tests/`
+lock the central claims so they cannot drift silently. (That number was `872`
+from the day this file was written until it was counted again — a stale figure
+in a document about auditing stale figures.)
 
 **What would refute the whole thing:** a palette other than three scoring
 comparably on the joint criterion (§6); a capacity sweep that moves the
