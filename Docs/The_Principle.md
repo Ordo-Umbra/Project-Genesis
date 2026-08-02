@@ -422,13 +422,34 @@ out to rest on an underived constant, and the second where the failure was the
 convention, and separate the claim that survives from the one that does not — is
 at this point better established than any particular substrate result.
 
-*Scope, stated because it is a real limit on the above.* The Hopfield sweep
-covers `31` of `36` arms and every value of each free choice; the missing five
-are the most expensive corner. On the oscillators only the `τ = 1` block
-(`9/9` arms) completed, supplemented by the direct horizon probe recorded in
-the experiment. Repeated interruptions of long runs in the execution
-environment, not a design choice, are why — and the qualitative conclusion is
-carried by both substrates while the formal oscillator sweep is not complete.
+**[measured — the oscillator sweep, and the peak simply slides]** The
+`τ = 1 / 5 / 20` blocks now complete `27` of `36` oscillator arms, and they
+settle the horizon question more cleanly than the network did. With
+`γ_c ≈ 0.94` and a critical window of `[0.61, 1.26]`:
+
+| `τ` (relaxation times) | ΔC peak across the 9 arms | scan at ceiling | usable arms |
+|---|---|---|---|
+| 1 | `0.10` | 100% | **0/9** |
+| 5 | `0.87, 1.06` | 62–69% | **0/9** |
+| 20 | `1.44, 1.63, 1.82, 2.02, 2.21, 2.40` | 0–46% | **0/9** |
+
+**Across all 27 arms, none places the peak inside the critical window on a
+non-degenerate reading.** And the failure has a simpler shape than "the curve
+inverts": the peak **slides monotonically from the ordered end to the
+disordered end as the horizon grows** — `0.10 → 0.87 → 1.44–2.40`. It crosses
+criticality the way a clock hand crosses twelve, and the only horizon where it
+is nominally inside the window is `τ = 5`, which is exactly where the reading
+sits at its ceiling and the "peak" is a tie-break among saturated points.
+
+So the causal ΔC peak is a **function of the chosen horizon, not a property of
+the substrate** — the same conclusion the network gave, reached by a different
+route and with the mechanism visible.
+
+*Scope.* The Hopfield sweep covers `31` of `36` arms and every value of each
+free choice; the missing five are its most expensive corner. The oscillator
+sweep covers `27` of `36`, missing only `τ = 40`. Repeated interruption of long
+runs in the execution environment, not a design choice, is why the last blocks
+lagged.
 
 **[measured]** Where the law meets external ground truth — a learning system —
 capacity-gated plasticity beats plain SGD on a compositional task sequence,
