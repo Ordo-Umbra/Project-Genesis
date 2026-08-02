@@ -422,34 +422,49 @@ out to rest on an underived constant, and the second where the failure was the
 convention, and separate the claim that survives from the one that does not — is
 at this point better established than any particular substrate result.
 
-**[measured — the oscillator sweep, and the peak simply slides]** The
-`τ = 1 / 5 / 20` blocks now complete `27` of `36` oscillator arms, and they
-settle the horizon question more cleanly than the network did. With
-`γ_c ≈ 0.94` and a critical window of `[0.61, 1.26]`:
+**[measured — the complete oscillator grid, and it is worse than "it never
+works"]** All `36` oscillator arms are now in. With `γ_c ≈ 0.94` and a critical
+window of `[0.61, 1.26]`:
 
-| `τ` (relaxation times) | ΔC peak across the 9 arms | scan at ceiling | usable arms |
+| `τ` (relaxation times) | ΔC peak across the 9 arms | scan at ceiling | usable |
 |---|---|---|---|
-| 1 | `0.10` | 100% | **0/9** |
-| 5 | `0.87, 1.06` | 62–69% | **0/9** |
-| 20 | `1.44, 1.63, 1.82, 2.02, 2.21, 2.40` | 0–46% | **0/9** |
+| 1 | `0.10` | 100% | 0/9 |
+| 5 | `0.87, 1.06` | 62–69% | 0/9 |
+| 20 | `1.44, 1.63, 1.82, 2.02, 2.21, 2.40` | 0–46% | 0/9 |
+| 40 | `0.67, 0.87` | **0%** | **9/9** |
 
-**Across all 27 arms, none places the peak inside the critical window on a
-non-degenerate reading.** And the failure has a simpler shape than "the curve
-inverts": the peak **slides monotonically from the ordered end to the
-disordered end as the horizon grows** — `0.10 → 0.87 → 1.44–2.40`. It crosses
-criticality the way a clock hand crosses twelve, and the only horizon where it
-is nominally inside the window is `τ = 5`, which is exactly where the reading
-sits at its ceiling and the "peak" is a tie-break among saturated points.
+*An earlier revision of this section, written from the first three blocks,
+claimed the peak "slides monotonically from the ordered end to the disordered
+end as the horizon grows". **That is false** — `τ = 40` brings it back to
+`0.67–0.87`. The dependence is non-monotone: out to the disordered end and
+back.*
 
-So the causal ΔC peak is a **function of the chosen horizon, not a property of
-the substrate** — the same conclusion the network gave, reached by a different
-route and with the mechanism visible.
+At `τ = 40` the construction **works**: the reading is unsaturated, and it puts
+the peak inside the critical window on all nine arms, robustly across replicate
+count and merge confidence. Taken alone that would read as a success.
+
+It is not one, because of the row above it. At `τ = 20` with `R = 8` the
+reading is **also** completely unsaturated — `0%` at ceiling, no ties, no
+internal sign of trouble — and it puts the peak at `2.02–2.40`, far outside the
+window. Two horizons, both giving clean, internally consistent, confident
+readings; one right and one wrong; **and nothing available inside the
+measurement distinguishes them.** The saturation diagnostic catches `τ = 1` and
+`τ = 5` and is silent on exactly the case that matters.
+
+So the honest statement is not "a dictionary-free ΔC cannot find criticality" —
+at a long enough horizon it does. It is that **the horizon at which it is right
+cannot be identified without already knowing the answer**, which is the same
+thing as not having an instrument. `9` of `36` arms are usable and only in
+hindsight. (Q3 is unaffected either way: the hull still ranges over `{3, 4, 5}`
+at `τ = 40`, so the route stays indeterminate.)
+
+This is the fourth instance in this arc of the same failure mode and the most
+subtle: not a statistic reporting on data that cannot support it, but a clean
+measurement that is simply wrong with no flag available.
 
 *Scope.* The Hopfield sweep covers `31` of `36` arms and every value of each
 free choice; the missing five are its most expensive corner. The oscillator
-sweep covers `27` of `36`, missing only `τ = 40`. Repeated interruption of long
-runs in the execution environment, not a design choice, is why the last blocks
-lagged.
+sweep is complete at `36/36`.
 
 **[measured]** Where the law meets external ground truth — a learning system —
 capacity-gated plasticity beats plain SGD on a compositional task sequence,
