@@ -29,6 +29,7 @@ from project_genesis.crossing import (  # noqa: E402
     capacity_floor,
     consumption_at_crossing,
     crossing_exists,
+    evictable,
     kappa_at_crossing,
     kappa_partner,
     measured_crossing,
@@ -97,6 +98,74 @@ class TestCapacityLaw(unittest.TestCase):
         k_o = float(capacity(l_o, u))
         self.assertAlmostEqual(float(kappa_partner(k_o, l_s / l_o)),
                                float(capacity(l_s, u)), places=12)
+
+
+class TestEvictableIsCeilingFree(unittest.TestCase):
+    """The §5 ceiling, decided.
+
+    `evicted` was `isfinite(c_evict)` on a search ladder to c = 1e5, while the
+    same run declared c_max = 50. Two ceilings 2000x apart, nothing choosing
+    between them, and the answer differing across the range. The resolution is
+    not to pick one: it is that `c` is the wrong variable, since the load scale
+    is arbitrary and cancels in the capacity form. Taking `u -> inf` sends the
+    floor to zero for any non-zero load, so the ceiling leaves the statement:
+
+        evictable  <=>  crossing_exists  and  L_o > 0
+
+    These tests pin both halves, the control that keeps it from being vacuous,
+    and the numerical guard — which is a zero-test with ten orders of latitude,
+    not a modelling choice wearing a smaller hat.
+    """
+
+    @staticmethod
+    def red(load_o, load_s=1.0, di_o=1.0, di_s=0.0, gap=0.1):
+        return {"di_o": di_o, "di_s": di_s, "gap": gap,
+                "load_o": load_o, "load_s": load_s}
+
+    def test_a_driven_ordered_phase_is_evictable(self):
+        self.assertTrue(evictable(self.red(0.58), W))
+        self.assertTrue(evictable(self.red(1e-2), W))
+
+    def test_a_free_ordered_phase_is_never_evictable(self):
+        """L_o = 0 gives a capacity floor of exactly 1: kappa_o never falls, so
+        no amount of scarcity reaches the crossing. This is the control the
+        whole transplant argument rests on."""
+        self.assertFalse(evictable(self.red(0.0), W))
+
+    def test_machine_noise_around_zero_load_does_not_count_as_driven(self):
+        """The measured undriven oscillator load. A literal `> 0` passes this
+        and breaks the control on 9 of 16 arms — which is how the guard came to
+        exist."""
+        self.assertFalse(evictable(self.red(1.24e-15), W))
+
+    def test_nothing_to_evict_when_the_ordered_point_starts_behind(self):
+        """Both halves are required: a heavy load cannot evict an optimum that
+        was never at the ordered point."""
+        self.assertFalse(evictable(self.red(0.58, di_o=0.0, di_s=1.0), W))
+
+    def test_the_zero_load_guard_has_orders_of_magnitude_of_latitude(self):
+        """The measured separation is 13 orders wide, so every defensible
+        threshold gives the same verdict on every arm. That is what makes this
+        a numerical zero-test rather than the ceiling it replaced, where the
+        two candidates were 2000x apart and the answer changed between them."""
+        for z in (1e-12, 1e-9, 1e-6, 1e-3):
+            self.assertFalse(evictable(self.red(1.24e-15), W, z), msg=str(z))
+            self.assertTrue(evictable(self.red(1e-2), W, z), msg=str(z))
+            self.assertTrue(evictable(self.red(0.58), W, z), msg=str(z))
+
+    def test_the_verdict_is_scale_free_in_the_load_units(self):
+        """The point of the whole reduction: rescaling both loads — which is
+        what changing the integrator's dt does — must not move the answer."""
+        for factor in (1e-4, 1.0, 1e4):
+            self.assertTrue(evictable(self.red(0.58 * factor, 1.0 * factor), W))
+            self.assertFalse(evictable(self.red(0.0, 1.0 * factor), W))
+
+    def test_no_consumption_ceiling_appears_anywhere_in_the_signature(self):
+        """A regression guard on the decision itself: if a c_max or ladder
+        bound ever creeps back into this call, the ambiguity is back with it."""
+        import inspect
+        params = set(inspect.signature(evictable).parameters)
+        self.assertEqual(params, {"red", "weight", "zero_load"})
 
 
 class TestReduction(unittest.TestCase):

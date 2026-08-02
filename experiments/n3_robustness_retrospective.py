@@ -96,6 +96,9 @@ BANNER = "=" * 78
 # boolean actually tests against.
 LADDER_CEILING = 1e5
 
+# `crossing.evictable`'s numerical zero-test on the load ratio.
+ZERO_LOAD = 1e-9
+
 
 def load(directory: Path, name: str):
     p = directory / name
@@ -173,6 +176,29 @@ def eviction_claim(data, tol):
         return {}
     c_max = float(data.get("params", {}).get("c_max", 50.0))
     out = {}
+    # The ceiling has since been decided (`crossing.evictable`): `c` is the
+    # wrong variable, the load scale cancels in the capacity form, and taking
+    # u -> inf removes the bound from the statement. The condition is now
+    # `crossing_exists AND L_o > 0`, and both halves carry a signed margin, so
+    # it is scoreable here rather than only countable. These are the primary
+    # rows; the two c-ceilings below are kept as the sensitivity that motivated
+    # the decision.
+    for family in ("hopfield", "kuramoto"):
+        rows = [v for k, v in arms.items() if k.startswith(family)]
+        cm = [r.get("crossing_margin") for r in rows
+              if r.get("crossing_margin") is not None]
+        if len(cm) >= 2:
+            out[f"{family} — ordered point starts ahead, {len(cm)} arms"] = \
+                threshold_headroom(cm, threshold=0.0, headroom_tol=tol)
+        lr = [r["load_o"] / r["load_s"] for r in rows
+              if r.get("load_s") and r.get("load_o") is not None]
+        if len(lr) >= 2:
+            with np.errstate(divide="ignore"):
+                dec = [float(np.log10(x / ZERO_LOAD)) if x > 0 else float("-inf")
+                       for x in lr]
+            out[f"{family} — decades of load above numerical zero, "
+                f"{len(dec)} arms"] = threshold_headroom(
+                    dec, threshold=0.0, headroom_tol=tol)
     # Two ceilings, because the experiment uses two and says so nowhere. The
     # `evicted` flag is `isfinite(c_evict)`, which passes for any crossing found
     # on `measured_crossing`'s search ladder — a computational bound running to
@@ -194,7 +220,7 @@ def eviction_claim(data, tol):
             # The ladder rows re-score the same claim against a different
             # ceiling. They are a sensitivity check, not extra claims, and
             # counting them in the tally would inflate it with presentation.
-            r["sensitivity"] = ceiling != c_max
+            r["sensitivity"] = True
             out[f"{family} vs {label} — decades, {len(margins)} arms"] = r
     return out
 
@@ -375,6 +401,17 @@ def main() -> int:
     else:
         print("  PREDICTION FAILED — an arm did approach the threshold and")
         print("  held. Then 16/16 is the strong evidence it has been quoted as.")
+        print()
+        print("  Scored against the ceiling-free condition the claim also")
+        print("  separates into two halves that were being reported as one:")
+        print("    - 'the ordered point starts ahead' is a real measurement.")
+        print("      It is exercised and it nearly fails — headroom 0.24x on")
+        print("      the oscillators, where the ΔC convention moves the margin")
+        print("      by four times its own distance to zero.")
+        print("    - 'holding order costs capacity' is categorical, not close.")
+        print("      Driven and undriven loads sit 7 to 9 decades apart, which")
+        print("      is a difference in kind rather than a near miss.")
+        print("  '16/16' averaged those together and reported neither.")
 
     print()
     print(BANNER)

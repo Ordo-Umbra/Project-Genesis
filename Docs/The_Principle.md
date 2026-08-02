@@ -145,8 +145,8 @@ predicted — `1/3`:
 | §2 gap, noise floor (both sweeps) | difference | `n_C` pinned | not exercised |
 | §2/§3 `P = 3`, 2-D | ranking | `2.79×` | **exercised — held** |
 | §2/§3 `P = 3`, 3-D | ranking | `0.68×` | **exercised — held** |
-| §5 eviction, oscillators | boolean | `2.79×` | **exercised — held** |
-| §5 eviction, network | boolean | `−0.08×` | see §5 |
+| §5 eviction, ordered point ahead | boolean | `0.24×` | **exercised — held** |
+| §5 eviction, order costs capacity | boolean | `27–50×` | categorical, see §5 |
 
 So the blind spot is real but **local to §2's gap**. The `P = 3` cliff was
 predicted to be *structural* — rivals identically zero, hence unflippable, hence
@@ -417,19 +417,54 @@ across a range a reader would accept without argument. `2/3` held:
 - **The eviction condition is untouched**, in `16/16` arms. The capacity floor
   sits orders of magnitude below `κ_o⋆` everywhere, so this was never a close
   call a convention could tip. Everything above about the *condition* stands.
-  **[amended — an undeclared ceiling decides this]** `evicted` is
-  `isfinite(c_evict)`, and `c_evict` is found on a search ladder running to
+  **[amended, then resolved — the ceiling is gone]** `evicted` was
+  `isfinite(c_evict)`, with `c_evict` found on a search ladder running to
   `c = 1e5` — `2000×` past the `c_max = 50` the same run declares as its
-  scarcity range. The two ceilings disagree. Against the ladder all `16`
-  arms pass with room to spare; against the declared budget the Hopfield arm
-  at `threshold = 0.50` does not, needing `c = 59.7`. The ΔC convention moves
-  the eviction consumption over `7.3 → 59.7`, an `8×` range that the boolean
-  hides. The oscillators are unaffected — they evict at `c ≈ 0.1`, two decades
-  inside any ceiling. *The condition is not refuted; it is underdetermined,
-  because nothing in the experiment says which ceiling the claim is about.*
-  The arm's `c_evict` is now recorded alongside the verdict, which it was not
-  before: the original stored the conclusion and discarded the distance to it,
-  so the claim could not be re-checked even in principle.
+  scarcity range. Two ceilings, nothing in the model choosing between them, and
+  *the answer differed across the range*: against the ladder all `16` arms
+  passed, against the declared budget the Hopfield arm at `threshold = 0.50`
+  did not, needing `c = 59.7`.
+
+  **The resolution is not to pick one, because `c` is the wrong variable.**
+  §5's own reduction is that the load scale is arbitrary and cancels in the
+  capacity form; the verdict simply had not been carried through it. Eviction
+  requires `floor < κ_o⋆` with `floor = 1/(1 + u·L_o)`, and as `u` grows the
+  floor falls to zero *for any non-zero load*. Taking that limit removes the
+  ceiling from the statement:
+
+  > **evictable ⟺ the ordered point starts ahead, and holding it costs
+  > capacity** — `crossing_exists(w)` and `L_o > 0`.
+
+  No consumption bound appears anywhere in it. This is the sentence §5 has
+  been making all along — *scarcity evicts order exactly when maintaining
+  order costs capacity* — with the last free constant taken out.
+
+  **[measured]** It reproduces the published result and keeps the control:
+  `16/16` driven arms evictable, `0/16` undriven, agreeing with the ladder
+  verdict on all `16`. The Hopfield "failure" was an artefact of comparing
+  `c_evict` against `c_max`; the structural claim was never about `c`. What
+  the boolean *was* hiding is that the condition has two halves behaving
+  differently — **the ordered point starting ahead is a genuine measurement
+  that nearly fails** (headroom `0.24×` on the oscillators, where the ΔC
+  convention moves the margin by four times its distance to zero), while
+  **holding order costing capacity is categorical** (driven and undriven loads
+  `7–9` decades apart — a difference in kind, not a near miss). `16/16`
+  averaged those together and reported neither.
+
+  *One constant remains and it is a different animal.* `L_o > 0` is the right
+  condition and the wrong test: an undriven oscillator scan measures
+  `L_o = 1.24e-15`, machine noise around a physically zero load, and a literal
+  `> 0` passes it — breaking the control on `9/16` arms, which is how the guard
+  came to exist. The comparison is made on the dimensionless ratio `L_o/L_⋆`
+  against a numerical zero. Measured loads separate into `0` or `1e-15` when
+  free and `1e-2 … 5.8e-1` when driven: **thirteen orders of empty space**, and
+  every threshold from `1e-12` to `1e-3` gives the same verdict on every arm.
+  A constant with ten orders of slack that no result depends on is not the
+  same object as one with three orders that decides the outcome.
+
+  The margins are now stored beside the verdict, which they were not: the
+  original kept the conclusion and discarded the distance to it, so the claim
+  could not be re-checked even in principle.
 - **The critical neighbourhood does not fully survive.** The ΔC peak slides
   monotonically with the network's threshold — `T⋆ = 1.20 → 0.70` across
   `0.15 → 0.50` — and leaves the published `±35%·T_c` window at the two most
@@ -728,7 +763,7 @@ python experiments/n3_robustness_retrospective.py --from RESULTS  # all, was any
 ```
 
 Each prints its own pre-registered predictions, its verdict, and its honest
-scope — including when the prediction failed. 1237 test functions in `tests/`
+scope — including when the prediction failed. 1245 test functions in `tests/`
 lock the central claims so they cannot drift silently. (That number was `872`
 from the day this file was written until it was counted again — a stale figure
 in a document about auditing stale figures.)

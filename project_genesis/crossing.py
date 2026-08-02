@@ -79,6 +79,7 @@ __all__ = [
     "capacity",
     "two_point_reduction",
     "crossing_exists",
+    "evictable",
     "capacity_floor",
     "kappa_partner",
     "kappa_at_crossing",
@@ -147,6 +148,67 @@ def crossing_exists(red: dict, weight: float) -> bool:
     any consumption ladder exists.
     """
     return bool(weight * (red["di_o"] - red["di_s"]) > red["gap"])
+
+
+def evictable(red: dict, weight: float,
+              zero_load: float = 1e-9) -> bool:
+    """Is the ordered optimum evictable *at all* — with no ceiling to argue about?
+
+    The published eviction verdict is ``isfinite(c_evict)``, where ``c_evict`` is
+    hunted on :func:`measured_crossing`'s ladder up to ``c = 1e5``. That number
+    is a search bound, not a physical one, and `n3_anatomy` separately declares
+    ``c_max = 50`` as the scarcity it considers. Two ceilings, 2000x apart, and
+    nothing in the model choosing between them — so the boolean was decided by
+    whichever one the reader happened to have in mind.
+
+    **The right answer is neither, because ``c`` is the wrong variable.** This
+    module's whole argument is that the load scale is arbitrary and cancels in
+    the capacity form. Carrying that through to the verdict: eviction requires
+    ``floor < κ_o⋆``, with ``floor = 1/(1 + u·L_o)``. As ``u`` grows the floor
+    falls to zero **for any non-zero load**, so for a large enough budget the
+    crossing is reached whenever it exists at all. Taking the limit removes the
+    ceiling from the statement entirely:
+
+        evictable  ⟺  crossing_exists(red, w)  and  L_o > 0
+
+    Both conditions are ceiling-free and dimensionless-or-sign-only. The first
+    says the ordered point starts ahead, so there is something to evict; the
+    second says maintaining order costs capacity, so scarcity has a grip on it.
+    That is exactly the sentence §5 has been making — *"scarcity evicts order
+    exactly when maintaining order costs capacity"* — with no free constant left
+    in it.
+
+    This is not vacuous, and the control is what makes it so: a genuinely free
+    ordered phase has ``L_o = 0``, floor identically 1, and is scarcity-proof at
+    every ``c``. The transplants' undriven arms are that case, and they must
+    fail this test for the driven result to mean anything.
+
+    What is given up is the quantitative claim, and deliberately. *How much*
+    consumption eviction costs is ``c_evict``, which carries the substrate's
+    arbitrary load units and belongs in a table with its budget stated beside
+    it — never in a boolean.
+
+    **``L_o > 0`` is the right condition and the wrong test.** An undriven
+    oscillator scan measures ``L_o = 1.24e-15`` — machine noise around a load
+    that is physically zero — and a literal ``> 0`` passes it, breaking the
+    control on 9 of 16 arms. So the comparison is made on the dimensionless
+    ratio ``L_o/L_⋆`` against ``zero_load``, which asks only whether the ordered
+    load is distinguishable from zero *at all*.
+
+    That is a constant, and this module is in no position to smuggle one in
+    unremarked — so here is its latitude. Measured ordered loads separate into
+    ``0`` or ``1.24e-15`` when free and ``1e-2 … 5.8e-1`` when driven: **thirteen
+    orders of magnitude of empty space**. Every ``zero_load`` from ``1e-12`` to
+    ``1e-3`` returns the same verdict on every arm. Contrast the ceiling it
+    replaces, where the two candidates were 2000x apart and *the answer changed
+    between them*. A constant with ten orders of slack that no result depends on
+    is a different kind of object from one with three orders that decides the
+    outcome; the first is a numerical zero-test, the second was a modelling
+    choice nobody had made.
+    """
+    l_o, l_s = float(red["load_o"]), float(red["load_s"])
+    scale = abs(l_s) if l_s else 1.0
+    return bool(crossing_exists(red, weight) and l_o / scale > float(zero_load))
 
 
 def capacity_floor(red: dict, u_max: float) -> float:

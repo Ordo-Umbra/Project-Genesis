@@ -115,69 +115,91 @@ class TestCliffClaim(unittest.TestCase):
 
 
 class TestEvictionClaim(unittest.TestCase):
+    """§5's condition after the ceiling was decided.
+
+    `evicted` used to be `isfinite(c_evict)` on a ladder to c = 1e5, arguing
+    with the run's own c_max = 50. That ambiguity is resolved in
+    `crossing.evictable`: c is the wrong variable, and in the capacity form no
+    ceiling survives. The condition became two margins — the ordered point
+    starts ahead, and holding it costs capacity — and those are the primary
+    rows here. The c-ceiling rows are kept as the sensitivity that motivated
+    the decision, and must never be counted as claims.
+    """
 
     @staticmethod
-    def data(hop, kur, c_max=50.0):
-        """`c_evict` — the consumption at which eviction happens. NOT
-        `excess_frac`: that is the chord excess, it is negative in several arms
-        that evict perfectly well, and scoring it against zero reports failures
-        that did not occur. Getting this wrong is the specific mistake this
-        fixture exists to prevent recurring."""
-        arms = {f"hopfield th={i}": {"c_evict": v} for i, v in enumerate(hop)}
-        arms.update({f"kuramoto tol={i}": {"c_evict": v}
-                     for i, v in enumerate(kur)})
+    def data(hop_c_evict, kur_c_evict, margin=0.3, load_ratio=0.5,
+             c_max=50.0):
+        """`c_evict` for the sensitivity rows; `crossing_margin` and the load
+        ratio for the two primary ones."""
+        def mk(ce):
+            return {"c_evict": ce, "crossing_margin": margin,
+                    "load_o": load_ratio, "load_s": 1.0}
+        arms = {f"hopfield th={i}": mk(v) for i, v in enumerate(hop_c_evict)}
+        arms.update({f"kuramoto tol={i}": mk(v)
+                     for i, v in enumerate(kur_c_evict)})
         return {"arms": arms, "params": {"c_max": c_max}}
 
     @staticmethod
     def primary(e):
         return {k: v for k, v in e.items() if not v.get("sensitivity")}
 
-    def test_both_families_are_scored_separately(self):
+    def test_the_two_ceiling_free_margins_are_the_primary_claims(self):
         e = eviction_claim(self.data([0.4, 0.5, 0.45], [0.3, 0.35, 0.32]),
                            tol=3.0)
-        self.assertEqual(len(self.primary(e)), 2)
+        prim = self.primary(e)
+        self.assertEqual(len(prim), 4)          # 2 margins x 2 families
+        self.assertTrue(all("starts ahead" in k or "numerical zero" in k
+                            for k in prim), msg=str(list(prim)))
 
-    def test_the_ladder_ceiling_is_marked_as_a_sensitivity_not_a_claim(self):
-        """Both ceilings are shown, but only the declared budget is a claim.
-        Counting the sensitivity rows in the tally would inflate the score with
-        a presentation choice."""
+    def test_every_consumption_row_is_a_sensitivity_never_a_claim(self):
+        """The regression guard on the decision: if a c-ceiling row is ever
+        counted as a claim again, the ambiguity is back in the tally."""
         e = eviction_claim(self.data([0.4, 0.5, 0.45], [0.3, 0.35, 0.32]),
                            tol=3.0)
-        self.assertEqual(len(e), 4)
-        self.assertEqual(sum(1 for v in e.values() if v.get("sensitivity")), 2)
         for k, v in e.items():
-            self.assertEqual(v.get("sensitivity"), "search ladder" in k, msg=k)
+            is_c_row = "budget" in k or "ladder" in k
+            self.assertEqual(bool(v.get("sensitivity")), is_c_row, msg=k)
 
-    def test_evicting_far_inside_budget_is_not_exercised(self):
-        """c_evict around 0.4 against a ceiling of 50 is two decades of room,
-        and the arms barely differ. The condition could not have failed."""
+    def test_a_free_ordered_phase_fails_the_load_margin(self):
+        """L_o = 0 is the control. It must fail, or the condition is vacuous."""
         e = self.primary(eviction_claim(
-            self.data([0.40, 0.42, 0.44], [0.30, 0.31, 0.32]), tol=3.0))
-        for name, h in e.items():
-            self.assertTrue(h["holds"], msg=name)
-            self.assertFalse(h["exercised"], msg=name)
+            self.data([0.4, 0.5], [0.3, 0.35], load_ratio=0.0), tol=3.0))
+        load_rows = [v for k, v in e.items() if "numerical zero" in k]
+        self.assertTrue(load_rows)
+        for h in load_rows:
+            self.assertFalse(h["holds"])
 
-    def test_an_arm_that_never_evicts_fails_the_condition(self):
-        """`c_evict = inf` is the real failure mode — the argmax never leaves
-        the ordered point. It must read as CROSSES, not as a large margin."""
+    def test_machine_noise_also_fails_the_load_margin(self):
+        """1.24e-15 is what an undriven scan actually measures. A literal
+        `> 0` would pass it; the decades form must not."""
         e = self.primary(eviction_claim(
-            self.data([0.4, float("inf")], [0.3, 0.35]), tol=3.0))
-        hop = [v for k, v in e.items() if "hopfield" in k][0]
-        self.assertFalse(hop["holds"])
+            self.data([0.4, 0.5], [0.3, 0.35], load_ratio=1.24e-15), tol=3.0))
+        for k, h in e.items():
+            if "numerical zero" in k:
+                self.assertFalse(h["holds"], msg=k)
 
-    def test_evicting_only_above_budget_fails(self):
-        e = self.primary(eviction_claim(self.data([0.4, 80.0], [0.3, 0.35]),
-                                        tol=3.0))
-        hop = [v for k, v in e.items() if "hopfield" in k][0]
-        self.assertFalse(hop["holds"])
+    def test_a_driven_load_clears_the_margin_by_many_decades(self):
+        e = self.primary(eviction_claim(
+            self.data([0.4, 0.5], [0.3, 0.35], load_ratio=1e-2), tol=3.0))
+        for k, h in e.items():
+            if "numerical zero" in k:
+                self.assertTrue(h["holds"], msg=k)
+                self.assertGreater(h["min_margin"], 6.0, msg=k)
+
+    def test_an_ordered_point_starting_behind_fails(self):
+        e = self.primary(eviction_claim(
+            self.data([0.4, 0.5], [0.3, 0.35], margin=-0.2), tol=3.0))
+        for k, h in e.items():
+            if "starts ahead" in k:
+                self.assertFalse(h["holds"], msg=k)
 
     def test_a_family_with_one_arm_is_not_scored(self):
         """One arm has no spread, so 'it held' says nothing at all."""
-        e = self.primary(eviction_claim(self.data([0.4], [0.3, 0.35]), tol=3.0))
-        self.assertEqual(len(e), 1)
-        self.assertTrue(any("kuramoto" in k for k in e))
+        e = self.primary(eviction_claim(self.data([0.4], [0.3, 0.35]),
+                                        tol=3.0))
+        self.assertTrue(all("kuramoto" in k for k in e), msg=str(list(e)))
 
-    def test_arms_without_the_margin_key_are_dropped(self):
+    def test_arms_without_any_margin_key_are_dropped(self):
         """The published anatomy.json stored only the boolean. That must come
         back empty — reported as UNAVAILABLE — and never as a pass."""
         d = {"arms": {"hopfield th=0": {"evicted": True},
