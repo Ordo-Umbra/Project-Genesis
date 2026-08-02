@@ -215,6 +215,221 @@ is imported as literally the same code object in each. All three show the same
 level crossing under the same toggle: order that is *free* is scarcity-proof;
 order that must be *maintained* is driven to the edge.
 
+**[measured, and it narrows the claim]** An audit of the units
+(`n3_crossing_prediction`) establishes what that agreement is and is not.
+
+- The consumption `c` and the recovery rate `r` are **one parameter**, not two:
+  the capacity law depends only on `u = c/r`. Every `c` the transplants quote is
+  really `c/r`, and `r` is the axis's unit.
+- The mechanism's condition needs no toggle. Eviction happens **iff** the
+  capacity floor the load permits, `1/(1 + u·L_o)`, falls below the crossing
+  capacity `κ_o⋆` fixed by the measured curves. The published four-condition
+  result is a comparison of two numbers.
+- Where the relocation is a single jump it **is** exactly the two-point
+  competition the mechanism describes — integration funding decaying past the
+  distinction gap — to **0.1%** on the Hopfield network.
+- But it is not always a single jump. Under a flat load the optimum walks the
+  upper convex hull of the `(ΔI, ΔC)` cloud; that hull has two vertices on the
+  Hopfield network and **three** on the driven oscillators, which stop at an
+  intermediate partially-synchronised state first.
+- And the oscillators' load is **mostly the drive**. The injected phase noise
+  contributes `σ√dt` per step to the measured activity, and the ordered phase's
+  reading is `1.004×` that floor as `dt → 0`: `activity` never subtracts the
+  perturbation, where the Hopfield query drive explicitly does. Between the two
+  points that matter the load ratio is `ρ ≈ 1.0`, against `34` on the network.
+
+So on the published reading the third substrate agrees on the **verdict** while
+differing on the **mechanism**: a uniform tax that costs the integration-funded
+optimum its lead because `ΔI_o > ΔI_⋆`, not a differential tax on order. `1/3`
+registered predictions held.
+
+**[measured, and it repairs half of that]** The last bullet named a specific
+fix, and `n3_kuramoto_repair` carried it out. `simulate` now also reports
+`repair_rate` — the spread of the *deterministic* phase velocity,
+`std_i(v_i − ⟨v⟩)` with `v_i = ω_i + K·r·sin(ψ − θ_i)` — which contains none of
+the injected noise and, being a rate rather than a per-step displacement,
+carries no `dt`. `activity` is unchanged and bit-identical, so the three
+published results remain reproducible as stated. On the corrected reading
+(`2/3` held):
+
+- It measures the system, not the apparatus. Across a 16× change in the
+  integrator's step `repair_rate` moves **7.8%** where `activity` moves
+  **4.4×** — and a deterministic locked rhythm still pays nothing, so the
+  toggle the transplant design needs survives.
+- The load profile is **not** flat after all: `ρ = 1.70`, against `1.04` for
+  the contaminated reading. The differential tax the mechanism describes is
+  genuinely present here; the noise floor was hiding it.
+- So the **condition** does transplant to all three substrates. Order that must
+  be maintained pays, and scarcity evicts it.
+
+What did not repair is the **destination**. The route is set by the `(ΔI, ΔC)`
+cloud, which no choice of load metric can move; correcting the load made the
+oscillators' walk *longer* — four stops rather than three — because taxing the
+ordered phase harder evicts it earlier, onto a state only part-way to the ΔC
+peak.
+
+**[measured — and it retracts the reading above]** That was written here as
+*anatomy, not convention*, on the reasoning that a load metric cannot move the
+cloud. The reasoning has a hole: the cloud is not raw data either. **ΔC is
+itself a convention on both substrates** — a structured-overlap threshold on the
+network (published `0.3`), a fixed frequency-bin width and entrainment tolerance
+on the oscillators (published `0.4` / `0.3`) — and none of those numbers is
+derived from anything. `n3_anatomy` sweeps each substrate's own ΔC convention
+across a range a reader would accept without argument. `2/3` held:
+
+- **The route is not a property of either substrate.** Both hulls flip between
+  two and three vertices inside their own sweeps. "The network crosses once and
+  the oscillators walk" was a statement about the dictionaries.
+- **The eviction condition is untouched**, in `16/16` arms. The capacity floor
+  sits orders of magnitude below `κ_o⋆` everywhere, so this was never a close
+  call a convention could tip. Everything above about the *condition* stands.
+- **The critical neighbourhood does not fully survive.** The ΔC peak slides
+  monotonically with the network's threshold — `T⋆ = 1.20 → 0.70` across
+  `0.15 → 0.50` — and leaves the published `±35%·T_c` window at the two most
+  permissive settings. One of those, `0.20`, is `3.5σ` above chance overlap for
+  `N = 300`: strict enough that its failure is not an artefact of an absurd
+  setting.
+
+So the claim survives at one resolution and not at the next two. **Does a
+relocation happen?** Yes, and convention-independently. **Does it reach
+criticality?** At the published conventions yes, but the ΔC peak's location is
+a function of an underived threshold, so this is not established in general.
+**Which state, by which route?** Not established at all.
+
+That is a narrower result than §5 has claimed at any point, and it is the one
+the measurements support. The next thing worth doing is not another substrate:
+it is a principled ΔC — a distinction reading whose scale comes from the
+substrate rather than from a chosen cut.
+
+**[measured, a negative — and it may be a constraint rather than a gap]**
+`causal_state.py` and `n3_causal_delta_c` attempt exactly that, via the
+causal-state construction: two states are the same state when the dynamics
+cannot tell their futures apart, with "cannot tell apart" calibrated against
+the spread of a *single* state's own replicates. Nothing is thresholded; the
+resolution comes from the system's own stochasticity.
+
+It is a correct instrument. Against ground truth — `k` genuinely distinct
+attractors — it recovers `k` exactly for `k = 1, 2, 3, 5`, and **the count does
+not move with the noise amplitude** (`0.1 → 2.0`), which is precisely the
+failure mode that contaminated the oscillator load reading.
+
+It is also **worse than what it replaces**, on the same sweep design:
+
+| across the free choices | threshold ΔC | causal ΔC |
+|---|---|---|
+| hull sizes | `{2, 3}` | `{2, 3, 4, 5, 6, 7}` |
+| arms with the ΔC peak in the critical window | 5/7 | 5/31 |
+
+And the reason is structural, not a tuning failure. In 17 of 31 Hopfield arms
+the causal ΔC peaks at the **cold end**: in the ordered phase the dynamics are
+near-deterministic, so distinct microstates stay distinct and every sample
+resolves as its own causal state. **Causal distinguishability is maximal
+exactly where URP needs ΔC to be minimal.**
+
+Nor is there a horizon that escapes it. There are three regimes and none of
+them is usable:
+
+| horizon | what the reading does | scan at ceiling |
+|---|---|---|
+| short (`τ = 1` relaxation) | no shape at all | **100%** |
+| intermediate (`τ = 5`) | "peak" is a tie-break among ceiling points | **62–69%** |
+| long (`τ = 20–40`) | peaks at the cold end, or the shape inverts | — |
+
+The intermediate case is the one most likely to be mistaken for success. On the
+oscillators at `τ = 5` all nine arms report the peak inside the critical
+window, which reads as a clean pass. But the measured curve is
+`ΔC = 0.355, 0.595, 1.000, 1.000, 1.000, 1.000, 1.000` across `γ` — every one
+of the twenty sampled states resolving as a distinct causal state from
+`γ = 0.87` up — so the argmax is picking whichever tied ceiling point comes
+first. `n3_causal_delta_c` now reports the saturated fraction per arm and marks
+these `TIE` instead of counting them as landing in the window. With the
+diagnostic in place **all 18 completed oscillator arms are `TIE`**: not one of
+them carries a usable peak, where before the diagnostic nine of them looked
+like successes.
+
+Any construction of the form *"states differ if their futures differ"* inherits
+this, because determinism is what makes futures differ reliably. Recovering the
+quantity URP actually wants — diversity of *structured* states — would require
+counting distinguishable **macro**states, which needs a coarse-graining, which
+is the chosen cut this was meant to eliminate. The loop closes.
+
+So the honest reading is stronger than "this attempt failed": distinction
+requires committing to *which differences count as differences*, and the
+dynamics alone will not supply that commitment. On present evidence the
+arbitrariness in ΔC looks **irreducible** — a constraint on the principle as
+formulated, not a defect in three experiments. What is unaffected is the
+eviction *condition*, which survived every convention sweep in `16/16` arms;
+what is blocked is anything depending on ΔC's shape.
+
+**[measured — the gap has a coordinate]** If the choice cannot be removed, the
+next question is whether it is *structured*: do the admissible ΔC conventions
+move the reading along one axis, or in many independent directions?
+`n3_convention_manifold` tests this, and it is testable because the convention
+changes **only** ΔC — ΔI and the load come off the same trajectories — so a
+family of conventions gives a family of curves over one fixed scan with
+everything else identical. `2/3` held:
+
+- **On the oscillators the consequence is invariant.** Across all nine
+  combinations of two unrelated knobs — entrainment tolerance and frequency bin
+  width — the ΔC peak spans `0.192`, exactly one scan grid step. Two independent
+  conventions do not move it at all.
+- **On the network it is monotone in the cut.** The peak slides
+  `T⋆ = 1.10 → 0.70` as the threshold tightens, and the leading curve-shape axis
+  is perfectly monotone in the knob (`Spearman = +1.000`).
+- **The registered bar was `r² ≥ 0.80` and the network gave `0.756`**, so Q1 is
+  recorded as failed. But the second axis adds `+0.014`, and by rank rather than
+  linear fit the shape axis and the knob are the *same* predictor of the peak —
+  `Spearman = −0.906` for both. `r²` is a linear statistic and `argmax` is not a
+  linear functional of a grid-quantised curve, so what failed is the estimator.
+  Registered as a failure regardless.
+
+So the freedom in ΔC is not an open set. It is **one interpretable knob** —
+resolution — with two independent conventions on one substrate collapsing onto
+it and the second direction adding nothing on either. That does not repair
+anything above: ΔC still has no derived value and the retraction stands. What
+it changes is the *kind* of object the gap is. A choice with a coordinate can be
+stated, compared between observers, and quotiented; a choice without one cannot.
+
+**[measured — the same audit, aimed at the one agent-facing instrument]**
+`trajectory_label` sorts a step in `(ΔC, ΔI)` into `expanding` /
+`consolidating` / `diverging` / `contracting` / `steady`, and the identical
+taxonomy is read on LLM session traces in the sibling repo. Both transplants use
+it to report a `diverging` band — "the compass's hallucination trajectory" — and
+place the capacity-starved optimum inside it. It takes a `deadband`, published
+at `0.01`, which nothing derives. `n3_label_stability` sweeps it. `2/3` held:
+
+- **The labels move.** Only `27%` (network) and `17%` (oscillators) of steps
+  keep the same label across the sweep, so the constant is a parameter of the
+  reading, not a formality.
+- **But monotonically.** Widening the deadband only ever converts `diverging`
+  steps into `steady` ones — never the reverse — so it behaves as a sensitivity
+  dial. A flag raised at a wide deadband is a fortiori raised at a narrow one.
+- **And `0.01` is knife-edge on one substrate.** It survives `20×` downward on
+  both, but only `5×` up on the network and **`1.0×` up on the oscillators** —
+  the very next setting moves the band.
+
+The useful part is that **presence and extent come apart**. The `diverging`
+regime is present at *every* deadband tested on both substrates, while its
+**onset** takes three distinct values on the oscillators. So the two questions
+one would actually ask of a running agent have different answers: *is this
+trajectory diverging?* is robust; *when did it start?* is not. Reporting the
+flag is defensible; reporting where it began requires reporting the deadband
+with it.
+
+This is the third instrument in a row where a confident-looking reading turned
+out to rest on an underived constant, and the second where the failure was the
+*statistic* rather than the phenomenon. The transferable discipline — sweep the
+convention, and separate the claim that survives from the one that does not — is
+at this point better established than any particular substrate result.
+
+*Scope, stated because it is a real limit on the above.* The Hopfield sweep
+covers `31` of `36` arms and every value of each free choice; the missing five
+are the most expensive corner. On the oscillators only the `τ = 1` block
+(`9/9` arms) completed, supplemented by the direct horizon probe recorded in
+the experiment. Repeated interruptions of long runs in the execution
+environment, not a design choice, are why — and the qualitative conclusion is
+carried by both substrates while the formal oscillator sweep is not complete.
+
 **[measured]** Where the law meets external ground truth — a learning system —
 capacity-gated plasticity beats plain SGD on a compositional task sequence,
 paired and powered (`p < 0.001`), and the advantage is scarcity-graded. Its
@@ -318,6 +533,12 @@ python experiments/n3_kappa_gravity.py         # §4, gravity
 python experiments/n3_boundary_gravity.py      # §4, the negative
 python experiments/n3_criticality_transplant.py  # §5, substrate independence
 python experiments/n3_kuramoto_transplant.py     # §5, the third substrate
+python experiments/n3_crossing_prediction.py     # §5, the units audit of both
+python experiments/n3_kuramoto_repair.py         # §5, the drive-free load
+python experiments/n3_anatomy.py                 # §5, is the destination real?
+python experiments/n3_causal_delta_c.py          # §5, a DC with no cut (negative)
+python experiments/n3_convention_manifold.py     # §5, does the gap have a coordinate?
+python experiments/n3_label_stability.py         # §5, the compass's own deadband
 ```
 
 Each prints its own pre-registered predictions, its verdict, and its honest

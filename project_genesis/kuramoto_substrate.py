@@ -77,6 +77,7 @@ from .hopfield_substrate import (
 __all__ = [
     "natural_frequencies",
     "order_parameter",
+    "drift_field",
     "kuramoto_step",
     "simulate",
     "window_metrics",
@@ -117,6 +118,18 @@ def order_parameter(phases: np.ndarray) -> tuple[float, float]:
     return float(np.abs(z)), float(np.angle(z))
 
 
+def drift_field(phases: np.ndarray, omega: np.ndarray,
+                coupling: float) -> np.ndarray:
+    """The deterministic phase velocity ``ω_i + K·r·sin(ψ − θ_i)``.
+
+    Split out of :func:`kuramoto_step` so the *system's own* motion can be read
+    without the injected noise mixed into it — see ``repair_rate`` in
+    :func:`simulate` for why that distinction turned out to matter.
+    """
+    r, psi = order_parameter(phases)
+    return omega + coupling * r * np.sin(psi - np.asarray(phases))
+
+
 def kuramoto_step(phases: np.ndarray, omega: np.ndarray, coupling: float,
                   dt: float, noise: float,
                   rng: np.random.Generator) -> np.ndarray:
@@ -129,9 +142,7 @@ def kuramoto_step(phases: np.ndarray, omega: np.ndarray, coupling: float,
     ``noise = 0`` this is the deterministic model; ``noise > 0`` is the driven
     condition — a rhythm the population must actively repair.
     """
-    r, psi = order_parameter(phases)
-    drift = omega + coupling * r * np.sin(psi - phases)
-    increment = drift * dt
+    increment = drift_field(phases, omega, coupling) * dt
     if noise > 0.0:
         increment = increment + noise * np.sqrt(dt) * rng.standard_normal(
             phases.size)
@@ -155,6 +166,24 @@ def simulate(phases: np.ndarray, omega: np.ndarray, coupling: float,
       the oscillator analogue of the Hopfield flip rate, and in the same O(0.1)
       range.  In a deterministic locked state this is ~0 (everyone rotates
       together); under noise it is the repair activity the ordered rhythm pays.
+
+      **This reading is contaminated by the drive, and `n3_crossing_prediction`
+      measured by how much.**  The injected noise contributes exactly ``σ√dt``
+      to the same spread, and ``activity/(σ√dt)`` at the ordered end converges
+      to ``1.004`` as ``dt → 0``: essentially all of it is the perturbation
+      being counted back as though it were the population's response to the
+      perturbation.  It is kept unchanged because three published results are
+      stated in it.
+    - ``repair_rate`` — the same idea with the drive removed and the
+      integrator's step divided out: the mean over the window of
+      ``std_i(v_i − ⟨v⟩)`` where ``v_i = ω_i + K·r·sin(ψ − θ_i)`` is the
+      *deterministic* phase velocity.  Three properties the raw ``activity``
+      does not have: it contains no injected noise, it is a **rate** rather
+      than a per-step displacement so it does not carry ``dt`` at all, and it
+      still vanishes in the deterministic locked state (where every oscillator
+      shares one collective velocity), which is the toggle the transplant
+      design needs.  What it measures is the restoring work the coupling
+      actually does against the perturbation.
     - ``phases`` — the final phases.
     """
     phases = np.array(phases, dtype=float)
@@ -165,9 +194,14 @@ def simulate(phases: np.ndarray, omega: np.ndarray, coupling: float,
     r_samples: list[float] = []
     total_phase = np.zeros(phases.size)
     activity_acc = 0.0
+    repair_acc = 0.0
     n_measure = max(1, steps - burn_in)
     for _ in range(n_measure):
         prev = phases
+        # the system's own velocity, read BEFORE the step so it is the drift
+        # that produced this increment and carries none of its noise
+        v = drift_field(prev, omega, coupling)
+        repair_acc += float(np.std(v - v.mean()))
         phases = kuramoto_step(phases, omega, coupling, dt, noise, rng)
         increment = phases - prev
         total_phase += increment
@@ -181,6 +215,7 @@ def simulate(phases: np.ndarray, omega: np.ndarray, coupling: float,
         "r_samples": np.array(r_samples),
         "eff_freq": eff_freq,
         "activity": activity_acc / n_measure,
+        "repair_rate": repair_acc / n_measure,
         "phases": phases,
     }
 
@@ -198,7 +233,10 @@ def window_metrics(sim: dict, freq_tol: float = 0.3,
       of drifters (the critical neighbourhood).
     - ``coherent_fraction`` — share of oscillators entrained to the collective
       frequency (``|Ω_i| < freq_tol``; frequencies are zero-centred).
-    - ``activity`` — passed through from the simulation (the load reading).
+    - ``activity`` — passed through from the simulation (the published load
+      reading, drive-contaminated; see :func:`simulate`).
+    - ``repair_rate`` — passed through from the simulation (the drive-free,
+      dt-free load reading).
 
     The frequency histogram uses **fixed-width bins** on a fixed range, not
     data-driven edges: a tight locked cluster then stays in one bin whatever
@@ -231,4 +269,5 @@ def window_metrics(sim: dict, freq_tol: float = 0.3,
         "delta_i": delta_i,
         "coherent_fraction": coherent_fraction,
         "activity": float(sim.get("activity", 0.0)),
+        "repair_rate": float(sim.get("repair_rate", 0.0)),
     }

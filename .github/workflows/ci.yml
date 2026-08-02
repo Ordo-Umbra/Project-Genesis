@@ -12,7 +12,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Checkout repository
@@ -28,6 +28,11 @@ jobs:
         timeout-minutes: 10
         run: python -m pip install -r requirements.txt
 
+      # The suite runs real simulations, not mocks: ~1100 tests taking ~13 min
+      # of genuine computation locally. At a 15 min cap it was passing at 86%
+      # of budget with no headroom, so ordinary runner variance failed it
+      # (run 30679105296). Raised rather than thinned -- the tests that cost
+      # the time are the ensemble and substrate ones that catch real errors.
       - name: Run test suite
-        timeout-minutes: 15
+        timeout-minutes: 18
         run: python -m unittest discover -s tests -v
