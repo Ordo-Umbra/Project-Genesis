@@ -87,17 +87,29 @@ def neighbourhood_label_bits(labels: np.ndarray, radius: int = 1) -> np.ndarray:
 
 
 def full_palette_density(labels: np.ndarray, n_palette: int,
-                         radius: int = 1) -> float:
+                         radius: int = 1,
+                         min_valence: int | None = None) -> float:
     """Density of cells whose ``radius`` neighbourhood carries the whole palette.
 
-    Identical to `multiphase.full_palette_junction_density` at ``radius = 1``.
-    The two conditions are unchanged and both remain exact: the neighbourhood
-    must contain every colour, and it must be a junction (three or more distinct
-    sectors) rather than a wall.
+    Identical to `multiphase.full_palette_junction_density` at ``radius = 1``
+    and ``min_valence = None``. Both conditions remain exact: the neighbourhood
+    must contain every colour, and it must be a junction rather than a wall.
+
+    ``min_valence`` exposes the second condition, which the published measure
+    hardcodes to ``3``.  **That constant is dimension-blind, and in 3-D it is
+    the wrong one.**  Codimension counting: ``m`` sectors meeting form a
+    codimension-``(m-1)`` object, so three sectors meet at a *point* in 2-D but
+    along a *line* in 3-D.  A genuine point junction in ``d`` dimensions needs
+    ``d + 1`` sectors.  Left at ``3`` in 3-D the measure therefore asks whether
+    an **edge** carries the whole palette — which a 3-palette does trivially —
+    and cannot express the ``d + 1`` claim it is used to support.  ``None``
+    keeps the published behaviour so nothing silently changes underneath the
+    existing results.
     """
     bits = neighbourhood_label_bits(labels, radius)
     full = (1 << int(n_palette)) - 1
-    return float(np.mean((bits == full) & (_popcount(bits) >= 3)))
+    m = 3 if min_valence is None else int(min_valence)
+    return float(np.mean((bits == full) & (_popcount(bits) >= m)))
 
 
 def valence_profile(labels: np.ndarray, radius: int = 1) -> dict:

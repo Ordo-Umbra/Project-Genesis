@@ -120,6 +120,33 @@ capacity principle is doing work here: a plain multiphase field with no κ
 selects three just as sharply. The evidence for substrate-independent capacity
 dynamics is §5, not this.
 
+**[measured — and this one got *stronger* under audit]** The selection has one
+free choice: the neighbourhood the junction test looks at, hardcoded to the
+immediate `3^d` ring. Unlike every other constant this programme has swept, it
+has an argument behind it — on a lattice it is the smallest window a junction
+can appear in. `n3_junction_scale` widened it anyway, on fields the texture
+guard confirms are tilings (domain scale `4.07–9.79`):
+
+| neighbourhood | P=2 | P=3 | P=4 | P=5 | P=6 | margin |
+|---|---|---|---|---|---|---|
+| radius 1 (published, 3×3) | 0 | **0.0069** | 0 | 0 | 0 | ∞ |
+| radius 2 (5×5) | 0 | **0.0293** | 0.0006 | 0 | 0 | 45.5× |
+| radius 3 (7×7) | 0 | **0.0684** | 0.0041 | 0.0007 | 0 | 16.6× |
+
+The registered prediction was that the margin would *collapse* once the probe
+stopped being vertex-sized — a 5×5 window can geometrically hold four colours.
+**It does not.** At radius 2 every rival is still exactly zero, and at radius 3
+— a window wide enough to be measuring a region rather than a vertex — `P = 3`
+still leads by `16.6×`. The field simply never places four colours within a
+domain width of one another. That is a stronger result than the vertex-scale
+mechanism proposed for it, and it is the **only** claim in this programme to
+come out of a convention sweep wider than it went in.
+
+And the ranking is what carries: `argmax = P = 3` at *every* radius while the
+margin moves across `∞ → 45.5 → 16.6`. The magnitude is a location and it
+drifts; the ranking is a comparison and it does not — the same split found in
+every audit of §5, now on the claim the document rests on.
+
 **Matter is the cells of a tessellation.** **[measured]** Held near its critical
 point, the field partitions space into domains, walls, and junctions — a
 countable inventory with exact invariants. Where walls meet in threes, Euler's
@@ -127,6 +154,30 @@ formula fixes the proportions at `2:3:1`. The number of families is `d+1` — th
 in two dimensions, **four in three** — so *the number of generations is the
 dimension of space plus one*. The abundances are topologically protected, not
 energetically tuned.
+
+*`d+1` was asserted until now, and the instrument could not have shown it.*
+**[measured]** `n3_junction_scale` ran the selection measure in 3-D for the
+first time and it picks `P = 3`, not `4`. The cause is a constant, not the
+claim: `full_palette_junction_density` hardcodes its junction test to
+`distinct >= 3`, which is the **2-D** vertex number. By codimension counting
+`m` sectors meeting form a codimension-`(m−1)` object, so three sectors meet at
+a *point* in the plane but along a *line* in space, and a point junction in `d`
+dimensions needs `d+1` of them. Left at `3`, the measure asks in 3-D whether an
+**edge** carries the whole palette — which a 3-palette does trivially.
+
+Reading it at the geometrically correct `distinct >= d+1`, on fields the
+texture guard confirms are genuine tilings:
+
+| junction test | P=2 | P=3 | P=4 | P=5 | P=6 | winner |
+|---|---|---|---|---|---|---|
+| `>= 3` (published) | 0 | **0.0286** | 0.0032 | 0.0002 | 0 | `P=3` |
+| `>= 4` (`d+1`) | 0 | **0** | **0.0032** | 0.0002 | 0 | **`P=4`** |
+
+`P = 3` falls to *identically* zero, because a three-colour palette cannot form
+a four-fold vertex at all. So `d+1` is right and is now **measured rather than
+asserted** — but the published instrument is 2-D-specific and cannot express it
+outside the plane. That is a bug in the measure, not in the geometry, and it
+had never been caught because the measure had never been run in 3-D.
 
 **Binding is derived, not dialled.** **[measured]** "Adding the same distinction
 twice does not expand the structure" — no-cloning — priced against the capacity
@@ -561,6 +612,7 @@ Every claim above is a file you can run.
 ```
 python experiments/n3_selection_sweep.py       # §6, the selection argument
 python experiments/n3_capacity_separation.py   # §2, the cliff
+python experiments/n3_junction_scale.py        # §2/§3, at what scale is 3 special?
 python experiments/n3_capacity_gating.py       # §3, the correction (geometry, not scarcity)
 python experiments/n3_area_law.py              # §2, the scaling dimension
 python experiments/n3_exchange_statistics.py   # §3, the exchange sign

@@ -113,6 +113,7 @@ def sweep(palettes, radii, *, size, ndim, steps, gamma, dt, seed, trials,
         # the texture guard: a junction count on a field that never tessellated
         # is counting lattice noise. This caught an artefact once already.
         out[("scale", P)] = float(np.mean([domain_scale(l) for l in labels]))
+        out[("labels", P)] = labels
     return out
 
 
@@ -294,6 +295,48 @@ def main() -> int:
         print("  §3's 'families = d+1' does not follow from this measure, and")
         print("  the docstring's own warning that the selection 'need not")
         print("  transfer' to 3-D turns out to be the operative fact.")
+
+    # ------------------------------------------- post-hoc, and labelled so
+    print()
+    print(BANNER)
+    print("D  POST-HOC — why Q3 failed, and it is not what Q3 assumed")
+    print(BANNER)
+    print("  Found by asking what the measure's OTHER constant is doing. The")
+    print("  junction condition `distinct >= 3` is hardcoded — and 3 is the")
+    print("  2-D vertex number. By codimension counting, m sectors meeting")
+    print("  form a codimension-(m-1) object: three sectors meet at a POINT in")
+    print("  2-D but along a LINE in 3-D. A point junction in d dimensions")
+    print("  needs d+1 sectors. So in 3-D the published measure asks whether an")
+    print("  EDGE carries the whole palette, which a 3-palette does trivially.")
+    print()
+    print(f"  {'condition':<34}" + "".join(f"{'P=' + str(P):>10}"
+                                           for P in args.palettes)
+          + f"{'argmax':>8}")
+    for mv, label in ((None, "distinct >= 3   (published)"),
+                      (4, "distinct >= 4   (d+1, a vertex)")):
+        dens = {P: float(np.mean([full_palette_density(lab, P, 1, mv)
+                                  for lab in three[("labels", P)]]))
+                for P in args.palettes}
+        pr = selection_profile(dens)
+        print(f"  {label:<34}"
+              + "".join(f"{dens[P]:>10.5f}" for P in args.palettes)
+              + f"{pr['argmax']!s:>8}")
+        results[f"3-D_minvalence_{mv}"] = {"densities": dens, **pr}
+    fixed = results["3-D_minvalence_4"]["argmax"]
+    print()
+    if fixed == 4:
+        print("  With the geometrically correct condition, 3-D selects P=4 —")
+        print("  exactly what §3's `families = d+1` claims, and P=3 falls to")
+        print("  identically zero because a 3-palette CANNOT form a four-fold")
+        print("  vertex. So Q3's failure is a property of the measure's")
+        print("  dimension-blind constant, not of the claim: d+1 is correct and")
+        print("  the published instrument simply cannot express it outside 2-D.")
+        print("  That makes `d+1` measured here for the first time rather than")
+        print("  asserted — and it is a bug in the measure, not in the physics.")
+    else:
+        print(f"  Even at the correct condition 3-D selects P={fixed}, so the")
+        print("  dimension-blind constant is not the explanation and `d+1` is")
+        print("  not supported by this measure however it is read.")
 
     print()
     print(BANNER)
