@@ -90,6 +90,8 @@ sys.path.insert(0, str(ROOT / "experiments"))
 from project_genesis.anatomy import anatomy_reading  # noqa: E402
 from project_genesis.crossing import (  # noqa: E402
     capacity_floor,
+    crossing_exists,
+    evictable,
     kappa_at_crossing,
     measured_crossing,
     two_point_reduction,
@@ -164,6 +166,35 @@ def arm(rows_d, rows_u, x_key, weight, recovery, u_max, window):
     in_window = bool(np.isfinite(x_c) and abs(x_peak - x_c) <= window * x_c)
     return {**a, "kappa_star": k_d, "floor": f_d,
             "evicted": bool(np.isfinite(m_d["c_evict"])),
+            # The verdict alone cannot be re-scored later: "evicted in 16/16
+            # arms" counts settings, and says nothing about how nearly any of
+            # them failed. `c_evict` is the distance to that failure, so it is
+            # recorded alongside the boolean it decides. (Added when
+            # `n3_robustness_retrospective` tried to check the margin behind
+            # this claim and found only the conclusion had been kept.)
+            "c_evict": float(m_d["c_evict"]),
+            "kappa_evict": float(m_d.get("kappa_evict", float("nan"))),
+            # The ceiling-free verdict. `evicted` above asks whether a crossing
+            # turns up on a search ladder to c = 1e5, which is a search bound
+            # arguing with this run's declared c_max. `evictable` asks the
+            # question in the capacity variable instead, where the load scale
+            # cancels and no ceiling survives: the ordered point must start
+            # ahead, and holding it must cost capacity. The undriven arm is the
+            # control that keeps this from being vacuous.
+            "evictable": evictable(red_d, weight),
+            "evictable_undriven": evictable(red_u, weight),
+            "crossing_exists": crossing_exists(red_d, weight),
+            "crossing_exists_undriven": crossing_exists(red_u, weight),
+            "load_o": float(red_d["load_o"]),
+            "load_o_undriven": float(red_u["load_o"]),
+            "load_s": float(red_d["load_s"]),
+            "load_s_undriven": float(red_u["load_s"]),
+            # the two ceiling-free conditions as signed margins, so the claim
+            # can be scored for headroom rather than only counted
+            "crossing_margin": float(weight * (red_d["di_o"] - red_d["di_s"])
+                                     - red_d["gap"]),
+            "crossing_margin_undriven": float(
+                weight * (red_u["di_o"] - red_u["di_s"]) - red_u["gap"]),
             "floor_undriven": f_u, "kappa_star_undriven": k_u,
             "evicted_undriven": bool(
                 np.isfinite(measured_crossing(rows_u, x_key=x_key,
@@ -295,6 +326,27 @@ def main() -> int:
     print(f"  driven capacity floor spans   [{min(floors):.4f}, {max(floors):.4f}]")
     print(f"  crossing capacity κ_o⋆ spans  [{min(kstars):.4f}, {max(kstars):.4f}]")
     q2 = not bad_d and not bad_u
+
+    # The same question with no ceiling in it. `evicted` above is
+    # isfinite(c_evict) on a ladder to c = 1e5, which argues with this run's
+    # c_max; `evictable` asks it in the capacity variable, where the load scale
+    # cancels and nothing arbitrary is left. The undriven column is the control
+    # that stops the ceiling-free form from being vacuous.
+    ce_d = [k for k, v in arms.items() if not v["evictable"]]
+    ce_u = [k for k, v in arms.items() if v["evictable_undriven"]]
+    x_d = [k for k, v in arms.items() if not v["crossing_exists"]]
+    lo_u = [v["load_o_undriven"] for v in arms.values()]
+    print()
+    print("  ceiling-free form  [evictable = crossing_exists AND L_o > 0]")
+    print(f"    driven arms evictable:        "
+          f"{len(arms) - len(ce_d)}/{len(arms)}   "
+          f"(ordered point starts ahead in {len(arms) - len(x_d)}/{len(arms)})")
+    print(f"    undriven arms evictable:      {len(ce_u)}/{len(arms)}"
+          f"   [must be 0 — this is the control]")
+    print(f"    undriven L_o spans            "
+          f"[{min(lo_u):.3e}, {max(lo_u):.3e}]")
+    agree = [k for k in arms if arms[k]["evictable"] == arms[k]["evicted"]]
+    print(f"    agrees with the ladder verdict on {len(agree)}/{len(arms)} arms")
     print()
     if q2:
         print("  PREDICTION HELD — the condition is untouched by any of it. The")

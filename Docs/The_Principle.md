@@ -87,6 +87,84 @@ because it is underfunded; it never had the option.
 *(Honest note: for a classical field an area law is expected. The content is the
 exact one-dimension gap and its invariance, not the existence of an area law.)*
 
+**[measured — the only load-bearing claim here that came out of its convention
+sweep with nothing added to it]** Both of §2's measurements have now been swept
+for hidden conventions,
+because the rest of this document is a list of readings that turned out to
+depend on constants nobody derived. The gap has two such constants: the
+**fitting window** (four nested regions spanning a factor of two) and the
+**noise floor** subtracted from the correlation kernel. `n3_gap_conventions`
+moves both.
+
+| convention swept | `n_C` | `n_I` | gap |
+|---|---|---|---|
+| fitting window — 5 ladders, incl. sub-ranges and shifted | `0.046` | `0.017` | `0.029` |
+| noise-floor band — 4 defensible bands | `0.000` | `0.015` | `0.015` |
+| noise-floor magnitude — `0×` to `2×`, `0×` = no floor at all | `0.000` | `0.096` | `0.096` |
+
+Every entry is a full spread, not an error bar. The largest motion under any
+convention swept is `0.096` — **38% of the tolerance the original experiment
+set for itself**, and it is the case where the noise-floor correction is
+dropped entirely, which no reader would ask for. At the published conventions:
+`n_C = 1.99`, `n_I = 0.95` after a calibrated instrument bias of `+0.12`, gap
+`1.04`. The one-dimension gap is a fact about the field, full stop.
+
+**And the audit found something it was not looking for.** The prediction being
+tested was the split that had held in five previous audits — *locations move
+under a convention change, differences of co-measured quantities do not,
+because the compared readings share the distortion and it cancels*. The window
+was chosen as the common-mode case (both exponents fitted on the same regions)
+and the floor as the differential one (`n_C` is gradient energy and never
+touches the kernel). Neither test ran. `n_I` barely responds to the window, and
+`n_C` cannot respond to the floor **at all** — so in the floor sweeps the gap's
+spread equals `n_I`'s to fourteen decimal places, which is not a result but a
+subtraction. *A difference whose parts do not both move is not protected by
+being a difference; it inherits the fragile part exactly.*
+
+That is a real limit on a rule this programme has been leaning on, and the
+sharpened version is: **prefer differences over quantities that share the
+convention you are worried about — and check that both of them actually respond
+to it.** The second clause was implicit and is doing more work than the first.
+It also indicts the bar: "the difference moved less than the tolerance" passes
+both when cancellation happens and when nothing moved, and five audits scored
+that bar without distinguishing them. `cancellation()` now separates the cases,
+and applied here it reports **not exercised** on all three sweeps rather than a
+pass on all three.
+
+**[measured — the bar re-applied to the earlier audits, and it acquits most of
+them]** If the bar was blind, the six claims scored against it needed
+re-checking, so `n3_robustness_retrospective` re-scores the published sweeps
+with instruments that ask *how close did this come to breaking, in units of how
+much the sweep moved things*. Three claim-shapes, three diagnostics
+(`project_genesis.robustness`). The result was largely **not** what was
+predicted — `1/3`:
+
+| claim | shape | headroom | verdict |
+|---|---|---|---|
+| §2 gap, fitting window | difference | ratio `1.77` | not exercised |
+| §2 gap, noise floor (both sweeps) | difference | `n_C` pinned | not exercised |
+| §2/§3 `P = 3`, 2-D | ranking | `2.79×` | **exercised — held** |
+| §2/§3 `P = 3`, 3-D | ranking | `0.68×` | **exercised — held** |
+| §5 eviction, ordered point ahead | boolean | `0.24×` | **exercised — held** |
+| §5 eviction, order costs capacity | boolean | `27–50×` | categorical, see §5 |
+
+So the blind spot is real but **local to §2's gap**. The `P = 3` cliff was
+predicted to be *structural* — rivals identically zero, hence unflippable, hence
+a categorical claim filed as a robustness one. That is wrong. The rivals are
+live: as the probe widens, `P = 4` closes on `P = 3` from `45.5×` to `16.6×` in
+the plane, and harder in space. The ranking survived a convention that genuinely
+threatened it, which is the strong version of the result and was already the
+honest reading. Same for the eviction condition on the oscillator substrate.
+
+*One methodological correction, found by checking rather than by reasoning.*
+The first run of that experiment measured leads **additively** and reported the
+wrong rival. On densities spanning orders of magnitude the smallest *difference*
+sits at the tightest probe — where the rivals are exactly zero and the winner is
+merely small — so it reads as a near miss when the winner is in fact infinitely
+ahead. Scored as a ratio, the rival that is actually closing is a different one.
+The published analysis quotes a margin for exactly this reason; the diagnostic
+now matches it.
+
 ---
 
 ## 3. What follows: structure
@@ -120,6 +198,38 @@ capacity principle is doing work here: a plain multiphase field with no κ
 selects three just as sharply. The evidence for substrate-independent capacity
 dynamics is §5, not this.
 
+**[measured — and this one got *stronger* under audit]** The selection has one
+free choice: the neighbourhood the junction test looks at, hardcoded to the
+immediate `3^d` ring. Unlike every other constant this programme has swept, it
+has an argument behind it — on a lattice it is the smallest window a junction
+can appear in. `n3_junction_scale` widened it anyway, on fields the texture
+guard confirms are tilings (domain scale `4.07–9.79`):
+
+| neighbourhood | P=2 | P=3 | P=4 | P=5 | P=6 | margin |
+|---|---|---|---|---|---|---|
+| radius 1 (published, 3×3) | 0 | **0.0069** | 0 | 0 | 0 | ∞ |
+| radius 2 (5×5) | 0 | **0.0293** | 0.0006 | 0 | 0 | 45.5× |
+| radius 3 (7×7) | 0 | **0.0684** | 0.0041 | 0.0007 | 0 | 16.6× |
+
+The registered prediction was that the margin would *collapse* once the probe
+stopped being vertex-sized — a 5×5 window can geometrically hold four colours.
+**It does not.** At radius 2 every rival is still exactly zero, and at radius 3
+— a window wide enough to be measuring a region rather than a vertex — `P = 3`
+still leads by `16.6×`. The field simply never places four colours within a
+domain width of one another. That is a stronger result than the vertex-scale
+mechanism proposed for it, and it is the **only** claim in this programme to
+come out of a convention sweep wider than it went in.
+
+And the ranking is what carries: `argmax = P = 3` at *every* radius while the
+margin moves across `∞ → 45.5 → 16.6`. The magnitude is a location and it
+drifts; the ranking is a comparison and it does not — the same split found in
+every audit of §5, now on the claim the document rests on. (This case meets the
+precondition §2 added afterwards, and has since been measured against it:
+widening the probe moves the winning density *and* the runner-up, and the
+ranking survived with a headroom of `2.79×` in the plane and `0.68×` in space —
+`P = 4` genuinely closing, not a rival pinned at zero. The survival is a
+measurement, not an identity. Not every case is.)
+
 **Matter is the cells of a tessellation.** **[measured]** Held near its critical
 point, the field partitions space into domains, walls, and junctions — a
 countable inventory with exact invariants. Where walls meet in threes, Euler's
@@ -127,6 +237,30 @@ formula fixes the proportions at `2:3:1`. The number of families is `d+1` — th
 in two dimensions, **four in three** — so *the number of generations is the
 dimension of space plus one*. The abundances are topologically protected, not
 energetically tuned.
+
+*`d+1` was asserted until now, and the instrument could not have shown it.*
+**[measured]** `n3_junction_scale` ran the selection measure in 3-D for the
+first time and it picks `P = 3`, not `4`. The cause is a constant, not the
+claim: `full_palette_junction_density` hardcodes its junction test to
+`distinct >= 3`, which is the **2-D** vertex number. By codimension counting
+`m` sectors meeting form a codimension-`(m−1)` object, so three sectors meet at
+a *point* in the plane but along a *line* in space, and a point junction in `d`
+dimensions needs `d+1` of them. Left at `3`, the measure asks in 3-D whether an
+**edge** carries the whole palette — which a 3-palette does trivially.
+
+Reading it at the geometrically correct `distinct >= d+1`, on fields the
+texture guard confirms are genuine tilings:
+
+| junction test | P=2 | P=3 | P=4 | P=5 | P=6 | winner |
+|---|---|---|---|---|---|---|
+| `>= 3` (published) | 0 | **0.0290** | 0.0021 | 0.0002 | 0 | `P=3` |
+| `>= 4` (`d+1`) | 0 | **0** | **0.0021** | 0.0002 | 0 | **`P=4`** |
+
+`P = 3` falls to *identically* zero, because a three-colour palette cannot form
+a four-fold vertex at all. So `d+1` is right and is now **measured rather than
+asserted** — but the published instrument is 2-D-specific and cannot express it
+outside the plane. That is a bug in the measure, not in the geometry, and it
+had never been caught because the measure had never been run in 3-D.
 
 **Binding is derived, not dialled.** **[measured]** "Adding the same distinction
 twice does not expand the structure" — no-cloning — priced against the capacity
@@ -283,6 +417,54 @@ across a range a reader would accept without argument. `2/3` held:
 - **The eviction condition is untouched**, in `16/16` arms. The capacity floor
   sits orders of magnitude below `κ_o⋆` everywhere, so this was never a close
   call a convention could tip. Everything above about the *condition* stands.
+  **[amended, then resolved — the ceiling is gone]** `evicted` was
+  `isfinite(c_evict)`, with `c_evict` found on a search ladder running to
+  `c = 1e5` — `2000×` past the `c_max = 50` the same run declares as its
+  scarcity range. Two ceilings, nothing in the model choosing between them, and
+  *the answer differed across the range*: against the ladder all `16` arms
+  passed, against the declared budget the Hopfield arm at `threshold = 0.50`
+  did not, needing `c = 59.7`.
+
+  **The resolution is not to pick one, because `c` is the wrong variable.**
+  §5's own reduction is that the load scale is arbitrary and cancels in the
+  capacity form; the verdict simply had not been carried through it. Eviction
+  requires `floor < κ_o⋆` with `floor = 1/(1 + u·L_o)`, and as `u` grows the
+  floor falls to zero *for any non-zero load*. Taking that limit removes the
+  ceiling from the statement:
+
+  > **evictable ⟺ the ordered point starts ahead, and holding it costs
+  > capacity** — `crossing_exists(w)` and `L_o > 0`.
+
+  No consumption bound appears anywhere in it. This is the sentence §5 has
+  been making all along — *scarcity evicts order exactly when maintaining
+  order costs capacity* — with the last free constant taken out.
+
+  **[measured]** It reproduces the published result and keeps the control:
+  `16/16` driven arms evictable, `0/16` undriven, agreeing with the ladder
+  verdict on all `16`. The Hopfield "failure" was an artefact of comparing
+  `c_evict` against `c_max`; the structural claim was never about `c`. What
+  the boolean *was* hiding is that the condition has two halves behaving
+  differently — **the ordered point starting ahead is a genuine measurement
+  that nearly fails** (headroom `0.24×` on the oscillators, where the ΔC
+  convention moves the margin by four times its distance to zero), while
+  **holding order costing capacity is categorical** (driven and undriven loads
+  `7–9` decades apart — a difference in kind, not a near miss). `16/16`
+  averaged those together and reported neither.
+
+  *One constant remains and it is a different animal.* `L_o > 0` is the right
+  condition and the wrong test: an undriven oscillator scan measures
+  `L_o = 1.24e-15`, machine noise around a physically zero load, and a literal
+  `> 0` passes it — breaking the control on `9/16` arms, which is how the guard
+  came to exist. The comparison is made on the dimensionless ratio `L_o/L_⋆`
+  against a numerical zero. Measured loads separate into `0` or `1e-15` when
+  free and `1e-2 … 5.8e-1` when driven: **thirteen orders of empty space**, and
+  every threshold from `1e-12` to `1e-3` gives the same verdict on every arm.
+  A constant with ten orders of slack that no result depends on is not the
+  same object as one with three orders that decides the outcome.
+
+  The margins are now stored beside the verdict, which they were not: the
+  original kept the conclusion and discarded the distance to it, so the claim
+  could not be re-checked even in principle.
 - **The critical neighbourhood does not fully survive.** The ΔC peak slides
   monotonically with the network's threshold — `T⋆ = 1.20 → 0.70` across
   `0.15 → 0.50` — and leaves the published `±35%·T_c` window at the two most
@@ -422,13 +604,49 @@ out to rest on an underived constant, and the second where the failure was the
 convention, and separate the claim that survives from the one that does not — is
 at this point better established than any particular substrate result.
 
-*Scope, stated because it is a real limit on the above.* The Hopfield sweep
-covers `31` of `36` arms and every value of each free choice; the missing five
-are the most expensive corner. On the oscillators only the `τ = 1` block
-(`9/9` arms) completed, supplemented by the direct horizon probe recorded in
-the experiment. Repeated interruptions of long runs in the execution
-environment, not a design choice, are why — and the qualitative conclusion is
-carried by both substrates while the formal oscillator sweep is not complete.
+**[measured — the complete oscillator grid, and it is worse than "it never
+works"]** All `36` oscillator arms are now in. With `γ_c ≈ 0.94` and a critical
+window of `[0.61, 1.26]`:
+
+| `τ` (relaxation times) | ΔC peak across the 9 arms | scan at ceiling | usable |
+|---|---|---|---|
+| 1 | `0.10` | 100% | 0/9 |
+| 5 | `0.87, 1.06` | 62–69% | 0/9 |
+| 20 | `1.44, 1.63, 1.82, 2.02, 2.21, 2.40` | 0–46% | 0/9 |
+| 40 | `0.67, 0.87` | **0%** | **9/9** |
+
+*An earlier revision of this section, written from the first three blocks,
+claimed the peak "slides monotonically from the ordered end to the disordered
+end as the horizon grows". **That is false** — `τ = 40` brings it back to
+`0.67–0.87`. The dependence is non-monotone: out to the disordered end and
+back.*
+
+At `τ = 40` the construction **works**: the reading is unsaturated, and it puts
+the peak inside the critical window on all nine arms, robustly across replicate
+count and merge confidence. Taken alone that would read as a success.
+
+It is not one, because of the row above it. At `τ = 20` with `R = 8` the
+reading is **also** completely unsaturated — `0%` at ceiling, no ties, no
+internal sign of trouble — and it puts the peak at `2.02–2.40`, far outside the
+window. Two horizons, both giving clean, internally consistent, confident
+readings; one right and one wrong; **and nothing available inside the
+measurement distinguishes them.** The saturation diagnostic catches `τ = 1` and
+`τ = 5` and is silent on exactly the case that matters.
+
+So the honest statement is not "a dictionary-free ΔC cannot find criticality" —
+at a long enough horizon it does. It is that **the horizon at which it is right
+cannot be identified without already knowing the answer**, which is the same
+thing as not having an instrument. `9` of `36` arms are usable and only in
+hindsight. (Q3 is unaffected either way: the hull still ranges over `{3, 4, 5}`
+at `τ = 40`, so the route stays indeterminate.)
+
+This is the fourth instance in this arc of the same failure mode and the most
+subtle: not a statistic reporting on data that cannot support it, but a clean
+measurement that is simply wrong with no flag available.
+
+*Scope.* The Hopfield sweep covers `31` of `36` arms and every value of each
+free choice; the missing five are its most expensive corner. The oscillator
+sweep is complete at `36/36`.
 
 **[measured]** Where the law meets external ground truth — a learning system —
 capacity-gated plasticity beats plain SGD on a compositional task sequence,
@@ -525,8 +743,10 @@ Every claim above is a file you can run.
 ```
 python experiments/n3_selection_sweep.py       # §6, the selection argument
 python experiments/n3_capacity_separation.py   # §2, the cliff
+python experiments/n3_junction_scale.py        # §2/§3, at what scale is 3 special?
 python experiments/n3_capacity_gating.py       # §3, the correction (geometry, not scarcity)
 python experiments/n3_area_law.py              # §2, the scaling dimension
+python experiments/n3_gap_conventions.py       # §2, which conventions the gap survives
 python experiments/n3_exchange_statistics.py   # §3, the exchange sign
 python experiments/n3_ab_statistics.py         # §3, spin = statistics = gauge
 python experiments/n3_kappa_gravity.py         # §4, gravity
@@ -539,11 +759,14 @@ python experiments/n3_anatomy.py                 # §5, is the destination real?
 python experiments/n3_causal_delta_c.py          # §5, a DC with no cut (negative)
 python experiments/n3_convention_manifold.py     # §5, does the gap have a coordinate?
 python experiments/n3_label_stability.py         # §5, the compass's own deadband
+python experiments/n3_robustness_retrospective.py --from RESULTS  # all, was any of it tested?
 ```
 
 Each prints its own pre-registered predictions, its verdict, and its honest
-scope — including when the prediction failed. 872 checks in `tests/`
-lock the central claims so they cannot drift silently.
+scope — including when the prediction failed. 1245 test functions in `tests/`
+lock the central claims so they cannot drift silently. (That number was `872`
+from the day this file was written until it was counted again — a stale figure
+in a document about auditing stale figures.)
 
 **What would refute the whole thing:** a palette other than three scoring
 comparably on the joint criterion (§6); a capacity sweep that moves the
