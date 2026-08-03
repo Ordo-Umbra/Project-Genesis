@@ -32,6 +32,7 @@ from project_genesis.junction_scale import (  # noqa: E402
 )
 from project_genesis.multiphase import (  # noqa: E402
     _neighbour_offsets,
+    domain_diameter,
     _neighbourhood_label_bits,
     full_palette_junction_density,
 )
@@ -219,6 +220,67 @@ class TestOneDimension(unittest.TestCase):
     def test_a_larger_palette_than_the_window_can_hold_is_always_zero(self):
         lab = np.array([0, 1, 2, 3] * 10)
         self.assertEqual(full_palette_density(lab, 4, 1, min_valence=2), 0.0)
+
+
+class TestDimensionCorrectedTextureGuard(unittest.TestCase):
+    """The second dimension-blind constant in this measure.
+
+    `domain_scale` is compared against a fixed floor of 2.5 wherever it guards a
+    junction reading, and that floor does not mean the same thing in every
+    dimension: a cell is wall if any of its 3^d - 1 neighbours differs, and that
+    ring grows exponentially, so a larger share of any domain sits within one
+    step of its surface as d rises. Measured, a 2-D field at scale 5.14 and a
+    4-D field at scale 2.31 hold domains of 19.5 and 15.1 lattice units — the
+    same kind of structure, on opposite sides of the cut.
+
+    `domain_diameter` inverts the relation so the guard means one thing
+    everywhere. These tests pin the property that makes it worth having.
+    """
+
+    def test_noise_reads_one_in_every_dimension(self):
+        """The whole point. Texture is texture in 1-D or 4-D, and the guard
+        must say so with the same number, which a raw scale does not."""
+        rng = np.random.default_rng(0)
+        for d in (2, 3, 4):
+            lab = rng.integers(0, 4, (12,) * d)
+            self.assertAlmostEqual(domain_diameter(lab), 1.0, places=6,
+                                   msg=f"{d}-D")
+
+    def test_a_single_domain_has_no_width_to_report(self):
+        """inf rather than a number, because any finite answer for a field with
+        no walls is a fact about the box, not the structure."""
+        self.assertTrue(np.isinf(domain_diameter(np.zeros((10, 10), dtype=int))))
+
+    def test_it_recovers_a_known_compact_domain_size(self):
+        """Checkerboard blocks of width w: the guard should land near w."""
+        for w in (4, 8):
+            n = 4 * w
+            idx = np.arange(n) // w
+            lab = ((idx[:, None] + idx[None, :]) % 2).astype(int)
+            got = domain_diameter(lab)
+            self.assertGreater(got, w * 0.5, msg=str(w))
+            self.assertLess(got, w * 2.5, msg=str(w))
+
+    def test_a_slab_over_reads_by_about_the_dimension(self):
+        """The documented limit, pinned so it stays documented. Stripes vary on
+        one axis and carry walls on one axis instead of d, so the compact-domain
+        assumption over-reads — by about a factor of d."""
+        lab = np.zeros((40, 40), dtype=int)
+        lab[:, 20:] = 1
+        got = domain_diameter(lab)
+        self.assertGreater(got, 30.0)     # true slab width is 20
+        self.assertLess(got, 50.0)
+
+    def test_bigger_domains_read_bigger(self):
+        """Monotonicity is what makes it usable as a guard at all."""
+        sizes = []
+        for w in (2, 4, 8, 16):
+            n = 4 * w
+            idx = np.arange(n) // w
+            lab = ((idx[:, None] + idx[None, :]) % 2).astype(int)
+            sizes.append(domain_diameter(lab))
+        self.assertTrue(all(a < b for a, b in zip(sizes, sizes[1:])),
+                        msg=str(sizes))
 
 
 if __name__ == "__main__":
