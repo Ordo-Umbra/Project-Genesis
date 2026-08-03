@@ -63,18 +63,20 @@ Load-bearing results only. Negatives included, because they are the point.
 
 | Question | Verdict |
 |---|---|
-| Does a field select a palette size, and which? | **`d + 1`**, in every dimension tested. Rivals are *identically zero*, not merely smaller |
-| Is that selection driven by capacity scarcity? | **No — refuted.** It is geometric (Plateau's law). `P = 3` peaks at every capacity level *including no capacity field at all* |
-| Does distinction outrun integration by a fixed amount? | **Yes.** Distinction is volume-law (`n = 1.99`), integration is surface-law (`n = 0.95`) — a gap of exactly one dimension, stable under every convention swept |
-| Does the capacity law transplant off the lattice? | **Yes**, to a Hopfield network and a Kuramoto oscillator population — three structurally unrelated substrates |
+| Does a field select a palette size, and which? | **`d + 1`**, measured at `d = 1, 2, 3, 4`. Rivals are *identically zero* in 1-, 2- and 4-D; in 3-D the nearest is live at `10×` behind |
+| Is that selection driven by capacity scarcity? | **No — refuted.** It is geometric: codimension counting, of which Plateau's trivalent vertex is the 2-D case. `P = 3` peaks at every capacity level *including no capacity field at all* |
+| Does distinction outrun integration by a fixed amount? | **Yes, in 2-D.** Distinction is volume-law (`n = 1.99`), integration is surface-law (`n = 0.95`) — a gap of `1.04`, one dimension, and the worst motion under any convention swept is 38% of the experiment's own tolerance |
+| Does the capacity law transplant off the lattice? | **The eviction condition does** — to a Hopfield network and a Kuramoto oscillator population, three structurally unrelated substrates. Whether the crossing sits at a substrate-independent `κ` is **not settled** |
 | Is the optimum's *route* to criticality a substrate fact? | **No.** It moves when you change how ΔC is read. The *condition* survives; the route was measuring the dictionary |
 | Does scarcity evict an ordered optimum? | **Yes, ceiling-free**: exactly when the ordered point starts ahead and holding it costs capacity |
-| Have the robustness claims themselves been checked? | **Partly — `1/3` of the re-scoring predictions held.** Three published claims turned out *unevidenced by the sweeps cited for them* |
+| Have the robustness claims themselves been checked? | **Yes, and `2/3` of the re-scoring predictions failed.** One claim — §2's gap — turned out *unevidenced by all three sweeps cited for it*; the others were genuinely tested and held |
 
 That last row is the honest headline. A claim can pass a robustness bar because
 nothing moved rather than because it resisted, and telling those apart needed
-[a separate instrument](project_genesis/robustness.py) and a retrospective that
-mostly refuted its own predictions.
+[a separate instrument](project_genesis/robustness.py). Applied retrospectively
+it refuted two of its own three predictions — the blind spot turned out to be
+narrower than feared, and the `P = 3` selection survived a convention that
+genuinely threatened it.
 
 ## What would refute it
 
