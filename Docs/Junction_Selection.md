@@ -75,11 +75,17 @@ junction can appear at all.
 |---|---|---|---|---|---|
 | density | `0.00000` | `0.00000` | **0.00213** | `0.00021` | `0.00000` |
 
-**`d = 4`** (lattice 24⁴, 1500 steps), `m = 5`:
+**`d = 4`** (lattice 24⁴, 1500 steps), `m = 5`, **two independent seed sets**:
 
 | | `P=2` | `P=3` | `P=4` | `P=5` | `P=6` | `P=7` |
 |---|---|---|---|---|---|---|
-| density | `0` | `0` | `0` | **0.000278** | `0` | `0` |
+| run A | `0` | `0` | `0` | **0.000278** | `0` | `0` |
+| run B | `0` | `0` | `0` | **0.000097** | `0` | `0` |
+
+The *ranking* reproduces exactly — `P = 5` alone, every rival identically zero
+in both. The *density* does not: it differs by a factor of `2.9` between seed
+sets, because at this box size the whole reading rests on 30–90 qualifying cells.
+Quote the ranking; do not quote the density to more than an order of magnitude.
 
 In all four dimensions the argmax is `d + 1`. In `d = 1`, `2` and `4` every
 rival is exactly zero. In `d = 3` the nearest rival (`P = 5`) is non-zero but
@@ -109,22 +115,27 @@ because the geometry was absent but because the instrument could not express it.
 Codimension counting predicts four tiers of structure in four dimensions rather
 than three. All four are occupied (`P = 5`, fraction of cells at each valence):
 
-| valence `k` | locus | fraction | falloff from previous |
-|---|---|---|---|
-| 1 | domain interior | `0.579` | — |
-| 2 | 3-D wall | `0.314` | `1.8×` |
-| 3 | 2-D surface | `0.096` | `3.3×` |
-| 4 | 1-D line | `0.0115` | `8.3×` |
-| 5 | **point vertex** | `0.00028` | `41×` |
+| valence `k` | locus | run A | run B | falloff |
+|---|---|---|---|---|
+| 1 | domain interior | `0.579` | `0.579` | — |
+| 2 | 3-D wall | `0.314` | `0.333` | `1.7–1.8×` |
+| 3 | 2-D surface | `0.096` | `0.078` | `3.3–4.3×` |
+| 4 | 1-D line | `0.0115` | `0.0104` | `7.4–8.3×` |
+| 5 | **point vertex** | `0.00028` | `0.00010` | `41–107×` |
 
 The falloff **accelerates** down the ladder. Point vertices are not merely the
 rarest tier; they are rarer by a widening margin, which is the structural reason
 this measurement gets harder with dimension rather than merely more expensive.
 
+The two seed sets agree closely down to the line tier — within 20% — and
+diverge by `2.8×` at the point tier. That is the honest shape of this result:
+**the hierarchy is solid down to codimension 3 and seed-noisy at the vertex**,
+which is exactly where the counting statistics run out.
+
 ### Are vertices scarcer at higher `d` because structure fails, or because points are small?
 
 Mostly the second, and the distinction matters. Raw peak density falls `0.091 →
-0.0069 → 0.0021 → 0.00028` across `d = 1…4` — a 330× drop. But a point occupies
+0.0069 → 0.0021 → 0.0001–0.0003` across `d = 1…4` — a 300–900× drop. But a point occupies
 a vanishing fraction of a `d`-volume regardless of stability: for domains of
 width `L`, vertex-containing cells should scale like `(3/L)^d` on geometry
 alone. Dividing that out:
@@ -134,13 +145,18 @@ alone. Dividing that out:
 | 1 | 22.0 | 1.99 | `0.66` |
 | 2 | 19.5 | 2.64 | `0.29` |
 | 3 | 16.8 | 10.10 | `0.37` |
-| 4 | 15.7 | 16.89 | `0.21` |
+| 4 | 15.7–16.2 | 6.68–16.89 | `0.08–0.21` |
 
-The residual is a **3× decline, not 330×**, and it is not monotone — `d = 3`
+The residual is a **3–8× decline, not 330×**, and it is not monotone — `d = 3`
 sits above `d = 2`. So on this evidence **4-D point vertices form perfectly
 well and are simply geometrically scarce.** Higher dimensions support this
-structure; they just hold less of it per unit volume. The residual trend is too
-noisy at four points to claim more than that.
+structure; they just hold less of it per unit volume.
+
+The `d = 4` entry is a range because the two seed sets disagree by `2.9×`, and
+that range is wide enough to matter: it is the difference between "the residual
+decline is negligible" and "the residual decline is real but small". Four
+points, one of them a range spanning a factor of three, will not support a
+stronger statement than *geometry dominates*.
 
 ## Scope, and what this is not
 
@@ -169,9 +185,9 @@ that licenses the result its author predicted is a pattern worth stating plainly
 rather than leaving for a reader to notice.
 
 **The `d = 4` arm is weak, specifically:** the box holds ~1.5 domains per axis
-against 3.7 in the 2-D arm; roughly 92 qualifying cells across all three trials;
-and the `P = 6, 7` zeros cannot be distinguished from under-sampling at this box
-size. Matching 2-D's resolution in four dimensions needs roughly `55⁴ ≈ 9M`
+against 3.7 in the 2-D arm; 30–90 qualifying cells across all three trials,
+which is why two seed sets differ by `2.9×`; and the `P = 6, 7` zeros cannot be
+distinguished from under-sampling at this box size. Matching 2-D's resolution in four dimensions needs roughly `55⁴ ≈ 9M`
 cells — about 30 hours — so this is a budget limit, not a measurement.
 
 **This is a categorical result, not a robustness result, and the distinction

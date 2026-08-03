@@ -265,19 +265,23 @@ had never been caught because the measure had never been run in 3-D.
 **[measured — `d+1` now holds in four dimensions]** The same test in `d = 1`
 selects `P = 2` and in `d = 4` selects `P = 5`, rivals identically zero in both.
 The `d = 4` arm also shows what a four-dimensional tiling is *made of*: all four
-codimension tiers are occupied — 3-D walls at `0.314`, 2-D surfaces at `0.096`,
-1-D lines at `0.0115`, point vertices at `0.00028` — with the falloff per tier
-**accelerating** (`1.8× → 3.3× → 8.3× → 41×`).
+codimension tiers are occupied — 3-D walls at `0.31–0.33`, 2-D surfaces at
+`0.078–0.096`, 1-D lines at `0.010–0.012`, point vertices at `0.0001–0.0003` —
+with the falloff per tier **accelerating** (`1.8× → 4× → 8× → 41–107×`).
 
-Raw vertex density drops `330×` from `d = 1` to `d = 4`, but almost all of that
-is geometry rather than instability: points are a vanishing fraction of a
+Raw vertex density drops `300–900×` from `d = 1` to `d = 4`, but almost all of
+that is geometry rather than instability: points are a vanishing fraction of a
 `d`-volume, and dividing out the expected `(3/L)^d` leaves a residual decline of
-about `3×` that is not even monotone. **Higher dimensions support this structure
+`3–8×` that is not even monotone. **Higher dimensions support this structure
 perfectly well; they simply hold less of it per unit volume.**
 
-The `d = 4` arm is the weakest measured here — the box holds ~1.5 domains per
-axis against 3.7 in the plane — and `d = 5` is out of reach by this route, since
-its point tier would sit near `1e-6`. Full treatment, standing free of this
+Ranges, not point values, because two independent seed sets reproduce the
+*ranking* exactly and disagree on the vertex *density* by `2.9×`. The hierarchy
+is solid down to codimension 3 and seed-noisy at the vertex, which is where the
+counting statistics run out: the whole reading rests on 30–90 cells. The
+`d = 4` arm is the weakest measured here — the box holds ~1.5 domains per axis
+against 3.7 in the plane — and `d = 5` is out of reach by this route, since its
+point tier would sit near `1e-6`. Full treatment, standing free of this
 framework, in `Docs/Junction_Selection.md`.
 
 *A second dimension-blind constant surfaced in the same measure while reaching
