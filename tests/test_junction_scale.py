@@ -183,5 +183,43 @@ class TestSelectionProfile(unittest.TestCase):
                         selection_profile(base)["margin"])
 
 
+class TestOneDimension(unittest.TestCase):
+    """The d=1 arm, which is what turns d+1 from two points into a trend.
+
+    1-D is the degenerate end and the place the law is most likely to break: a
+    lattice has no junctions in the 2-D sense at all, so a "vertex" separating
+    two sectors is simply a wall. If d+1 held in the plane and in space but not
+    on a line, the honest claim would be `d >= 2` — so this is worth pinning
+    rather than assuming.
+    """
+
+    def test_the_neighbourhood_is_the_two_adjacent_cells(self):
+        self.assertEqual(sorted(neighbourhood_offsets(1, 1)), [(-1,), (1,)])
+
+    def test_a_two_colour_wall_is_a_junction_at_min_valence_two(self):
+        lab = np.zeros(40, dtype=int)
+        lab[20:] = 1
+        self.assertGreater(full_palette_density(lab, 2, 1, min_valence=2), 0.0)
+
+    def test_the_published_2d_condition_finds_nothing_in_1d(self):
+        """`distinct >= 3` cannot be met by two sectors on a line, which is why
+        the dimension-blind constant hides the answer here exactly as it does
+        in 3-D — in the opposite direction."""
+        lab = np.zeros(40, dtype=int)
+        lab[20:] = 1
+        self.assertEqual(full_palette_density(lab, 2, 1, min_valence=3), 0.0)
+
+    def test_three_colours_cannot_fill_a_two_cell_neighbourhood_plus_centre(self):
+        """A 1-D radius-1 window holds three cells, so a 3-palette *can* just
+        fit — the exclusion of P>2 in the measured fields is dynamical, not a
+        counting artefact, and this test keeps the two explanations separate."""
+        lab = np.array([0, 1, 2] * 12)
+        self.assertGreater(full_palette_density(lab, 3, 1, min_valence=3), 0.0)
+
+    def test_a_larger_palette_than_the_window_can_hold_is_always_zero(self):
+        lab = np.array([0, 1, 2, 3] * 10)
+        self.assertEqual(full_palette_density(lab, 4, 1, min_valence=2), 0.0)
+
+
 if __name__ == "__main__":
     unittest.main()

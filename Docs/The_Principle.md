@@ -744,6 +744,7 @@ Every claim above is a file you can run.
 python experiments/n3_selection_sweep.py       # §6, the selection argument
 python experiments/n3_capacity_separation.py   # §2, the cliff
 python experiments/n3_junction_scale.py        # §2/§3, at what scale is 3 special?
+#   -> Docs/Junction_Selection.md is this result standing alone, framework-free
 python experiments/n3_capacity_gating.py       # §3, the correction (geometry, not scarcity)
 python experiments/n3_area_law.py              # §2, the scaling dimension
 python experiments/n3_gap_conventions.py       # §2, which conventions the gap survives
@@ -763,7 +764,7 @@ python experiments/n3_robustness_retrospective.py --from RESULTS  # all, was any
 ```
 
 Each prints its own pre-registered predictions, its verdict, and its honest
-scope — including when the prediction failed. 1245 test functions in `tests/`
+scope — including when the prediction failed. 1250 test functions in `tests/`
 lock the central claims so they cannot drift silently. (That number was `872`
 from the day this file was written until it was counted again — a stale figure
 in a document about auditing stale figures.)

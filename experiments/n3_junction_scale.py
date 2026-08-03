@@ -123,12 +123,15 @@ def main() -> int:
     p.add_argument("--radii", type=int, nargs="+", default=[1, 2, 3])
     p.add_argument("--size", type=int, default=72)
     p.add_argument("--size-3d", type=int, default=28)
+    p.add_argument("--size-1d", type=int, default=4000,
+                   help="1-D needs a long lattice for comparable statistics")
     p.add_argument("--steps", type=int, default=600)
     p.add_argument("--steps-3d", type=int, default=1500,
                    help="3-D needs longer to coarsen: at the published 600 the "
                         "texture guard reports domain scale 2.45 (P=4) and "
                         "2.34 (P=5), below the 2.5 tiling floor. 1500 gives "
                         "3.17/2.99/2.72. Measured, not tuned for an answer.")
+    p.add_argument("--steps-1d", type=int, default=1500)
     p.add_argument("--gamma", type=float, default=1.5)
     p.add_argument("--dt", type=float, default=0.1)
     p.add_argument("--diffusion", type=float, default=1.0)
@@ -322,6 +325,46 @@ def main() -> int:
               + "".join(f"{dens[P]:>10.5f}" for P in args.palettes)
               + f"{pr['argmax']!s:>8}")
         results[f"3-D_minvalence_{mv}"] = {"densities": dens, **pr}
+    # ---- d = 1, so the d+1 law rests on a trend rather than two points
+    print()
+    print("  The same question in ONE dimension, where d+1 = 2. A 1-D lattice")
+    print("  has no junctions in the 2-D sense at all — a 'vertex' separating")
+    print("  two sectors is just a wall — so this is the degenerate end of the")
+    print("  law and the place it is most likely to break.")
+    print()
+    print(f"  {'condition':<34}" + "".join(f"{'P=' + str(P):>10}"
+                                           for P in args.palettes)
+          + f"{'argmax':>8}")
+    one = {P: [relaxed(P, args.size_1d, 1, args.steps_1d, args.gamma, args.dt,
+                       args.seed + 977 * t, args.diffusion)
+               for t in range(args.trials)]
+           for P in args.palettes}
+    for mv, label in ((2, "distinct >= 2   (d+1, a 1-D wall)"),
+                      (3, "distinct >= 3   (published, 2-D)")):
+        dens = {P: float(np.mean([full_palette_density(lab, P, 1, mv)
+                                  for lab in one[P]]))
+                for P in args.palettes}
+        pr = selection_profile(dens)
+        print(f"  {label:<34}"
+              + "".join(f"{dens[P]:>10.5f}" for P in args.palettes)
+              + f"{pr['argmax']!s:>8}")
+        results[f"1-D_minvalence_{mv}"] = {"densities": dens, **pr}
+    scales_1d = {P: float(np.mean([domain_scale(lab) for lab in one[P]]))
+                 for P in args.palettes}
+    results["1-D_scale"] = scales_1d
+    print(f"  domain scale (texture guard, need > 2.5): "
+          + "  ".join(f"P{P}={scales_1d[P]:.1f}" for P in args.palettes))
+    one_fixed = results["1-D_minvalence_2"]["argmax"]
+    print()
+    if one_fixed == 2:
+        print("  1-D selects P=2, and every larger palette is identically zero.")
+        print("  With 3-D selecting P=4 and 2-D selecting P=3, `d+1` now holds")
+        print("  across three dimensions on one instrument — a trend, not a")
+        print("  coincidence between two readings.")
+    else:
+        print(f"  1-D selects P={one_fixed}, not 2. The law does not extend to")
+        print("  the degenerate end, and `d+1` should be stated for d >= 2.")
+
     fixed = results["3-D_minvalence_4"]["argmax"]
     print()
     if fixed == 4:
