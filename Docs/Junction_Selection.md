@@ -32,11 +32,12 @@ and that every other palette is not merely worse but **identically zero**.
 The condition `m` is not free. Codimension counting fixes it: where `m` sectors
 meet, the locus they meet on has codimension `m − 1`. So
 
-| `m` sectors meeting | locus in 1-D | in 2-D | in 3-D |
-|---|---|---|---|
-| 2 | **point** | line | plane |
-| 3 | — | **point** | line |
-| 4 | — | — | **point** |
+| `m` sectors meeting | locus in 1-D | in 2-D | in 3-D | in 4-D |
+|---|---|---|---|---|
+| 2 | **point** | line | plane | 3-volume |
+| 3 | — | **point** | line | plane |
+| 4 | — | — | **point** | line |
+| 5 | — | — | — | **point** |
 
 A *point* junction in `d` dimensions therefore requires exactly `d + 1` sectors.
 Fewer, and the sectors meet along an extended locus — a wall or an edge, not a
@@ -74,10 +75,18 @@ junction can appear at all.
 |---|---|---|---|---|---|
 | density | `0.00000` | `0.00000` | **0.00213** | `0.00021` | `0.00000` |
 
-In all three dimensions the argmax is `d + 1`. In `d = 1` and `d = 2` every
+**`d = 4`** (lattice 24⁴, 1500 steps), `m = 5`:
+
+| | `P=2` | `P=3` | `P=4` | `P=5` | `P=6` | `P=7` |
+|---|---|---|---|---|---|---|
+| density | `0` | `0` | `0` | **0.000278** | `0` | `0` |
+
+In all four dimensions the argmax is `d + 1`. In `d = 1`, `2` and `4` every
 rival is exactly zero. In `d = 3` the nearest rival (`P = 5`) is non-zero but
 **10× smaller**, and `P = 3` — which wins in the plane — falls to identically
 zero, because three sectors cannot meet at a four-fold vertex.
+
+The `d = 4` arm is the weakest of the four and is reported as such below.
 
 ### The control that matters
 
@@ -95,13 +104,75 @@ trivially, along the line where its three sectors meet. Fixing the threshold to
 the dimension is what makes `d + 1` visible; it was invisible before, not
 because the geometry was absent but because the instrument could not express it.
 
+## What a `d = 4` tessellation is made of
+
+Codimension counting predicts four tiers of structure in four dimensions rather
+than three. All four are occupied (`P = 5`, fraction of cells at each valence):
+
+| valence `k` | locus | fraction | falloff from previous |
+|---|---|---|---|
+| 1 | domain interior | `0.579` | — |
+| 2 | 3-D wall | `0.314` | `1.8×` |
+| 3 | 2-D surface | `0.096` | `3.3×` |
+| 4 | 1-D line | `0.0115` | `8.3×` |
+| 5 | **point vertex** | `0.00028` | `41×` |
+
+The falloff **accelerates** down the ladder. Point vertices are not merely the
+rarest tier; they are rarer by a widening margin, which is the structural reason
+this measurement gets harder with dimension rather than merely more expensive.
+
+### Are vertices scarcer at higher `d` because structure fails, or because points are small?
+
+Mostly the second, and the distinction matters. Raw peak density falls `0.091 →
+0.0069 → 0.0021 → 0.00028` across `d = 1…4` — a 330× drop. But a point occupies
+a vanishing fraction of a `d`-volume regardless of stability: for domains of
+width `L`, vertex-containing cells should scale like `(3/L)^d` on geometry
+alone. Dividing that out:
+
+| `d` | domain width `L` | density × `L^d` | ratio to `3^d` |
+|---|---|---|---|
+| 1 | 22.0 | 1.99 | `0.66` |
+| 2 | 19.5 | 2.64 | `0.29` |
+| 3 | 16.8 | 10.10 | `0.37` |
+| 4 | 15.7 | 16.89 | `0.21` |
+
+The residual is a **3× decline, not 330×**, and it is not monotone — `d = 3`
+sits above `d = 2`. So on this evidence **4-D point vertices form perfectly
+well and are simply geometrically scarce.** Higher dimensions support this
+structure; they just hold less of it per unit volume. The residual trend is too
+noisy at four points to claim more than that.
+
 ## Scope, and what this is not
 
-**Texture guard.** A field that never coarsens into domains would still produce
-neighbourhoods full of colours — lattice noise, not a tessellation. Every arm
-above is checked with `domain_scale` (volume per unit wall area), which reads
-`4.4–9.8` in 2-D and `7.8–11.0` in 1-D against a floor of `2.5`. These are
-resolved domains.
+**Texture guard, and a correction to it.** A field that never coarsens into
+domains would still produce neighbourhoods full of colours — lattice noise, not
+a tessellation. The original guard was `domain_scale` (volume per unit wall
+area) against a floor of `2.5`.
+
+**That floor is dimension-blind, and it is the second such constant found in
+this measure.** A cell counts as wall if any of its `3^d − 1` neighbours
+differs, and that ring grows exponentially, so a larger share of any domain sits
+within one step of its surface as `d` rises — the same raw scale means a smaller
+domain in higher dimensions. Measured: 2-D at `scale = 5.14` and 4-D at
+`scale = 2.38` hold domains of `19.5` and `15.7` lattice units. Comparable
+structures, on opposite sides of the cut. `domain_diameter` inverts
+`scale ≈ 1/(1 − ((L−2)/L)^d)` to report the width directly, and pure noise then
+reads `1.0` in every dimension. Widths: `22.0` (1-D), `16.8–19.5` (2-D/3-D),
+`15.7` (4-D) — all resolved.
+
+**Disclosure on that fix.** The corrected guard is what makes the `d = 4` arm
+readable at all: its raw scale of `2.38` is below the published floor, so the
+old guard would have rejected it. I wrote the guard before the `d = 4` densities
+existed — the commit precedes the run — and it is derived from the
+interior-fraction geometry rather than fitted to anything. But an instrument
+that licenses the result its author predicted is a pattern worth stating plainly
+rather than leaving for a reader to notice.
+
+**The `d = 4` arm is weak, specifically:** the box holds ~1.5 domains per axis
+against 3.7 in the 2-D arm; roughly 92 qualifying cells across all three trials;
+and the `P = 6, 7` zeros cannot be distinguished from under-sampling at this box
+size. Matching 2-D's resolution in four dimensions needs roughly `55⁴ ≈ 9M`
+cells — about 30 hours — so this is a budget limit, not a measurement.
 
 **This is a categorical result, not a robustness result, and the distinction
 matters.** Where the rivals are *identically zero*, no perturbation of the
@@ -129,16 +200,26 @@ is not a study of universality across dynamics.
   on a resolved field.
 - The `d = 3` result reversing under a different relaxation (the arm with a live
   rival is the vulnerable one).
-- `d = 4`, which is untested here and is the obvious next check. The claim
-  predicts `P = 5` at `m = 5`.
-- Any demonstration that `domain_scale` is not distinguishing tessellation from
-  texture, which would invalidate every arm at once.
+- The `d = 4` arm reversing at a box large enough to hold a proper tiling. This
+  is the most likely place for it to fail, because it is the least resolved.
+- Any demonstration that `domain_diameter` is not distinguishing tessellation
+  from texture, which would invalidate every arm at once.
+
+`d = 5` is the frontier and is **not reachable by this approach**. Extrapolating
+the tier falloff puts its point-vertex density near `1e-6`, below what any
+affordable box can sample — so the failure there would be a measurement ceiling,
+not evidence about the structure. Answering whether `d + 1` continues past four
+dimensions needs a different instrument, not a bigger lattice.
 
 ## Reproducing it
 
 ```
-python experiments/n3_junction_scale.py
+python experiments/n3_junction_scale.py            # d = 1, 2, 3
+python experiments/n3_junction_scale.py --with-4d  # adds d = 4 (~60 min)
 ```
+
+The `d = 4` arm is opt-in because a 4-D box big enough to hold a tiling is
+expensive; the default run stays affordable.
 
 Prints its pre-registered predictions and every verdict, including the one that
 failed. The measurement lives in `project_genesis/junction_scale.py`; the
@@ -148,7 +229,10 @@ demonstrably widening *that* measure and not some other one.
 
 ---
 
-*The `m = 3` constant was hardcoded and dimension-blind. Finding that was the
-whole result: `d + 1` had been asserted for some time and could not have been
-measured, because the instrument used to look for it silently assumed the
-answer for `d = 2`.*
+*Both of this measure's constants turned out to be dimension-blind: the junction
+threshold `m`, hardcoded to the 2-D vertex number, and the texture floor, tuned
+to a 2-D domain. Finding the first was the original result — `d + 1` had been
+asserted for some time and could not have been measured, because the instrument
+used to look for it silently assumed the answer for `d = 2`. Finding the second
+was what let the measurement reach four dimensions at all. A measure written in
+one dimension will assume that dimension twice over before anyone notices.*
