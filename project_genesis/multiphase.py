@@ -406,6 +406,56 @@ def domain_scale(labels: np.ndarray) -> float:
     return float(labels.size) / wall if wall else float(labels.size)
 
 
+def domain_diameter(labels: np.ndarray) -> float:
+    """:func:`domain_scale` converted to a domain width in lattice units.
+
+    ``domain_scale`` is volume per unit wall area, and it is compared against a
+    fixed floor of ``2.5`` wherever it is used as a texture guard. **That floor
+    is dimension-blind, and it is the second such constant found in this
+    measure** — the first was `junction_scale.full_palette_density`'s hardcoded
+    ``distinct >= 3``.
+
+    The reason is geometric. A cell counts as wall if any of its ``3^d - 1``
+    neighbours differs, and that ring grows exponentially with ``d``, so in
+    higher dimensions a far larger share of a domain's cells sit within one step
+    of its surface. For a compact domain of width ``L`` the interior fraction is
+    about ``((L-2)/L)^d``, giving
+
+        scale  ≈  1 / (1 - ((L-2)/L)^d)
+
+    which **falls with ``d`` at fixed physical domain size**. Measured: a 2-D
+    field at ``scale = 5.14`` and a 4-D field at ``scale = 2.31`` hold domains of
+    ``19.5`` and ``15.1`` lattice units respectively — comparable structures, on
+    opposite sides of a ``2.5`` cut. Judged by the raw scale the 4-D field looks
+    like texture; it is nothing of the kind.
+
+    Inverting the relation gives a guard that means the same thing in every
+    dimension: the width of the domains, in lattice units, which is what "is
+    this a tessellation or is it noise" was always asking about.
+
+    **Calibrated for compact domains**, which is what a relaxed multiphase field
+    produces. An anisotropic morphology breaks the assumption in a known
+    direction: a slab varies along one axis only, so it carries walls on one
+    axis instead of ``d`` and this over-reads by roughly a factor of ``d`` (20-
+    wide stripes in 2-D read as ``39``). That is a real limit, not a rounding
+    error, and it is why this is a guard against *texture* rather than a
+    general-purpose length scale.
+
+    Returns ``inf`` for a field with no walls at all — a single domain has no
+    width to report, and any finite answer there would be a fact about the box.
+    """
+    bits = _neighbourhood_label_bits(labels)
+    wall = int(np.sum(_popcount(bits) >= 2))
+    if wall == 0:
+        return float("inf")
+    scale = float(labels.size) / wall
+    d = int(labels.ndim)
+    if scale <= 1.0:
+        return 1.0
+    x = (1.0 - 1.0 / scale) ** (1.0 / d)
+    return float(2.0 / (1.0 - x)) if x < 1.0 else float("inf")
+
+
 def majority_filter(labels: np.ndarray, n_palette: int, passes: int = 1) -> np.ndarray:
     """Replace each cell by the commonest sector in its 3^d neighbourhood.
 

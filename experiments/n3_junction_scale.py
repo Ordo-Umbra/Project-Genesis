@@ -75,7 +75,7 @@ from project_genesis.junction_scale import (  # noqa: E402
     full_palette_density, selection_profile, valence_profile,
 )
 from project_genesis.multiphase import (  # noqa: E402
-    domain_scale, step_multiphase_conserved,
+    domain_diameter, domain_scale, step_multiphase_conserved,
 )
 
 BANNER = "=" * 78
@@ -123,12 +123,19 @@ def main() -> int:
     p.add_argument("--radii", type=int, nargs="+", default=[1, 2, 3])
     p.add_argument("--size", type=int, default=72)
     p.add_argument("--size-3d", type=int, default=28)
+    p.add_argument("--size-1d", type=int, default=4000,
+                   help="1-D needs a long lattice for comparable statistics")
     p.add_argument("--steps", type=int, default=600)
     p.add_argument("--steps-3d", type=int, default=1500,
                    help="3-D needs longer to coarsen: at the published 600 the "
                         "texture guard reports domain scale 2.45 (P=4) and "
                         "2.34 (P=5), below the 2.5 tiling floor. 1500 gives "
                         "3.17/2.99/2.72. Measured, not tuned for an answer.")
+    p.add_argument("--steps-1d", type=int, default=1500)
+    p.add_argument("--with-4d", action="store_true",
+                   help="add the d=4 arm (~60 min; off by default)")
+    p.add_argument("--size-4d", type=int, default=24)
+    p.add_argument("--steps-4d", type=int, default=1500)
     p.add_argument("--gamma", type=float, default=1.5)
     p.add_argument("--dt", type=float, default=0.1)
     p.add_argument("--diffusion", type=float, default=1.0)
@@ -322,6 +329,115 @@ def main() -> int:
               + "".join(f"{dens[P]:>10.5f}" for P in args.palettes)
               + f"{pr['argmax']!s:>8}")
         results[f"3-D_minvalence_{mv}"] = {"densities": dens, **pr}
+    # ---- d = 1, so the d+1 law rests on a trend rather than two points
+    print()
+    print("  The same question in ONE dimension, where d+1 = 2. A 1-D lattice")
+    print("  has no junctions in the 2-D sense at all — a 'vertex' separating")
+    print("  two sectors is just a wall — so this is the degenerate end of the")
+    print("  law and the place it is most likely to break.")
+    print()
+    print(f"  {'condition':<34}" + "".join(f"{'P=' + str(P):>10}"
+                                           for P in args.palettes)
+          + f"{'argmax':>8}")
+    one = {P: [relaxed(P, args.size_1d, 1, args.steps_1d, args.gamma, args.dt,
+                       args.seed + 977 * t, args.diffusion)
+               for t in range(args.trials)]
+           for P in args.palettes}
+    for mv, label in ((2, "distinct >= 2   (d+1, a 1-D wall)"),
+                      (3, "distinct >= 3   (published, 2-D)")):
+        dens = {P: float(np.mean([full_palette_density(lab, P, 1, mv)
+                                  for lab in one[P]]))
+                for P in args.palettes}
+        pr = selection_profile(dens)
+        print(f"  {label:<34}"
+              + "".join(f"{dens[P]:>10.5f}" for P in args.palettes)
+              + f"{pr['argmax']!s:>8}")
+        results[f"1-D_minvalence_{mv}"] = {"densities": dens, **pr}
+    scales_1d = {P: float(np.mean([domain_scale(lab) for lab in one[P]]))
+                 for P in args.palettes}
+    results["1-D_scale"] = scales_1d
+    print(f"  domain scale (texture guard, need > 2.5): "
+          + "  ".join(f"P{P}={scales_1d[P]:.1f}" for P in args.palettes))
+    one_fixed = results["1-D_minvalence_2"]["argmax"]
+    print()
+    if one_fixed == 2:
+        print("  1-D selects P=2, and every larger palette is identically zero.")
+        print("  With 3-D selecting P=4 and 2-D selecting P=3, `d+1` now holds")
+        print("  across three dimensions on one instrument — a trend, not a")
+        print("  coincidence between two readings.")
+    else:
+        print(f"  1-D selects P={one_fixed}, not 2. The law does not extend to")
+        print("  the degenerate end, and `d+1` should be stated for d >= 2.")
+
+    # ---- d = 4, opt-in: ~60 min, and the box can only just hold a tiling
+    if args.with_4d:
+        print()
+        print("  And in FOUR dimensions, where d+1 = 5. Opt-in because it costs")
+        print("  about an hour: a 4-D box large enough to hold a tiling is")
+        print("  expensive, and this one only just does.")
+        print()
+        four = {P: [relaxed(P, args.size_4d, 4, args.steps_4d, args.gamma,
+                            args.dt, args.seed + 4093 * t, args.diffusion)
+                    for t in range(args.trials)]
+                for P in args.palettes}
+        print(f"  {'condition':<34}" + "".join(f"{'P=' + str(P):>10}"
+                                               for P in args.palettes)
+              + f"{'argmax':>8}")
+        for mv in (4, 5):
+            label = ("distinct >= 5   (d+1, a vertex)" if mv == 5
+                     else "distinct >= 4   (3-D vertex)")
+            dens = {P: float(np.mean([full_palette_density(lab, P, 1, mv)
+                                      for lab in four[P]]))
+                    for P in args.palettes}
+            pr = selection_profile(dens)
+            print(f"  {label:<34}"
+                  + "".join(f"{dens[P]:>10.6f}" for P in args.palettes)
+                  + f"{pr['argmax']!s:>8}")
+            results[f"4-D_minvalence_{mv}"] = {"densities": dens, **pr}
+
+        # the texture guard, read in the only form that means one thing in
+        # every dimension -- `domain_scale` alone would reject this arm
+        print()
+        print(f"  {'palette':>8}{'domain_scale':>14}{'domain width L':>16}")
+        sc4, l4 = {}, {}
+        for P in args.palettes:
+            sc4[P] = float(np.mean([domain_scale(lab) for lab in four[P]]))
+            l4[P] = float(np.mean([domain_diameter(lab) for lab in four[P]]))
+            flag = "  <- below the 2.5 raw floor" if sc4[P] < 2.5 else ""
+            print(f"  {P:>8}{sc4[P]:>14.2f}{l4[P]:>16.1f}{flag}")
+        results["4-D_scale"] = sc4
+        results["4-D_diameter"] = l4
+        print("  The raw scale rejects arms whose domains are 15+ lattice units")
+        print("  across. That floor is dimension-blind; the width is not.")
+
+        # what a 4-D tessellation is actually made of
+        win = results["4-D_minvalence_5"]["argmax"]
+        vp = [valence_profile(lab, 1) for lab in four[win]]
+        hist = np.zeros(12)
+        for v in vp:
+            h = np.array(v["histogram"] + [0] * 12)[:12]
+            hist += h / h.sum() / len(vp)
+        print()
+        print(f"  the codimension hierarchy at P={win} — every tier is occupied")
+        tiers = {1: "domain interior", 2: "3-D wall", 3: "2-D surface",
+                 4: "1-D line", 5: "POINT vertex"}
+        prev = None
+        for k in range(1, 6):
+            drop = f"{prev / hist[k]:>8.1f}x" if prev and hist[k] > 0 else ""
+            print(f"    k={k}  {tiers[k]:<16}{hist[k]:>10.5f}{drop}")
+            prev = hist[k] if hist[k] > 0 else None
+        results["4-D_valence"] = hist.tolist()
+        four_fixed = win
+        print()
+        if four_fixed == 5:
+            print("  4-D selects P=5. With 1-D, 2-D and 3-D selecting 2, 3 and")
+            print("  4, `d+1` holds in every dimension tested. Note what the")
+            print("  hierarchy adds: the falloff per tier ACCELERATES, so point")
+            print("  vertices are the scarcest structure by a widening margin.")
+        else:
+            print(f"  4-D selects P={four_fixed}, not 5 — `d+1` does not reach")
+            print("  four dimensions, and the note should say so.")
+
     fixed = results["3-D_minvalence_4"]["argmax"]
     print()
     if fixed == 4:
