@@ -133,7 +133,6 @@ def attachment_energy(
         return 0.0
     b = plaquette_flux(theta)
     rho = charge_density_proxy(psi, target_charge)
-    # B lives on plaquettes; ρ on sites — use site-centred proxy (same grid)
     mismatch = b - 2.0 * np.pi * rho
     weight = 1.0 if kappa is None else kappa
     return float(0.5 * gamma * np.sum(weight * mismatch ** 2))
@@ -219,7 +218,6 @@ def _link_force(
     if gamma > 0.0 and abs(target_charge) > 1e-12:
         rho = charge_density_proxy(psi, target_charge)
         weight = 1.0 if kappa is None else kappa
-        # ∂E_att/∂B = γ κ (B − 2πρ); B depends on links as in Maxwell term
         dE_dB = gamma * weight * (b - 2.0 * np.pi * rho)
         force[0] = force[0] - (dE_dB - np.roll(dE_dB, 1, 1))
         force[1] = force[1] - (-dE_dB + np.roll(dE_dB, 1, 0))
@@ -323,43 +321,77 @@ def displace_flux(theta, shift: tuple[int, int]) -> list:
     ]
 
 
+def _periodic_offset(
+    a: tuple[float, float], b: tuple[float, float], n: int
+) -> tuple[float, float, float]:
+    """Minimum-image displacement from a → b on an n×n torus."""
+    dx = ((b[0] - a[0] + n / 2) % n) - n / 2
+    dy = ((b[1] - a[1] + n / 2) % n) - n / 2
+    return float(dx), float(dy), float(np.hypot(dx, dy))
+
+
 def flux_core_offset(
     psi: np.ndarray,
     theta,
     *,
     center: tuple[float, float] | None = None,
+    flux_radius: float = 6.0,
 ) -> dict:
-    """Measure separation between Higgs-core and flux-weighted centre.
+    """Separation between Higgs core and flux peak (primary: peak markers).
 
-    Core = centroid of ``(1−|ψ|²)_+``; flux centre = centroid of ``|B|``.
-    Periodic minimum-image offset on the torus.  Small offset ⇒ locked;
-    large offset ⇒ flux has drifted from the charge proxy.
+    **Peak mode (primary).**  Core = ``argmin |ψ|`` (deepest amplitude hole);
+    flux peak = ``argmax |B|``.  Periodic minimum-image distance.  Centroids of
+    broad ``(1−|ψ|²)`` and ``|B|`` clouds were too noisy (baseline offsets of
+    several lattice units on well-quantised vortices); peaks track the same
+    objects the displacement protocol moves.
+
+    Also reports centroid offset (secondary), and ``core_flux`` = total flux
+    through a disk of ``flux_radius`` about the Higgs peak — a lock-recovery
+    observable independent of the flux-peak location.
     """
     n = psi.shape[0]
-    rho = np.maximum(1.0 - np.abs(psi) ** 2, 0.0)
-    b = np.abs(plaquette_flux(theta))
+    amp = np.abs(psi)
+    b = plaquette_flux(theta)
+    abs_b = np.abs(b)
+
+    # --- peaks ---
+    core_ij = np.unravel_index(int(np.argmin(amp)), amp.shape)
+    flux_ij = np.unravel_index(int(np.argmax(abs_b)), abs_b.shape)
+    core_peak = (float(core_ij[0]), float(core_ij[1]))
+    flux_peak = (float(flux_ij[0]), float(flux_ij[1]))
+    dx_p, dy_p, offset_peak = _periodic_offset(core_peak, flux_peak, n)
+
+    # --- centroids (secondary) ---
+    rho = np.maximum(1.0 - amp ** 2, 0.0)
     grids = np.meshgrid(np.arange(n), np.arange(n), indexing="ij")
+    ref = center if center is not None else core_peak
 
     def _centroid(weight: np.ndarray) -> tuple[float, float]:
-        w = weight.sum()
+        w = float(weight.sum())
         if w < 1e-12:
-            return (n / 2.0, n / 2.0)
-        # unwrap relative to optional center for periodic centroid
-        ref = center if center is not None else (n / 2.0, n / 2.0)
+            return ref
         dx = ((grids[0] - ref[0] + n / 2) % n) - n / 2
         dy = ((grids[1] - ref[1] + n / 2) % n) - n / 2
         cx = (ref[0] + float((weight * dx).sum() / w)) % n
         cy = (ref[1] + float((weight * dy).sum() / w)) % n
         return (cx, cy)
 
-    core = _centroid(rho)
-    flux_c = _centroid(b)
-    dx = ((flux_c[0] - core[0] + n / 2) % n) - n / 2
-    dy = ((flux_c[1] - core[1] + n / 2) % n) - n / 2
+    core_c = _centroid(rho)
+    flux_c = _centroid(abs_b)
+    dx_c, dy_c, offset_cent = _periodic_offset(core_c, flux_c, n)
+
+    core_flux = local_flux(theta, core_peak, flux_radius)
+
     return {
-        "core": core,
-        "flux_center": flux_c,
-        "offset": float(np.hypot(dx, dy)),
-        "dx": float(dx),
-        "dy": float(dy),
+        "core": core_peak,
+        "flux_center": flux_peak,
+        "offset": offset_peak,  # primary
+        "dx": dx_p,
+        "dy": dy_p,
+        "offset_peak": offset_peak,
+        "offset_centroid": offset_cent,
+        "core_centroid": core_c,
+        "flux_centroid": flux_c,
+        "core_flux": float(core_flux),
+        "core_flux_quanta": float(core_flux / (2.0 * np.pi)),
     }
