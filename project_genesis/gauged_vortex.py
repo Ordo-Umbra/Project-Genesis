@@ -21,28 +21,24 @@ The energy is the gauged Ginzburg–Landau functional
     E = Σ_μ |ψ(x) − U_μ(x)ψ(x+μ)|²  +  (β/2) Σ B(x)²  +  (λ/4) Σ (|ψ|²−1)²
 
 (covariant kinetic + Maxwell magnetic + Higgs potential).  Gradient flow on it
-(`relax`) descends to the self-consistent gauged vortex.  Three facts, each
-what a real gauge field gives that the phase template did not:
+(`relax`) descends to the self-consistent gauged vortex.
 
-1. **Flux quantization.**  A winding-``q`` vortex forces the gauge field to
-   carry a *quantised* magnetic flux ``Φ = 2π·q`` through a loop about the core —
-   solved by the dynamics, not imposed; ``0`` when the gauge field is frozen off.
-2. **Finite energy (London screening).**  The gauge field screens the
-   logarithmically-divergent energy of a *global* vortex over the London
-   penetration length, so the gauged vortex is a **finite-energy soliton** whose
-   energy converges as the box grows (the global vortex's does not).
-3. **Gauge invariance.**  The observables (flux, energy) are invariant under a
-   *local* gauge transformation ``ψ → e^{iα(x)}ψ``, ``θ_μ → θ_μ + α(x) −
-   α(x+μ)`` — the signature of a genuine gauge theory, which a fixed phase
-   template is not.
+**Flux attachment (Chern–Simons proxy).**  The Aharonov–Bohm experiment read the
+statistical phase off the solved Wilson loop; flux–charge binding was not
+enforced dynamically.  An optional soft attachment term
 
-Honest scope: this is the **classical** gauge field — a genuine, self-consistent
-U(1) gauge theory, closing the phase-template caveat and making the vortex a
-finite-energy gauged particle.  It is **not** second quantization: no Fock space,
-no ``{ψ, ψ†}`` anticommutator, no many-body Pauli principle.  The
-Aharonov–Bohm / Chern–Simons statistical phase — the flux-attachment that turns
-the gauged ½-vortex's topological exchange sign into a genuine dynamical fermion
-statistic — is the standing frontier.
+    E_att = (γ/2) Σ κ(x) · (B(x) − 2π · ρ(x))²
+
+penalises local mismatch between plaquette flux ``B`` and a charge-density
+proxy ``ρ`` built from the Higgs depletion ``(1 − |ψ|²)_+``, normalised so a
+winding-``q`` core carries integrated charge ``q``.  ``κ(x)`` is an optional
+capacity weight (default 1): attachment costs more where capacity is available,
+matching the framework's κ-weighted integration.  This is a **classical lattice
+proxy** for Chern–Simons flux attachment, not a continuum CS action and not
+second quantisation.
+
+Honest scope: classical U(1) gauge field and classical attachment; no Fock
+space, no ``{ψ, ψ†}``, no many-body Pauli principle.
 """
 
 from __future__ import annotations
@@ -61,6 +57,10 @@ __all__ = [
     "zero_links",
     "wilson_loop",
     "ab_phase",
+    "charge_density_proxy",
+    "attachment_energy",
+    "displace_flux",
+    "flux_core_offset",
 ]
 
 
@@ -97,18 +97,46 @@ def plaquette_flux(theta) -> np.ndarray:
 
 
 def local_flux(theta, center, radius: float) -> float:
-    """Total magnetic flux through a disk of ``radius`` about ``center``.
-
-    For a winding-``q`` vortex this saturates at ``2π·q`` (one flux quantum per
-    winding) once ``radius`` exceeds the London length and while it stays inside
-    the region the vortex's flux occupies.
-    """
+    """Total magnetic flux through a disk of ``radius`` about ``center``."""
     b = plaquette_flux(theta)
     n = b.shape[0]
     grids = np.meshgrid(np.arange(n), np.arange(n), indexing="ij")
     dx = ((grids[0] - center[0] + n / 2) % n) - n / 2
     dy = ((grids[1] - center[1] + n / 2) % n) - n / 2
     return float(b[np.hypot(dx, dy) < radius].sum())
+
+
+def charge_density_proxy(psi: np.ndarray, target_charge: float) -> np.ndarray:
+    """Normalised Higgs-depletion density with integrated charge ``target_charge``.
+
+    ``ρ₀ = max(1 − |ψ|², 0)`` peaks at vortex cores.  Rescaled so
+    ``Σ ρ = target_charge`` when the total depletion is positive; otherwise a
+    zero field (no charge to attach).
+    """
+    rho = np.maximum(1.0 - np.abs(psi) ** 2, 0.0)
+    total = float(rho.sum())
+    if total < 1e-12 or abs(target_charge) < 1e-12:
+        return np.zeros_like(rho)
+    return rho * (target_charge / total)
+
+
+def attachment_energy(
+    psi: np.ndarray,
+    theta,
+    *,
+    gamma: float,
+    target_charge: float,
+    kappa: np.ndarray | None = None,
+) -> float:
+    """Soft flux-attachment energy ``(γ/2) Σ κ (B − 2π ρ)²``."""
+    if gamma <= 0.0:
+        return 0.0
+    b = plaquette_flux(theta)
+    rho = charge_density_proxy(psi, target_charge)
+    # B lives on plaquettes; ρ on sites — use site-centred proxy (same grid)
+    mismatch = b - 2.0 * np.pi * rho
+    weight = 1.0 if kappa is None else kappa
+    return float(0.5 * gamma * np.sum(weight * mismatch ** 2))
 
 
 def covariant_laplacian(psi: np.ndarray, theta) -> np.ndarray:
@@ -123,112 +151,215 @@ def covariant_laplacian(psi: np.ndarray, theta) -> np.ndarray:
     return out
 
 
-def energy_parts(psi: np.ndarray, theta, lam: float, beta: float) -> dict:
-    """The three energy contributions: covariant kinetic, magnetic, potential."""
+def energy_parts(
+    psi: np.ndarray,
+    theta,
+    lam: float,
+    beta: float,
+    *,
+    gamma: float = 0.0,
+    target_charge: float = 0.0,
+    kappa: np.ndarray | None = None,
+) -> dict:
+    """Energy contributions: kinetic, magnetic, potential, attachment."""
     kinetic = 0.0
     for mu in (0, 1):
         u = np.exp(1j * theta[mu])
         kinetic += float(np.sum(np.abs(psi - u * np.roll(psi, -1, mu)) ** 2))
     magnetic = float(0.5 * beta * np.sum(plaquette_flux(theta) ** 2))
     potential = float(0.25 * lam * np.sum((np.abs(psi) ** 2 - 1.0) ** 2))
-    return {"kinetic": kinetic, "magnetic": magnetic, "potential": potential,
-            "total": kinetic + magnetic + potential}
+    attach = attachment_energy(
+        psi, theta, gamma=gamma, target_charge=target_charge, kappa=kappa
+    )
+    return {
+        "kinetic": kinetic,
+        "magnetic": magnetic,
+        "potential": potential,
+        "attachment": attach,
+        "total": kinetic + magnetic + potential + attach,
+    }
 
 
-def energy(psi: np.ndarray, theta, lam: float, beta: float) -> float:
-    """Total gauged Ginzburg–Landau energy."""
-    return energy_parts(psi, theta, lam, beta)["total"]
+def energy(
+    psi: np.ndarray,
+    theta,
+    lam: float,
+    beta: float,
+    *,
+    gamma: float = 0.0,
+    target_charge: float = 0.0,
+    kappa: np.ndarray | None = None,
+) -> float:
+    """Total gauged Ginzburg–Landau energy (with optional attachment)."""
+    return energy_parts(
+        psi, theta, lam, beta,
+        gamma=gamma, target_charge=target_charge, kappa=kappa,
+    )["total"]
 
 
-def _link_force(psi: np.ndarray, theta, beta: float) -> list:
-    """``−∂E/∂θ_μ``: the matter current plus the Maxwell ``∇×B`` term."""
+def _link_force(
+    psi: np.ndarray,
+    theta,
+    beta: float,
+    *,
+    gamma: float = 0.0,
+    target_charge: float = 0.0,
+    kappa: np.ndarray | None = None,
+) -> list:
+    """``−∂E/∂θ_μ``: matter current + Maxwell + optional attachment."""
     b = plaquette_flux(theta)
     force = []
     for mu in (0, 1):
         u = np.exp(1j * theta[mu])
         current = 2.0 * np.imag(np.conj(psi) * u * np.roll(psi, -1, mu))
         force.append(-current)
-    # θ_x(x) enters B(x) with +1 and B(x−ŷ) with −1; θ_y(x) enters B(x) with −1
-    # and B(x−x̂) with +1
     force[0] = force[0] - beta * (b - np.roll(b, 1, 1))
     force[1] = force[1] - beta * (-b + np.roll(b, 1, 0))
+
+    if gamma > 0.0 and abs(target_charge) > 1e-12:
+        rho = charge_density_proxy(psi, target_charge)
+        weight = 1.0 if kappa is None else kappa
+        # ∂E_att/∂B = γ κ (B − 2πρ); B depends on links as in Maxwell term
+        dE_dB = gamma * weight * (b - 2.0 * np.pi * rho)
+        force[0] = force[0] - (dE_dB - np.roll(dE_dB, 1, 1))
+        force[1] = force[1] - (-dE_dB + np.roll(dE_dB, 1, 0))
+
     return force
 
 
-def relax(psi: np.ndarray, theta, *, lam: float = 2.0, beta: float = 1.0,
-          dt: float = 0.05, steps: int = 4000, gauge_on: bool = True,
-          record_every: int = 0) -> dict:
-    """Gradient-flow the gauged Ginzburg–Landau energy to the self-consistent
-    vortex.
+def relax(
+    psi: np.ndarray,
+    theta,
+    *,
+    lam: float = 2.0,
+    beta: float = 1.0,
+    dt: float = 0.05,
+    steps: int = 4000,
+    gauge_on: bool = True,
+    record_every: int = 0,
+    gamma: float = 0.0,
+    target_charge: float = 0.0,
+    kappa: np.ndarray | None = None,
+) -> dict:
+    """Gradient-flow the gauged GL energy (optional flux attachment).
 
-    Descends ``∂_tψ = D²ψ − (λ/2)(|ψ|²−1)ψ`` and, with ``gauge_on``,
-    ``∂_tθ_μ = −∂E/∂θ_μ`` (the gauge field solving itself to carry the flux the
-    winding demands).  ``gauge_on = False`` freezes ``θ`` (the *global* vortex,
-    no flux) — the control that isolates what the gauge field buys.  Returns the
-    relaxed ``psi``/``theta``, the final energy parts, and (if ``record_every``)
-    an energy history.
+    With ``gamma > 0`` the soft CS-proxy term pulls plaquette flux toward
+    ``2π ρ(ψ)``, locking flux to the charge-density proxy.  ``kappa`` weights
+    the attachment cost spatially when supplied.
     """
     psi = np.array(psi, dtype=complex)
     theta = [np.array(theta[0], dtype=float), np.array(theta[1], dtype=float)]
     hist = []
     for i in range(steps):
         if record_every and i % record_every == 0:
-            hist.append(energy(psi, theta, lam, beta))
-        psi = psi + dt * (covariant_laplacian(psi, theta)
-                          - 0.5 * lam * (np.abs(psi) ** 2 - 1.0) * psi)
+            hist.append(energy(
+                psi, theta, lam, beta,
+                gamma=gamma, target_charge=target_charge, kappa=kappa,
+            ))
+        psi = psi + dt * (
+            covariant_laplacian(psi, theta)
+            - 0.5 * lam * (np.abs(psi) ** 2 - 1.0) * psi
+        )
         if gauge_on:
-            force = _link_force(psi, theta, beta)
+            force = _link_force(
+                psi, theta, beta,
+                gamma=gamma, target_charge=target_charge, kappa=kappa,
+            )
             theta = [theta[0] + dt * force[0], theta[1] + dt * force[1]]
-    parts = energy_parts(psi, theta, lam, beta)
-    return {"psi": psi, "theta": theta, "energy": parts["total"],
-            "parts": parts, "history": hist}
+    parts = energy_parts(
+        psi, theta, lam, beta,
+        gamma=gamma, target_charge=target_charge, kappa=kappa,
+    )
+    return {
+        "psi": psi,
+        "theta": theta,
+        "energy": parts["total"],
+        "parts": parts,
+        "history": hist,
+    }
 
 
 def gauge_transform(psi: np.ndarray, theta, alpha: np.ndarray) -> tuple:
-    """Apply a local gauge transformation ``α(x)``.
-
-    ``ψ → e^{iα}ψ``, ``θ_μ(x) → θ_μ(x) + α(x) − α(x+μ)``.  All physical
-    observables (flux, energy) are invariant under this — the test that the
-    theory is a genuine gauge theory rather than a fixed phase template.
-    """
+    """Apply a local gauge transformation ``α(x)``."""
     psi_g = np.exp(1j * alpha) * psi
-    theta_g = [theta[0] + alpha - np.roll(alpha, -1, 0),
-               theta[1] + alpha - np.roll(alpha, -1, 1)]
+    theta_g = [
+        theta[0] + alpha - np.roll(alpha, -1, 0),
+        theta[1] + alpha - np.roll(alpha, -1, 1),
+    ]
     return psi_g, theta_g
 
 
 def wilson_loop(theta, center, half_width: float) -> tuple:
-    """The gauge holonomy of a square loop — the Aharonov–Bohm phase.
-
-    Parallel-transports a *unit* test charge around a square loop of half-width
-    ``half_width`` about ``center`` by multiplying the U(1) link variables along
-    the perimeter: the accumulated phase (the Wilson loop) is ``∮A·dl``, which by
-    lattice Stokes equals the **enclosed magnetic flux** ``Φ``.  Returns
-    ``(holonomy, loop_value)`` with ``holonomy`` the unwrapped angle (``≈ 2π·q``
-    for a winding-``q`` vortex) and ``loop_value = e^{iΦ}``.  The loop is assumed
-    to sit inside the lattice (it must not wrap the torus).
-    """
+    """The gauge holonomy of a square loop — the Aharonov–Bohm phase."""
     tx, ty = theta
     cx, cy = int(round(center[0])), int(round(center[1]))
     r = int(round(half_width))
     x0, x1, y0, y1 = cx - r, cx + r, cy - r, cy + r
-    holonomy = (float(tx[x0:x1, y0].sum()) + float(ty[x1, y0:y1].sum())
-                - float(tx[x0:x1, y1].sum()) - float(ty[x0, y0:y1].sum()))
+    holonomy = (
+        float(tx[x0:x1, y0].sum())
+        + float(ty[x1, y0:y1].sum())
+        - float(tx[x0:x1, y1].sum())
+        - float(ty[x0, y0:y1].sum())
+    )
     return holonomy, complex(np.exp(1j * holonomy))
 
 
 def ab_phase(theta, center, radius: float, charge: float = 1.0) -> complex:
-    """The Aharonov–Bohm phase ``e^{iQΦ}`` a charge ``Q`` accrues encircling the
-    flux.
-
-    ``Φ`` is the holonomy ``∮A·dl`` of the self-consistent gauge field, taken as
-    the enclosed flux through a disk of ``radius`` (:func:`local_flux` — a
-    circular Wilson loop, robust to the loop shape; the square
-    :func:`wilson_loop` is the same holonomy by Stokes but more corner-sensitive
-    at small size).  A *unit* charge around one flux quantum (``Φ = 2π``) gets
-    ``e^{2πi} = 1`` (Dirac); a **half** charge gets ``e^{iπ} = −1`` — the flux
-    quantum is visible to a fractional charge as a sign, the Aharonov–Bohm root
-    of statistics.
-    """
+    """The Aharonov–Bohm phase ``e^{iQΦ}`` a charge ``Q`` accrues encircling the flux."""
     holonomy = local_flux(theta, center, radius)
     return complex(np.exp(1j * charge * holonomy))
+
+
+def displace_flux(theta, shift: tuple[int, int]) -> list:
+    """Rigidly translate the link-phase field by ``shift`` (periodic).
+
+    Used to create a controlled flux–core mismatch: the Higgs stays put while
+    the gauge field (and its flux) is moved.
+    """
+    sx, sy = shift
+    return [
+        np.roll(np.roll(theta[0], sx, 0), sy, 1),
+        np.roll(np.roll(theta[1], sx, 0), sy, 1),
+    ]
+
+
+def flux_core_offset(
+    psi: np.ndarray,
+    theta,
+    *,
+    center: tuple[float, float] | None = None,
+) -> dict:
+    """Measure separation between Higgs-core and flux-weighted centre.
+
+    Core = centroid of ``(1−|ψ|²)_+``; flux centre = centroid of ``|B|``.
+    Periodic minimum-image offset on the torus.  Small offset ⇒ locked;
+    large offset ⇒ flux has drifted from the charge proxy.
+    """
+    n = psi.shape[0]
+    rho = np.maximum(1.0 - np.abs(psi) ** 2, 0.0)
+    b = np.abs(plaquette_flux(theta))
+    grids = np.meshgrid(np.arange(n), np.arange(n), indexing="ij")
+
+    def _centroid(weight: np.ndarray) -> tuple[float, float]:
+        w = weight.sum()
+        if w < 1e-12:
+            return (n / 2.0, n / 2.0)
+        # unwrap relative to optional center for periodic centroid
+        ref = center if center is not None else (n / 2.0, n / 2.0)
+        dx = ((grids[0] - ref[0] + n / 2) % n) - n / 2
+        dy = ((grids[1] - ref[1] + n / 2) % n) - n / 2
+        cx = (ref[0] + float((weight * dx).sum() / w)) % n
+        cy = (ref[1] + float((weight * dy).sum() / w)) % n
+        return (cx, cy)
+
+    core = _centroid(rho)
+    flux_c = _centroid(b)
+    dx = ((flux_c[0] - core[0] + n / 2) % n) - n / 2
+    dy = ((flux_c[1] - core[1] + n / 2) % n) - n / 2
+    return {
+        "core": core,
+        "flux_center": flux_c,
+        "offset": float(np.hypot(dx, dy)),
+        "dx": float(dx),
+        "dy": float(dy),
+    }
