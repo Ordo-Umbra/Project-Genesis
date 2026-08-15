@@ -1,0 +1,1006 @@
+<title>Reading Project Genesis Cold</title>
+<style>
+  :root {
+    --ground: #F6F7F9;
+    --surface: #FFFFFF;
+    --surface-sunk: #EDEFF3;
+    --ink: #14181F;
+    --ink-soft: #3D4553;
+    --muted: #666F7E;
+    --rule: #DBDFE6;
+    --rule-soft: #E8EBF0;
+    --sector-a: #3B4E8C;
+    --sector-b: #A6553C;
+    --sector-c: #2E6F6B;
+    --shadow: 0 1px 2px rgba(20, 24, 31, .05), 0 8px 24px -16px rgba(20, 24, 31, .25);
+
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+
+    --measure: 68ch;
+    --gutter: clamp(1.25rem, 4vw, 3rem);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0E1218;
+      --surface: #161B23;
+      --surface-sunk: #1C222B;
+      --ink: #E5E9EF;
+      --ink-soft: #BCC4D0;
+      --muted: #8B96A6;
+      --rule: #29313D;
+      --rule-soft: #212832;
+      --sector-a: #8B9CDA;
+      --sector-b: #D68F72;
+      --sector-c: #64AFA8;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -16px rgba(0, 0, 0, .8);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0E1218;
+    --surface: #161B23;
+    --surface-sunk: #1C222B;
+    --ink: #E5E9EF;
+    --ink-soft: #BCC4D0;
+    --muted: #8B96A6;
+    --rule: #29313D;
+    --rule-soft: #212832;
+    --sector-a: #8B9CDA;
+    --sector-b: #D68F72;
+    --sector-c: #64AFA8;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -16px rgba(0, 0, 0, .8);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: calc(var(--measure) + 2 * var(--gutter));
+    margin: 0 auto;
+    padding: 0 var(--gutter) 6rem;
+  }
+
+  /* ---- masthead ---- */
+
+  .masthead {
+    padding: clamp(3rem, 9vw, 5.5rem) 0 2.5rem;
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .kicker {
+    font-family: var(--mono);
+    font-size: .7rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem 1rem;
+  }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(1.9rem, 5.5vw, 2.9rem);
+    line-height: 1.12;
+    letter-spacing: -.02em;
+    font-weight: 600;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .standfirst {
+    font-size: 1.12rem;
+    color: var(--ink-soft);
+    margin: 0;
+    max-width: 60ch;
+  }
+
+  /* ---- verdict strip: three sectors, three classes ---- */
+
+  .verdicts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 2.5rem 0 0;
+  }
+
+  .verdict {
+    background: var(--surface);
+    padding: 1.15rem 1.25rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+    border-top: 2px solid var(--vc, var(--rule));
+  }
+
+  .verdict:nth-child(1) { --vc: var(--sector-c); }
+  .verdict:nth-child(2) { --vc: var(--sector-a); }
+  .verdict:nth-child(3) { --vc: var(--sector-b); }
+
+  .verdict dt {
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--vc);
+    font-weight: 600;
+  }
+
+  .verdict dd {
+    margin: 0;
+    font-size: .93rem;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+
+  .verdict dd strong { color: var(--ink); font-weight: 600; }
+
+  /* ---- sections ---- */
+
+  section { padding-top: 3.5rem; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 .7rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+  }
+
+  .eyebrow::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+
+  h2 {
+    font-family: var(--mono);
+    font-size: clamp(1.25rem, 3.2vw, 1.6rem);
+    line-height: 1.25;
+    letter-spacing: -.015em;
+    font-weight: 600;
+    margin: 0 0 1rem;
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-family: var(--sans);
+    font-size: 1.02rem;
+    font-weight: 650;
+    letter-spacing: -.005em;
+    margin: 2rem 0 .5rem;
+  }
+
+  p { margin: 0 0 1.1rem; }
+
+  a { color: var(--sector-a); text-underline-offset: .18em; }
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--sector-a);
+    outline-offset: 3px;
+  }
+
+  code {
+    font-family: var(--mono);
+    font-size: .875em;
+    background: var(--surface-sunk);
+    padding: .12em .38em;
+    border-radius: 3px;
+  }
+
+  strong { font-weight: 650; }
+
+  ul, ol { margin: 0 0 1.1rem; padding-left: 1.3rem; }
+  li { margin-bottom: .5rem; }
+  li::marker { color: var(--muted); }
+
+  /* ---- pull quote / callout ---- */
+
+  .callout {
+    border-left: 2px solid var(--sector-b);
+    background: var(--surface);
+    padding: 1.1rem 1.35rem;
+    margin: 1.75rem 0;
+    border-radius: 0 3px 3px 0;
+    box-shadow: var(--shadow);
+  }
+
+  .callout p:last-child { margin-bottom: 0; }
+
+  .callout .label {
+    font-family: var(--mono);
+    font-size: .66rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--sector-b);
+    display: block;
+    margin-bottom: .4rem;
+    font-weight: 600;
+  }
+
+  /* ---- figure ---- */
+
+  figure {
+    margin: 2rem 0;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 1.5rem 1.35rem 1.15rem;
+    box-shadow: var(--shadow);
+  }
+
+  .panels {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+    gap: 1.1rem;
+  }
+
+  .panel { display: flex; flex-direction: column; gap: .5rem; }
+
+  .panel canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 2px;
+    image-rendering: pixelated;
+    background: var(--surface-sunk);
+  }
+
+  .panel-label {
+    font-family: var(--mono);
+    font-size: .72rem;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    gap: .5rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .panel-label b { color: var(--ink); font-weight: 600; }
+  .panel.win .panel-label b { color: var(--sector-c); }
+
+  figcaption {
+    font-size: .88rem;
+    color: var(--muted);
+    line-height: 1.55;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule-soft);
+  }
+
+  /* ---- tables ---- */
+
+  .scroll { overflow-x: auto; margin: 1.5rem 0; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: .9rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  th, td {
+    text-align: left;
+    padding: .6rem .8rem;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+  }
+
+  thead th {
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    border-bottom: 1px solid var(--rule);
+    white-space: nowrap;
+  }
+
+  td.num { font-family: var(--mono); white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: .16em .5em;
+    border-radius: 2px;
+    white-space: nowrap;
+    font-weight: 600;
+    border: 1px solid currentColor;
+  }
+  .tag.keep { color: var(--sector-c); }
+  .tag.near { color: var(--sector-a); }
+  .tag.drop { color: var(--sector-b); }
+
+  /* ---- strata ---- */
+
+  .strata {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 1.75rem 0;
+  }
+
+  .stratum {
+    background: var(--surface);
+    padding: 1.15rem 1.3rem;
+    display: grid;
+    grid-template-columns: minmax(0, 11rem) 1fr;
+    gap: .35rem 1.5rem;
+  }
+
+  @media (max-width: 620px) {
+    .stratum { grid-template-columns: 1fr; }
+  }
+
+  .stratum .name {
+    font-family: var(--mono);
+    font-size: .78rem;
+    letter-spacing: .04em;
+    font-weight: 600;
+    color: var(--sc, var(--ink));
+  }
+
+  .stratum:nth-child(1) { --sc: var(--sector-b); }
+  .stratum:nth-child(2) { --sc: var(--sector-a); }
+  .stratum:nth-child(3) { --sc: var(--sector-c); }
+
+  .stratum .where {
+    font-family: var(--mono);
+    font-size: .72rem;
+    color: var(--muted);
+    grid-column: 1;
+  }
+
+  @media (max-width: 620px) {
+    .stratum .where { grid-column: auto; }
+  }
+
+  .stratum .body {
+    grid-column: 2;
+    font-size: .93rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    grid-row: 1 / span 2;
+  }
+
+  @media (max-width: 620px) {
+    .stratum .body { grid-column: auto; grid-row: auto; }
+  }
+
+  .stratum .body strong { color: var(--ink); }
+
+  /* ---- terminal block ---- */
+
+  .readout {
+    font-family: var(--mono);
+    font-size: .78rem;
+    line-height: 1.7;
+    background: var(--surface-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 1.1rem 1.25rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    color: var(--ink-soft);
+    white-space: pre;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .readout b { color: var(--sector-c); font-weight: 600; }
+  .readout i { color: var(--muted); font-style: normal; }
+
+  footer {
+    margin-top: 4.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+    font-size: .85rem;
+    color: var(--muted);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="kicker">
+      <span>Outside review</span>
+      <span>Ordo-Umbra / Project-Genesis</span>
+      <span>fc8cf8f · 186 commits</span>
+    </div>
+    <h1>Reading Project Genesis Cold</h1>
+    <p class="standfirst">
+      An assessment by someone with no stake in the Universal Recursion Principle: what
+      reproduces, what the results actually establish, and which parts are worth keeping
+      if the theory around them turned out to be wrong.
+    </p>
+
+    <dl class="verdicts">
+      <div class="verdict">
+        <dt>The engineering</dt>
+        <dd><strong>Genuinely good.</strong> Every experiment I ran reproduced its published numbers to the digit. The test suite, CI, and audit discipline are better than most funded research code.</dd>
+      </div>
+      <div class="verdict">
+        <dt>The results</dt>
+        <dd><strong>Real, but relocated.</strong> The two load-bearing measurements are correct facts about generic local fields and tessellations — not evidence for the theory built on them.</dd>
+      </div>
+      <div class="verdict">
+        <dt>The theory</dt>
+        <dd><strong>Not carrying weight.</strong> <code>S = ΔC + κΔI</code> is a labelling scheme. The repo's own §5 concludes ΔC's arbitrariness is irreducible, which is the honest end of that road.</dd>
+      </div>
+    </dl>
+  </header>
+
+  <section>
+    <p class="eyebrow">What this is based on</p>
+    <h2>I ran it, not just read it</h2>
+    <p>
+      Installed the pinned dependencies, ran the experiments the README nominates as
+      load-bearing, and ran the full test suite. This matters because the most common
+      failure mode for a project this size is that the numbers in the documents no longer
+      match the code. Here they do — exactly.
+    </p>
+    <div class="readout"><i># n3_selection_sweep.py — published: 0.00549 at P=3</i>
+  P=2  distinction 0.0307   integration 0.00000   score 0.000e+00
+  P=3  distinction 0.0458   integration <b>0.00549</b>   score 4.362e-05
+  P=4  distinction 0.0591   integration 0.00005   score 4.983e-07
+
+<i># n3_area_law.py — published: n_C = 1.99, n_I = 0.95, gap 1.04</i>
+  c=1.0   ⟨κ⟩=0.752  ξ=9.0   n_C=<b>1.99</b>   n_I=<b>0.95</b>   gap=<b>1.04</b>
+
+<i># n3_junction_scale.py — published: d=1 selects P=2, d=3 selects P=4</i>
+  d=1, m=2   P=2 <b>0.09067</b>   P=3 0.00000   P=4 0.00000   argmax <b>2</b>
+
+<i># python -m unittest discover -s tests</i>
+  Ran <b>1255</b> tests in 767.612s — <b>OK</b>   <i>(README claims 1255)</i></div>
+    <p>
+      Exact reproduction, including the experiments' own self-scored verdicts
+      (<code>1/3</code> for the junction scan, <code>2/3</code> for the area law). Nothing
+      is quietly rounded, and the failures are printed as loudly as the passes. That is
+      rarer than it should be, and it is the reason the rest of this review can be
+      specific instead of speculative.
+    </p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Structure</p>
+    <h2>The repository is three projects wearing one name</h2>
+    <p>
+      The single most useful thing to see from outside is that this is not one body of
+      work. It is three, laid down in order, and the newest one has been quietly
+      demolishing the oldest.
+    </p>
+
+    <div class="strata">
+      <div class="stratum">
+        <span class="name">The corpus</span>
+        <span class="where">docs/ · The_Lucidic_Compass.md · the URP .txt</span>
+        <span class="body">
+          Speculative synthesis, largely LLM-drafted, untouched since day one. Hermetic
+          "as above, so below", the holographic principle, <code>κ·r₀ = 0.220 nm</code>
+          calibrated at the DNA scale from a "QCD-derived vacuum capacity". <strong>This
+          is numerology</strong>, and the programme knows: <code>The_Principle.md</code> §7
+          formally retires <code>κ ≈ 0.22</code> as a constant, which is the number the
+          entire Lucidic Compass rests on.
+        </span>
+      </div>
+      <div class="stratum">
+        <span class="name">The instruments</span>
+        <span class="where">project_genesis/ · experiments/ · tests/</span>
+        <span class="body">
+          Competent, well-documented scientific computing. Multiphase Allen–Cahn fields,
+          a correct SU(N) lattice gauge Monte Carlo, Hopfield and Kuramoto substrates,
+          ~1,300 tests. <strong>The code is better than the physics it is asked to
+          support</strong>, and most of it would survive the theory being discarded.
+        </span>
+      </div>
+      <div class="stratum">
+        <span class="name">The audit</span>
+        <span class="where">robustness.py · the convention sweeps · The_Principle.md §5</span>
+        <span class="body">
+          The newest layer, and <strong>the only part I would call original</strong>. It
+          exists to ask whether the middle layer's confident readings were ever actually
+          tested. Repeatedly, the answer is no — and it says so.
+        </span>
+      </div>
+    </div>
+
+    <p>
+      A reader arriving at the front door cannot tell these apart, because the README
+      links them as one programme. The corpus layer actively damages the credibility of
+      the audit layer, which is the part worth defending.
+    </p>
+  </section>
+
+  <section>
+    <p class="eyebrow">The central result</p>
+    <h2>The flagship measurement doesn't need the theory</h2>
+    <p>
+      The README's hero image and headline claim is that a multiphase field relaxed under
+      the programme's dynamics selects a palette of <code>d + 1</code> sectors in
+      <code>d</code> dimensions — measured at <code>d = 1, 2, 3, 4</code>. It is presented
+      as "the shape of the central result".
+    </p>
+    <p>
+      The measure asks, of every cell: does its immediate <code>3^d</code> neighbourhood
+      contain all <code>P</code> sectors <em>and</em> at least <code>d + 1</code> distinct
+      ones? So I ran a control the repository does not have. I replaced the entire
+      apparatus — the Allen–Cahn dynamics, the capacity field, the S-functional, the
+      relaxation protocol — with <strong>random points and nearest-neighbour
+      colouring</strong>. A plain Voronoi diagram. Then I scored it with the repo's own
+      unmodified <code>full_palette_density</code>.
+    </p>
+
+    <figure>
+      <div class="panels" id="panels"></div>
+      <figcaption>
+        Plain Voronoi tessellations at palette sizes 2–5, scored with the repository's own
+        junction measure at <code>d = 2</code>, <code>m = 3</code>. Rings mark cells whose
+        neighbourhood carries the full palette at a vertex. No field dynamics, no capacity,
+        no S-functional — and the same picture as the README's hero image, for the same
+        reason.
+      </figcaption>
+    </figure>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Dimension</th><th>P=2</th><th>P=3</th><th>P=4</th><th>P=5</th><th>argmax</th><th>d+1</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>d = 1</td><td class="num">0.04783</td><td class="num">0.00008</td><td class="num">0.00000</td><td class="num">0.00000</td><td class="num">2</td><td class="num">2 ✓</td></tr>
+          <tr><td>d = 2</td><td class="num">0.00000</td><td class="num">0.00547</td><td class="num">0.00000</td><td class="num">0.00000</td><td class="num">3</td><td class="num">3 ✓</td></tr>
+          <tr><td>d = 3</td><td class="num">0.00000</td><td class="num">0.00000</td><td class="num">0.00653</td><td class="num">0.00030</td><td class="num">4</td><td class="num">4 ✓</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      Every dimension reproduces. In 3-D the Voronoi diagram scores <em>higher</em>
+      (<code>0.00653</code>) than the relaxed field does (<code>0.00213</code>). The result
+      is a fact about generic tessellations, and the mechanism is general position: in
+      <code>d</code> dimensions, <code>d + 1</code> domains generically meet at a point.
+      That is Plateau's laws in 2-D, and it has been understood since the 1870s.
+    </p>
+
+    <div class="callout">
+      <span class="label">The distinction that matters</span>
+      <p>
+        The claim is <strong>true</strong>. It is also <strong>not evidence for the
+        URP</strong>, because it holds for any process that partitions space into domains.
+        <code>Junction_Selection.md</code> half-concedes this — "the same counting that
+        gives Plateau's laws their trivalent vertices", "the measurement confirms the
+        counting rather than testing it" — and then the README elevates it to the headline
+        anyway, listing "a palette other than <code>d+1</code> scoring higher" as a
+        falsifier of the programme. It isn't one. Nothing about the theory could make it
+        come out differently.
+      </p>
+    </div>
+
+    <p>
+      Structurally, the measure guarantees most of its own answer: requiring all
+      <code>P</code> sectors <em>and</em> <code>≥ d+1</code> distinct ones makes every
+      <code>P &lt; d+1</code> identically zero by definition, and requiring all
+      <code>P</code> colours inside one small window gets monotonically harder as
+      <code>P</code> grows. A function that is zero below <code>d+1</code> and decreasing
+      above it has its maximum at <code>d+1</code> before any field is relaxed.
+    </p>
+  </section>
+
+  <section>
+    <p class="eyebrow">The second load-bearing result</p>
+    <h2>The one-dimension gap is a restatement of locality</h2>
+    <p>
+      The other pillar: distinction scales with volume (<code>n_C = 1.99</code>),
+      integration with surface (<code>n_I = 0.95</code>), so the gap is
+      <code>1.04</code> — "exactly one dimension", and capacity-invariant.
+    </p>
+    <p>
+      Both halves are what any local field with a finite correlation length must do.
+      Gradient energy is an extensive density, so it scales as <code>ℓ^d</code>. Mutual
+      information between a region and its complement is boundary-mediated, so it scales
+      as <code>ℓ^(d−1)</code>. The gap is <code>d − (d−1) = 1</code> — there is no residue
+      left over once the two exponents are known. And exponent-invariance under a changing
+      correlation length is what it means to be an exponent; <code>ξ</code> sets the
+      coefficient, not the slope.
+    </p>
+    <p>
+      The experiment's own calibration proves this: its <strong>control field</strong> is a
+      Gaussian random field with no dynamics at all, and it produces the area law by
+      construction. The instrument is validated against the very genericity that makes the
+      result generic. The document adds an honest scope note — "for any classical field
+      with a finite correlation length, area-law mutual information is expected" — and then
+      says the content is "the exact one-dimension gap", which is the same statement
+      subtracted from itself.
+    </p>
+    <p>
+      What <em>is</em> a real measurement here is <code>A3</code>, the registered
+      hypothesis that capacity scarcity <em>causes</em> the area law. It was refuted, and
+      recorded as refuted. That is the experiment working.
+    </p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Keep</p>
+    <h2>What is genuinely useful</h2>
+
+    <h3>1. <code>project_genesis/robustness.py</code> — extract this</h3>
+    <p>
+      This is the best thing in the repository and it has nothing to do with physics. It
+      formalises a distinction that most empirical work never makes: <strong>"the claim
+      survived the sweep" and "the sweep could never have moved the claim" look identical
+      in a results table</strong>, and only one of them is a measurement.
+    </p>
+    <p>
+      Three diagnostics, each returning a headroom in units of how much the sweep actually
+      moved things, and a four-way verdict — <code>FLIPS</code>, <code>EXERCISED</code>,
+      <code>STRUCTURAL</code>, <code>NOT EXERCISED</code> — with the deliberate asymmetry
+      that <em>not exercised is not the same as false</em>. The sharpest of them is
+      <code>cancellation()</code>: a difference of two quantities is not protected by being
+      a difference unless <em>both</em> parts respond to the convention. If only one moves,
+      the difference inherits the fragile part exactly, and its stability is arithmetic
+      rather than evidence.
+    </p>
+    <p>
+      That generalises to every ablation study, every robustness check, every "our result
+      is stable across hyperparameters" claim in ML. Applied retrospectively here it
+      overturned two of its author's own three predictions. <strong>Publish it as a
+      standalone package with worked non-physics examples.</strong> It is ~300 lines and it
+      would be immediately useful to people who will never read a word about capacity
+      fields.
+    </p>
+
+    <h3>2. The lattice gauge Monte Carlo</h3>
+    <p>
+      <code>gauge_mc.py</code> is a correct, readable, numba-accelerated SU(N) implementation
+      — Wilson action, exact staple-sum ΔS, Kennedy–Pendleton SU(2) heat bath, Cabibbo–Marinari
+      subgroup updates, overrelaxation, Creutz ratios — validated against the exact analytic
+      2-D SU(2) string tension. It is entirely standard physics wearing URP labels, which is
+      precisely why it is trustworthy: it reproduces known results because it <em>is</em> the
+      known method. As a teaching or reference implementation it stands on its own.
+    </p>
+
+    <h3>3. The experimental protocol</h3>
+    <p>
+      Predictions pre-registered in the experiment file before the run; every script printing
+      its predictions, its measurement, its verdict, and its honest scope; failures kept in
+      place rather than tidied away; corrections written beside the original rather than
+      replacing it. The CI comment explaining why the timeout was raised rather than the
+      suite thinned is the kind of thing that only appears when someone is actually being
+      careful. <strong>This protocol is portable to any computational project</strong> and is
+      worth writing up separately from anything it was used to measure.
+    </p>
+
+    <h3>4. The tessellation measure itself</h3>
+    <p>
+      <code>junction_scale.py</code> is a clean, dimension-general statistic for vertex
+      structure in a partitioned space, with the valence profile and the
+      <code>domain_diameter</code> texture guard alongside it. Detached from the URP framing
+      it is a legitimate small tool for grain growth, foams, and cellular materials.
+    </p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Nearly</p>
+    <h2>What is close to useful, and what it would take</h2>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Thing</th><th></th><th>What it needs</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>The irreducibility of ΔC</strong><br><span style="color:var(--muted)">§5, three instruments</span></td>
+            <td><span class="tag near">expand</span></td>
+            <td>The most interesting idea in the repo and it is buried at the bottom of an 815-line document. The finding: any "states differ if their futures differ" construction makes distinction maximal in the <em>ordered</em> phase, because determinism is what makes futures differ reliably. Recovering what the theory wants needs a coarse-graining — the chosen cut it was meant to eliminate. That is a real epistemological result about emergence measures, demonstrated three ways. It deserves to be its own paper, aimed at the causal-emergence literature.</td>
+          </tr>
+          <tr>
+            <td><strong>The τ = 20 / τ = 40 failure</strong><br><span style="color:var(--muted)">n3_causal_delta_c</span></td>
+            <td><span class="tag near">expand</span></td>
+            <td>Two horizons give clean, unsaturated, internally consistent readings; one is right and one is wrong; nothing inside the measurement distinguishes them. A short, sharp methodological note on silent instrument failure — better than most of what gets published on the topic.</td>
+          </tr>
+          <tr>
+            <td><strong>The substrate transplant harness</strong><br><span style="color:var(--muted)">Hopfield + Kuramoto</span></td>
+            <td><span class="tag near">reframe</span></td>
+            <td>Importing the same code object into structurally unrelated substrates is a good design for testing generality. But ΔC is <em>constructed</em> to peak at the transition on both (zero in deep order, zero in disorder, maximal between), so "S peaks at criticality" is partly built in. Reframe as a comparative-substrate testbed and the harness keeps its value; keep it as evidence for a universal law and it doesn't.</td>
+          </tr>
+          <tr>
+            <td><strong>Capacity-gated plasticity</strong><br><span style="color:var(--muted)">continual_learning.py</span></td>
+            <td><span class="tag near">benchmark</span></td>
+            <td>The only claim touching external ground truth. The module honestly places itself in the EWC / Synaptic Intelligence family, and the twist — protection as a regenerating resource with a sharp persistence↔plasticity rate — is a legitimate idea. But the baseline is plain SGD on a tiny numpy MLP with synthetic tasks, which almost anything beats, and the repo already records that plain replay wins. Run it against EWC and SI on a standard benchmark, or drop the claim.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Drop</p>
+    <h2>What isn't working</h2>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Claim</th><th></th><th>Why</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>S = ΔC + κΔI as a principle</strong></td>
+            <td><span class="tag drop">no</span></td>
+            <td>Not derived from anything, and its terms have no substrate-independent definition — the repo's own §5 concludes the arbitrariness in ΔC is "irreducible". A functional whose two terms are each a convention is a notation for describing results, not a theory that predicts them.</td>
+          </tr>
+          <tr>
+            <td><strong>The Gödel foundation</strong></td>
+            <td><span class="tag drop">no</span></td>
+            <td>"Incompleteness is the room a system has left to grow into" is a metaphor. Setting <code>C(F) = ω₁^CK</code> and <code>I(F) = |F|</code> and calling the inequality a theorem that lifts into physics is analogy doing the work of proof. Nothing downstream actually uses it.</td>
+          </tr>
+          <tr>
+            <td><strong>Gravity from capacity</strong></td>
+            <td><span class="tag drop">no</span></td>
+            <td>The module is honest in its own docstring: linearising gives a screened Yukawa equation with range <code>√(D/r)</code>. A massive scalar mediating an attractive force between sources is a textbook object. "Inertial and gravitational mass coincide" holds because both are defined as the same load density. Real, correct, and not gravity — as §7 concedes.</td>
+          </tr>
+          <tr>
+            <td><strong>The corpus layer</strong></td>
+            <td><span class="tag drop">no</span></td>
+            <td>Fixed constants predicting helium ionisation energies and bond lengths; <code>κ·r₀</code> conserved at the DNA scale; "co-developed with Grok". The programme has already retired the constant these rest on. Move them to an <code>archive/</code> directory with a note, or delete them.</td>
+          </tr>
+          <tr>
+            <td><strong>The volume</strong></td>
+            <td><span class="tag drop">trim</span></td>
+            <td>~9,400 lines of markdown and 133 experiments supporting perhaps three defensible results. The prose has the texture of confidence — dense, sub-claused, heavily qualified — which reads as rigour but functions as camouflage. The audit layer is invisible underneath it.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">If you do four things</p>
+    <h2>Recommendations</h2>
+    <ol>
+      <li>
+        <strong>Extract <code>robustness.py</code> as its own project.</strong> New repo,
+        new name, no URP anywhere in it, examples drawn from ML ablations rather than
+        capacity fields. This is the piece with an audience outside this programme.
+      </li>
+      <li>
+        <strong>Add the null control to the junction work.</strong> The Voronoi comparison
+        takes an afternoon and it is the honest framing: <em>our field produces generic
+        tessellations, and here is a clean dimension-general measurement of a known
+        geometric fact.</em> Right now the result reads as a discovery and a reviewer will
+        find the control in ten minutes.
+      </li>
+      <li>
+        <strong>Split the repository.</strong> Archive the corpus layer. The instrument
+        layer and the audit layer are defensible; keeping them adjacent to DNA-scale
+        numerology means no one will read far enough to find out.
+      </li>
+      <li>
+        <strong>Stop adding substrates and instruments.</strong> The programme's own
+        conclusion — repeated across four separate audits — is that its confident readings
+        rest on underived constants, and the last one found a case where a clean
+        measurement was simply wrong with no flag available. Another substrate will not
+        resolve that. Either derive ΔC from something, or accept §5's conclusion that it
+        cannot be derived and follow <em>that</em> where it leads. It leads somewhere
+        interesting.
+      </li>
+    </ol>
+
+    <div class="callout">
+      <span class="label">The honest summary</span>
+      <p>
+        This is a real research programme that has been refuting itself faster than it has
+        been confirming itself, which is the correct direction for a research programme to
+        run — and it has built a decent instrument for doing that. The framing has not
+        caught up: the README still presents as foundational discoveries two measurements
+        that would come out the same way under any local dynamics. The theory is not
+        earning its keep. <strong>The habits built while testing it are.</strong>
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    Reviewed at <code>fc8cf8f</code> on branch <code>claude/repo-overview-assessment-384iih</code>.
+    Experiments re-run locally against pinned dependencies; the Voronoi control was written
+    for this review and scored with the repository's own unmodified measure.
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // Deterministic RNG so the figure is stable across reloads.
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  var N = 120;            // lattice cells per side
+  var SCALE = 2;          // device pixels per lattice cell
+  var SEEDS = 13;
+
+  // Sector palette: three sectors is the subject, so the first three colours
+  // are the page's three accents; the rest extend the same family.
+  function palette() {
+    var dark = matchMedia("(prefers-color-scheme: dark)").matches;
+    var stamped = document.documentElement.getAttribute("data-theme");
+    var isDark = stamped === "dark" || (stamped !== "light" && dark);
+    return isDark
+      ? [[139,156,218],[214,143,114],[100,175,168],[164,152,196],[196,181,120],[130,160,190]]
+      : [[59,78,140],[166,85,60],[46,111,107],[122,106,158],[150,132,72],[92,120,152]];
+  }
+
+  function voronoi(P, rng) {
+    var sx = [], sy = [], sc = [];
+    for (var i = 0; i < SEEDS; i++) {
+      sx.push(rng() * N); sy.push(rng() * N); sc.push(Math.floor(rng() * P));
+    }
+    for (var c = 0; c < P; c++) {            // make sure every colour is used
+      if (sc.indexOf(c) === -1) sc[Math.floor(rng() * SEEDS)] = c;
+    }
+    var lab = new Int32Array(N * N);
+    for (var y = 0; y < N; y++) {
+      for (var x = 0; x < N; x++) {
+        var best = Infinity, bc = 0;
+        for (var s = 0; s < SEEDS; s++) {
+          var dx = Math.abs(x - sx[s]); dx = Math.min(dx, N - dx);
+          var dy = Math.abs(y - sy[s]); dy = Math.min(dy, N - dy);
+          var d2 = dx * dx + dy * dy;
+          if (d2 < best) { best = d2; bc = sc[s]; }
+        }
+        lab[y * N + x] = bc;
+      }
+    }
+    return lab;
+  }
+
+  // The repository's measure: the 3x3 neighbourhood must carry the whole
+  // palette (bits === full) and at least `m` distinct sectors.
+  function junctions(lab, P, m) {
+    var full = (1 << P) - 1, hits = [];
+    for (var y = 0; y < N; y++) {
+      for (var x = 0; x < N; x++) {
+        var bits = 0;
+        for (var dy = -1; dy <= 1; dy++) {
+          for (var dx = -1; dx <= 1; dx++) {
+            bits |= 1 << lab[((y + dy + N) % N) * N + ((x + dx + N) % N)];
+          }
+        }
+        if (bits !== full) continue;
+        var n = 0, b = bits;
+        while (b) { n += b & 1; b >>= 1; }
+        if (n >= m) hits.push([x, y]);
+      }
+    }
+    return hits;
+  }
+
+  // Collapse adjacent hit cells into one ring per vertex.
+  function cluster(hits) {
+    var seen = Object.create(null), groups = [];
+    hits.forEach(function (h) { seen[h[0] + "," + h[1]] = h; });
+    hits.forEach(function (h) {
+      var key = h[0] + "," + h[1];
+      if (!seen[key]) return;
+      var stack = [h], sx = 0, sy = 0, n = 0;
+      while (stack.length) {
+        var p = stack.pop(), k = p[0] + "," + p[1];
+        if (!seen[k]) continue;
+        delete seen[k];
+        sx += p[0]; sy += p[1]; n++;
+        for (var dy = -2; dy <= 2; dy++) {
+          for (var dx = -2; dx <= 2; dx++) {
+            var q = (p[0] + dx + N) % N + "," + ((p[1] + dy + N) % N);
+            if (seen[q]) stack.push(seen[q]);
+          }
+        }
+      }
+      groups.push([sx / n, sy / n]);
+    });
+    return groups;
+  }
+
+  function render(canvas, P, cols) {
+    var rng = mulberry32(20260815 + P * 7919);
+    var lab = voronoi(P, rng);
+    var hits = junctions(lab, P, 3);
+    var ctx = canvas.getContext("2d");
+    canvas.width = N * SCALE;
+    canvas.height = N * SCALE;
+
+    var img = ctx.createImageData(N * SCALE, N * SCALE);
+    for (var y = 0; y < N * SCALE; y++) {
+      for (var x = 0; x < N * SCALE; x++) {
+        var c = cols[lab[((y / SCALE) | 0) * N + ((x / SCALE) | 0)] % cols.length];
+        var o = (y * N * SCALE + x) * 4;
+        img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2]; img.data[o + 3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+
+    var rings = cluster(hits);
+    ctx.strokeStyle = "rgba(255,255,255,.95)";
+    ctx.lineWidth = 2;
+    rings.forEach(function (g) {
+      ctx.beginPath();
+      ctx.arc(g[0] * SCALE, g[1] * SCALE, 9, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+    ctx.strokeStyle = "rgba(0,0,0,.45)";
+    ctx.lineWidth = 1;
+    rings.forEach(function (g) {
+      ctx.beginPath();
+      ctx.arc(g[0] * SCALE, g[1] * SCALE, 10.5, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+
+    return { density: hits.length / (N * N), rings: rings.length };
+  }
+
+  function build() {
+    var host = document.getElementById("panels");
+    host.textContent = "";
+    var cols = palette();
+    [2, 3, 4, 5].forEach(function (P) {
+      var panel = document.createElement("div");
+      panel.className = "panel" + (P === 3 ? " win" : "");
+      var canvas = document.createElement("canvas");
+      canvas.setAttribute("role", "img");
+      panel.appendChild(canvas);
+      var label = document.createElement("div");
+      label.className = "panel-label";
+      panel.appendChild(label);
+      host.appendChild(panel);
+
+      var r = render(canvas, P, cols);
+      canvas.setAttribute("aria-label",
+        "Voronoi tessellation with " + P + " sectors; " + r.rings +
+        " full-palette vertices marked.");
+      label.innerHTML = "<span>P = " + P + "</span><b>" +
+        (r.rings === 0 ? "none" : r.rings + " vertices") + "</b>";
+    });
+  }
+
+  build();
+  var mq = matchMedia("(prefers-color-scheme: dark)");
+  (mq.addEventListener ? mq.addEventListener.bind(mq, "change") : mq.addListener.bind(mq))(build);
+})();
+</script>
