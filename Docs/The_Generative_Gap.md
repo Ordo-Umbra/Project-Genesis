@@ -172,6 +172,26 @@ shortfall is the capacity the field lacks. Our "ΔC leads, κ·ΔI is
 capacity-gated and lags" is the in-silico echo of "C(F) leads, I(F) lags."
 The gap we kept measuring is the gap the ordinals name.
 
+*The right column is now executable too — `gcp_reflection_ladder.py`,
+`project_genesis/reflection.py`.* The ladder `T_{n+1} = T_n + Con(T_n)` was
+cited above and never run; it now runs from `T_0 = PA`, constructing each
+`Con(T_n)` syntactically. Running it corrects something this section had been
+taking for granted. In the `(C, I, G)` bookkeeping, `C = ω₁^CK` is fixed by the
+domain and `G ≥ 1` holds because the successor is *defined* — both are
+definitions, and neither can fail. The only quantity that can is whether a rung
+actually enlarges the axiom set, and that turns out to depend on a choice the
+mathematics leaves free: which of the r.e. axiom set's infinitely many indices
+`Con` names. Under two honest presentations the ladder's productive content is
+identical rung for rung while its symbol cost differs by **2,222×** at twelve
+rungs (geometric against flat); under a deliberately lossy one the index wraps
+at rung 8, the theory stops moving, and `I` climbs on regardless at unchanged
+cost. So **formal size is not evidence of rank, and rank is not evidence of
+capability** — the two dissociate in both directions. The reflection ladder
+raising `|F|` remains the right picture of the right column; what the run adds
+is that the raising has to be *certified*, not assumed, and that the certificate
+is cheap. Full entry and honest scope in
+[`Experiment_Log.md`](Experiment_Log.md).
+
 ---
 
 ## 4. The bridge ahead: ordinals → functors → instantons

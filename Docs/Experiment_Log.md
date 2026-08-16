@@ -1511,6 +1511,83 @@ Reproduce with `python experiments/n3_chirality.py` (`--quick` for a smoke run);
 
 ---
 
+## The reflection ladder, run — does climbing it buy capability or only symbols?
+
+`The_Generative_Gap.md` §3 has been leaning on a borrowed theorem for the whole
+ordinal reading: `I(F) < C(F) = ω₁^CK` strictly and permanently, with the ladder
+`T_{n+1} = T_n + Con(T_n)` climbing forever without closing the gap. The ladder
+was cited, never run. `experiments/gcp_reflection_ladder.py` runs it —
+`T_0 = PA`, twelve rungs, `Con` constructed syntactically each time — and asks
+the first question about it that can come out either way.
+
+The trap the design had to avoid: in the `(C, I, G)` bookkeeping, `C = ω₁^CK` is
+fixed by the domain and `G ≥ 1` holds because the successor is *defined*. Both
+are definitions. A program that printed them back would be a tautology with a
+progress bar. So the measured quantity is a different one — **did the rung
+enlarge the axiom SET** — plus a machine-checked derivation that *uses* what was
+added. `I` is a counter and will climb regardless; the experiment is built so
+that the measured quantity can come apart from it, and one arm is built so that
+it does. Three presentations of the same construction, differing only in which
+index `Con` names for the theory below it (an r.e. set has infinitely many, and
+the mathematics does not fix the choice): `inline` (the literal axiom list),
+`indexed` (a recursive index `⟨code(PA), n⟩`), and `truncated` — a deliberate
+negative control whose rung counter lives in a 3-bit field. **3/3, and the
+headline answer is neither of the two the question offered:**
+
+- **Q1 ✓ The productive step is presentation-invariant.** `12/12` rungs
+  productive in both honest arms: every rung enlarged the axiom set, every
+  `Con(T_n)` checked as an axiom of `T_{n+1}`, and the conjunction of all twelve
+  rungs was derived and machine-checked in **45 lines** — each rung used as a
+  premise, not merely stored.
+- **Q2 ✓ The cost is not.** At rung 12 the `inline` presentation is **11,103,120
+  symbols** against `indexed`'s **4,996** — a factor of **2,222**, on two
+  ladders whose rungs are one-for-one identical in productive content. `inline`
+  grows **×2.00 per rung** (geometric, because each `Con` must carry a numeral
+  for the whole theory beneath it); `indexed` is **×1.00** (flat, bounded by the
+  base code rather than by the height reached). The separation has no limit.
+- **Q3 ✓ The dissociation runs both ways.** The truncated arm's index first
+  repeats at **rung 8** (= 2³, exactly the wrap), and from there `Con(T_n)` is a
+  sentence the theory already contains: the measured increment falls to **0** and
+  the axiom count freezes at **16** — while `I` climbs to 11 exactly as in the
+  other two arms, at identical cost to `indexed`.
+
+**Q4 — does increasing `I` produce productive capacity, or merely formal
+complexity?** Neither, as posed. `I` is identical in all three arms, and the two
+other quantities each come apart from it in a *different direction*: `inline` vs
+`indexed` shows formal size inflated 2,222× at constant capability (so size is
+not evidence of rank), and `indexed` vs `truncated` shows capability lost at
+constant cost while the counter keeps climbing (so rank is not evidence of
+capability). Increasing `I` buys productive capacity only when the presentation
+makes the step productive, and **whether it does is an independent fact that has
+to be measured**. The falsifiable separation the framing asked for is real, and
+the truncated arm proves it is not vacuous — a system can climb the ladder by
+the counter and go nowhere. On this construction the certificate that rules that
+out is cheap: one bit per rung, plus a derivation that uses what was added.
+
+Reproduce with `python experiments/gcp_reflection_ladder.py` (`--quick` for a
+smoke run); the generator, Gödel numbering and Hilbert proof checker are in
+`project_genesis/reflection.py`, with 42 tests in
+`tests/test_reflection_ladder.py` — most of them adversarial, since the claim
+that a rung is a *capability* rests entirely on the checker refusing bad proofs.
+
+**Honest scope — this measures the syntax of the ladder, not its strength.**
+`T_n ⊬ Con(T_n)` is **not measured here and cannot be**: it is Gödel's second
+theorem, discharged from stated hypotheses (each `T_n` consistent, recursively
+axiomatised, extending Robinson arithmetic). The bounded closure search reported
+in the run is calibrated against a target the theory demonstrably proves and then
+saturates at ~20 formulas on `Con(T_n)` — it is *rule*-limited, not
+budget-limited, covering a vanishing fragment of PA's derivations, and it is
+printed as a smoke test rather than as evidence. `Prf` is a primitive relation
+symbol rather than an expanded Δ₀ formula, so absolute symbol counts carry an
+unexpanded constant and only ratios between arms are read. `I = n` is declared
+metadata — the model puts the rank at `ε₀ + n`; Kleene's `O`, fundamental
+sequences and limit notations are deliberately not implemented. What the run
+does establish is the thing the ordinal framing had been assuming for free: the
+productive step and the formal bulk are **two** quantities, and the `(C, I, G)`
+bookkeeping does not by itself tell you which one you are holding.
+
+---
+
 ## What Comes Next
 
 The frontier questions, roughly in priority order:
