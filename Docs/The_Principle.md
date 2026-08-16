@@ -84,8 +84,19 @@ The shortfall is therefore not a resource problem. It is structural, in the same
 way `I(F) < C(F)` is structural. A system does not fail to integrate everything
 because it is underfunded; it never had the option.
 
-*(Honest note: for a classical field an area law is expected. The content is the
-exact one-dimension gap and its invariance, not the existence of an area law.)*
+*(Honest note, sharpened after outside review: for a classical field an area law
+is expected — and so is the gap. Gradient energy is an **extensive density**, so
+it scales as `ℓ^d`; mutual information between a region and its complement is
+**boundary-mediated**, so it scales as `ℓ^(d−1)`. The gap is `d − (d−1) = 1` with
+no residue once both exponents are known, so "the content is the exact
+one-dimension gap" was the same statement subtracted from itself. Invariance
+under a changing correlation length is likewise what it means to be an exponent:
+`ξ` sets the coefficient, not the slope. And the experiment's calibration control
+is a Gaussian random field with no dynamics, which produces the area law by
+construction — the instrument is validated against the very genericity that makes
+the result generic. **What is a real measurement here is A3**, the registered
+hypothesis that capacity scarcity causes the area law. It was refuted, and
+recorded as refuted.)*
 
 **[measured — the only load-bearing claim here that came out of its convention
 sweep with nothing added to it]** Both of §2's measurements have now been swept
@@ -107,7 +118,9 @@ convention swept is `0.096` — **38% of the tolerance the original experiment
 set for itself**, and it is the case where the noise-floor correction is
 dropped entirely, which no reader would ask for. At the published conventions:
 `n_C = 1.99`, `n_I = 0.95` after a calibrated instrument bias of `+0.12`, gap
-`1.04`. The one-dimension gap is a fact about the field, full stop.
+`1.04`. The gap is stable under every convention swept — which is worth
+knowing, and is a fact about the *instrument* rather than a discovery about the
+field, for the reason given in the note above.
 
 **And the audit found something it was not looking for.** The prediction being
 tested was the split that had held in five previous audits — *locations move
@@ -262,8 +275,18 @@ asserted** — but the published instrument is 2-D-specific and cannot express i
 outside the plane. That is a bug in the measure, not in the geometry, and it
 had never been caught because the measure had never been run in 3-D.
 
-**[measured — `d+1` now holds in four dimensions]** The same test in `d = 1`
+**[RETRACTED — the measure forces this answer]** The same test in `d = 1`
 selects `P = 2` and in `d = 4` selects `P = 5`, rivals identically zero in both.
+*An outside review supplied the control this never had.* A plain Voronoi diagram
+— random points, nearest-neighbour colouring, no dynamics, no capacity, no
+S-functional — returns `d+1` in every dimension, passes the texture guard, and is
+scored with this repository's own unmodified measure. Pure noise returns it too,
+two orders of magnitude higher, failing only the guard. At `m = d+1` the measure
+is **zero below `d+1` by definition** and decreasing above it, so it peaks there
+before any field exists. `d+1` is a property of the statistic. It is not evidence
+for anything in this document, and the falsifier §8 built on it has been
+withdrawn. Reproduce: `python experiments/n3_junction_null.py`. What survives is
+below, and it is a fact about the instrument rather than the field.
 The `d = 4` arm also shows what a four-dimensional tiling is *made of*: all four
 codimension tiers are occupied — 3-D walls at `0.31–0.33`, 2-D surfaces at
 `0.078–0.096`, 1-D lines at `0.010–0.012`, point vertices at `0.0001–0.0003` —
@@ -775,6 +798,8 @@ python experiments/n3_selection_sweep.py       # §6, the selection argument
 python experiments/n3_capacity_separation.py   # §2, the cliff
 python experiments/n3_junction_scale.py        # §2/§3, at what scale is 3 special?
 python experiments/n3_junction_scale.py --with-4d   # adds d=4 (~60 min)
+python experiments/n3_junction_null.py         # the control that retracted d+1
+python experiments/n3_rg_flow.py --ndims 2 3 --palettes 2 3 4 5   # §5, what survives coarse-graining
 #   -> Docs/Junction_Selection.md is this result standing alone, framework-free
 python experiments/n3_capacity_gating.py       # §3, the correction (geometry, not scarcity)
 python experiments/n3_area_law.py              # §2, the scaling dimension
@@ -795,16 +820,60 @@ python experiments/n3_robustness_retrospective.py --from RESULTS  # all, was any
 ```
 
 Each prints its own pre-registered predictions, its verdict, and its honest
-scope — including when the prediction failed. 1255 test functions in `tests/`
+scope — including when the prediction failed. 1280 test functions in `tests/`
 lock the central claims so they cannot drift silently. (That number was `872`
 from the day this file was written until it was counted again — a stale figure
 in a document about auditing stale figures.)
 
-**What would refute the whole thing:** a palette other than three scoring
-comparably on the joint criterion (§6); a capacity sweep that moves the
-integrated fraction (§2 — run, and it does not); or an integration measure that scales with volume
-rather than surface (§2). Those are the load-bearing measurements. The rest is
-consequence.
+**[measured — the first thing §5's stall has yielded]** `S = ΔC + κΔI`
+**scores** a description rather than **transforming** one, and a score needs
+someone to have already chosen the level. `coarse_grain.py` supplies the missing
+operation — three blocking schemes that differ in kind — and asks which
+observables flow the same way whichever cut you chose. Scheme disagreement,
+divided by how much the observable itself moves:
+
+| | 2-D, `P = 2…5` | 3-D, `P = 2…5` | |
+|---|---|---|---|
+| wall density (distinction-like) | `0.03–0.12` | `0.04–0.06` | **survives** |
+| order parameter | `1.37–2.26` | `2.18–2.83` | artefact of the cut |
+| largest component (integration-like) | `1.03–2.50` | `1.85–2.72` | artefact of the cut |
+
+**One classification in all eight cells**, with an order of magnitude between
+survivor and casualties in every one — so any threshold from `0.15` to `1.0`
+gives the same answer. That is the property this document has been missing: the
+cut stays arbitrary and the classification does not, and neither is it a
+function of the dimension or the palette.
+
+Read the direction honestly. **The distinction-like observable survives; both
+integration-flavoured ones are artefacts.** Integration is the term the entire
+capacity argument rests on, so on this evidence the half of `S` the theory needs
+is the half that does not survive its own coarse-graining. One block factor,
+three observables, one substrate — but it is the first result here that bears on
+which term is real rather than on how either is measured.
+
+*The relaxed field is indistinguishable from a width-matched Voronoi in all
+eight cells, consistent with §3's retraction.* An earlier run said otherwise in
+five of them; that was a domain-width mismatch of `1.7–2.4×` being read as
+physics, and the correction is in `n3_rg_flow`'s `matched_voronoi`.
+
+**What would refute the whole thing.** This list was three items. An outside
+review showed two of them could not have been satisfied by any possible world,
+and they are withdrawn:
+
+- **A capacity sweep that moves the integrated fraction** (§2). *Stands.* It was
+  run, it is a real prediction about the dynamics, and it does not move.
+- **A palette other than three scoring comparably on the joint criterion** (§6).
+  *Stands, narrowly* — the joint criterion weighs integration against distinction,
+  which is not settled by counting. But note it is **not** the junction measure of
+  §3, whose `d+1` answer is forced by construction and refutes nothing.
+- ~~An integration measure that scales with volume rather than surface~~ (§2).
+  **Withdrawn.** Boundary-mediated information scales as `ℓ^(d−1)` for any local
+  field; a volume-law integration measure would mean the instrument was broken,
+  not that the theory was wrong.
+
+A falsifier no possible world could satisfy is not a falsifier. Losing two of
+three is the most informative thing that has happened to this list, and it is a
+sharper result than most of what they were guarding.
 
 ---
 

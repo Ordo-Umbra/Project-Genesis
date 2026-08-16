@@ -51,9 +51,18 @@ carries **every** sector at once, at a vertex rather than along a wall. Two
 sectors cannot form such a junction; four and five form plenty of junctions but
 essentially none that bind the whole palette. Three can, and does.
 
-That picture is the shape of the central result, and it generalises: in `d`
-dimensions the palette that maximises full-palette junction density is **`d + 1`**
-— measured at `d = 1, 2, 3, 4`. ([the standalone note](Docs/Junction_Selection.md))
+It generalises: in `d` dimensions the palette maximising full-palette junction
+density is **`d + 1`**, at `d = 1, 2, 3, 4`.
+
+**And it needs none of this repository's physics.** A plain Voronoi diagram —
+random points, nearest-neighbour colouring, no dynamics — returns the same
+answer, scored with the same unmodified measure. So does pure noise. The measure
+is zero below `d + 1` by construction and decreasing above it, so it peaks there
+before any field exists. This was the headline claim until an outside review
+supplied the control; it is now
+[a retraction](Docs/Junction_Selection.md), and the control is
+[`n3_junction_null.py`](experiments/n3_junction_null.py). The picture is real and
+the arithmetic is generic.
 
 ---
 
@@ -63,9 +72,9 @@ Load-bearing results only. Negatives included, because they are the point.
 
 | Question | Verdict |
 |---|---|
-| Does a field select a palette size, and which? | **`d + 1`**, measured at `d = 1, 2, 3, 4`. Rivals are *identically zero* in 1-, 2- and 4-D; in 3-D the nearest is live at `10×` behind |
+| Does a field select a palette size, and which? | **`d + 1`** — but so does a Voronoi diagram and so does random noise. The measure forces its own argmax; this is **retracted** as a result about the field ([control](experiments/n3_junction_null.py)) |
 | Is that selection driven by capacity scarcity? | **No — refuted.** It is geometric: codimension counting, of which Plateau's trivalent vertex is the 2-D case. `P = 3` peaks at every capacity level *including no capacity field at all* |
-| Does distinction outrun integration by a fixed amount? | **Yes, in 2-D.** Distinction is volume-law (`n = 1.99`), integration is surface-law (`n = 0.95`) — a gap of `1.04`, one dimension, and the worst motion under any convention swept is 38% of the experiment's own tolerance |
+| Does distinction outrun integration by a fixed amount? | **Yes — and it is a restatement of locality.** `n_C = 1.99`, `n_I = 0.95`, gap `1.04`, stable under every convention swept. But an extensive density scales as `ℓ^d` and boundary-mediated information as `ℓ^(d−1)` for *any* local field, so the gap of 1 has no residue left once both exponents are known |
 | Does the capacity law transplant off the lattice? | **The eviction condition does** — to a Hopfield network and a Kuramoto oscillator population, three structurally unrelated substrates. Whether the crossing sits at a substrate-independent `κ` is **not settled** |
 | Is the optimum's *route* to criticality a substrate fact? | **No.** It moves when you change how ΔC is read. The *condition* survives; the route was measuring the dictionary |
 | Does scarcity evict an ordered optimum? | **Yes, ceiling-free**: exactly when the ordered point starts ahead and holding it costs capacity |
@@ -80,11 +89,24 @@ genuinely threatened it.
 
 ## What would refute it
 
-- A palette other than `d + 1` scoring higher on a resolved field, in any dimension.
-- A capacity sweep that moves the integrated fraction (run — it does not).
-- An integration measure that scales with volume rather than surface.
+Two entries were withdrawn from this list after an outside review, and the reason
+is worth more than the entries were:
 
-Those are the measurements the rest depends on. Everything else is consequence.
+- ~~A palette other than `d + 1` scoring higher on a resolved field.~~
+  **Not a falsifier.** Nothing about any theory could make it come out
+  differently — the measure forbids it.
+- ~~An integration measure that scales with volume rather than surface.~~
+  **Not a falsifier.** Gradient energy is an extensive density, so it scales as
+  `ℓ^d`; mutual information across a boundary scales as `ℓ^(d−1)`. The gap is
+  `d − (d−1) = 1` for any local field with a finite correlation length. The
+  experiment's own calibration control is a Gaussian random field with no
+  dynamics, which produces the area law by construction.
+- **A capacity sweep that moves the integrated fraction.** This one stands — it
+  was run, it is a real prediction about the dynamics, and it does not move.
+
+A falsifier that no possible world could satisfy is not a falsifier. Finding that
+two of three were arithmetic rather than physics is the most useful thing that
+happened to this list.
 
 ---
 
@@ -105,7 +127,10 @@ python experiments/n3_gap_conventions.py
 python experiments/n3_criticality_transplant.py
 python experiments/n3_kuramoto_transplant.py
 
-python -m unittest discover -s tests      # ~1255 checks, ~15 min
+python experiments/n3_junction_null.py     # the control that retracted d+1
+python experiments/n3_rg_flow.py           # does anything survive coarse-graining?
+
+python -m unittest discover -s tests      # ~1280 checks, ~15 min
 python tools/make_figures.py              # regenerate the figures above
 ```
 
@@ -119,7 +144,7 @@ losing.
 project_genesis/     the instruments — field dynamics, capacity, gauge sector,
                      substrates (Hopfield, Kuramoto), and the measures
 experiments/         one file per question, each self-scoring
-tests/               ~1255 checks pinning the central claims so they cannot
+tests/               ~1280 checks pinning the central claims so they cannot
                      drift silently
 Docs/                the theory, the standalone results, the full record
 tools/               figure generation

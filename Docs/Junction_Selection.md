@@ -1,10 +1,37 @@
 # A palette of `d+1` maximises full-palette junction density in `d` dimensions
 
-### A self-contained measurement on relaxed multiphase fields
+### — and that is a property of the measure, not of the field
 
-*This note stands alone. It assumes no framework, states one geometric claim,
-reports what was measured, and says what would refute it. It is extracted from a
-larger programme, but nothing here depends on that programme being right.*
+> ## Retraction
+>
+> **This note originally presented `d+1` as a measurement about relaxed
+> multiphase fields.** It is not. An outside review supplied the control the
+> work never had: replace the entire apparatus — Allen–Cahn dynamics, capacity
+> field, S-functional, relaxation protocol — with random points and
+> nearest-neighbour colouring, and score the plain Voronoi diagram with this
+> repository's own unmodified measure. **The argmax is still `d+1`, in every
+> dimension.** It passes the texture guard. It has no dynamics of any kind.
+>
+> Worse for the original claim: **pure random labels** — no tessellation at all —
+> also return `d+1`, at densities two orders of magnitude higher. That arm fails
+> the texture guard, so it does not by itself refute a guarded claim; the Voronoi
+> arm passes every check this repository applies, and does.
+>
+> The reason is structural, and it was visible in the definition the whole time.
+> At `m = d+1` the measure demands all `P` sectors *and* at least `d+1` distinct
+> ones in one `3^d` window, so every `P < d+1` is **identically zero by
+> definition**, and every `P > d+1` must fit more colours into the same small
+> window, which only gets harder. A statistic that is zero below `d+1` and
+> decreasing above it peaks at `d+1` **before any field exists**.
+>
+> What survives is that the relaxed field tessellates space — which the texture
+> guard already reported, and which was never in doubt. What does not survive is
+> `d+1` as a finding about the field, as a result of this programme, or as a
+> falsifier of anything in it. The sections below are kept as written, with the
+> claim's actual standing marked, because the reasoning is worth reading and the
+> record of having been wrong is part of what makes the rest checkable.
+>
+> Reproduce the control: `python experiments/n3_junction_null.py`
 
 ---
 
@@ -26,6 +53,12 @@ sectors that meet at a genuine point junction, this density is maximised at
 ```
 
 and that every other palette is not merely worse but **identically zero**.
+
+> **Standing: true, and empty of content about the field.** The statement holds.
+> It also holds for a Voronoi diagram and for random noise, because — as the
+> retraction above sets out — the measure is zero below `d+1` by construction and
+> decreasing above it. Read what follows as *an analysis of a statistic*, which
+> is what it turned out to be.
 
 ## Why `d+1` is the geometrically correct threshold
 
@@ -212,8 +245,10 @@ is not a study of universality across dynamics.
 
 ## What would refute it
 
-- A palette other than `d + 1` scoring higher at `m = d + 1`, in any dimension,
-  on a resolved field.
+- ~~A palette other than `d + 1` scoring higher at `m = d + 1`, in any dimension,
+  on a resolved field.~~ **Withdrawn.** This is not a falsifier: nothing about
+  any field could make it come out differently, because the measure forbids it.
+  Listing it as one was the original error in a single line.
 - The `d = 3` result reversing under a different relaxation (the arm with a live
   rival is the vulnerable one).
 - The `d = 4` arm reversing at a box large enough to hold a proper tiling. This
