@@ -83,6 +83,38 @@ BANNER = "=" * 78
 OBS = ("wall_density", "order_parameter", "largest_component")
 
 
+def matched_voronoi(size, ndim, n_palette, target_width, rng, tries=4):
+    """A Voronoi whose domains are the same width as the field it controls for.
+
+    Without this the control is worthless and worse than nothing. Wall density
+    is a direct function of domain width, so comparing a relaxed field against a
+    Voronoi with different-sized cells reads a size mismatch as a difference in
+    physics. Measured: R3 "failed" in exactly the five cells where the widths
+    were mismatched by 1.7-2.4x and held in the three where they matched to
+    within 8%. A fixed seed count cannot match, because the relaxed field's
+    coarsening depends on both dimension and palette.
+
+    Seeds are estimated from ``N = (S/L)^d`` and then corrected against the
+    measured width, because ``domain_diameter`` is not exactly that geometric
+    L. The achieved ratio is returned so the match is reported rather than
+    assumed.
+    """
+    n = max(2, int(round((size / max(target_width, 1e-9)) ** ndim)))
+    best = None
+    for _ in range(tries):
+        lab = voronoi_labels(size, ndim, n, n_palette, rng)
+        w = domain_diameter(lab)
+        ratio = w / target_width if target_width > 0 else float("inf")
+        if best is None or abs(np.log(ratio)) < abs(np.log(best[1])):
+            best = (lab, ratio, n)
+        if 0.92 <= ratio <= 1.08:
+            break
+        # width scales like N^(-1/d): to change width by 1/ratio, scale N by
+        # ratio^d
+        n = max(2, int(round(n * ratio ** ndim)))
+    return best
+
+
 def trajectories(labels, n_palette, schemes, levels, b, rng) -> dict:
     return {s: rg_flow(labels, n_palette, s, levels=levels, b=b, rng=rng)
             for s in schemes}
@@ -191,11 +223,17 @@ def main() -> int:
         steps = args.steps if ndim == 2 else max(args.steps, 800)
         for P in args.palettes:
             fields = {"relaxed": [], "voronoi": [], "noise": []}
+            ratios = []
             for t in range(args.trials):
-                fields["relaxed"].append(
-                    relaxed(P, size, ndim, steps, 1.5, 0.1, args.seed + 31 * t))
-                fields["voronoi"].append(
-                    voronoi_labels(size, ndim, seeds, P, rng))
+                rel = relaxed(P, size, ndim, steps, 1.5, 0.1,
+                              args.seed + 31 * t)
+                fields["relaxed"].append(rel)
+                # the control must have the SAME domain width as the thing it
+                # controls for, or a size mismatch reads as physics
+                vor, ratio, _n = matched_voronoi(size, ndim, P,
+                                                 domain_diameter(rel), rng)
+                fields["voronoi"].append(vor)
+                ratios.append(ratio)
                 fields["noise"].append(noise_labels(size, ndim, P, rng))
 
             avg = {}
@@ -229,7 +267,8 @@ def main() -> int:
                                     for l in fields["voronoi"]]))
 
             key = f"{ndim}D_P{P}"
-            cells[key] = {"spreads": spreads, "raw_spread": raw,
+            cells[key] = {"width_match_ratio": float(np.mean(ratios)),
+                          "spreads": spreads, "raw_spread": raw,
                           "flow_range": moves, "survives": survives,
                           "r1_gaps": r1g, "r3_gaps": r3g,
                           "r3_resolved": resolved,
@@ -239,7 +278,8 @@ def main() -> int:
             r3_ok.append(not any(resolved.values()))
 
             surv = [k for k in OBS if survives[k]]
-            print(f"  {key:<8} width {width:5.1f} (voronoi {vwidth:5.1f})  "
+            print(f"  {key:<8} width {width:5.1f} (voronoi {vwidth:5.1f}, "
+                  f"match {np.mean(ratios):.2f}x)  "
                   f"levels {cells[key]['levels']}  "
                   f"survives: {', '.join(surv) if surv else 'NOTHING'}")
 
