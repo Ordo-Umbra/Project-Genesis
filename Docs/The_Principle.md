@@ -819,7 +819,7 @@ python experiments/n3_robustness_retrospective.py --from RESULTS  # all, was any
 ```
 
 Each prints its own pre-registered predictions, its verdict, and its honest
-scope — including when the prediction failed. 1264 test functions in `tests/`
+scope — including when the prediction failed. 1280 test functions in `tests/`
 lock the central claims so they cannot drift silently. (That number was `872`
 from the day this file was written until it was counted again — a stale figure
 in a document about auditing stale figures.)

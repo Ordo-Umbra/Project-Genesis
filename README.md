@@ -128,8 +128,9 @@ python experiments/n3_criticality_transplant.py
 python experiments/n3_kuramoto_transplant.py
 
 python experiments/n3_junction_null.py     # the control that retracted d+1
+python experiments/n3_rg_flow.py           # does anything survive coarse-graining?
 
-python -m unittest discover -s tests      # ~1264 checks, ~15 min
+python -m unittest discover -s tests      # ~1280 checks, ~15 min
 python tools/make_figures.py              # regenerate the figures above
 ```
 
@@ -143,7 +144,7 @@ losing.
 project_genesis/     the instruments — field dynamics, capacity, gauge sector,
                      substrates (Hopfield, Kuramoto), and the measures
 experiments/         one file per question, each self-scoring
-tests/               ~1264 checks pinning the central claims so they cannot
+tests/               ~1280 checks pinning the central claims so they cannot
                      drift silently
 Docs/                the theory, the standalone results, the full record
 tools/               figure generation
