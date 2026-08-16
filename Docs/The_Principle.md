@@ -799,6 +799,7 @@ python experiments/n3_capacity_separation.py   # §2, the cliff
 python experiments/n3_junction_scale.py        # §2/§3, at what scale is 3 special?
 python experiments/n3_junction_scale.py --with-4d   # adds d=4 (~60 min)
 python experiments/n3_junction_null.py         # the control that retracted d+1
+python experiments/n3_rg_flow.py --ndims 2 3 --palettes 2 3 4 5   # §5, what survives coarse-graining
 #   -> Docs/Junction_Selection.md is this result standing alone, framework-free
 python experiments/n3_capacity_gating.py       # §3, the correction (geometry, not scarcity)
 python experiments/n3_area_law.py              # §2, the scaling dimension
@@ -823,6 +824,37 @@ scope — including when the prediction failed. 1280 test functions in `tests/`
 lock the central claims so they cannot drift silently. (That number was `872`
 from the day this file was written until it was counted again — a stale figure
 in a document about auditing stale figures.)
+
+**[measured — the first thing §5's stall has yielded]** `S = ΔC + κΔI`
+**scores** a description rather than **transforming** one, and a score needs
+someone to have already chosen the level. `coarse_grain.py` supplies the missing
+operation — three blocking schemes that differ in kind — and asks which
+observables flow the same way whichever cut you chose. Scheme disagreement,
+divided by how much the observable itself moves:
+
+| | 2-D, `P = 2…5` | 3-D, `P = 2…5` | |
+|---|---|---|---|
+| wall density (distinction-like) | `0.03–0.12` | `0.04–0.06` | **survives** |
+| order parameter | `1.37–2.26` | `2.18–2.83` | artefact of the cut |
+| largest component (integration-like) | `1.03–2.50` | `1.85–2.72` | artefact of the cut |
+
+**One classification in all eight cells**, with an order of magnitude between
+survivor and casualties in every one — so any threshold from `0.15` to `1.0`
+gives the same answer. That is the property this document has been missing: the
+cut stays arbitrary and the classification does not, and neither is it a
+function of the dimension or the palette.
+
+Read the direction honestly. **The distinction-like observable survives; both
+integration-flavoured ones are artefacts.** Integration is the term the entire
+capacity argument rests on, so on this evidence the half of `S` the theory needs
+is the half that does not survive its own coarse-graining. One block factor,
+three observables, one substrate — but it is the first result here that bears on
+which term is real rather than on how either is measured.
+
+*The relaxed field is indistinguishable from a width-matched Voronoi in all
+eight cells, consistent with §3's retraction.* An earlier run said otherwise in
+five of them; that was a domain-width mismatch of `1.7–2.4×` being read as
+physics, and the correction is in `n3_rg_flow`'s `matched_voronoi`.
 
 **What would refute the whole thing.** This list was three items. An outside
 review showed two of them could not have been satisfied by any possible world,
