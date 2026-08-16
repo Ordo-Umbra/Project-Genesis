@@ -44,12 +44,21 @@ R3. **The relaxed URP field flows the same as a plain Voronoi.** *This predicts
     be the first evidence in this programme that the dynamics do something a
     generic tessellation does not.
 
-Honest scope. This tests whether a *classification* exists, not whether it is
-the one the theory wants. Three observables, three schemes, one block factor,
-2-D. A negative here is cheap and informative; a positive would need the whole
-apparatus repeated in 3-D and across palettes before it meant anything.
+R4. **The classification is the same in every dimension and at every palette
+    size.** This is the one that decides whether any of it matters. A
+    classification that changes with `d` or `P` has not removed the
+    arbitrariness — it has moved it one level up, from "which cut" to "which
+    setup", and bought nothing. **Falsifier:** an observable that survives the
+    cut in one cell of the sweep and not in another.
 
-    python experiments/n3_rg_flow.py
+Honest scope. This tests whether a *classification* exists and is invariant,
+not whether it is the one the theory wants. Three observables, three schemes,
+one block factor. Invariance across `d` and `P` is necessary for the RG analogy
+to be doing any work; it is nowhere near sufficient to say the surviving
+quantity is meaningful.
+
+    python experiments/n3_rg_flow.py                    # 2-D only, quick
+    python experiments/n3_rg_flow.py --ndims 2 3 --palettes 2 3 4 5
 """
 
 from __future__ import annotations
@@ -66,6 +75,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "experiments"))
 
 from project_genesis.coarse_grain import SCHEMES, rg_flow      # noqa: E402
+from project_genesis.multiphase import domain_diameter        # noqa: E402
 from n3_junction_null import noise_labels, voronoi_labels      # noqa: E402
 from n3_junction_scale import relaxed                          # noqa: E402
 
@@ -88,6 +98,40 @@ def gap(a: list, b: list) -> float:
     return float(max(abs(a[i] - b[i]) for i in range(n))) if n else float("nan")
 
 
+def flow_range(trajs: dict, key: str) -> float:
+    """How far the observable moves across the flow, averaged over schemes.
+
+    The scale against which a disagreement has to be judged. An observable that
+    barely moves cannot have a meaningful spread: the schemes agree because
+    there is nothing to disagree about.
+    """
+    rs = []
+    for t in trajs.values():
+        ser = series(t, key)
+        if ser:
+            rs.append(max(ser) - min(ser))
+    return float(np.mean(rs)) if rs else float("nan")
+
+
+def relative_spread(trajs: dict, key: str) -> float:
+    """Scheme disagreement as a fraction of the observable's own motion.
+
+    A *fixed* threshold on the raw spread is not usable here: measured spreads
+    fall monotonically with palette size (0.30 -> 0.09 for the order parameter
+    across P = 2..5), so a fixed cut classifies by P rather than by the field —
+    the same defect as the dimension-blind texture floor.
+
+    Dividing by :func:`flow_range` asks the scale-free question instead: does
+    the observable's *flow* survive the choice of cut, relative to how much
+    flowing it does? Returns ``inf`` when nothing moves, which correctly reads
+    as "cannot tell" rather than as agreement.
+    """
+    rng_ = flow_range(trajs, key)
+    if not np.isfinite(rng_) or rng_ <= 1e-12:
+        return float("inf")
+    return float(scheme_spread(trajs, key) / rng_)
+
+
 def scheme_spread(trajs: dict, key: str) -> float:
     """Largest disagreement between schemes, level by level."""
     ser = [series(t, key) for t in trajs.values()]
@@ -98,18 +142,26 @@ def scheme_spread(trajs: dict, key: str) -> float:
 
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    p.add_argument("--size", type=int, default=128)
-    p.add_argument("--palette", type=int, default=3)
+    p.add_argument("--ndims", type=int, nargs="+", default=[2])
+    p.add_argument("--palettes", type=int, nargs="+", default=[3])
+    p.add_argument("--size-2d", type=int, default=128)
+    p.add_argument("--size-3d", type=int, default=64)
     p.add_argument("--steps", type=int, default=600)
     p.add_argument("--levels", type=int, default=4)
     p.add_argument("--block", type=int, default=2)
-    p.add_argument("--seeds", type=int, default=64,
-                   help="Voronoi seed points (matched to the relaxed field's "
-                        "domain count as closely as one can)")
+    p.add_argument("--seeds-2d", type=int, default=64)
+    p.add_argument("--seeds-3d", type=int, default=125,
+                   help="Voronoi seed points; chosen so domains-per-axis is "
+                        "broadly comparable to the 2-D arm rather than equal, "
+                        "which is why domain width is reported per cell")
     p.add_argument("--trials", type=int, default=3)
     p.add_argument("--gap-tol", type=float, default=0.10,
                    help="trajectories differing by more than this, on a [0,1] "
                         "fraction, count as different")
+    p.add_argument("--rel-tol", type=float, default=0.35,
+                   help="scheme disagreement as a fraction of the observable's "
+                        "own motion, above which its flow is a fact about the "
+                        "cut rather than the field")
     p.add_argument("--seed", type=int, default=11)
     p.add_argument("--output-dir", type=Path, default=None)
     args = p.parse_args()
@@ -117,8 +169,8 @@ def main() -> int:
     print(BANNER)
     print("DOES ANYTHING SURVIVE COARSE-GRAINING ON ITS OWN?")
     print(BANNER)
-    print(f"  {args.size}^2, P={args.palette}, block {args.block}, "
-          f"{args.levels} levels, {args.trials} trials")
+    print(f"  dimensions {args.ndims}, palettes {args.palettes}, "
+          f"block {args.block}, {args.trials} trials")
     print("  three schemes that differ in kind: majority smooths, decimate")
     print("  samples a fixed corner, random samples uniformly")
     print()
@@ -126,145 +178,150 @@ def main() -> int:
     print(f"    R1  structure and noise flow differently (> {args.gap_tol:g})")
     print("    R2  some observable is scheme-independent, some is not")
     print("    R3  the relaxed field flows the SAME as a Voronoi")
-    print("        (predicting the deflationary outcome on purpose)")
+    print("    R4  and the classification is identical in every cell of the")
+    print("        sweep -- otherwise the arbitrariness just moved up a level")
     print()
 
     rng = np.random.default_rng(args.seed)
-    fields = {}
-    for t in range(args.trials):
-        fields.setdefault("relaxed", []).append(
-            relaxed(args.palette, args.size, 2, args.steps, 1.5, 0.1,
-                    args.seed + 31 * t))
-        fields.setdefault("voronoi", []).append(
-            voronoi_labels(args.size, 2, args.seeds, args.palette, rng))
-        fields.setdefault("noise", []).append(
-            noise_labels(args.size, 2, args.palette, rng))
+    cells, r1_ok, r3_ok = {}, [], []
 
-    # average each trajectory over trials
-    avg = {}
-    for kind, labs in fields.items():
-        per = [trajectories(l, args.palette, SCHEMES, args.levels, args.block,
-                            rng) for l in labs]
-        avg[kind] = {}
-        for s in SCHEMES:
-            n = min(len(pt[s]) for pt in per)
-            avg[kind][s] = [
-                {k: float(np.mean([pt[s][i][k] for pt in per])) for k in OBS}
-                for i in range(n)]
+    for ndim in args.ndims:
+        size = args.size_2d if ndim == 2 else args.size_3d
+        seeds = args.seeds_2d if ndim == 2 else args.seeds_3d
+        steps = args.steps if ndim == 2 else max(args.steps, 800)
+        for P in args.palettes:
+            fields = {"relaxed": [], "voronoi": [], "noise": []}
+            for t in range(args.trials):
+                fields["relaxed"].append(
+                    relaxed(P, size, ndim, steps, 1.5, 0.1, args.seed + 31 * t))
+                fields["voronoi"].append(
+                    voronoi_labels(size, ndim, seeds, P, rng))
+                fields["noise"].append(noise_labels(size, ndim, P, rng))
 
-    for kind in ("relaxed", "voronoi", "noise"):
-        print(BANNER)
-        print(f"{kind}")
-        print(BANNER)
-        for s in SCHEMES:
-            print(f"  {s}")
-            for key in OBS:
-                vals = series(avg[kind][s], key)
-                print(f"    {key:<18}" + "  ".join(f"{v:.4f}" for v in vals))
-        print()
+            avg = {}
+            for kind, labs in fields.items():
+                per = [trajectories(l, P, SCHEMES, args.levels, args.block, rng)
+                       for l in labs]
+                avg[kind] = {}
+                for sc in SCHEMES:
+                    n = min(len(pt[sc]) for pt in per)
+                    avg[kind][sc] = [
+                        {k: float(np.mean([pt[sc][i][k] for pt in per]))
+                         for k in OBS} for i in range(n)]
 
-    # ------------------------------------------------------------------- R1
-    print(BANNER)
-    print("R1  DOES THE FLOW SEE THE FIELD, OR JUST THE LATTICE?")
-    print(BANNER)
-    r1_gaps = {}
-    for key in OBS:
-        g = max(gap(series(avg["relaxed"][s], key),
-                    series(avg["noise"][s], key)) for s in SCHEMES)
-        r1_gaps[key] = g
-        print(f"  {key:<18} relaxed vs noise, worst-scheme gap: {g:.4f}")
-    r1 = any(g > args.gap_tol for g in r1_gaps.values())
+            spreads = {k: relative_spread(avg["relaxed"], k) for k in OBS}
+            raw = {k: scheme_spread(avg["relaxed"], k) for k in OBS}
+            moves = {k: flow_range(avg["relaxed"], k) for k in OBS}
+            r1g = {k: max(gap(series(avg["relaxed"][sc], k),
+                              series(avg["noise"][sc], k)) for sc in SCHEMES)
+                   for k in OBS}
+            r3g = {k: max(gap(series(avg["relaxed"][sc], k),
+                              series(avg["voronoi"][sc], k)) for sc in SCHEMES)
+                   for k in OBS}
+            # an effect counts only if it clears the instrument's own
+            # disagreement with itself on that same observable
+            resolved = {k: bool(r3g[k] > max(args.gap_tol, spreads[k]))
+                        for k in OBS}
+            survives = {k: bool(spreads[k] <= args.rel_tol) for k in OBS}
+            width = float(np.mean([domain_diameter(l)
+                                   for l in fields["relaxed"]]))
+            vwidth = float(np.mean([domain_diameter(l)
+                                    for l in fields["voronoi"]]))
+
+            key = f"{ndim}D_P{P}"
+            cells[key] = {"spreads": spreads, "raw_spread": raw,
+                          "flow_range": moves, "survives": survives,
+                          "r1_gaps": r1g, "r3_gaps": r3g,
+                          "r3_resolved": resolved,
+                          "relaxed_width": width, "voronoi_width": vwidth,
+                          "levels": len(avg["relaxed"]["majority"])}
+            r1_ok.append(any(g > args.gap_tol for g in r1g.values()))
+            r3_ok.append(not any(resolved.values()))
+
+            surv = [k for k in OBS if survives[k]]
+            print(f"  {key:<8} width {width:5.1f} (voronoi {vwidth:5.1f})  "
+                  f"levels {cells[key]['levels']}  "
+                  f"survives: {', '.join(surv) if surv else 'NOTHING'}")
+
     print()
-    print("  PREDICTION HELD — blocking distinguishes a structured field from"
-          if r1 else
-          "  PREDICTION FAILED — structure and noise flow the same, so")
-    print("  noise, so the flow is reading the field." if r1 else
-          "  blocking measures the lattice and this approach is dead.")
+    print(BANNER)
+    print("THE CLASSIFICATION, CELL BY CELL")
+    print(BANNER)
+    print(f"  {'cell':<10}" + "".join(f"{k:>20}" for k in OBS))
+    for key, c in cells.items():
+        row = "".join(
+            f"{c['spreads'][k]:>13.2f} {'OK ' if c['survives'][k] else 'cut'}"
+            for k in OBS)
+        print(f"  {key:<10}{row}")
+    print()
+    print("  Numbers are scheme disagreement / the observable's own motion.")
+    print("  OK = the flow survives the choice of cut. cut = the disagreement")
+    print("  is comparable to the flow, so the flow is a fact about the scheme.")
 
-    # ------------------------------------------------------------------- R2
+    # ------------------------------------------------------------------ R1-R3
     print()
     print(BANNER)
-    print("R2  IS ANYTHING INDEPENDENT OF WHICH CUT YOU CHOSE?")
+    print("R1  DOES THE FLOW SEE THE FIELD?      "
+          f"{sum(r1_ok)}/{len(r1_ok)} cells")
+    print("R3  DYNAMICS INDISTINGUISHABLE FROM VORONOI?  "
+          f"{sum(r3_ok)}/{len(r3_ok)} cells")
     print(BANNER)
-    spreads = {}
-    for key in OBS:
-        sp = scheme_spread(avg["relaxed"], key)
-        spreads[key] = sp
-        verdict = ("scheme-INDEPENDENT" if sp <= args.gap_tol
-                   else "depends on the cut")
-        print(f"  {key:<18} spread across schemes: {sp:.4f}   {verdict}")
-    indep = [k for k, v in spreads.items() if v <= args.gap_tol]
-    dep = [k for k, v in spreads.items() if v > args.gap_tol]
-    r2 = bool(indep) and bool(dep)
+    r1 = all(r1_ok)
+    r3 = all(r3_ok)
+    print("  R1 " + ("held everywhere." if r1 else
+                     "FAILED in some cell -- blocking read the lattice there."))
+    print("  R3 " + ("held everywhere, deflationary as predicted."
+                     if r3 else
+                     "FAILED somewhere -- worth a hard look before believing."))
+
+    # --------------------------------------------------------------------- R2
     print()
-    if r2:
-        print(f"  PREDICTION HELD — {len(indep)} observable(s) survive the")
-        print(f"  choice of cut and {len(dep)} do not. That split is the whole")
-        print("  point: it means 'which cut' has an answer that is not itself")
-        print("  a choice.")
-    elif not dep:
-        print("  PREDICTION FAILED — everything agrees across schemes. The cut")
-        print("  never mattered here, so there is nothing to classify and no")
-        print("  arbitrariness was resolved.")
+    print(BANNER)
+    print("R2  IS THERE A SPLIT AT ALL?")
+    print(BANNER)
+    r2 = all(any(c["survives"].values()) and not all(c["survives"].values())
+             for c in cells.values())
+    print("  PREDICTION HELD in every cell -- each has survivors and casualties."
+          if r2 else
+          "  PREDICTION FAILED in at least one cell (all survive, or none do).")
+
+    # --------------------------------------------------------------------- R4
+    print()
+    print(BANNER)
+    print("R4  IS THE CLASSIFICATION THE SAME EVERYWHERE?")
+    print(BANNER)
+    sigs = {key: tuple(c["survives"][k] for k in OBS)
+            for key, c in cells.items()}
+    uniq = set(sigs.values())
+    r4 = len(uniq) == 1
+    for key, sig in sigs.items():
+        print(f"  {key:<10} " + ", ".join(
+            f"{k}={'OK' if v else 'cut'}" for k, v in zip(OBS, sig)))
+    print()
+    if r4 and len(cells) > 1:
+        surv = [k for k, v in zip(OBS, next(iter(uniq))) if v]
+        print("  PREDICTION HELD — one classification across every dimension")
+        print(f"  and palette tested. Survivors: {', '.join(surv) or 'none'}.")
+        print("  That is the property the RG analogy needs: the cut is a")
+        print("  choice, the classification is not, and neither is it a")
+        print("  function of the setup.")
+    elif len(cells) == 1:
+        print("  ONLY ONE CELL — nothing to compare. Run with --ndims 2 3 and")
+        print("  several palettes for this to mean anything.")
+        r4 = False
     else:
-        print("  PREDICTION FAILED — nothing survives the choice of cut. The")
-        print("  RG analogy does not hold for these observables.")
-
-    # ------------------------------------------------------------------- R3
-    print()
-    print(BANNER)
-    print("R3  DO THE DYNAMICS DO ANYTHING A VORONOI DOES NOT?")
-    print(BANNER)
-    # An effect only counts if it exceeds the instrument's own disagreement
-    # with itself. `scheme_spread` IS that disagreement, measured on the same
-    # observable: if three defensible cuts differ by more than the
-    # relaxed-vs-Voronoi gap, the gap is inside the noise and no comparison has
-    # been made. Without this the first run of this experiment reported "the
-    # dynamics do something" on a margin of 0.008, on the least reliable of the
-    # three observables -- which is the `d+1` mistake wearing a new hat.
-    r3_gaps, resolved = {}, {}
-    print(f"  {'observable':<18}{'gap':>9}{'scheme spread':>16}"
-          f"{'resolvable?':>14}")
-    for key in OBS:
-        g = max(gap(series(avg["relaxed"][s], key),
-                    series(avg["voronoi"][s], key)) for s in SCHEMES)
-        floor = max(args.gap_tol, spreads[key])
-        r3_gaps[key] = g
-        resolved[key] = bool(g > floor)
-        print(f"  {key:<18}{g:>9.4f}{spreads[key]:>16.4f}"
-              f"{('yes' if resolved[key] else 'no'):>14}")
-    same = not any(resolved.values())
-    print()
-    if same:
-        print("  PREDICTION HELD — and it is the deflationary one. The relaxed")
-        print("  field flows exactly as a dynamics-free tessellation does, so")
-        print("  the Allen-Cahn dynamics contribute nothing the blocking can")
-        print("  see. Consistent with n3_junction_null: what this repository's")
-        print("  physics produces is *a tessellation*, and the rest is geometry.")
-    else:
-        hits = [k for k, v in resolved.items() if v]
-        print("  PREDICTION FAILED — the relaxed field flows differently from a")
-        print(f"  Voronoi on: {', '.join(hits)}, by more than the schemes")
-        print("  disagree among themselves. That would be the first evidence in")
-        print("  this programme that the dynamics do something generic")
-        print("  tessellation does not, and it deserves a much harder look")
-        print("  before anyone believes it.")
+        print("  PREDICTION FAILED — the classification changes across the")
+        print(f"  sweep ({len(uniq)} distinct signatures). Then it is a fact")
+        print("  about the setup, not about the field, and the arbitrariness")
+        print("  has only moved from 'which cut' to 'which dimension and")
+        print("  palette'. That is a real negative and it costs the approach")
+        print("  its main claim.")
 
     print()
     print(BANNER)
-    n = int(r1) + int(r2) + int(r3 := same)
-    print(f"VERDICT: {n}/3 pre-registered predictions held.")
+    n = int(r1) + int(r2) + int(r3) + int(r4)
+    print(f"VERDICT: {n}/4 pre-registered predictions held.")
     print(BANNER)
-    if r1 and r2:
-        print("  The useful reading: a coarse-graining flow CAN be defined here,")
-        print("  and it does sort observables into ones that survive the choice")
-        print("  of cut and ones that do not. That is the structural property")
-        print("  §5 said was missing — the cut stays arbitrary, the")
-        print("  classification does not. What it does NOT yet show is that the")
-        print("  surviving quantities are the ones the theory wants.")
-    else:
-        print("  The approach does not clear its own first hurdle, which is")
-        print("  worth knowing cheaply rather than after building on it.")
 
     if args.output_dir:
         args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -272,9 +329,7 @@ def main() -> int:
         o.write_text(json.dumps(
             {"params": {k: (str(v) if isinstance(v, Path) else v)
                         for k, v in vars(args).items()},
-             "trajectories": avg, "r1_gaps": r1_gaps,
-             "scheme_spreads": spreads, "r3_gaps": r3_gaps,
-             "score": n}, indent=2, default=float))
+             "cells": cells, "score": n}, indent=2, default=float))
         print(f"\n  wrote {o}")
     return 0
 
