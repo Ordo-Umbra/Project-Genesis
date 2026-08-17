@@ -213,6 +213,24 @@ affordability *and* productivity together. That pair — a cost that binds and a
 certificate that the step did something — is what the ordinal reading of the gap
 was missing, and neither half substitutes for the other.
 
+*And the second mechanism changes the character of the result —
+`reflection_limits.py`.* Everything above is quantitative: presentation is a
+**price**, paid in symbols or in capacity. The model names a second mechanism
+besides the successor, the hierarchical limit `T_{l_a} = ⋃ₙ T_{succ^n(a)}`, and
+there the price becomes a **gate**. Taking a limit means naming the union of the
+whole ladder below; an index that *describes* an axiom set can do that at
+constant cost (measured ratio to a successor: **1.000**, flat in the ladder
+subsumed), while an index that is a literal axiom *list* has no list to give and
+cannot do it at any budget — the wall moves from rank 6 to rank 9 as capacity
+rises from 10⁵ to 10⁶, and then stops moving forever, including at 10¹⁵, halting
+for a different reason. So there are **two kinds of terminal state**: the
+contingent one a budget produces, and the necessary one a presentation produces,
+where the edge is absent from `𝒜` rather than priced within it. What a system can
+buy is not a cheaper enumeration but *the right to stop enumerating* — and a
+system that can only name what it has already listed hits a hard ceiling at its
+first limit while `C`, `I` and the nominal `G` all report nothing unusual right
+up to the moment it stops.
+
 ---
 
 ## 4. The bridge ahead: ordinals → functors → instantons

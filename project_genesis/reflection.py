@@ -407,6 +407,42 @@ FALSITY_CODE: int = godel_number(FALSITY)
 # ------------------------------------------------------------------- theories
 
 
+@dataclass(frozen=True, order=True)
+class Rank:
+    """A rank in the `ω²` fragment: `ω·limits + successors`.
+
+    Deliberately *not* Kleene's `O`. This is the smallest notation system that
+    can express the two mechanisms the model names — successor and limit — and
+    nothing more. Ordering is lexicographic on `(limits, successors)`, which is
+    the correct order on `ω·a + b`, and that is the only ordinal fact used.
+    Anything needing fundamental sequences, notation comparison or transfinite
+    recursion is out of scope here and is flagged as such rather than faked.
+    """
+
+    limits: int = 0
+    successors: int = 0
+
+    def __str__(self) -> str:
+        if not self.limits:
+            return str(self.successors)
+        head = "ω" if self.limits == 1 else f"ω·{self.limits}"
+        return head if not self.successors else f"{head}+{self.successors}"
+
+    @property
+    def is_limit(self) -> bool:
+        return self.limits > 0 and self.successors == 0
+
+
+class LimitUndefined(Exception):
+    """Raised when a presentation cannot name the union it is asked to take.
+
+    This is not a budget failure. A presentation whose index is the Gödel
+    number of a literal axiom list has no index to offer for an infinite union,
+    at any price — so the limit edge is absent from the accessibility relation
+    rather than merely expensive.
+    """
+
+
 @functools.lru_cache(maxsize=None)
 def _base_code(base: tuple[Formula, ...], schemas: tuple[str, ...]) -> int:
     """Gödel number of the fixed part of a presentation.
@@ -434,6 +470,9 @@ class Theory:
     schemas: tuple[str, ...]
     rungs: tuple[Formula, ...]
     width: int | None = None
+    #: Limits taken so far. With `rung` counting successors since the last
+    #: limit, `(limits, rung)` is the rank `ω·limits + rung`.
+    limits: int = 0
     #: Indices already reflected on. `Con(T)` is a pure function of `T`'s
     #: index, so "have we named this index before" decides whether a rung can
     #: add anything — and decides it in O(1), where scanning the rung formulas
@@ -443,8 +482,12 @@ class Theory:
     seen: frozenset[int] = frozenset()
 
     @property
+    def rank(self) -> Rank:
+        return Rank(self.limits, self.rung)
+
+    @property
     def name(self) -> str:
-        return f"T_{self.rung}" if self.rung else "PA"
+        return "PA" if not (self.rung or self.limits) else f"T_{self.rank}"
 
     def axioms(self) -> tuple[Formula, ...]:
         """The explicit axioms — base plus rungs. The induction schema is
@@ -461,12 +504,24 @@ class Theory:
                 return godel_number(list(self.axioms())
                                     + [Var(s) for s in self.schemas])
             case "indexed":
-                return pair(base_code, self.rung)
+                return pair(base_code, pair(self.limits, self.rung))
             case "truncated":
                 if self.width is None:
                     raise ValueError("truncated presentations need a width")
-                return pair(base_code, self.rung % (1 << self.width))
+                return pair(base_code,
+                            pair(self.limits, self.rung % (1 << self.width)))
         raise ValueError(f"unknown presentation kind {self.kind!r}")
+
+    def can_take_limit(self) -> bool:
+        """Can this presentation name the union of the ladder so far?
+
+        The indexed presentations can: an index is a *description* of an axiom
+        set, and "PA plus every rung below this point" is a description of
+        exactly the same length as any other. The `inline` presentation cannot,
+        because its index is the Gödel number of a literal list and the union
+        has no finite list. That is a structural absence, not a price.
+        """
+        return self.kind != "inline"
 
     def presentation_symbols(self) -> int:
         """Cost of the presentation the generator actually maintains.
@@ -545,6 +600,38 @@ def ladder(theory: Theory, rungs: int) -> Iterator[Step]:
         s = step(current)
         yield s
         current = s.theory_after
+
+
+def limit_step(theory: Theory) -> Step:
+    """Apply the hierarchical mechanism: pass to `⋃ₙ T_{succ^n(a)}`.
+
+    The union's axiom set is what the ladder has already accumulated — the
+    rungs are unchanged. What is new is the *index*: the limit theory names
+    that union as a single r.e. set, at rank `ω·(limits+1)`. Reflecting on it
+    then produces a consistency sentence about the whole ladder below, which no
+    finite rung asserts.
+
+    Raises `LimitUndefined` for a presentation with no index to offer. The
+    successor mechanism is always available; the limit mechanism is not, and
+    that asymmetry is the thing this function exists to expose.
+    """
+    if not theory.can_take_limit():
+        raise LimitUndefined(
+            f"the {theory.kind!r} presentation indexes a literal axiom list, "
+            f"and the union at rank {Rank(theory.limits + 1, 0)} has no finite "
+            f"list to index — no budget makes this edge exist")
+    t0 = time.perf_counter()
+    index = theory.index()
+    at_limit = replace(theory, limits=theory.limits + 1, rung=0)
+    con = con_formula(at_limit)
+    new_axiom = at_limit.index() not in theory.seen
+    rungs = theory.rungs + (con,) if new_axiom else theory.rungs
+    after = replace(at_limit, rung=1, rungs=rungs,
+                    seen=theory.seen | {at_limit.index()})
+    return Step(n=theory.rung, con=con, theory_before=theory,
+                theory_after=after, new_axiom=new_axiom, index=index,
+                con_symbols=symbols(con),
+                build_seconds=time.perf_counter() - t0)
 
 
 def first_index_collision(steps: Sequence[Step]) -> int | None:
@@ -887,6 +974,73 @@ def terminal_rung(theory: Theory, capacity: Capacity, *, horizon: int,
         if b.step is None:
             return b.n
     return None
+
+
+@dataclass(frozen=True)
+class ClimbOutcome:
+    """Where a mixed successor/limit climb stopped, and why.
+
+    `stopped_because` is the whole point: a climb can end for two structurally
+    different reasons. `unaffordable` is *economic* — the budget could not buy
+    the next successor, and a larger budget moves it. `limit-undefined` is
+    *structural* — the presentation has no index for the union, and no budget
+    moves it at all. The capacity experiment found the first kind of terminal
+    state; this finds the second, and they are not the same thing.
+    """
+
+    rank: Rank
+    productive: int
+    taken: int
+    stopped_because: str
+    limits_taken: int
+
+
+def transfinite_climb(theory: Theory, *, blocks: int, per_block: int,
+                      capacity: Capacity | None = None,
+                      cost_of=None) -> ClimbOutcome:
+    """Climb `blocks` many ω-blocks of `per_block` successors each.
+
+    Alternates the two mechanisms the model names: `per_block` applications of
+    `K(T) = T + Con(T)`, then one limit, repeated. With a `capacity`, each
+    successor must be affordable; the limit is charged the same way.
+    """
+    cost_of = cost_of or construction_cost
+    current = theory
+    kappa = capacity.kappa_max if capacity else None
+    productive = taken = 0
+
+    def charge(s: Step) -> bool:
+        nonlocal kappa
+        if capacity is None:
+            return True
+        if kappa < cost_of(s):
+            return False
+        kappa = capacity.spend(kappa, cost_of(s))
+        return True
+
+    for block in range(blocks):
+        for _ in range(per_block):
+            s = step(current)
+            if not charge(s):
+                return ClimbOutcome(current.rank, productive, taken,
+                                    "unaffordable", current.limits)
+            taken += 1
+            productive += 1 if s.new_axiom else 0
+            current = s.theory_after
+        if block == blocks - 1:
+            break
+        if not current.can_take_limit():
+            return ClimbOutcome(current.rank, productive, taken,
+                                "limit-undefined", current.limits)
+        s = limit_step(current)
+        if not charge(s):
+            return ClimbOutcome(current.rank, productive, taken,
+                                "unaffordable", current.limits)
+        taken += 1
+        productive += 1 if s.new_axiom else 0
+        current = s.theory_after
+    return ClimbOutcome(current.rank, productive, taken, "horizon",
+                        current.limits)
 
 
 def critical_recovery(cost: float, kappa_max: float) -> float:

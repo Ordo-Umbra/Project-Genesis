@@ -1661,6 +1661,74 @@ contained nothing that could fail.
 
 ---
 
+## The limit mechanism — where presentation stops being a price and becomes a gate
+
+The model names **two** continuation mechanisms, and only one had been run:
+
+    K(T) = T + Con(T)              the local successor
+    T_{l_a} = ⋃ₙ T_{succ^n(a)}     the hierarchical limit
+
+Both previous results were *quantitative*: presentation cost a factor of 2,222
+in symbols at identical productive content, and a capacity budget made `G > 0`
+contingent without being able to tell a real ladder from a degenerate one.
+Presentation was a **price**. `experiments/reflection_limits.py` runs the second
+mechanism, where the prediction was that its character changes — because taking
+a limit means naming the union of the whole ladder below, and a presentation
+whose index is a literal axiom *list* has no list to give. **4/4:**
+
+- **Q1 ✓ The limit is a gate, not a price.** The `inline` arm's wall **moves
+  while it is economic** — rank 6 at κ_max = 10⁵, rank 9 at 10⁶ — and then stops
+  moving. From 10⁹ upward, including **10¹⁵**, every run halts in the same place
+  for a *different reason*: `limit-undefined`. The wall did not recede further;
+  it **changed kind**. `inline` takes 0 limits at any budget.
+- **Q2 ✓ Where definable, a limit costs exactly what a successor costs.** Ratio
+  **1.000** at every depth tested (2, 4, 8, 12 rungs subsumed), and flat in the
+  ladder it subsumes. Naming a union costs what naming anything costs, because
+  an index is a *description* and "everything below here" is not a longer
+  description than "this one thing". What `inline` cannot buy at any price is
+  not a cheaper list — it is **the right to stop listing**.
+- **Q3 ✓ The successor resumes past ω at full productivity.** `indexed` produces
+  all 13 of its 13 attempts in every block, through rank **ω·5+1**. `Con(T_ω)`
+  is new — the limit index has never been named — so passing ω costs the
+  mechanism nothing.
+- **Q4 ✓ The limit is a reprieve, not a cure.** The truncated control settles at
+  exactly **2³ = 8** productive rungs per ω-block, forever: `[9, 8, 8, 8, 8]`
+  (the first block gets one more, opening on a fresh index where later blocks
+  open on the one the limit itself consumed). A stalled ladder that takes a
+  limit **starts producing again** — worth knowing — but its rank runs away like
+  `ω·limits` while its productive content grows only *linearly* in limits taken.
+  The reprieve is bounded by the same width that caused the stall: it buys
+  blocks, not a rate.
+
+**Two kinds of terminal state, and they are not alike.** A *budget* produces a
+contingent wall — it moves when you pay more, and the recovery rate sets where it
+sits. A *presentation* produces a necessary wall — no budget moves it, because
+the edge is **absent from the accessibility relation** rather than priced within
+it. `inline` exhibits both, in that order, and the crossover is visible in a
+single table: the wall stops receding and starts refusing.
+
+That is what the `(C, I, G)` bookkeeping leaves out. `G > 0` is a statement about
+which edges exist; which edges exist is fixed by how a system names itself; and a
+system that can only name what it has already listed has a hard ceiling at its
+first limit — while its rank counter, its `C`, and its nominal `G` all report
+nothing unusual right up to the point where it stops.
+
+Reproduce with `python experiments/reflection_limits.py` (`--quick` for a smoke
+run); 21 tests in `tests/test_reflection_limits.py`, weighted toward the two
+places an impossibility claim could be wrong — that no code path lets `inline`
+through, and that the limit is genuinely productive and genuinely O(1).
+
+**Honest scope.** The rank notation is the **ω² fragment** `ω·a + b` — the
+smallest system expressing the two mechanisms and nothing more. It is *not*
+Kleene's `O`: no fundamental sequences, no notation comparison, no transfinite
+recursion, and the only ordinal fact used is that `(limits, successors)` orders
+lexicographically. `index()` is a **denotation** and `rungs` is the enumerated
+prefix — the limit theory's axiom set is *described*, not materialised, which is
+precisely the capability being measured and also the boundary of what was
+checked. `Prf` stays primitive, so only ratios between arms are read.
+
+---
+
 ## What Comes Next
 
 The frontier questions, roughly in priority order:
