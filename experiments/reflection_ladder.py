@@ -90,9 +90,9 @@ the rank at `ε₀ + n`. Kleene's `O`, fundamental sequences and limit notations
 are deliberately not implemented — the exchange's own instruction was to build
 the finite generator first and let the ordinal layer sit above it.
 
-    python experiments/gcp_reflection_ladder.py
-    python experiments/gcp_reflection_ladder.py --quick
-    python experiments/gcp_reflection_ladder.py --rungs 16 --width 3
+    python experiments/reflection_ladder.py
+    python experiments/reflection_ladder.py --quick
+    python experiments/reflection_ladder.py --rungs 16 --width 3
 """
 
 from __future__ import annotations
@@ -428,7 +428,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.output_dir:
         args.output_dir.mkdir(parents=True, exist_ok=True)
-        out = args.output_dir / "gcp_reflection_ladder.json"
+        out = args.output_dir / "reflection_ladder.json"
         payload = {
             "params": vars(args) | {"output_dir": str(args.output_dir)},
             "capacity": CAPACITY,

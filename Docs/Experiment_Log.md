@@ -1516,7 +1516,7 @@ Reproduce with `python experiments/n3_chirality.py` (`--quick` for a smoke run);
 `The_Generative_Gap.md` §3 has been leaning on a borrowed theorem for the whole
 ordinal reading: `I(F) < C(F) = ω₁^CK` strictly and permanently, with the ladder
 `T_{n+1} = T_n + Con(T_n)` climbing forever without closing the gap. The ladder
-was cited, never run. `experiments/gcp_reflection_ladder.py` runs it —
+was cited, never run. `experiments/reflection_ladder.py` runs it —
 `T_0 = PA`, twelve rungs, `Con` constructed syntactically each time — and asks
 the first question about it that can come out either way.
 
@@ -1564,7 +1564,7 @@ the truncated arm proves it is not vacuous — a system can climb the ladder by
 the counter and go nowhere. On this construction the certificate that rules that
 out is cheap: one bit per rung, plus a derivation that uses what was added.
 
-Reproduce with `python experiments/gcp_reflection_ladder.py` (`--quick` for a
+Reproduce with `python experiments/reflection_ladder.py` (`--quick` for a
 smoke run); the generator, Gödel numbering and Hilbert proof checker are in
 `project_genesis/reflection.py`, with 42 tests in
 `tests/test_reflection_ladder.py` — most of them adversarial, since the claim
@@ -1585,6 +1585,79 @@ sequences and limit notations are deliberately not implemented. What the run
 does establish is the thing the ordinal framing had been assuming for free: the
 productive step and the formal bulk are **two** quantities, and the `(C, I, G)`
 bookkeeping does not by itself tell you which one you are holding.
+
+---
+
+## Making the ladder pay — cost-bounded accessibility, and the κ the ordinal column never had
+
+The run above left one thing unresolved, and it was the important one. "No
+terminal state" is a theorem about the **accessibility relation**, not about the
+system: `𝒜` was defined to contain successors, so successors are accessible and
+`G > 0` holds by inspection. Nothing a run can do bears on it.
+
+The field program does not have that problem, because there integration is paid
+for out of a capacity field κ consumed by load and regenerating with slack, and
+the whole memory arc turns on that budget binding. The ordinal column of
+`The_Generative_Gap.md` §3 has **no κ at all** — reflection is free — so it drops
+the one feature that makes the field column interesting. Its side-by-side table
+maps "κ pays for integration" onto "proof strength buys inferential reach", but
+nothing in the right-hand column ever runs out.
+
+`experiments/reflection_capacity.py` ports the budget across. A successor is
+reachable only if the theory can afford to construct it, with the cost paid from
+a capacity that heals at rate `r` between rungs — the field program's own
+dynamics, discretised onto the ladder. **4/4:**
+
+- **Q1 ✓ Cost-bounding produces terminal states.** `inline` terminates at every
+  budget tested (rung **2 / 6 / 9 / 12 / 16 / 19 / 22** for κ_max = 10⁴…10¹⁰);
+  the flat-cost arms survive the horizon at all of them. `G > 0` is now
+  *contingent* — true for some presentations, false for others — which is
+  exactly what it could not be before.
+- **Q2 ✓ Capacity is nearly worthless against geometric cost.** `inline`'s reach
+  grows at **1.000 rungs per doubling** of capacity: six orders of magnitude of
+  budget buy it 20 rungs. A presentation whose cost doubles cannot be rescued by
+  capacity, only by a better presentation — the ordinal column's version of the
+  field program's *the separation cannot be bought*.
+- **Q3 ✓ The recovery rate is a sharp dial, and it is the one the algebra
+  predicts.** Paying `L` and healing a fraction `r` back toward `κ_max` has fixed
+  point `κ* = κ_max − L(1−r)/r`, sustainable exactly when `κ* ≥ L`, so
+  `r* = L/κ_max`. Measured by bisection across three budgets and both flat arms,
+  the worst departure from the closed form is **< 0.01%**. `inline` has no such
+  threshold — no fixed `r` sustains an unbounded cost — reported as `none`, which
+  is the honest answer rather than a measurement failure. **The dial that decides
+  whether a formal system keeps climbing is the same dial the field program found
+  decides whether memory re-roots.**
+- **Q4 ✓ — and this is the one that matters — cost-bounding *alone* does not
+  separate productive from degenerate continuation.** At κ_max = 10⁵, r = 0.5 the
+  truncated control takes **the same 64 rungs** as `indexed` and has an
+  **identical critical recovery rate**: it is indistinguishable from the real
+  ladder on every capacity observable, while producing **8** new axioms to
+  `indexed`'s **64**. A budget rules out steps that cost too much and says
+  nothing about steps that cost little and achieve nothing — so ranking states by
+  how long they can continue actively rewards the arm doing the least.
+
+**The corrected relation therefore needs both halves.** Restrict `𝒜` on
+affordability *and* productivity together, and the control terminates at rung
+**8** — the wrap — at every budget and every recovery rate tested, while
+`indexed` still runs to the horizon. The budget makes `G > 0` contingent; the
+productivity certificate makes it *mean* something. Neither alone is enough, and
+the pair of experiments is what shows that neither alone is enough.
+
+Reproduce with `python experiments/reflection_capacity.py` (`--quick` for a smoke
+run); 21 tests in `tests/test_reflection_capacity.py`, including the one that
+pins the failure mode the first version of this scan actually had — a horizon
+shorter than the budget's own decay time makes a starving budget look
+sustainable, and reported a threshold four orders of magnitude low.
+
+**Honest scope.** The cost model is the *flow* cost of constructing the successor,
+not the *stock* cost of holding the presentation; a stock model moves the
+constants and not the ordering. The closed form for `r*` is exact only at constant
+cost, so it is applied to the flat arms and explicitly withheld from `inline`.
+`Prf` is still a primitive symbol, so budgets are in units of that convention
+rather than absolute. And none of this bears on whether the generative-continuation
+claim is true in general: it shows the *ordinal realisation* can be given
+contingent continuation, which the unbounded version could not, because it
+contained nothing that could fail.
 
 ---
 

@@ -172,7 +172,7 @@ shortfall is the capacity the field lacks. Our "ΔC leads, κ·ΔI is
 capacity-gated and lags" is the in-silico echo of "C(F) leads, I(F) lags."
 The gap we kept measuring is the gap the ordinals name.
 
-*The right column is now executable too — `gcp_reflection_ladder.py`,
+*The right column is now executable too — `reflection_ladder.py`,
 `project_genesis/reflection.py`.* The ladder `T_{n+1} = T_n + Con(T_n)` was
 cited above and never run; it now runs from `T_0 = PA`, constructing each
 `Con(T_n)` syntactically. Running it corrects something this section had been
@@ -191,6 +191,27 @@ raising `|F|` remains the right picture of the right column; what the run adds
 is that the raising has to be *certified*, not assumed, and that the certificate
 is cheap. Full entry and honest scope in
 [`Experiment_Log.md`](Experiment_Log.md).
+
+*And the table above has a hole in it — `reflection_capacity.py`.* The row
+"κ pays for integration ↔ proof strength buys inferential reach" is the one
+place the correspondence was never really drawn: **nothing in the right-hand
+column ever runs out.** Reflection is free, so "the ladder never saturates" is a
+property of how accessibility was defined, not a finding. Giving the ordinal
+column the κ it was missing — a successor is reachable only if the theory can
+afford to construct it, out of a capacity that heals at rate `r` — closes that
+row and returns three things. Continuation becomes **contingent**: the
+geometric-cost presentation terminates at every budget, and its reach grows at
+**one rung per doubling** of capacity, so like the area-law separation it *cannot
+be bought* — only re-presented. The recovery rate becomes a **sharp dial** at
+`r* = L/κ_max`, matched to better than 0.01% — the same dial that decides whether
+memory re-roots in the field column now decides whether a formal system keeps
+climbing, which is the closest the two columns have come to sharing a mechanism
+rather than a shape. And the budget alone turns out **not to be enough**: the
+degenerate presentation is indistinguishable from the real ladder on every
+capacity observable while producing nothing, so `𝒜` has to be restricted on
+affordability *and* productivity together. That pair — a cost that binds and a
+certificate that the step did something — is what the ordinal reading of the gap
+was missing, and neither half substitutes for the other.
 
 ---
 

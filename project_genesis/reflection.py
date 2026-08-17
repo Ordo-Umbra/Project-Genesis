@@ -61,6 +61,7 @@ none of its direction.
 
 from __future__ import annotations
 
+import functools
 import time
 from dataclasses import dataclass, replace
 from typing import Iterable, Iterator, Sequence
@@ -406,6 +407,17 @@ FALSITY_CODE: int = godel_number(FALSITY)
 # ------------------------------------------------------------------- theories
 
 
+@functools.lru_cache(maxsize=None)
+def _base_code(base: tuple[Formula, ...], schemas: tuple[str, ...]) -> int:
+    """Gödel number of the fixed part of a presentation.
+
+    Memoised because it is constant along a ladder and re-serialising PA at
+    every rung dominates the runtime of the capacity scans, which need
+    thousands of rungs to resolve a threshold.
+    """
+    return godel_number(list(base) + [Var(s) for s in schemas])
+
+
 @dataclass(frozen=True)
 class Theory:
     """A finite presentation of a recursively axiomatised theory.
@@ -422,6 +434,13 @@ class Theory:
     schemas: tuple[str, ...]
     rungs: tuple[Formula, ...]
     width: int | None = None
+    #: Indices already reflected on. `Con(T)` is a pure function of `T`'s
+    #: index, so "have we named this index before" decides whether a rung can
+    #: add anything — and decides it in O(1), where scanning the rung formulas
+    #: is O(n) in comparisons over astronomical numerals. The two agree on any
+    #: ladder, which `test_new_axiom_agrees_with_formula_membership` asserts
+    #: directly rather than leaving to the reader.
+    seen: frozenset[int] = frozenset()
 
     @property
     def name(self) -> str:
@@ -436,7 +455,7 @@ class Theory:
     def index(self) -> int:
         """The natural number this presentation offers as its own index — the
         thing `Con` has to name. This is where the three arms diverge."""
-        base_code = godel_number(list(self.base) + [Var(s) for s in self.schemas])
+        base_code = _base_code(self.base, self.schemas)
         match self.kind:
             case "inline":
                 return godel_number(list(self.axioms())
@@ -509,9 +528,10 @@ def step(theory: Theory) -> Step:
     t0 = time.perf_counter()
     index = theory.index()
     con = con_formula(theory)
-    new_axiom = con not in theory.axioms()
+    new_axiom = index not in theory.seen
     rungs = theory.rungs + (con,) if new_axiom else theory.rungs
-    after = replace(theory, rung=theory.rung + 1, rungs=rungs)
+    after = replace(theory, rung=theory.rung + 1, rungs=rungs,
+                    seen=theory.seen | {index})
     elapsed = time.perf_counter() - t0
     return Step(n=theory.rung, con=con, theory_before=theory, theory_after=after,
                 new_axiom=new_axiom, index=index, con_symbols=symbols(con),
@@ -757,3 +777,156 @@ def productive_increment(s: Step) -> int:
     and the `truncated` arm makes it do so.
     """
     return 1 if s.new_axiom else 0
+
+
+# ------------------------------------------------- cost-bounded accessibility
+#
+# The unbounded ladder above cannot terminate: the accessibility relation was
+# defined to contain successors, so successors are accessible and `G > 0` is
+# true by inspection of the definition. That is the tautology.
+#
+# The field program does not have this problem, because there integration is
+# paid for out of a capacity field κ that is consumed by load and regenerates
+# with slack. The ordinal column has no such budget — reflection is free — and
+# so it drops the one feature that makes the field column interesting.
+#
+# This section ports the budget across. Accessibility becomes contingent: a
+# successor is reachable only if the theory can afford to construct it, out of
+# a capacity that the construction consumes and that heals at a rate `r`. Then
+# terminal states are reachable rather than ruled out, and `G > 0` becomes
+# something a run can refute.
+
+
+@dataclass(frozen=True)
+class Capacity:
+    """A capacity budget with the field program's own dynamics.
+
+    Discretised onto the ladder, `∂_t κ = r(κ₀ − κ) − load` becomes: pay the
+    construction cost out of κ, then heal a fraction `r` of the way back to
+    `kappa_max`. `recovery = 1` is full healing between rungs (a pure stock
+    constraint); `recovery → 0` is a budget that never comes back.
+    """
+
+    kappa_max: float
+    recovery: float = 1.0
+
+    def __post_init__(self) -> None:
+        if self.kappa_max <= 0:
+            raise ValueError("capacity must be positive")
+        if not 0 < self.recovery <= 1:
+            raise ValueError("recovery rate must lie in (0, 1]")
+
+    def spend(self, kappa: float, cost: float) -> float:
+        """Pay `cost`, then regenerate toward the ceiling."""
+        left = kappa - cost
+        return left + self.recovery * (self.kappa_max - left)
+
+
+def construction_cost(s: Step) -> int:
+    """Default cost model: the symbols of the sentence being constructed.
+
+    This is a *flow* cost — what it takes to build the successor — as against
+    the *stock* cost of holding the presentation, which `presentation_symbols`
+    reports. The flow is the one the budget meters, because it is the act of
+    continuation that has to be afforded.
+    """
+    return s.con_symbols
+
+
+@dataclass(frozen=True)
+class BoundedStep:
+    """One rung attempted under a budget."""
+
+    n: int
+    cost: int
+    kappa_before: float
+    kappa_after: float
+    #: Could the theory pay for this successor at all?
+    affordable: bool
+    #: Did it enlarge the axiom set? Meaningless unless `affordable`.
+    new_axiom: bool
+    step: Step | None
+
+
+def bounded_ladder(theory: Theory, rungs: int, capacity: Capacity, *,
+                   cost_of=construction_cost,
+                   require_productive: bool = False) -> Iterator[BoundedStep]:
+    """Climb under a capacity budget, stopping at the first rung it cannot buy.
+
+    With `require_productive`, accessibility is restricted further: a step
+    counts as taken only if it is *both* affordable and enlarges the axiom set.
+    That is the corrected relation — the plain budget rules out steps that cost
+    too much, but says nothing at all about steps that cost little and achieve
+    nothing.
+    """
+    current, kappa = theory, capacity.kappa_max
+    for _ in range(rungs):
+        s = step(current)
+        cost = cost_of(s)
+        affordable = kappa >= cost
+        productive_enough = s.new_axiom or not require_productive
+        if not affordable or not productive_enough:
+            yield BoundedStep(n=s.n, cost=cost, kappa_before=kappa,
+                              kappa_after=kappa, affordable=affordable,
+                              new_axiom=s.new_axiom, step=None)
+            return
+        after = capacity.spend(kappa, cost)
+        yield BoundedStep(n=s.n, cost=cost, kappa_before=kappa,
+                          kappa_after=after, affordable=True,
+                          new_axiom=s.new_axiom, step=s)
+        current, kappa = s.theory_after, after
+
+
+def terminal_rung(theory: Theory, capacity: Capacity, *, horizon: int,
+                  cost_of=construction_cost,
+                  require_productive: bool = False) -> int | None:
+    """The rung at which the ladder can no longer continue, or `None` if it
+    survives the whole horizon."""
+    for b in bounded_ladder(theory, horizon, capacity, cost_of=cost_of,
+                            require_productive=require_productive):
+        if b.step is None:
+            return b.n
+    return None
+
+
+def critical_recovery(cost: float, kappa_max: float) -> float:
+    """Closed form for the sustainable recovery rate at *constant* cost `L`.
+
+    Paying `L` and healing a fraction `r` back toward `κ_max` has the fixed
+    point `κ* = κ_max − L(1−r)/r`. The ladder survives indefinitely exactly
+    when `κ* ≥ L`, i.e. when `κ_max ≥ L/r`, so the threshold is
+
+        r* = L / κ_max.
+
+    Below it the budget drifts down to a level that cannot buy the next rung;
+    above it, it settles at a level that can, forever. Arms whose cost grows
+    have no such threshold — no fixed `r` sustains an unbounded cost — and this
+    formula does not apply to them. It exists to be checked against a measured
+    bisection, which is the only reason to trust the numerical answer.
+    """
+    return cost / kappa_max
+
+
+def measure_critical_recovery(theory: Theory, capacity_max: float, *,
+                              horizon: int, cost_of=construction_cost,
+                              tol: float = 1e-6) -> float | None:
+    """Bisect for the smallest recovery rate that survives `horizon` rungs.
+
+    Returns `None` if even full recovery (`r = 1`) fails — which is the honest
+    answer for an arm whose cost grows without bound.
+    """
+    def survives(r: float) -> bool:
+        cap = Capacity(kappa_max=capacity_max, recovery=r)
+        return terminal_rung(theory, cap, horizon=horizon,
+                             cost_of=cost_of) is None
+
+    if not survives(1.0):
+        return None
+    lo, hi = 0.0, 1.0
+    while hi - lo > tol:
+        mid = (lo + hi) / 2
+        if mid <= 0 or not survives(mid):
+            lo = mid
+        else:
+            hi = mid
+    return hi

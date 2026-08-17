@@ -415,3 +415,26 @@ class TestClosureSearch(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# --------------------------------------- 7. the fast path is the honest path
+
+
+class TestProductivityCheckEquivalence(unittest.TestCase):
+    """`step` decides productivity by index rather than by scanning the rung
+    formulas, because the scan is quadratic in comparisons over astronomical
+    numerals. That is only legitimate if the two agree everywhere."""
+
+    def test_new_axiom_agrees_with_formula_membership(self):
+        for kind, width in (("inline", None), ("indexed", None),
+                            ("truncated", 2), ("truncated", 3)):
+            horizon = 12 if width is None else (1 << width) + 4
+            for s in ladder(peano(kind, width=width), horizon):
+                self.assertEqual(
+                    s.new_axiom, s.con not in s.theory_before.axioms(),
+                    f"{kind}/{width} disagreed at rung {s.n}")
+
+    def test_seen_set_tracks_every_index_named(self):
+        steps = list(ladder(peano("indexed"), 8))
+        final = steps[-1].theory_after
+        self.assertEqual(final.seen, frozenset(s.index for s in steps))
