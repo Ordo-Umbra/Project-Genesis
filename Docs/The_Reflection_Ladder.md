@@ -417,6 +417,67 @@ whether a system is actually getting anywhere.
 
 ---
 
+## 8b. Result six — G, derived rather than posited
+
+*Added after two independent reviews of this document converged on the same
+directive: stop treating `G` as a primitive.*
+
+### The intuition
+
+If a quantity can be computed from things you already measure, it should not
+also be assumed.
+
+### What the math actually says
+
+`G` was carried as an independent magnitude, with `G > 0` asserted. But the five
+results above found **four** separate things that can stop a system, and `G`
+could express none of them. So compute it from them instead:
+
+    G_actual    = structural ∧ affordable ∧ productive
+    G_certified = certifiable ∧ affordable ∧ productive
+
+The first three are facts about the world; the fourth is a fact about what the
+system can know. Three verdicts follow, and the middle one is new:
+
+| verdict | condition | meaning |
+|---|---|---|
+| `terminal` | `G_actual = 0` | nothing is there |
+| `recognised` | `G_actual = G_certified` | something is there and known |
+| **`hidden`** | `G_actual > G_certified` | **something is there and not known** |
+
+### What was measured
+
+**12 out of 12.** For every arm at every budget, the derived verdict names the
+same wall an actual climb reports. No fifth dimension was needed. `hidden` is
+realised by exactly one arm — `searched` — which is the epistemic wall of §7,
+now falling out of the decomposition rather than being stipulated.
+
+**And unproductivity turns out not to be a wall at all.** The stalled arm runs
+clean to the horizon: it is not *stopped*, it *arrives having done nothing*. So
+productivity is a fourth dimension **orthogonal** to the three walls. A system
+can fail by halting, or by running forever without moving, and those are
+different failures — the second one leaves every wall-detector reading normal.
+
+**The cost of demanding evidence has a shape.** Sweeping the requirement `N`
+over 400 candidate addresses (half genuinely total, the rest diverging on a
+heavy tail): the cliff rate falls from 0.500 to 0.407 and never reaches zero,
+while verification cost rises linearly. Every total address is accepted at every
+`N`, so the trade-off is pure — more evidence buys precision and nothing else,
+at a diminishing rate.
+
+**The strict policy is the corner of that curve, not a point on it.** Zero
+cliffs, and zero continuations, forever. A system that demands proof gets
+perfect safety and goes nowhere. A system that demands `N` steps goes everywhere
+and is sometimes wrong. There is no `N` that is both, and no amount of evidence
+converts the second kind of system into the first.
+
+### What it does not show
+
+The population is **constructed** — we choose the divergence points, so the
+absolute cliff rate means nothing on its own. Only the shape survives.
+
+---
+
 ## 9. What this does not say
 
 Kept separate deliberately, because the results are aesthetically suggestive and

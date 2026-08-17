@@ -1037,6 +1037,105 @@ def nominal_increment(_theory: Theory) -> int:
     return 1
 
 
+@dataclass(frozen=True)
+class Continuation:
+    """`G`, derived from four measured dimensions rather than posited.
+
+    The original model carried `G` as a primitive and asserted `G > 0`. Five
+    experiments then found four separate things that can independently stop a
+    system, none of which `G` could express. This computes `G` *from* them.
+
+    The four dimensions, each measured somewhere in the series:
+
+    - `structural` — does the move exist at all under this naming scheme?
+    - `affordable` — can the current budget pay for it?
+    - `productive` — would it actually enlarge the axiom set?
+    - `certifiable` — can the *system itself* establish `structural`?
+      `None` means it cannot determine that either way.
+
+    The first three are facts about the world; the fourth is a fact about what
+    the system can know, which is why `G` splits in two. The gap between them
+    is the finding of experiment five, and it has a name in each direction.
+    """
+
+    structural: bool
+    affordable: bool
+    productive: bool
+    certifiable: bool | None
+
+    @property
+    def g_actual(self) -> int:
+        """`G` as an outside observer with full information computes it."""
+        return int(self.structural and self.affordable and self.productive)
+
+    @property
+    def g_certified(self) -> int:
+        """`G` as the system itself can establish it. Never exceeds `g_actual`
+        — a system cannot certify a move that is not there, which is asserted
+        in the tests rather than assumed here."""
+        return int(bool(self.certifiable) and self.affordable and self.productive)
+
+    @property
+    def verdict(self) -> str:
+        """`terminal` | `hidden` | `recognised`.
+
+        `hidden` is the category the experiments turned up and the original
+        framework had no room for: a continuation that is really there, that
+        the system cannot establish, and on which it therefore will not move.
+        """
+        if not self.g_actual:
+            return "terminal"
+        return "recognised" if self.g_certified else "hidden"
+
+    @property
+    def blocked_by(self) -> str | None:
+        """Which dimension failed, named in the order a climb would meet it."""
+        if not self.affordable:
+            return "economic"
+        if not self.structural:
+            return "structural"
+        if not self.productive:
+            return "unproductive"
+        if not self.certifiable:
+            return "epistemic"
+        return None
+
+
+def derive_continuation(theory: Theory, *, move: str = "limit",
+                        capacity: Capacity | None = None,
+                        kappa: float | None = None,
+                        cost_of=None) -> Continuation:
+    """Measure the four dimensions of one candidate move and derive `G`.
+
+    `move` is `"successor"` or `"limit"`. A successor is always structurally
+    available and always certifiable — that asymmetry with the limit is the
+    whole reason the series needed two mechanisms.
+    """
+    cost_of = cost_of or construction_cost
+    if move == "successor":
+        s = step(theory)
+        structural, certifiable = True, True
+        productive, cost = s.new_axiom, cost_of(s)
+    elif move == "limit":
+        status = theory.limit_status()
+        structural = status.status != "absent"
+        certifiable = (True if status.status == "available"
+                       else (False if status.status == "absent" else None))
+        if structural:
+            probe = limit_step(replace(theory, kind="indexed"))
+            productive, cost = probe.new_axiom, cost_of(probe)
+        else:
+            productive, cost = False, 0
+    else:
+        raise ValueError(f"unknown move {move!r}")
+
+    budget = kappa if kappa is not None else (
+        capacity.kappa_max if capacity else None)
+    affordable = budget is None or budget >= cost
+    return Continuation(structural=structural, affordable=affordable,
+                        productive=productive, certifiable=certifiable)
+
+
 def productive_increment(s: Step) -> int:
     """`G` as measured: 1 if the step actually enlarged the axiom set, else 0.
 

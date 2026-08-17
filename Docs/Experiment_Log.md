@@ -1862,6 +1862,79 @@ resemblance to an interior report of unboundedness is a resemblance. The
 
 ---
 
+## Deriving G instead of positing it — and the price of demanding evidence
+
+Two independent reviews of `The_Reflection_Ladder.md` converged on the same
+directive: stop treating `G` as a primitive. The original model carried it as an
+independent magnitude and asserted `G > 0`; five experiments then turned up four
+separate things that can stop a system, none of which `G` could express.
+`experiments/reflection_derived_g.py` computes `G` **from** those four instead,
+and tests whether the decomposition actually accounts for everything already
+measured. **4/4:**
+
+    G_actual    = structural ∧ affordable ∧ productive
+    G_certified = certifiable ∧ affordable ∧ productive
+
+- **Q1 ✓ The decomposition reproduces every outcome already measured.** 12/12 —
+  every arm at every budget, `blocked_by` naming the same wall an actual climb
+  reports. Every wall the five experiments found falls out of the four
+  dimensions; none needed a fifth. **`G` is now derived, and the framework has
+  one fewer primitive.**
+- **Q2 ✓ `hidden` is realised by exactly one arm.** `searched` alone has
+  `G_actual = 1` with `G_certified = 0` — the continuation is there and the
+  system will not move on it. That category did not exist in the original
+  framework, is not a degenerate case of `terminal`, and both reviewers asked
+  for it independently.
+- **Q3 ✓ Unproductivity is not a wall.** The stalled arm runs clean to the
+  horizon: it is not *stopped*, it *arrives having done nothing*. So
+  `unproductive` has no counterpart among the stop reasons, and the reviewers'
+  reading is right — productivity is a fourth dimension **orthogonal** to the
+  three walls. A system can fail by halting or by running forever without
+  moving, and those are different failures.
+- **Q4 ✓ No certification bound buys both safety and reach.** Sweeping the
+  evidence requirement `N` over 400 candidate limit addresses (half genuinely
+  total, the rest diverging on a heavy tail): the cliff rate falls monotonically
+  from 0.500 to 0.407 and never reaches zero, while verification cost rises
+  linearly. Every genuinely total address is accepted at every `N`, so the
+  trade-off is pure — more evidence buys precision and nothing else, at a
+  diminishing rate. **The strict policy is the corner of that curve, not a point
+  on it:** zero cliffs and zero continuations, forever.
+
+**Three verdicts replace one number:** `terminal` (nothing is there),
+`recognised` (something is there and known), `hidden` (something is there and
+not known). The claim `G > 0` splits into a claim about the world and a claim
+about what a system can establish, and the experiments say those come apart in
+exactly one place.
+
+**Two registered falsifiers fired on the first run, and both were defects in
+this experiment rather than in the framework** — recorded because the corrections
+are the same lesson a third and fourth time. Q1 failed because the derivation
+was taken at one hand-picked state rather than walked along a trajectory, so at
+a budget where the successors exhaust first it described a state the climb never
+reaches; a wall is a property of a *trajectory*. Then Q1 failed again because
+the walk depleted the budget monotonically instead of calling `Capacity.spend`,
+silently dropping the regeneration term and making every flat-cost arm look
+bankrupt after two moves — shared dynamics re-implemented in a second place,
+diverging. Q4 failed because the population capped divergence points at a fixed
+range, so a large enough bound caught every one of them and the cliff rate hit
+exactly zero; for arbitrary programs the divergence point is unbounded, and a
+population that caps it is not modelling the question.
+
+Reproduce with `python experiments/reflection_derived_g.py` (`--quick` for a
+smoke run); 12 tests in `tests/test_reflection_derived_g.py`, including the
+soundness invariant over all 24 combinations of the four dimensions —
+`G_certified ≤ G_actual` always, because a system certifying a move that is not
+there would be a bug rather than a finding.
+
+**Honest scope.** The Q4 population is **constructed** — we choose the divergence
+points, so the absolute cliff rate is a property of that choice and means nothing
+on its own. What survives is the shape: monotone, never zero, against linearly
+rising cost, with the strict policy at a corner. `Prf` stays primitive; Gödel's
+second theorem and the completeness results for totality and `O` are cited, not
+measured; nothing here concerns experience.
+
+---
+
 ## What Comes Next
 
 The frontier questions, roughly in priority order:
