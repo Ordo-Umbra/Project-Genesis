@@ -161,5 +161,55 @@ class TestLocationVersusNecessity(unittest.TestCase):
             self.assertTrue(p.certain)
 
 
+
+# ------------------------------ 4. the third wall's position is a policy
+
+
+class TestCertificationPolicy(unittest.TestCase):
+    """The third wall differs from the other two in a way worth pinning: its
+    location is set by how much certainty the system demands, not by the world.
+    Lower the requirement and the same theory continues — correctly, here,
+    since its sequence is total. That is luck rather than knowledge, and the
+    system cannot tell the difference, which is the whole point."""
+
+    def test_lowering_the_requirement_moves_the_third_wall(self):
+        strict = transfinite_climb(peano("searched"), blocks=4, per_block=10)
+        loose = transfinite_climb(peano("searched"), blocks=4, per_block=10,
+                                  require_certified=False)
+        self.assertEqual(strict.stopped_because, "undecidable")
+        self.assertEqual(loose.stopped_because, "horizon")
+        self.assertGreater(loose.productive, strict.productive)
+
+    def test_uncertified_searched_matches_the_certified_indexed_arm(self):
+        loose = transfinite_climb(peano("searched"), blocks=4, per_block=10,
+                                  require_certified=False)
+        indexed = transfinite_climb(peano("indexed"), blocks=4, per_block=10)
+        self.assertEqual((loose.rank, loose.productive, loose.taken),
+                         (indexed.rank, indexed.productive, indexed.taken))
+
+    def test_policy_does_not_move_the_other_two_walls(self):
+        """An absent edge stays absent and a budget stays spent — only the
+        undecidable wall is policy-dependent."""
+        for kind, cap in (("inline", None), ("inline", Capacity(1e5, 1.0))):
+            strict = transfinite_climb(peano(kind), blocks=4, per_block=10,
+                                       capacity=cap)
+            loose = transfinite_climb(peano(kind), blocks=4, per_block=10,
+                                      capacity=cap, require_certified=False)
+            self.assertEqual((strict.taken, strict.stopped_because),
+                             (loose.taken, loose.stopped_because), kind)
+
+    def test_an_absent_edge_is_never_takeable_even_uncertified(self):
+        from project_genesis.reflection import _uncertified_limit_step
+        with self.assertRaises(LimitUndefined):
+            _uncertified_limit_step(peano("inline"))
+
+    def test_limit_step_distinguishes_its_two_refusals(self):
+        with self.assertRaises(LimitUndefined) as absent:
+            limit_step(peano("inline"))
+        with self.assertRaises(LimitUndefined) as unknown:
+            limit_step(peano("searched"))
+        self.assertIn("no finite list", str(absent.exception))
+        self.assertIn("cannot certify", str(unknown.exception))
+
 if __name__ == "__main__":
     unittest.main()

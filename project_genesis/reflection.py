@@ -788,11 +788,18 @@ def limit_step(theory: Theory, level: int = 1) -> Step:
     that asymmetry is the thing this function exists to expose.
     """
     target = theory.rank.limit(level)
-    if not theory.can_take_limit():
+    status = theory.limit_status()
+    if status.status == "absent":
         raise LimitUndefined(
             f"the {theory.kind!r} presentation indexes a literal axiom list, "
             f"and the union at rank {target} has no finite list to index — "
             f"no budget makes this edge exist")
+    if not status.decided:
+        raise LimitUndefined(
+            f"the {theory.kind!r} presentation cannot certify its own edge at "
+            f"rank {target}: {status.reason}. The edge may well be there; this "
+            f"theory cannot establish that, and declines the step it cannot "
+            f"authorise")
     t0 = time.perf_counter()
     index = theory.index()
     at_limit = _at_rank(theory, target)
@@ -1372,9 +1379,26 @@ class ClimbOutcome:
     limits_taken: int
 
 
+def _uncertified_limit_step(theory: Theory, level: int = 1) -> Step:
+    """Take a limit edge the theory could not certify.
+
+    Reached only from a climb running `require_certified=False`, modelling a
+    system that proceeds on an edge it cannot authorise. Kept as a separate
+    function so the ordinary path cannot arrive here by accident: proceeding
+    uncertified is a deliberate posture, not a fallback. Whether it is *right*
+    is exactly what the system cannot determine — in this construction it
+    happens to be, because the sequence is total, and that is luck rather than
+    knowledge.
+    """
+    if theory.limit_status().status == "absent":
+        raise LimitUndefined(f"{theory.kind!r} has no limit edge to take")
+    return limit_step(replace(theory, kind="indexed"), level)
+
+
 def transfinite_climb(theory: Theory, *, blocks: int, per_block: int,
                       capacity: Capacity | None = None,
-                      cost_of=None) -> ClimbOutcome:
+                      cost_of=None,
+                      require_certified: bool = True) -> ClimbOutcome:
     """Climb `blocks` many ω-blocks of `per_block` successors each.
 
     Alternates the two mechanisms the model names: `per_block` applications of
@@ -1407,13 +1431,19 @@ def transfinite_climb(theory: Theory, *, blocks: int, per_block: int,
         if block == blocks - 1:
             break
         status = current.limit_status()
-        if not status.decided:
-            return ClimbOutcome(current.rank, productive, taken,
-                                "undecidable", current.limits)
         if status.status == "absent":
             return ClimbOutcome(current.rank, productive, taken,
                                 "limit-undefined", current.limits)
-        s = limit_step(current)
+        if not status.decided and require_certified:
+            # The halt here is a POLICY, not a fact about the world. With
+            # `require_certified=False` the same theory takes the same step and
+            # continues — correctly, as it happens, since its sequence is
+            # total. The third wall's position is set by how much certainty the
+            # system demands, which is what makes it unlike the other two.
+            return ClimbOutcome(current.rank, productive, taken,
+                                "undecidable", current.limits)
+        s = (limit_step(current) if status.decided
+             else _uncertified_limit_step(current))
         if not charge(s):
             return ClimbOutcome(current.rank, productive, taken,
                                 "unaffordable", current.limits)

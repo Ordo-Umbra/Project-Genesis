@@ -190,7 +190,8 @@ capability** — the two dissociate in both directions. The reflection ladder
 raising `|F|` remains the right picture of the right column; what the run adds
 is that the raising has to be *certified*, not assumed, and that the certificate
 is cheap. Full entry and honest scope in
-[`Experiment_Log.md`](Experiment_Log.md).
+[`Experiment_Log.md`](Experiment_Log.md); the whole arc in plain language, written to be
+read cold, is in [`The_Reflection_Ladder.md`](The_Reflection_Ladder.md).
 
 *And the table above has a hole in it — `reflection_capacity.py`.* The row
 "κ pays for integration ↔ proof strength buys inferential reach" is the one
