@@ -285,6 +285,14 @@ def pair(a: int, b: int) -> int:
     return s * (s + 1) // 2 + b
 
 
+def _code_tuple(values: Sequence[int]) -> int:
+    """Injective code for a finite sequence — length first, then fold."""
+    code = len(values)
+    for v in values:
+        code = pair(code, v)
+    return code
+
+
 # ------------------------------------------------------------------ variables
 
 
@@ -407,30 +415,127 @@ FALSITY_CODE: int = godel_number(FALSITY)
 # ------------------------------------------------------------------- theories
 
 
-@dataclass(frozen=True, order=True)
-class Rank:
-    """A rank in the `ω²` fragment: `ω·limits + successors`.
+def _normalise(levels: dict[int, int]) -> tuple[int, ...]:
+    """Coefficients in Cantor normal form, highest exponent first, no leading
+    zeros. `{1: 2, 0: 3}` (= ω·2+3) becomes `(2, 3)`."""
+    if any(c < 0 for c in levels.values()):
+        raise ValueError("ordinal coefficients are natural numbers")
+    top = max((e for e, c in levels.items() if c), default=-1)
+    return tuple(levels.get(e, 0) for e in range(top, -1, -1))
 
-    Deliberately *not* Kleene's `O`. This is the smallest notation system that
-    can express the two mechanisms the model names — successor and limit — and
-    nothing more. Ordering is lexicographic on `(limits, successors)`, which is
-    the correct order on `ω·a + b`, and that is the only ordinal fact used.
-    Anything needing fundamental sequences, notation comparison or transfinite
-    recursion is out of scope here and is flagged as such rather than faked.
+
+class Rank:
+    """An ordinal below `ω^ω`, in Cantor normal form.
+
+    `ω^k·a_k + … + ω·a_1 + a_0`, stored as the coefficient tuple
+    `(a_k, …, a_1, a_0)` with the highest exponent first. This is a genuine
+    ordinal notation system — unique representations, decidable comparison,
+    computable canonical fundamental sequences — and it is *not* Kleene's `O`.
+
+    The distinction matters and is the subject of `reflection_omega_squared.py`.
+    Reaching `ω²`, or `ω^ω`, or even `ε₀`, does not require `O`: those all have
+    decidable notation systems. `O` is needed only for *all* recursive ordinals,
+    and there notation validity is Π¹₁-complete — so the price of `O` is not
+    implementation effort, it is the decidability of the accessibility relation
+    itself. A system using it cannot in general determine which continuations
+    are open to it.
     """
 
-    limits: int = 0
-    successors: int = 0
+    __slots__ = ("coeffs",)
 
-    def __str__(self) -> str:
-        if not self.limits:
-            return str(self.successors)
-        head = "ω" if self.limits == 1 else f"ω·{self.limits}"
-        return head if not self.successors else f"{head}+{self.successors}"
+    def __init__(self, limits: int = 0, successors: int = 0) -> None:
+        object.__setattr__(self, "coeffs", _normalise({1: limits,
+                                                       0: successors}))
+
+    @classmethod
+    def from_levels(cls, levels: dict[int, int]) -> "Rank":
+        r = cls.__new__(cls)
+        object.__setattr__(r, "coeffs", _normalise(levels))
+        return r
+
+    @classmethod
+    def from_coeffs(cls, coeffs: Sequence[int]) -> "Rank":
+        top = len(coeffs) - 1
+        return cls.from_levels({top - i: c for i, c in enumerate(coeffs)})
+
+    def coefficient(self, exponent: int) -> int:
+        i = len(self.coeffs) - 1 - exponent
+        return self.coeffs[i] if 0 <= i < len(self.coeffs) else 0
+
+    @property
+    def limits(self) -> int:
+        """Coefficient of `ω`, kept so the ω² fragment reads as it did."""
+        return self.coefficient(1)
+
+    @property
+    def successors(self) -> int:
+        return self.coefficient(0)
+
+    @property
+    def degree(self) -> int:
+        """Highest exponent carrying a nonzero coefficient; -1 for zero."""
+        return len(self.coeffs) - 1 if self.coeffs else -1
 
     @property
     def is_limit(self) -> bool:
-        return self.limits > 0 and self.successors == 0
+        return bool(self.coeffs) and self.successors == 0
+
+    def successor(self) -> "Rank":
+        return Rank.from_levels(self._levels() | {0: self.successors + 1})
+
+    def limit(self, level: int = 1) -> "Rank":
+        """The next multiple of `ω^level`: bump that coefficient, zero below.
+
+        `level=1` is the ordinary limit of a ladder of successors; `level=2` is
+        the limit of a ladder of *those* — `ω, ω·2, ω·3, … → ω²`. The mechanism
+        is the same shape at every level, which is the point.
+        """
+        if level < 1:
+            raise ValueError("a limit is taken at level >= 1")
+        levels = {e: c for e, c in self._levels().items() if e > level}
+        levels[level] = self.coefficient(level) + 1
+        return Rank.from_levels(levels)
+
+    def _levels(self) -> dict[int, int]:
+        return {self.degree - i: c for i, c in enumerate(self.coeffs)}
+
+    def _key(self) -> tuple[int, tuple[int, ...]]:
+        return (len(self.coeffs), self.coeffs)
+
+    def __eq__(self, other) -> bool:
+        return isinstance(other, Rank) and self.coeffs == other.coeffs
+
+    def __lt__(self, other: "Rank") -> bool:
+        return self._key() < other._key()
+
+    def __le__(self, other: "Rank") -> bool:
+        return self._key() <= other._key()
+
+    def __gt__(self, other: "Rank") -> bool:
+        return self._key() > other._key()
+
+    def __ge__(self, other: "Rank") -> bool:
+        return self._key() >= other._key()
+
+    def __hash__(self) -> int:
+        return hash(self.coeffs)
+
+    def __repr__(self) -> str:
+        return f"Rank.from_coeffs({self.coeffs!r})"
+
+    def __str__(self) -> str:
+        if not self.coeffs:
+            return "0"
+        parts = []
+        for exponent, c in sorted(self._levels().items(), reverse=True):
+            if not c:
+                continue
+            if exponent == 0:
+                parts.append(str(c))
+                continue
+            base = "ω" if exponent == 1 else f"ω^{exponent}"
+            parts.append(base if c == 1 else f"{base}·{c}")
+        return "+".join(parts)
 
 
 class LimitUndefined(Exception):
@@ -473,6 +578,11 @@ class Theory:
     #: Limits taken so far. With `rung` counting successors since the last
     #: limit, `(limits, rung)` is the rank `ω·limits + rung`.
     limits: int = 0
+    #: Coefficients above `ω`, highest exponent first — the part of the rank
+    #: that the ω² fragment could not express. `(1,)` is `ω²`, `(2, 3)` is
+    #: `ω³·2 + ω²·3`. Empty for any rank below `ω²`, so every result recorded
+    #: before this field existed is unchanged.
+    higher: tuple[int, ...] = ()
     #: Indices already reflected on. `Con(T)` is a pure function of `T`'s
     #: index, so "have we named this index before" decides whether a rung can
     #: add anything — and decides it in O(1), where scanning the rung formulas
@@ -483,7 +593,11 @@ class Theory:
 
     @property
     def rank(self) -> Rank:
-        return Rank(self.limits, self.rung)
+        levels = {0: self.rung, 1: self.limits}
+        top = len(self.higher) + 1
+        for i, c in enumerate(self.higher):
+            levels[top - i] = c
+        return Rank.from_levels(levels)
 
     @property
     def name(self) -> str:
@@ -504,12 +618,14 @@ class Theory:
                 return godel_number(list(self.axioms())
                                     + [Var(s) for s in self.schemas])
             case "indexed":
-                return pair(base_code, pair(self.limits, self.rung))
+                return pair(base_code, _code_tuple(self.rank.coeffs))
             case "truncated":
                 if self.width is None:
                     raise ValueError("truncated presentations need a width")
-                return pair(base_code,
-                            pair(self.limits, self.rung % (1 << self.width)))
+                # Only the successor counter is truncated; the limit levels are
+                # named in full. That is what lets a limit escape the stall.
+                truncated = replace(self, rung=self.rung % (1 << self.width))
+                return pair(base_code, _code_tuple(truncated.rank.coeffs))
         raise ValueError(f"unknown presentation kind {self.kind!r}")
 
     def can_take_limit(self) -> bool:
@@ -602,31 +718,47 @@ def ladder(theory: Theory, rungs: int) -> Iterator[Step]:
         current = s.theory_after
 
 
-def limit_step(theory: Theory) -> Step:
-    """Apply the hierarchical mechanism: pass to `⋃ₙ T_{succ^n(a)}`.
+def _at_rank(theory: Theory, rank: Rank) -> Theory:
+    """The same theory re-labelled at `rank`, splitting the CNF coefficients
+    across the fields `Theory` stores them in."""
+    top = rank.degree
+    higher = tuple(rank.coefficient(e) for e in range(top, 1, -1))
+    return replace(theory, rung=rank.successors, limits=rank.limits,
+                   higher=higher)
+
+
+def limit_step(theory: Theory, level: int = 1) -> Step:
+    """Apply the hierarchical mechanism at `level`: pass to the union.
+
+    At `level=1` this is `⋃ₙ T_{succ^n(a)}` — the limit of a ladder of
+    successors, landing on the next multiple of `ω`. At `level=2` it is the
+    limit of a ladder of *those* (`ω, ω·2, ω·3, … → ω²`), and so on up. The
+    mechanism has the same shape at every level, which is the finding: a limit
+    of limits is not a new kind of move, and it does not cost more.
 
     The union's axiom set is what the ladder has already accumulated — the
     rungs are unchanged. What is new is the *index*: the limit theory names
-    that union as a single r.e. set, at rank `ω·(limits+1)`. Reflecting on it
-    then produces a consistency sentence about the whole ladder below, which no
-    finite rung asserts.
+    that union as a single r.e. set. Reflecting on it then produces a
+    consistency sentence about the whole ladder below, which no rung beneath
+    it asserts.
 
     Raises `LimitUndefined` for a presentation with no index to offer. The
     successor mechanism is always available; the limit mechanism is not, and
     that asymmetry is the thing this function exists to expose.
     """
+    target = theory.rank.limit(level)
     if not theory.can_take_limit():
         raise LimitUndefined(
             f"the {theory.kind!r} presentation indexes a literal axiom list, "
-            f"and the union at rank {Rank(theory.limits + 1, 0)} has no finite "
-            f"list to index — no budget makes this edge exist")
+            f"and the union at rank {target} has no finite list to index — "
+            f"no budget makes this edge exist")
     t0 = time.perf_counter()
     index = theory.index()
-    at_limit = replace(theory, limits=theory.limits + 1, rung=0)
+    at_limit = _at_rank(theory, target)
     con = con_formula(at_limit)
     new_axiom = at_limit.index() not in theory.seen
     rungs = theory.rungs + (con,) if new_axiom else theory.rungs
-    after = replace(at_limit, rung=1, rungs=rungs,
+    after = replace(_at_rank(theory, target.successor()), rungs=rungs,
                     seen=theory.seen | {at_limit.index()})
     return Step(n=theory.rung, con=con, theory_before=theory,
                 theory_after=after, new_axiom=new_axiom, index=index,
@@ -974,6 +1106,106 @@ def terminal_rung(theory: Theory, capacity: Capacity, *, horizon: int,
         if b.step is None:
             return b.n
     return None
+
+
+# ------------------------------------------ notations, and the price of Kleene
+#
+# A limit notation is only meaningful if it comes with a *fundamental sequence*:
+# a computable increasing sequence converging to it, so the union it names is
+# actually enumerable. Below ω^ω that sequence is canonical — read straight off
+# the Cantor normal form, closed form, total by construction, no search. That is
+# why every result above is cheap and decidable.
+#
+# Kleene's O drops that guarantee. There a limit notation is an arbitrary index
+# `e` for a function enumerating the sequence, and for the notation to be valid
+# that function must be *total* — a Π⁰₂ question in general, and O-membership as
+# a whole is Π¹₁-complete. Those are cited theorems, not measurements; nothing
+# here proves them and nothing here could.
+#
+# What the code below *does* show is the shape of the consequence: a checker
+# that must search cannot return "valid", only "verified this far", and no
+# finite amount of verification distinguishes a total sequence from one that
+# diverges later. So the price of O is not implementation effort. It is that
+# `can_take_limit` stops being a decision and becomes a search — the system can
+# no longer determine which continuations are open to it.
+
+
+@dataclass(frozen=True)
+class SequenceVerdict:
+    """What a bounded check of a fundamental sequence was able to conclude."""
+
+    status: str          # total-by-construction | verified-to | diverges-at
+    checked: int
+    detail: str
+
+    @property
+    def conclusive(self) -> bool:
+        """Did the check settle validity, rather than merely fail to refute it?"""
+        return self.status in ("total-by-construction", "diverges-at")
+
+
+def canonical_fundamental_sequence(rank: Rank):
+    """The standard fundamental sequence for a CNF limit, in closed form.
+
+    For `ω^(k+1)` it is `n ↦ ω^k·n`; for `ω^k·(m+1)` it is
+    `n ↦ ω^k·m + ω^(k-1)·n`, and at `k = 1` simply `n ↦ ω·m + n`. Total by
+    construction: it is arithmetic on the coefficients, with no search in it.
+    """
+    if not rank.is_limit or not rank.coeffs:
+        raise ValueError(f"{rank} is not a limit and has no fundamental sequence")
+    k = rank.degree
+    m = rank.coefficient(k) - 1
+    below = {e: rank.coefficient(e) for e in range(k + 1, rank.degree + 1)}
+
+    def seq(n: int) -> Rank:
+        levels = dict(below)
+        levels[k] = m
+        if k >= 1:
+            levels[k - 1] = levels.get(k - 1, 0) + n
+        return Rank.from_levels(levels)
+
+    return seq
+
+
+def verify_cnf_notation(rank: Rank) -> SequenceVerdict:
+    """Decide whether a CNF limit notation is valid. Total, and immediate."""
+    if not rank.is_limit:
+        return SequenceVerdict("total-by-construction", 0,
+                               f"{rank} is a successor or zero — no sequence needed")
+    seq = canonical_fundamental_sequence(rank)
+    for n in range(3):
+        if not seq(n) < seq(n + 1) or not seq(n) < rank:
+            return SequenceVerdict("diverges-at", n,
+                                   f"canonical sequence misbehaved at {n}")
+    return SequenceVerdict(
+        "total-by-construction", 0,
+        f"the fundamental sequence for {rank} is closed-form arithmetic on the "
+        f"Cantor normal form; totality needs no search")
+
+
+def verify_searched_notation(seq, *, bound: int, budget: int) -> SequenceVerdict:
+    """Check an *opaque* fundamental sequence by running it.
+
+    `seq(n, budget)` returns the n-th element, or `None` if it did not halt
+    within `budget` steps — standing in for the divergence a genuine index may
+    exhibit. The verdict is deliberately unable to say "valid": a run that
+    halted for every `n < bound` has refuted nothing about `n ≥ bound`, which
+    is exactly the gap that makes totality undecidable.
+    """
+    last = None
+    for n in range(bound):
+        value = seq(n, budget)
+        if value is None:
+            return SequenceVerdict("diverges-at", n,
+                                   f"element {n} did not halt within {budget} steps")
+        if last is not None and value <= last:
+            return SequenceVerdict("diverges-at", n,
+                                   f"sequence not increasing at {n}")
+        last = value
+    return SequenceVerdict(
+        "verified-to", bound,
+        f"halted and increased for every n < {bound}; nothing is known about "
+        f"n >= {bound}, and no finite bound changes that")
 
 
 @dataclass(frozen=True)

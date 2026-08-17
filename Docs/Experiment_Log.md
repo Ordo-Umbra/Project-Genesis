@@ -1729,6 +1729,73 @@ checked. `Prf` stays primitive, so only ratios between arms are read.
 
 ---
 
+## Limits of limits — and what Kleene's `O` actually costs
+
+The limit run left an open question: the next rung is a limit *of* limits, and
+that was supposed to be where deferring Kleene's `O` stops being free.
+`experiments/reflection_omega_squared.py` runs it, and the answer is not the
+expected one. **4/4:**
+
+- **Q1 ✓ A limit of limits is the same mechanism, not a new one.** Cost ratio to
+  a successor is **1.0000 at every level from 1 to 6**, and every level adds a
+  new axiom. Going from ω to ω² is not a harder move than going from 3 to 4 — it
+  bumps a different coefficient of the same normal form. The gate generalises
+  too: `inline` refuses a limit at *every* level, not just the first. It is not
+  short of a level; it has no limit edge of any kind.
+- **Q2 ✓ Rank outruns cost without bound.** Cost per step is flat to within
+  **0.00%** all the way to **ω⁶+1**, reached in 30 steps, every one productive.
+  Rank is not bought with cost at all — it is bought with the *right to name*,
+  and once a presentation has that right the ordinal it reaches is limited only
+  by how many times you apply it.
+- **Q3 ✓ Notation validity below ω^ω is decidable and immediate.** Every CNF
+  limit gets a conclusive verdict with no search, because its fundamental
+  sequence is closed-form arithmetic on the normal form. Nothing is run, so
+  nothing can fail to halt.
+- **Q4 ✓ Above it, validity becomes a search that cannot conclude.** A total
+  fundamental sequence and one diverging at `n = 9` return **identical verdicts
+  at every bound up to 9**, and the total one is *never* conclusive at any
+  bound — the checker can only say "verified this far". Raising the bound does
+  not converge on an answer; it moves the same ignorance further out.
+
+**So: should the ordinal layer pay for `O`?** Not for reach. Everything below
+`ω^ω` — and `ε₀` by the same construction — is available with canonical
+notations at a cost per step that does not move. What `O` buys is *all* recursive
+ordinals, and what it spends is **the decidability of the accessibility relation
+itself**. Below it, `can_take_limit` is a decision; with it, `can_take_limit` is
+a search, and the system cannot in general determine which continuations are open
+to it.
+
+That is a **third kind of terminal state**, and it completes the set the series
+has been converging on:
+
+| stop reason | meaning | kind |
+|---|---|---|
+| `unaffordable` | the edge exists and costs too much | economic |
+| `limit-undefined` | the edge does not exist | structural |
+| `undecidable` | whether the edge exists cannot be decided | epistemic |
+
+And it lands squarely on `G`. **`G > 0` is a claim about which edges exist.** At
+the top of the recursive ordinals that claim stops being checkable by the system
+making it — not false, not unavailable, but undecidable from the inside. A system
+there cannot tell a continuation it *has* from one it merely cannot rule out.
+
+Reproduce with `python experiments/reflection_omega_squared.py` (`--quick` for a
+smoke run); 27 tests in `tests/test_reflection_omega.py`, weighted toward the
+ordinal comparison (a backwards `ω^k` ordering would silently reorder every
+rank-mentioning result without breaking anything visibly) and toward the
+decidable/searched distinction the `O` conclusion rests on.
+
+**Honest scope.** Q4 demonstrates the *shape* of the consequence, not the
+theorem. Divergence is simulated by a sequence that declines to halt; that
+totality is Π⁰₂-complete and `O`-membership Π¹₁-complete are **cited results**,
+not things any run could show. What is measured is only that a checker which must
+run a sequence cannot separate "total" from "total so far" — which is the
+property that makes the citation bite. The rank system is Cantor normal form
+below `ω^ω`: unique representations, decidable comparison, canonical fundamental
+sequences. `Prf` stays primitive, so only ratios between arms are read.
+
+---
+
 ## What Comes Next
 
 The frontier questions, roughly in priority order:
