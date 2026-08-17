@@ -1796,6 +1796,72 @@ sequences. `Prf` stays primitive, so only ratios between arms are read.
 
 ---
 
+## The interior view — what a theory knows about its own walls
+
+Every measurement in this series had been taken from *outside*. The observer
+with the bigger notation system — running the ladder, reading off costs and
+collisions — was us, the whole time. `experiments/reflection_interior.py` asks
+the first question a theory can put to itself: using only checks it can run on
+its own presentation, what does it know about where and why it stops?
+
+It needed a fourth arm. Two of the three walls were exhibited by running
+presentations; the third was argued from the Π⁰₂ character of totality. So
+`searched` is added — a presentation whose limit notation is an *arbitrary*
+index rather than a canonical one, and so must be certified by **running** its
+fundamental sequence. The detail the whole result rests on: that sequence is
+`n ↦ n`, which is **total**. Its continuation genuinely exists. It halts anyway.
+**4/4:**
+
+- **Q1 ✓ Every theory predicts *where* it stops, exactly.** 16/16 across four
+  presentations and four budgets, including the undecidable arm — a cautious
+  system knows it will decline a step it cannot certify, so it knows precisely
+  where that happens.
+- **Q2 ✓ And *why*, for the two decidable walls.** `inline` names
+  `unaffordable` at κ_max = 10⁵ and `limit-undefined` above it: the same arm
+  reporting two different walls depending which it would **meet first**. This
+  experiment was written with that bug — the first version checked the limit
+  edge before simulating the budget and named the structural wall at a budget
+  where the economic one binds four rungs sooner.
+- **Q3 ✓ For the third wall, reality is not determinable.** `searched` knows it
+  halts at rung 10 and cannot establish whether anything was there. It halts on
+  a **live edge**, because a step it cannot certify is a step it will not take.
+  That is not a slower version of the other two walls.
+- **Q4 ✓ And the third wall is budget-invariant.** Identical answer from 10⁵ to
+  10¹², seven orders of magnitude buying exactly nothing, because the question
+  was never economic.
+
+**Stated carefully, because the tempting version is wrong.** The finding is
+*not* "from the inside a system cannot see its walls" — it sees all three and
+knows exactly where each one is. It is narrower and sharper:
+
+> A system is **complete about location** and **incomplete about necessity**.
+> It always knows where it stops. It does not always know whether stopping was
+> required.
+
+At the third wall it cannot distinguish a continuation it **lacks** from one it
+merely cannot **certify** — and the `searched` arm shows those are not the same
+situation, because there the edge was real and it stopped regardless.
+
+That bounds `G` from a new side. `G > 0` is a claim about which edges exist. A
+system can always compute where its own climb ends; what it cannot always
+compute is whether that ending was `G = 0`, or `G > 0` with no certificate.
+Those are different facts about the world and **identical facts from the
+inside**.
+
+Reproduce with `python experiments/reflection_interior.py` (`--quick` for a
+smoke run); 13 tests in `tests/test_reflection_interior.py`, guarding the two
+things the conclusion cannot survive without — that the prediction never
+consults the run (or "the interior view is exact" is circular), and that the
+searched arm's edge stays genuinely real while genuinely uncertifiable.
+
+**Honest scope.** Nothing here concerns experience and nothing here is evidence
+about it; the measured object is a formal presentation of arithmetic, and the
+resemblance to an interior report of unboundedness is a resemblance. The
+`searched` arm's bounded certifier stands in for a Π⁰₂ check; that totality is
+Π⁰₂-complete and `O`-membership Π¹₁-complete are **cited**, not measured.
+
+---
+
 ## What Comes Next
 
 The frontier questions, roughly in priority order:

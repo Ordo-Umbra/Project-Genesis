@@ -617,7 +617,7 @@ class Theory:
             case "inline":
                 return godel_number(list(self.axioms())
                                     + [Var(s) for s in self.schemas])
-            case "indexed":
+            case "indexed" | "searched":
                 return pair(base_code, _code_tuple(self.rank.coeffs))
             case "truncated":
                 if self.width is None:
@@ -628,16 +628,57 @@ class Theory:
                 return pair(base_code, _code_tuple(truncated.rank.coeffs))
         raise ValueError(f"unknown presentation kind {self.kind!r}")
 
-    def can_take_limit(self) -> bool:
-        """Can this presentation name the union of the ladder so far?
+    def limit_status(self, *, bound: int = 64,
+                     budget: int = 10000) -> "LimitStatus":
+        """What can this theory determine, *about itself*, about its own limit?
 
-        The indexed presentations can: an index is a *description* of an axiom
-        set, and "PA plus every rung below this point" is a description of
-        exactly the same length as any other. The `inline` presentation cannot,
-        because its index is the Gödel number of a literal list and the union
-        has no finite list. That is a structural absence, not a price.
+        Every measurement in this series so far has been taken from outside —
+        by an observer with a bigger notation system, which is to say by us.
+        This is the first thing a theory can run on itself, and the three
+        answers are not symmetric:
+
+        - `available` — the indexed presentations. An index is a *description*,
+          "PA plus every rung below this point" is a description like any other,
+          and the canonical fundamental sequence certifies it with no search.
+        - `absent` — `inline`. Its index is the Gödel number of a literal list,
+          and the union has no finite list. A syntactic check, decided at once.
+        - `unknown` — `searched`. Its limit notation is an arbitrary index, so
+          certifying it means checking a fundamental sequence for totality by
+          *running* it. The check can refute but never confirm.
+
+        The asymmetry is the point. Two of these walls a system can see coming
+        from any distance. The third it cannot see at all — and note that the
+        `searched` arm's sequence is in fact total, so its continuation really
+        does exist. It still cannot proceed on it, because it cannot authorise
+        a step it cannot certify.
         """
-        return self.kind != "inline"
+        match self.kind:
+            case "inline":
+                return LimitStatus(
+                    "absent", SequenceVerdict("diverges-at", 0, "no finite list"),
+                    "the index is a literal axiom list; a union has none")
+            case "indexed" | "truncated":
+                return LimitStatus(
+                    "available", verify_cnf_notation(self.rank.limit(1)),
+                    "canonical fundamental sequence, certified without search")
+            case "searched":
+                verdict = verify_searched_notation(_opaque_sequence,
+                                                   bound=bound, budget=budget)
+                status = "absent" if verdict.status == "diverges-at" else "unknown"
+                return LimitStatus(status, verdict,
+                                   "an arbitrary index must be certified by "
+                                   "running it, and running it cannot confirm")
+        raise ValueError(f"unknown presentation kind {self.kind!r}")
+
+    def can_take_limit(self) -> bool:
+        """Whether the limit edge is *certified* available.
+
+        Note what this returns for `searched`: `False`, because an uncertified
+        edge is not one the theory may take — not because the edge is absent.
+        `limit_status` is the honest three-valued version and should be
+        preferred wherever the distinction matters.
+        """
+        return self.limit_status().status == "available"
 
     def presentation_symbols(self) -> int:
         """Cost of the presentation the generator actually maintains.
@@ -659,7 +700,7 @@ class Theory:
 
 def peano(kind: str = "indexed", width: int | None = None) -> Theory:
     """`T_0 = PA` under the named presentation."""
-    if kind not in ("inline", "indexed", "truncated"):
+    if kind not in ("inline", "indexed", "truncated", "searched"):
         raise ValueError(f"unknown presentation kind {kind!r}")
     if kind == "truncated" and not width:
         raise ValueError("truncated presentations need a positive width")
@@ -1208,6 +1249,110 @@ def verify_searched_notation(seq, *, bound: int, budget: int) -> SequenceVerdict
         f"n >= {bound}, and no finite bound changes that")
 
 
+#: The opaque fundamental sequence the `searched` presentation must certify.
+#: It is *total* — `n ↦ n` — so the continuation it names genuinely exists.
+#: The point is that no bounded check can establish that, which is why the arm
+#: cannot proceed on an edge that is really there.
+def _opaque_sequence(n: int, _budget: int) -> int:
+    return n
+
+
+@dataclass(frozen=True)
+class LimitStatus:
+    """A theory's own three-valued verdict on its own limit edge."""
+
+    status: str          # available | absent | unknown
+    verdict: SequenceVerdict
+    reason: str
+
+    @property
+    def decided(self) -> bool:
+        """Could the theory settle the question at all? `unknown` is the whole
+        content of the third wall: not that the answer is no, but that the
+        system cannot reach an answer."""
+        return self.status in ("available", "absent")
+
+
+@dataclass(frozen=True)
+class Prediction:
+    """What a theory can work out about its own stopping point, from inside.
+
+    Two questions, and they come apart — which is the whole finding:
+
+    - `stop_rung`: *where* will I stop? `None` means "I reach the horizon".
+    - `wall_is_real`: is the thing that stops me an actual absence of
+      continuation, or merely one I cannot certify? `None` means the theory
+      cannot determine this.
+
+    A cautious system — one that declines steps it cannot certify — always
+    knows *where* it will halt. What it may not know is whether halting was
+    necessary. That is a sharper statement than "it cannot see the wall", and
+    it is the one the measurement supports.
+    """
+
+    stop_rung: int | None
+    reason: str
+    wall_is_real: bool | None
+    detail: str
+
+    @property
+    def certain(self) -> bool:
+        """Did the theory settle *why* it stops, not merely where?"""
+        return self.wall_is_real is not None
+
+
+def predict_stop(theory: Theory, *, blocks: int, per_block: int,
+                 capacity: "Capacity | None" = None,
+                 cost_of=None) -> Prediction:
+    """The interior view: what the theory determines about its own walls.
+
+    Uses only checks the theory can run on itself — its own presentation, its
+    own cost function, its own budget, its own `limit_status`. It never
+    consults the outcome of a run, which is what makes comparing it against an
+    actual climb meaningful rather than circular.
+
+    Walls are resolved *in the order they would be met*, not in order of
+    interest. Checking the limit edge first is wrong whenever the budget binds
+    sooner, and gets the reason wrong even when it happens to get the rung
+    right.
+    """
+    cost_of = cost_of or construction_cost
+    kappa = capacity.kappa_max if capacity else None
+    current, taken = theory, 0
+
+    def afford(s: Step) -> bool:
+        nonlocal kappa
+        if capacity is None:
+            return True
+        if kappa < cost_of(s):
+            return False
+        kappa = capacity.spend(kappa, cost_of(s))
+        return True
+
+    for block in range(blocks):
+        for _ in range(per_block):
+            s = step(current)
+            if not afford(s):
+                return Prediction(taken, "unaffordable", True,
+                                  f"budget {kappa:.0f} < cost {cost_of(s)}")
+            current, taken = s.theory_after, taken + 1
+        if block == blocks - 1:
+            break
+        status = current.limit_status()
+        if status.status == "absent":
+            return Prediction(taken, "limit-undefined", True, status.reason)
+        if not status.decided:
+            # It knows it will halt here — a step it cannot certify is a step
+            # it will not take. What it cannot determine is whether the
+            # continuation was there all along.
+            return Prediction(taken, "undecidable", None, status.reason)
+        lim = limit_step(current)
+        if not afford(lim):
+            return Prediction(taken, "unaffordable", True, "limit unaffordable")
+        current, taken = lim.theory_after, taken + 1
+    return Prediction(None, "horizon", True, "reaches the horizon")
+
+
 @dataclass(frozen=True)
 class ClimbOutcome:
     """Where a mixed successor/limit climb stopped, and why.
@@ -1261,7 +1406,11 @@ def transfinite_climb(theory: Theory, *, blocks: int, per_block: int,
             current = s.theory_after
         if block == blocks - 1:
             break
-        if not current.can_take_limit():
+        status = current.limit_status()
+        if not status.decided:
+            return ClimbOutcome(current.rank, productive, taken,
+                                "undecidable", current.limits)
+        if status.status == "absent":
             return ClimbOutcome(current.rank, productive, taken,
                                 "limit-undefined", current.limits)
         s = limit_step(current)
