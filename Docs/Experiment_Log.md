@@ -1935,6 +1935,62 @@ measured; nothing here concerns experience.
 
 ---
 
+## The classification, checked exhaustively — and where a proposed theorem fails
+
+A third round of review responded to the derived-`G` result with two corrections
+and a proposed theorem. Both corrections were right and one of them was a real
+defect in the code; the theorem is refuted by exhaustive check. All of it is now
+in `experiments/reflection_derived_g.py` as **Q5**, alongside the four questions
+already there.
+
+**Correction one — the verdict table was ambiguous.** Stated as conditions
+rather than as an ordered rule, `G_actual = G_certified = 0` satisfies both
+`terminal` and `recognised`. The code short-circuited correctly, but the table
+published in `The_Reflection_Ladder.md` §8b carried the hole. Fixed, with a test
+pinning the degenerate case.
+
+**Correction two — `stagnant` is not `terminal`, and this was a real bug.** The
+`verdict` property returned `terminal` whenever `G_actual` was 0, silently
+merging *no move exists* with *moves exist but achieve nothing*. Those are
+different: the second **does not halt**. Q3 had measured exactly that — the
+stalled arm runs clean to the horizon — and the verdict then contradicted it.
+There are now four verdicts, and `halts` is a separate property because halting
+and being out of moves turn out to be different cuts:
+
+| verdict | moves exist? | productive? | certified? | halts? |
+|---|---|---|---|---|
+| `terminal` | no | — | — | **yes** |
+| `stagnant` | yes | no | — | no |
+| `hidden` | yes | yes | no | **yes** |
+| `recognised` | yes | yes | yes | no |
+
+**Q5 ✓ The proposed classification theorem is refuted.** The review proposed
+that every terminal state is economic, structural, or epistemic. Checked
+exhaustively over all **16 sound combinations** of the four predicates — sound
+meaning the certifier may decline to commit but cannot certify an absent edge
+nor refute a present one — terminal states carry only **economic and
+structural**. The epistemic case lands in `hidden`, which is **not terminal at
+all**: it has a live move (`G_actual = 1`, `G_certified = 0`) and halts anyway.
+
+So **terminal splits two ways, not three**, and folding the epistemic case back
+into `terminal` would lose precisely the distinction the interior experiment
+exists to draw — halting because nothing is there, versus halting on something
+real you cannot authorise. No soundness violations anywhere in the space.
+
+Reproduce with `python experiments/reflection_derived_g.py`; 21 tests in
+`tests/test_reflection_derived_g.py`, including the exhaustive classification
+and the degenerate-case ambiguity. 152 reflection tests, 1.9s.
+
+**Honest scope.** The exhaustive check covers the space of *verdicts* — all 16
+sound predicate combinations — not a proof that the reflection ladder can only
+produce those. That would need an argument about the construction rather than a
+run over its state space, and is not attempted. The review's other suggestion,
+letting `C` vary rather than sitting fixed at `ω₁^CK`, remains open and is the
+one that would test whether this four-dimensional refinement is an artifact of
+the ordinal setting or a general property.
+
+---
+
 ## What Comes Next
 
 The frontier questions, roughly in priority order:

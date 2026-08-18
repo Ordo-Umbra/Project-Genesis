@@ -8,9 +8,16 @@ measured dimensions. Two things have to hold for that to be worth anything:
    is not there. That is the one direction of the interior/exterior gap which
    would be a soundness bug rather than a finding.
 
-2. **All three verdicts must be realised, and by the right arms.** If `hidden`
+2. **All four verdicts must be realised, and by the right arms.** If `hidden`
    were empty the category would be unnecessary; if every arm had it, it would
-   not be the epistemic wall it was attributed to.
+   not be the epistemic wall it was attributed to. And `stagnant` must stay
+   distinct from `terminal` — an earlier version merged them, which contradicted
+   the measurement that found a stalled arm running to the horizon.
+
+3. **The classification must be checked exhaustively.** A review proposed that
+   every terminal state is economic, structural, or epistemic. Over the whole
+   sound predicate space that is false, and the way it fails is the finding, so
+   it is pinned here rather than left to a run.
 """
 
 from __future__ import annotations
@@ -55,15 +62,43 @@ class TestContinuationAlgebra(unittest.TestCase):
             self.assertLessEqual(k.g_certified, k.g_actual,
                                  f"{(s, a, p, c)}")
 
-    def test_the_three_verdicts(self):
+    def test_the_four_verdicts(self):
         live = dict(structural=True, affordable=True, productive=True)
         self.assertEqual(Continuation(**live, certifiable=True).verdict,
                          "recognised")
         self.assertEqual(Continuation(**live, certifiable=None).verdict,
                          "hidden")
+        self.assertEqual(Continuation(structural=True, affordable=True,
+                                      productive=False,
+                                      certifiable=True).verdict, "stagnant")
         self.assertEqual(Continuation(structural=False, affordable=True,
                                       productive=False,
                                       certifiable=False).verdict, "terminal")
+
+    def test_stagnant_is_not_terminal(self):
+        """A review caught this: an earlier version returned `terminal`
+        whenever `g_actual` was 0, merging a system with no move at all into a
+        system whose moves achieve nothing. The second one does not halt."""
+        stagnant = Continuation(structural=True, affordable=True,
+                                productive=False, certifiable=True)
+        terminal = Continuation(structural=False, affordable=True,
+                                productive=True, certifiable=False)
+        self.assertEqual(stagnant.g_actual, terminal.g_actual, 0)
+        self.assertNotEqual(stagnant.verdict, terminal.verdict)
+        self.assertTrue(stagnant.moves_exist)
+        self.assertFalse(terminal.moves_exist)
+        self.assertFalse(stagnant.halts)
+        self.assertTrue(terminal.halts)
+
+    def test_the_degenerate_case_is_not_also_recognised(self):
+        """`G_actual = G_certified = 0` must read as terminal and nothing else.
+        Stated as a table of conditions rather than an ordered rule, that case
+        satisfies both `terminal` and `recognised` — which is the ambiguity the
+        review flagged in the prose version."""
+        dead = Continuation(structural=False, affordable=False,
+                            productive=False, certifiable=False)
+        self.assertEqual((dead.g_actual, dead.g_certified), (0, 0))
+        self.assertEqual(dead.verdict, "terminal")
 
     def test_hidden_requires_a_real_edge_that_is_not_certified(self):
         hidden = Continuation(structural=True, affordable=True,
@@ -142,6 +177,61 @@ class TestDerivedFromArms(unittest.TestCase):
     def test_rejects_an_unknown_move(self):
         with self.assertRaises(ValueError):
             derive_continuation(peano("indexed"), move="teleport")
+
+
+# --------------------------------- 3. the classification, checked exhaustively
+
+
+def _sound_space():
+    """Every combination where the certifier does not lie: it may decline to
+    commit (`None`), but cannot certify an absent edge nor refute a present
+    one. The rest describe a broken certifier, not a reachable state."""
+    for s, a, p, c in itertools.product((True, False), (True, False),
+                                        (True, False), (True, False, None)):
+        if c is not None and c != s:
+            continue
+        yield Continuation(structural=s, affordable=a, productive=p,
+                           certifiable=c)
+
+
+class TestClassification(unittest.TestCase):
+    """A review proposed: every terminal state is economic, structural, or
+    epistemic. Checked over the whole sound space, that is false — and the way
+    it fails is the finding, so it is pinned here rather than left to a run."""
+
+    def test_the_sound_space_is_the_expected_size(self):
+        self.assertEqual(len(list(_sound_space())), 16)
+
+    def test_terminal_states_carry_only_two_walls(self):
+        walls = {k.blocked_by for k in _sound_space() if k.verdict == "terminal"}
+        self.assertEqual(walls, {"economic", "structural"})
+        self.assertNotIn("epistemic", walls)
+
+    def test_the_epistemic_case_is_hidden_not_terminal(self):
+        verdicts = {k.verdict for k in _sound_space()
+                    if k.blocked_by == "epistemic"}
+        self.assertEqual(verdicts, {"hidden"})
+
+    def test_hidden_has_a_live_move(self):
+        for k in _sound_space():
+            if k.verdict == "hidden":
+                self.assertEqual(k.g_actual, 1)
+                self.assertEqual(k.g_certified, 0)
+
+    def test_halting_and_having_no_moves_are_different_cuts(self):
+        halts = {k.verdict for k in _sound_space() if k.halts}
+        runs = {k.verdict for k in _sound_space() if not k.halts}
+        self.assertEqual(halts, {"terminal", "hidden"})
+        self.assertEqual(runs, {"stagnant", "recognised"})
+
+    def test_every_state_gets_exactly_one_verdict(self):
+        names = {"terminal", "stagnant", "hidden", "recognised"}
+        for k in _sound_space():
+            self.assertIn(k.verdict, names)
+
+    def test_no_soundness_violation_anywhere_in_the_space(self):
+        for k in _sound_space():
+            self.assertLessEqual(k.g_certified, k.g_actual)
 
 
 if __name__ == "__main__":

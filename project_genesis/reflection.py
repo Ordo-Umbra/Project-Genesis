@@ -1076,16 +1076,46 @@ class Continuation:
         return int(bool(self.certifiable) and self.affordable and self.productive)
 
     @property
-    def verdict(self) -> str:
-        """`terminal` | `hidden` | `recognised`.
+    def moves_exist(self) -> bool:
+        """Is there *any* move — productive or not — the system can make?
 
-        `hidden` is the category the experiments turned up and the original
-        framework had no room for: a continuation that is really there, that
-        the system cannot establish, and on which it therefore will not move.
+        The distinction between having no move and having only useless ones is
+        the difference between halting and running forever without getting
+        anywhere, and those are not the same failure.
         """
-        if not self.g_actual:
+        return self.structural and self.affordable
+
+    @property
+    def verdict(self) -> str:
+        """`terminal` | `stagnant` | `hidden` | `recognised`.
+
+        Four, not three. An earlier version returned `terminal` whenever
+        `g_actual` was 0, which silently merged two different situations: a
+        system with no move at all, and a system with moves that achieve
+        nothing. The second one does not halt — it runs to the horizon — so
+        calling it terminal contradicts the measurement that found it.
+
+        - `terminal` — no move exists at all. The system stops.
+        - `stagnant` — moves exist, none is productive. The system *continues*
+          and gets nowhere, with every wall-detector reading normal.
+        - `hidden` — a productive move is there and cannot be certified.
+        - `recognised` — a productive move is there and is certified.
+
+        Note the ordering: `terminal` is checked first, so the degenerate case
+        `g_actual = g_certified = 0` cannot also read as `recognised`. That
+        ambiguity is real in the informal table version of this rule and is why
+        the rule lives here rather than in prose.
+        """
+        if not self.moves_exist:
             return "terminal"
+        if not self.productive:
+            return "stagnant"
         return "recognised" if self.g_certified else "hidden"
+
+    @property
+    def halts(self) -> bool:
+        """Does this verdict stop the system? `stagnant` notably does not."""
+        return self.verdict in ("terminal", "hidden")
 
     @property
     def blocked_by(self) -> str | None:

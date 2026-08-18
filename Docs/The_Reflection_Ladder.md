@@ -439,16 +439,31 @@ could express none of them. So compute it from them instead:
 The first three are facts about the world; the fourth is a fact about what the
 system can know. Three verdicts follow, and the middle one is new:
 
-| verdict | condition | meaning |
-|---|---|---|
-| `terminal` | `G_actual = 0` | nothing is there |
-| `recognised` | `G_actual = G_certified` | something is there and known |
-| **`hidden`** | `G_actual > G_certified` | **something is there and not known** |
+| verdict | condition | halts? | meaning |
+|---|---|---|---|
+| `terminal` | no move exists at all | yes | nothing is there |
+| `stagnant` | moves exist, none productive | **no** | it keeps going and gets nowhere |
+| **`hidden`** | productive move exists, uncertified | yes | **something is there and not known** |
+| `recognised` | productive move exists, certified | no | something is there and known |
+
+*Four, not three.* A first version of this table said `terminal` when
+`G_actual = 0` and `recognised` when `G_actual = G_certified`, and a review
+caught two problems with it. The degenerate case `G_actual = G_certified = 0`
+satisfies both. And more seriously, having **no move** and having **only
+useless moves** are different situations — the second one does not halt, which
+is exactly what §8b's own measurement found and the table then contradicted.
 
 ### What was measured
 
 **12 out of 12.** For every arm at every budget, the derived verdict names the
-same wall an actual climb reports. No fifth dimension was needed. `hidden` is
+same wall an actual climb reports.
+
+And checked exhaustively over all 16 sound combinations of the four predicates,
+**the three walls do not classify terminal states**. Terminal splits only two
+ways — economic and structural. The epistemic case is not terminal at all: it
+has a live move (`G_actual = 1`) and halts anyway. Halting and being out of
+moves are different cuts through the same space, and collapsing them loses
+precisely the distinction §7 exists to draw. No fifth dimension was needed. `hidden` is
 realised by exactly one arm — `searched` — which is the epistemic wall of §7,
 now falling out of the decomposition rather than being stipulated.
 

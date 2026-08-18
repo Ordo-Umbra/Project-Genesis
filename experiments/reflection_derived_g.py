@@ -22,12 +22,16 @@ system can know, which is why `G` splits into two:
     G_actual    = structural ∧ affordable ∧ productive
     G_certified = certifiable ∧ affordable ∧ productive
 
-and the verdict falls into three cases, of which the middle one is the category
-the original framework had no room for:
+and the verdict falls into **four** cases. Writing it as three is a real error
+and a review caught it: `G_actual = G_certified = 0` satisfies both "terminal"
+and "recognised" unless the latter carries a positivity qualifier, and worse,
+having *no move* and having *only useless moves* are not the same situation —
+the second does not halt.
 
-    terminal     G_actual = 0            nothing is there
-    recognised   G_actual = G_certified  something is there and known
-    hidden       G_actual > G_certified  something is there and NOT known
+    terminal     no move exists at all                  halts
+    stagnant     moves exist, none productive           does NOT halt
+    hidden       productive move exists, uncertified    halts
+    recognised   productive move exists, certified      does NOT halt
 
 Pre-registered predictions
 --------------------------
@@ -57,6 +61,15 @@ Q4. **No certification bound buys both safety and reach.** Sweeping the
     address. **Falsifier:** some finite `N` achieves zero false accepts while
     still accepting the totals, which would make the trade-off illusory.
 
+Q5. **The three walls do NOT classify terminal states.** A review of this
+    work proposed a classification theorem: every terminal state is economic,
+    structural, or epistemic. Checked exhaustively over the sound predicate
+    space, that should come out **false** — `epistemic` states have a live
+    move (`G_actual = 1`) and so are not terminal at all; they halt on a real
+    edge, which is the distinction §7 exists to draw. **Falsifier:**
+    `epistemic` appears among the terminal states, which would make the
+    proposed theorem right and the §7 distinction spurious.
+
 Q4 is the quantitative version of the thing the binary policy experiment could
 only report as one bit. It is where "how much certainty should a system demand"
 stops being a philosophical question and becomes a curve with a shape.
@@ -80,6 +93,7 @@ nothing here concerns experience.
 from __future__ import annotations
 
 import argparse
+import itertools
 import json
 import sys
 from pathlib import Path
@@ -88,8 +102,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from project_genesis.reflection import (  # noqa: E402
-    Capacity, derive_continuation, ladder, limit_step, peano, step,
-    transfinite_climb, verify_searched_notation,
+    Capacity, Continuation, derive_continuation, ladder, limit_step,
+    peano, step, transfinite_climb, verify_searched_notation,
 )
 
 #: `blocked_by` is per-move; a climb's `stopped_because` is per-run. These are
@@ -252,6 +266,39 @@ def sweep_policy(pop: list[int | None], bounds: list[int]) -> list[dict]:
     return rows
 
 
+# ------------------------------- Q5: does the wall taxonomy classify terminals?
+
+
+def classification_scan() -> dict:
+    """Every sound combination of the four predicates, and where it lands.
+
+    Sound means the certifier does not lie: it may decline to commit
+    (`None`), but it cannot certify an edge that is absent nor refute one that
+    is present. Unsound combinations are excluded because they describe a
+    broken certifier rather than a reachable state.
+    """
+    rows = []
+    for s, a, p, c in itertools.product((True, False), (True, False),
+                                        (True, False), (True, False, None)):
+        if c is not None and c != s:
+            continue
+        k = Continuation(structural=s, affordable=a, productive=p,
+                         certifiable=c)
+        rows.append({"structural": s, "affordable": a, "productive": p,
+                     "certifiable": c, "verdict": k.verdict,
+                     "blocked_by": k.blocked_by, "halts": k.halts,
+                     "g_actual": k.g_actual, "g_certified": k.g_certified})
+    return {
+        "rows": rows,
+        "terminal_walls": sorted({r["blocked_by"] for r in rows
+                                  if r["verdict"] == "terminal"}, key=str),
+        "epistemic_verdicts": sorted({r["verdict"] for r in rows
+                                      if r["blocked_by"] == "epistemic"}),
+        "soundness_violations": [r for r in rows
+                                 if r["g_certified"] > r["g_actual"]],
+    }
+
+
 # ---------------------------------------------------------------------- main
 
 
@@ -372,6 +419,40 @@ def main(argv: list[str] | None = None) -> int:
     print(f"     the second kind of system into the first.")
     print()
 
+    cls = classification_scan()
+    print("  Every sound combination of the four predicates, and where it lands")
+    print()
+    print(f"  {'verdict':<12}{'n':>3}  {'halts':>6}  walls seen")
+    for v in ("terminal", "stagnant", "hidden", "recognised"):
+        sub = [r for r in cls["rows"] if r["verdict"] == v]
+        if not sub:
+            continue
+        print(f"  {v:<12}{len(sub):>3}  {str(sub[0]['halts']):>6}  "
+              f"{sorted({str(r['blocked_by']) for r in sub})}")
+    q5 = ("epistemic" not in cls["terminal_walls"]
+          and cls["epistemic_verdicts"] == ["hidden"]
+          and not cls["soundness_violations"])
+    print()
+    print(f"  Q5 the three walls do NOT classify terminal states ...... "
+          f"{'CONFIRMED' if q5 else 'REFUTED'}")
+    print(f"     terminal states carry only {cls['terminal_walls']} — the")
+    print(f"     epistemic case lands in {cls['epistemic_verdicts']}, not in")
+    print(f"     terminal, because it has a LIVE move: G_actual = 1 with")
+    print(f"     G_certified = 0. It halts, but nothing is missing.")
+    print()
+    print(f"     So a proposed classification theorem — 'every terminal state is")
+    print(f"     economic, structural, or epistemic' — is refuted over the whole")
+    print(f"     sound predicate space ({len(cls['rows'])} combinations, checked")
+    print(f"     exhaustively). Terminal splits TWO ways, not three. Folding the")
+    print(f"     epistemic case back into 'terminal' would lose exactly the")
+    print(f"     distinction the interior experiment was built to draw: halting")
+    print(f"     because nothing is there, versus halting on something real you")
+    print(f"     cannot authorise.")
+    print()
+    print(f"     Note also that halting and having-no-moves are different cuts:")
+    print(f"     stagnant does not halt and has moves; hidden halts and has one.")
+    print(f"     No soundness violations in any combination.")
+    print()
     print("  What this changes in the framework")
     print()
     print("  G is no longer a primitive. It is:")
@@ -399,10 +480,12 @@ def main(argv: list[str] | None = None) -> int:
         out.write_text(json.dumps({
             "params": vars(args) | {"output_dir": str(args.output_dir)},
             "consolidation": rows, "productivity": probe, "policy_sweep": sweep,
+            "classification": cls,
             "verdicts": {"Q1_decomposition_complete": q1,
                          "Q2_hidden_is_one_arm": q2,
                          "Q3_unproductivity_is_not_a_wall": q3,
-                         "Q4_no_bound_buys_both": q4},
+                         "Q4_no_bound_buys_both": q4,
+                         "Q5_walls_do_not_classify_terminals": q5},
         }, indent=2, default=str))
         print(f"\n  wrote {out}")
     return 0
