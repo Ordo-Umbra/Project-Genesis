@@ -537,6 +537,48 @@ saturating domain gives the same five categories is untested.
 
 ---
 
+## 8d. Result eight — a ceiling nobody chose
+
+*The box was suspiciously tidy, so this is the same question in a domain where
+saturation is not hand-set.*
+
+### What the math actually says
+
+In the box, saturation was **stipulated**: `k` atoms, one added per step. The
+address and the thing added were the same object — the condition under which
+nothing can come apart. So: `n` propositional variables, `2ⁿ` valuations, a
+theory *is* its surviving models, a step eliminates one, and it cannot empty the
+set because a theory with no models is inconsistent. `C = 2ⁿ − 1` falls out of
+the semantics, and the address now names *which* model to remove.
+
+### What was measured
+
+**The ceiling is still naming-invariant in location.** Every adequate scheme
+reaches exactly the same floor.
+
+**But not in cost.** One adequate scheme pays **3.5× more** for the identical
+result (n = 8: 255 steps vs 897). The box couldn't show this. Separate the
+address from the thing added, and "adequate" splits into *efficient* and
+*merely-eventually-correct*.
+
+**And content-addressing turns out to be catastrophic here, not just expensive.**
+`inline` names itself by its surviving models, so its address only changes when
+an elimination *succeeds*. One wasted move and it is deterministically stuck —
+`I = 1` out of `C = 255`, forever. A system whose state is its address cannot
+recover from a single move that achieves nothing.
+
+**`stagnant` was hiding a family.** Three mechanisms, all reported identically,
+stalling at 1, 128 and 8 in the same domain: **freeze** (address stops moving),
+**coverage** (addresses reach only half the space), **collision** (address space
+too small).
+
+### What it does not show
+
+The 3.5× is a property of one hash — at `n ≤ 6` the same hash is a permutation
+and the gap vanishes. Existence is the claim, not a constant.
+
+---
+
 ## 9. What this does not say
 
 Kept separate deliberately, because the results are aesthetically suggestive and

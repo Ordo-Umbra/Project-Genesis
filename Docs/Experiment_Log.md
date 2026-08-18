@@ -2066,6 +2066,71 @@ the next thing that could refute this.
 
 ---
 
+## A ceiling nobody chose — and where the box's tidiness came from
+
+The atom box produced a reachable ceiling and every adequate naming scheme hit it
+in exactly `C` steps. That tidiness was suspect: saturation there was
+**stipulated** — `k` atoms, one added per step — and the address and the thing
+added were effectively the same object, which is precisely the condition under
+which nothing can come apart. `experiments/reflection_model_ladder.py` moves to a
+domain where the ceiling is semantic: `n` propositional variables give `2^n`
+valuations, a theory *is* its surviving models, a step eliminates one, and the
+ladder cannot empty the set because a theory with no models is inconsistent. So
+`C = 2^n − 1` falls out of the semantics, and the address now names *which* model
+to eliminate — a separate thing from the elimination. **5/5:**
+
+- **Q1 ✓ Capacity is emergent and reachable.** A well-addressed ladder makes
+  exactly `C` eliminations and is then stopped by consistency, not by a counter.
+- **Q2 ✓ Exhaustion is naming-invariant in LOCATION but not in COST.** Two
+  adequate schemes reach exactly the same floor — and one pays **3.5×** more to
+  get there (n = 8: 255 steps vs 897; n = 10: 1023 vs 3704). **The box could not
+  show this**, because there addressing and adding were one operation.
+- **Q3 ✓ Content-addressing freezes permanently on its first wasted move.**
+  `inline` names itself by its surviving models, so its address only changes when
+  an elimination *succeeds*. One miss and it is deterministically stuck — `I = 1`
+  out of `C = 255`, forever. In the arithmetic setting the same scheme was merely
+  expensive; here it is catastrophic. **Cost and recoverability are different
+  properties**, and only a domain where moves can be wasted tells them apart.
+- **Q4 ✓ At least three distinct ways to fail to exhaust**, all reported as
+  `stagnant` and all different underneath: **freeze** (`inline`, address stops
+  moving), **coverage** (`partial`, addresses reach only half the models),
+  **collision** (`truncated`, address space smaller than the domain). They stall
+  at `1`, `128` and `8` respectively in the same domain. So `stagnant` was hiding
+  structure — it is a family, not a failure.
+- **Q5 ✓ The box's tidiness was an artifact of its construction.** There,
+  adequate implied reaching `C` in `C` steps. Here `adequate` splits into
+  efficient and merely-eventually-correct, and the split is invisible in every
+  observable the box had.
+
+**Does the taxonomy transfer? Yes, and it gains a dimension.** `exhausted` and
+`stagnant` still separate, and the naming-invariance discriminator still works —
+but only for the *location* of the ceiling. **Cost** is a new observable neither
+previous domain could produce, and under it `stagnant` resolves into at least
+three mechanisms.
+
+The pattern across three domains is consistent, and worth stating plainly: **each
+richer domain has left the previous categories standing and added one the
+previous construction was structurally unable to express.** Arithmetic could not
+express `exhausted`. The box could not express `cost`. That is the opposite of a
+framework being confirmed, and it is the more useful outcome — it says where to
+look next rather than that there is nowhere left to look.
+
+Reproduce with `python experiments/reflection_model_ladder.py` (`--quick` for a
+smoke run); 18 tests in `tests/test_reflection_model_ladder.py`, with the
+`inline` freeze pinned by *mechanism* rather than by its stall value, since
+"stops at 1" is a symptom and "its address stops moving" is the cause. 189
+reflection tests, 3.2s.
+
+**Honest scope.** `scattered` is inefficient because a particular integer hash
+revisits models; at `n ≤ 6` that same hash is a permutation and the gap vanishes
+entirely. The arm establishes the **existence** of adequate-but-costly schemes,
+not a constant — the 3.5× is a property of that hash and is not reported as
+anything more. The domain is still a model, and shares no machinery with the
+arithmetic ladder or the atom box, which is the point: what is claimed to
+transfer is the taxonomy, not the code.
+
+---
+
 ## What Comes Next
 
 The frontier questions, roughly in priority order:
