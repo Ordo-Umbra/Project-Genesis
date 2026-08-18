@@ -493,6 +493,50 @@ absolute cliff rate means nothing on its own. Only the shape survives.
 
 ---
 
+## 8c. Result seven — a ladder in a box
+
+*Added after a reviewer asked whether the taxonomy survives when `C` varies.*
+
+### The intuition
+
+Everything above was measured in a setting with no ceiling. What happens in a
+system that can actually fill up?
+
+### What the math actually says
+
+`I < C` is a **theorem** in the arithmetic setting, so one possible blocker could
+never occur: running out of domain. And raising `C` doesn't test it — `I < C` is
+a theorem in second-order arithmetic and set theory too. So the *domain* has to
+change: `k` atoms, a theory is a subset of them, `C = k`, ceiling reachable.
+
+The question is whether **exhausted** is a real category or stagnation renamed.
+They look identical from outside — moves exist, none productive, system keeps
+running. One test separates them: **is it rescuable by renaming?**
+
+### What was measured
+
+**Exhaustion is naming-invariant.** Every adequate scheme stalls at exactly `C`.
+**Stagnation is not** — a scheme with too small an address space stalls early,
+and switching schemes moves it. So `exhausted` is a genuine fifth category.
+
+**And a naming defect is invisible when the box binds first.** Truncated and
+indexed are indistinguishable *exactly* when the address space is at least the
+box size — 15/15 rows, no exceptions. The `truncated` pathology was detectable
+earlier **only because arithmetic is infinite**. In a small enough box, a broken
+system and a sound one agree on every observable: same stall, same reason, same
+interior prediction. The defect wasn't fixed; the box was too small to show it.
+
+**Exhaustion is fully visible from inside** — 72/72 exact, lookahead unbounded,
+known at rung 0. The bookend: the epistemic wall was the one limit a system could
+never see coming; this is the one it sees most clearly.
+
+### What it does not show
+
+The box is a model, chosen as the simplest thing that saturates. Whether a richer
+saturating domain gives the same five categories is untested.
+
+---
+
 ## 9. What this does not say
 
 Kept separate deliberately, because the results are aesthetically suggestive and

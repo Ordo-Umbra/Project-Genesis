@@ -1062,6 +1062,12 @@ class Continuation:
     affordable: bool
     productive: bool
     certifiable: bool | None
+    #: Has the *domain* run out — `I = C`? Always `False` in the arithmetic
+    #: setting, where `I < C` is a theorem and the ceiling is unreachable.
+    #: It took a saturating domain (`finite_ladder.py`) to produce a state
+    #: where this is `True`, which is exactly why it was missing from the
+    #: first four dimensions rather than overlooked in them.
+    domain_exhausted: bool = False
 
     @property
     def g_actual(self) -> int:
@@ -1095,6 +1101,10 @@ class Continuation:
         nothing. The second one does not halt — it runs to the horizon — so
         calling it terminal contradicts the measurement that found it.
 
+        - `exhausted` — the domain itself ran out, `I = C`. Like `stagnant`
+          it does not halt, but unlike `stagnant` no naming scheme rescues it:
+          there is nothing left to name. Measured in `reflection_finite_box.py`;
+          unreachable in the arithmetic setting by theorem.
         - `terminal` — no move exists at all. The system stops.
         - `stagnant` — moves exist, none is productive. The system *continues*
           and gets nowhere, with every wall-detector reading normal.
@@ -1106,6 +1116,8 @@ class Continuation:
         ambiguity is real in the informal table version of this rule and is why
         the rule lives here rather than in prose.
         """
+        if self.domain_exhausted:
+            return "exhausted"
         if not self.moves_exist:
             return "terminal"
         if not self.productive:
@@ -1120,6 +1132,8 @@ class Continuation:
     @property
     def blocked_by(self) -> str | None:
         """Which dimension failed, named in the order a climb would meet it."""
+        if self.domain_exhausted:
+            return "exhausted"
         if not self.affordable:
             return "economic"
         if not self.structural:

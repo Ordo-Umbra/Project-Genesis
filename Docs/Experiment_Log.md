@@ -1991,6 +1991,81 @@ the ordinal setting or a general property.
 
 ---
 
+## A ladder in a box — what varying C actually changes
+
+Every result in this series was measured where `I < C` is a **theorem**, so one
+logically possible blocker could never occur: `exhausted`, meaning the domain
+itself ran out. Raising `C` does not help — `I < C` is a theorem in second-order
+arithmetic, in set theory and at every admissible ordinal, so climbing altitude
+re-derives the guarantee rather than testing it. `experiments/reflection_finite_box.py`
+changes the *domain* instead: `k` atomic sentences, a theory is a subset of them,
+`C = k` exactly, and the ceiling is reachable.
+
+The collaborator's prediction, registered before the run: **no limit in general,
+but within a finite setting — "within the box" — a limit that is real.** Both
+halves confirmed, and the second carries the sharper consequence. **5/5:**
+
+- **Q1 ✓ The box saturates: `I` reaches `C` exactly.** Every adequately-addressed
+  ladder makes exactly `C` productive steps and then stops producing. First time
+  in the series `I = C` has been *reachable* at all.
+- **Q2 ✓ Exhaustion is naming-invariant.** Within each box, `inline` (addresses
+  by content), `indexed` (by position) and `searched` (cannot certify its own
+  address) all stall at the **same rung**. The stall is a fact about the domain,
+  not about how the system writes itself down — which is what makes `exhausted`
+  a genuine fifth category rather than stagnation renamed.
+- **Q3 ✓ Stagnation is naming-dependent and rescuable.** A presentation whose
+  address space is smaller than the box stalls at its address space, not at `C`,
+  and switching schemes moves it. The bound is in the presentation and comes off
+  with the presentation.
+- **Q4 ✓ A naming defect is invisible when the box binds first.** Truncated and
+  indexed are indistinguishable **exactly** when the address space is at least
+  the size of the box, and distinguishable exactly when it is not — 15/15 rows
+  matching with no exceptions.
+- **Q5 ✓ Exhaustion is fully visible from inside.** 72/72 exact interior
+  predictions across every box, scheme and width; lookahead is unbounded, known
+  at rung 0.
+
+**Q4 is the result with consequences outside the construction.** The `truncated`
+pathology was detectable in the arithmetic setting *only because that domain is
+infinite*. Put the same broken system in a box smaller than its defect and it
+behaves identically to a sound one on every observable — same stall, same reason,
+same interior prediction. **A system cannot distinguish "I am out of room" from
+"I am badly built" when it runs out of room first, and neither can anyone
+watching it.** The defect was never fixed; the box was too small to reveal it.
+
+**Q5 is the bookend.** The epistemic wall was the one thing a system could not
+see coming. Exhaustion is the one it sees most clearly — both quantities it needs
+are countable from its own presentation. Running out of room is the *easiest*
+limit to know about and being unable to certify a live continuation is the
+hardest, and they sit at opposite ends of the same taxonomy.
+
+**So varying `C` does change things, in a specific way: it adds a dimension the
+fixed-`C` setting could not express.** `Continuation` now carries
+`domain_exhausted`, pinned `False` throughout the arithmetic work — which is
+exactly why it was missing from the first four dimensions rather than overlooked
+in them. Five verdicts over 32 sound combinations:
+
+| verdict | halts? | rescuable by renaming? |
+|---|---|---|
+| `exhausted` | no | **no** |
+| `terminal` | yes | no |
+| `stagnant` | no | **yes** |
+| `hidden` | yes | no |
+| `recognised` | — | — |
+
+Reproduce with `python experiments/reflection_finite_box.py` (`--quick` for a
+smoke run); 19 tests in `tests/test_reflection_finite_box.py`. 171 reflection
+tests, 2.0s.
+
+**Honest scope.** The box is a **model** — `k` atoms, one added per productive
+step — chosen because it is the simplest object that saturates, and it shares no
+machinery with the arithmetic ladder. What is claimed to transfer is the
+*taxonomy*, not the construction. Whether a richer saturating domain (bounded
+type theories, finite models) yields the same five categories is untested, and is
+the next thing that could refute this.
+
+---
+
 ## What Comes Next
 
 The frontier questions, roughly in priority order:
