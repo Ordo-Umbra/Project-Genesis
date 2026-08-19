@@ -579,6 +579,48 @@ and the gap vanishes. Existence is the claim, not a constant.
 
 ---
 
+## 8e. Result nine — productive forever, going nowhere
+
+*The first prediction in this series written down **before** the domain was
+built, with the domain chosen by someone else. That was the whole point: §8d
+admitted that "each richer domain adds a category" was partly selection, since
+each domain had been picked because it could express something new.*
+
+### What the math actually says
+
+A consistency statement can be taken relative to **any finite set** of theories,
+not just the previous one in a chain. That turns the ladder into a DAG, and
+separates two things every previous domain fused: *this step added something
+new* and *the collection reached further*.
+
+### What was measured
+
+**The predicted split exists.** Steps that add a genuinely new sentence and leave
+the global rank exactly where it was.
+
+**It needs branching, and branching can't arise from one root.** From a single
+base, multi-parent reflection produces **nothing** — 30/30 duplicates, because
+every join over a chain carries the content of its maximum. Independent starting
+theories have to be *given*. Neither registered prediction said that.
+
+**And it is not a sixth wall.** From one and the same graph, one policy gives a
+sideways step and another gives an advancing one. Every earlier category is a
+fact about *where a system is*; this is a fact about *what it chose*. Nothing
+blocks it — every check passes.
+
+**The consequence:** 200 consecutive productive steps, 209 nodes built, distinct
+global ranks visited: **`[5]`**. A system can be **productive forever and go
+nowhere.** Same budget spent differently: 39 nodes either way, rank 35 vs 5.
+
+### What it does not show
+
+`depth` is a declared proxy for proof-theoretic rank — the prediction was phrased
+in terms of genuine ordinal height, and this is a weakening. And the survival of
+the three walls is only *partially* tested here: this domain has no budget, no
+naming defect and no certification requirement, so they have nothing to bite on.
+
+---
+
 ## 9. What this does not say
 
 Kept separate deliberately, because the results are aesthetically suggestive and

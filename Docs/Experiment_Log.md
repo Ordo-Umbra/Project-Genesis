@@ -2131,6 +2131,95 @@ transfer is the taxonomy, not the code.
 
 ---
 
+## Multi-parent reflection — the first prediction written before the domain existed
+
+The previous entry closed by admitting that "each richer domain adds a category"
+was partly **selection**: each domain had been chosen *because* it could express
+something the last one could not. The fix proposed there was a protocol —
+predict what a new domain will show *before building it*, with the domain chosen
+by someone else. A reviewer did exactly that.
+
+**The domain (chosen externally):** finite multi-parent reflection. A step may
+add the consistency statement of any finite set of already-constructed theories,
+not merely the immediate predecessor — the ladder becomes a DAG. Motivated by
+the ordinary proof-theoretic fact that consistency can be taken relative to any
+finite collection, not reverse-engineered to produce a new wall.
+
+**Registered before implementation.** *Reviewer:* prior categories survive, and
+a step can be **locally productive** while leaving the **global rank** of the
+collection unchanged, because the reflected theories are already dominated. If
+so, `productive` splits into two orthogonal predicates. *This side, sharper:* the
+phenomenon appears **only where the DAG genuinely branches** — over a chain any
+join's content is that of its maximum, so joins say nothing new.
+
+**Both confirmed, and the second more strongly than stated.**
+
+| roots | policy | advancing | sideways | duplicate | rank | size |
+|---|---|---|---|---|---|---|
+| 1 | deepen | 30 | 0 | 0 | 35 | 36 |
+| 1 | broaden | 0 | **0** | **30** | 5 | 6 |
+| 3 | deepen | 30 | 0 | 0 | 35 | 38 |
+| 3 | broaden | 0 | **30** | 0 | 5 | 38 |
+
+- **The split exists.** Steps that add a genuinely new sentence and leave global
+  rank exactly where it was. The linear domains could not have shown it, because
+  there was only one place growth could happen.
+- **It requires branching — and branching cannot arise from a single root.**
+  From one base, free finite-join reflection produces *nothing*: 30/30
+  duplicates. Every join over a chain carries the content of its maximum.
+  Branching has to be **given**, as independent starting theories. Neither
+  registered prediction said that.
+
+**Q4, which neither prediction reached: `sideways` is a property of MOVES, not
+of states.** From one and the same graph, `broaden` gives a sideways step and
+`deepen` gives an advancing one. Every earlier category — economic, structural,
+epistemic, exhausted, stagnant — is a fact about *where a system is*. This is a
+fact about *what it chose*. **So it is not a sixth wall.** Nothing blocks it;
+every check passes.
+
+**And the consequence:** 200 consecutive `broaden` steps, **every one
+productive**, building 209 nodes — distinct global ranks visited: `[5]`. A system
+can be **productive forever and go nowhere.** Not stagnation, which produces
+nothing; not exhaustion, which has nothing left; not any wall, since nothing
+blocks it. No observable in the previous five domains would show it. Set beside
+the same budget spent differently: at 4 roots and 30 steps, `deepen` and
+`broaden` build the **same 39 nodes** and reach rank **35 and 5** — identical
+productivity, identical cost, 7× the reach.
+
+**Q1 is reported as PARTIALLY TESTED, not confirmed.** `stagnant` reappears
+intact as `duplicate` under machinery shared with nothing earlier. But this
+domain has no budget, no naming defect and no certification requirement, so
+`economic`, `structural` and `epistemic` have nothing to bite on. The run neither
+confirms nor refutes their survival, and calling it confirmed would claim a
+measurement that was not made.
+
+**A mistake worth recording.** Two assertions failed on the first run, both from
+one root cause: **conflating "has multiple parents" with "genuinely joins
+incomparable things."** Joining the frontier with anything beneath it produces a
+two-parent node whose key is *identical* to reflecting the frontier alone —
+nominal branching, no new content. `branches()` now tests for incomparable
+contents, and the corrected claim about chains is **redundancy** (a join carries
+its maximum's key) rather than **sterility** (a join is always a duplicate),
+which is false.
+
+Reproduce with `python experiments/reflection_dag.py` (`--quick` for a smoke
+run); 15 tests in `tests/test_reflection_dag.py`. 204 reflection tests, 3.6s.
+
+**Honest scope.** `depth` is a **declared structural proxy** for proof-theoretic
+rank; the registered prediction was phrased in terms of genuine ordinal height,
+and substituting depth is a weakening stated rather than hidden. Sentence
+identity is normalised to logical content — without that the phenomenon would be
+an artifact of the representation. Q4 was in neither registered prediction and is
+marked as a question the first two raised rather than as something foreseen.
+
+**On the protocol itself:** it worked, and it cost something to run honestly. One
+registered prediction came out stronger than written, one outcome was outside
+both, one question is only partly answered, and one of my own assertions was
+wrong in a way two tests caught. That is a better yield than five confirmations
+would have been.
+
+---
+
 ## What Comes Next
 
 The frontier questions, roughly in priority order:
