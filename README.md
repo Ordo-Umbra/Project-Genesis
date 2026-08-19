@@ -30,6 +30,7 @@ it, runs them, and reports verdicts — including when the answer is no.
 | The theory, from zero, in half an hour | [`Docs/The_Principle.md`](Docs/The_Principle.md) |
 | One result that stands entirely alone, no framework needed | [`Docs/Junction_Selection.md`](Docs/Junction_Selection.md) |
 | The full chronological record, ~100 experiments with verdicts | [`Docs/Experiment_Log.md`](Docs/Experiment_Log.md) |
+| The reflection-ladder results in plain language, no proof theory assumed | [`Docs/The_Reflection_Ladder.md`](Docs/The_Reflection_Ladder.md) |
 | To actually run the thing — CLI, agents, server, browser toys | [`Docs/Usage.md`](Docs/Usage.md) |
 
 Every claim in `The_Principle.md` is tagged with its standing: **[measured]** —

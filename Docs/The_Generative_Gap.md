@@ -172,6 +172,66 @@ shortfall is the capacity the field lacks. Our "ΔC leads, κ·ΔI is
 capacity-gated and lags" is the in-silico echo of "C(F) leads, I(F) lags."
 The gap we kept measuring is the gap the ordinals name.
 
+*The right column is now executable too — `reflection_ladder.py`,
+`project_genesis/reflection.py`.* The ladder `T_{n+1} = T_n + Con(T_n)` was
+cited above and never run; it now runs from `T_0 = PA`, constructing each
+`Con(T_n)` syntactically. Running it corrects something this section had been
+taking for granted. In the `(C, I, G)` bookkeeping, `C = ω₁^CK` is fixed by the
+domain and `G ≥ 1` holds because the successor is *defined* — both are
+definitions, and neither can fail. The only quantity that can is whether a rung
+actually enlarges the axiom set, and that turns out to depend on a choice the
+mathematics leaves free: which of the r.e. axiom set's infinitely many indices
+`Con` names. Under two honest presentations the ladder's productive content is
+identical rung for rung while its symbol cost differs by **2,222×** at twelve
+rungs (geometric against flat); under a deliberately lossy one the index wraps
+at rung 8, the theory stops moving, and `I` climbs on regardless at unchanged
+cost. So **formal size is not evidence of rank, and rank is not evidence of
+capability** — the two dissociate in both directions. The reflection ladder
+raising `|F|` remains the right picture of the right column; what the run adds
+is that the raising has to be *certified*, not assumed, and that the certificate
+is cheap. Full entry and honest scope in
+[`Experiment_Log.md`](Experiment_Log.md); the whole arc in plain language, written to be
+read cold, is in [`The_Reflection_Ladder.md`](The_Reflection_Ladder.md).
+
+*And the table above has a hole in it — `reflection_capacity.py`.* The row
+"κ pays for integration ↔ proof strength buys inferential reach" is the one
+place the correspondence was never really drawn: **nothing in the right-hand
+column ever runs out.** Reflection is free, so "the ladder never saturates" is a
+property of how accessibility was defined, not a finding. Giving the ordinal
+column the κ it was missing — a successor is reachable only if the theory can
+afford to construct it, out of a capacity that heals at rate `r` — closes that
+row and returns three things. Continuation becomes **contingent**: the
+geometric-cost presentation terminates at every budget, and its reach grows at
+**one rung per doubling** of capacity, so like the area-law separation it *cannot
+be bought* — only re-presented. The recovery rate becomes a **sharp dial** at
+`r* = L/κ_max`, matched to better than 0.01% — the same dial that decides whether
+memory re-roots in the field column now decides whether a formal system keeps
+climbing, which is the closest the two columns have come to sharing a mechanism
+rather than a shape. And the budget alone turns out **not to be enough**: the
+degenerate presentation is indistinguishable from the real ladder on every
+capacity observable while producing nothing, so `𝒜` has to be restricted on
+affordability *and* productivity together. That pair — a cost that binds and a
+certificate that the step did something — is what the ordinal reading of the gap
+was missing, and neither half substitutes for the other.
+
+*And the second mechanism changes the character of the result —
+`reflection_limits.py`.* Everything above is quantitative: presentation is a
+**price**, paid in symbols or in capacity. The model names a second mechanism
+besides the successor, the hierarchical limit `T_{l_a} = ⋃ₙ T_{succ^n(a)}`, and
+there the price becomes a **gate**. Taking a limit means naming the union of the
+whole ladder below; an index that *describes* an axiom set can do that at
+constant cost (measured ratio to a successor: **1.000**, flat in the ladder
+subsumed), while an index that is a literal axiom *list* has no list to give and
+cannot do it at any budget — the wall moves from rank 6 to rank 9 as capacity
+rises from 10⁵ to 10⁶, and then stops moving forever, including at 10¹⁵, halting
+for a different reason. So there are **two kinds of terminal state**: the
+contingent one a budget produces, and the necessary one a presentation produces,
+where the edge is absent from `𝒜` rather than priced within it. What a system can
+buy is not a cheaper enumeration but *the right to stop enumerating* — and a
+system that can only name what it has already listed hits a hard ceiling at its
+first limit while `C`, `I` and the nominal `G` all report nothing unusual right
+up to the moment it stops.
+
 ---
 
 ## 4. The bridge ahead: ordinals → functors → instantons

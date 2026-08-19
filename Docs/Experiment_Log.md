@@ -1511,6 +1511,913 @@ Reproduce with `python experiments/n3_chirality.py` (`--quick` for a smoke run);
 
 ---
 
+## The reflection ladder, run — does climbing it buy capability or only symbols?
+
+`The_Generative_Gap.md` §3 has been leaning on a borrowed theorem for the whole
+ordinal reading: `I(F) < C(F) = ω₁^CK` strictly and permanently, with the ladder
+`T_{n+1} = T_n + Con(T_n)` climbing forever without closing the gap. The ladder
+was cited, never run. `experiments/reflection_ladder.py` runs it —
+`T_0 = PA`, twelve rungs, `Con` constructed syntactically each time — and asks
+the first question about it that can come out either way.
+
+The trap the design had to avoid: in the `(C, I, G)` bookkeeping, `C = ω₁^CK` is
+fixed by the domain and `G ≥ 1` holds because the successor is *defined*. Both
+are definitions. A program that printed them back would be a tautology with a
+progress bar. So the measured quantity is a different one — **did the rung
+enlarge the axiom SET** — plus a machine-checked derivation that *uses* what was
+added. `I` is a counter and will climb regardless; the experiment is built so
+that the measured quantity can come apart from it, and one arm is built so that
+it does. Three presentations of the same construction, differing only in which
+index `Con` names for the theory below it (an r.e. set has infinitely many, and
+the mathematics does not fix the choice): `inline` (the literal axiom list),
+`indexed` (a recursive index `⟨code(PA), n⟩`), and `truncated` — a deliberate
+negative control whose rung counter lives in a 3-bit field. **3/3, and the
+headline answer is neither of the two the question offered:**
+
+- **Q1 ✓ The productive step is presentation-invariant.** `12/12` rungs
+  productive in both honest arms: every rung enlarged the axiom set, every
+  `Con(T_n)` checked as an axiom of `T_{n+1}`, and the conjunction of all twelve
+  rungs was derived and machine-checked in **45 lines** — each rung used as a
+  premise, not merely stored.
+- **Q2 ✓ The cost is not.** At rung 12 the `inline` presentation is **11,103,120
+  symbols** against `indexed`'s **4,996** — a factor of **2,222**, on two
+  ladders whose rungs are one-for-one identical in productive content. `inline`
+  grows **×2.00 per rung** (geometric, because each `Con` must carry a numeral
+  for the whole theory beneath it); `indexed` is **×1.00** (flat, bounded by the
+  base code rather than by the height reached). The separation has no limit.
+- **Q3 ✓ The dissociation runs both ways.** The truncated arm's index first
+  repeats at **rung 8** (= 2³, exactly the wrap), and from there `Con(T_n)` is a
+  sentence the theory already contains: the measured increment falls to **0** and
+  the axiom count freezes at **16** — while `I` climbs to 11 exactly as in the
+  other two arms, at identical cost to `indexed`.
+
+**Q4 — does increasing `I` produce productive capacity, or merely formal
+complexity?** Neither, as posed. `I` is identical in all three arms, and the two
+other quantities each come apart from it in a *different direction*: `inline` vs
+`indexed` shows formal size inflated 2,222× at constant capability (so size is
+not evidence of rank), and `indexed` vs `truncated` shows capability lost at
+constant cost while the counter keeps climbing (so rank is not evidence of
+capability). Increasing `I` buys productive capacity only when the presentation
+makes the step productive, and **whether it does is an independent fact that has
+to be measured**. The falsifiable separation the framing asked for is real, and
+the truncated arm proves it is not vacuous — a system can climb the ladder by
+the counter and go nowhere. On this construction the certificate that rules that
+out is cheap: one bit per rung, plus a derivation that uses what was added.
+
+Reproduce with `python experiments/reflection_ladder.py` (`--quick` for a
+smoke run); the generator, Gödel numbering and Hilbert proof checker are in
+`project_genesis/reflection.py`, with 42 tests in
+`tests/test_reflection_ladder.py` — most of them adversarial, since the claim
+that a rung is a *capability* rests entirely on the checker refusing bad proofs.
+
+**Honest scope — this measures the syntax of the ladder, not its strength.**
+`T_n ⊬ Con(T_n)` is **not measured here and cannot be**: it is Gödel's second
+theorem, discharged from stated hypotheses (each `T_n` consistent, recursively
+axiomatised, extending Robinson arithmetic). The bounded closure search reported
+in the run is calibrated against a target the theory demonstrably proves and then
+saturates at ~20 formulas on `Con(T_n)` — it is *rule*-limited, not
+budget-limited, covering a vanishing fragment of PA's derivations, and it is
+printed as a smoke test rather than as evidence. `Prf` is a primitive relation
+symbol rather than an expanded Δ₀ formula, so absolute symbol counts carry an
+unexpanded constant and only ratios between arms are read. `I = n` is declared
+metadata — the model puts the rank at `ε₀ + n`; Kleene's `O`, fundamental
+sequences and limit notations are deliberately not implemented. What the run
+does establish is the thing the ordinal framing had been assuming for free: the
+productive step and the formal bulk are **two** quantities, and the `(C, I, G)`
+bookkeeping does not by itself tell you which one you are holding.
+
+---
+
+## Making the ladder pay — cost-bounded accessibility, and the κ the ordinal column never had
+
+The run above left one thing unresolved, and it was the important one. "No
+terminal state" is a theorem about the **accessibility relation**, not about the
+system: `𝒜` was defined to contain successors, so successors are accessible and
+`G > 0` holds by inspection. Nothing a run can do bears on it.
+
+The field program does not have that problem, because there integration is paid
+for out of a capacity field κ consumed by load and regenerating with slack, and
+the whole memory arc turns on that budget binding. The ordinal column of
+`The_Generative_Gap.md` §3 has **no κ at all** — reflection is free — so it drops
+the one feature that makes the field column interesting. Its side-by-side table
+maps "κ pays for integration" onto "proof strength buys inferential reach", but
+nothing in the right-hand column ever runs out.
+
+`experiments/reflection_capacity.py` ports the budget across. A successor is
+reachable only if the theory can afford to construct it, with the cost paid from
+a capacity that heals at rate `r` between rungs — the field program's own
+dynamics, discretised onto the ladder. **4/4:**
+
+- **Q1 ✓ Cost-bounding produces terminal states.** `inline` terminates at every
+  budget tested (rung **2 / 6 / 9 / 12 / 16 / 19 / 22** for κ_max = 10⁴…10¹⁰);
+  the flat-cost arms survive the horizon at all of them. `G > 0` is now
+  *contingent* — true for some presentations, false for others — which is
+  exactly what it could not be before.
+- **Q2 ✓ Capacity is nearly worthless against geometric cost.** `inline`'s reach
+  grows at **1.000 rungs per doubling** of capacity: six orders of magnitude of
+  budget buy it 20 rungs. A presentation whose cost doubles cannot be rescued by
+  capacity, only by a better presentation — the ordinal column's version of the
+  field program's *the separation cannot be bought*.
+- **Q3 ✓ The recovery rate is a sharp dial, and it is the one the algebra
+  predicts.** Paying `L` and healing a fraction `r` back toward `κ_max` has fixed
+  point `κ* = κ_max − L(1−r)/r`, sustainable exactly when `κ* ≥ L`, so
+  `r* = L/κ_max`. Measured by bisection across three budgets and both flat arms,
+  the worst departure from the closed form is **< 0.01%**. `inline` has no such
+  threshold — no fixed `r` sustains an unbounded cost — reported as `none`, which
+  is the honest answer rather than a measurement failure. **The dial that decides
+  whether a formal system keeps climbing is the same dial the field program found
+  decides whether memory re-roots.**
+- **Q4 ✓ — and this is the one that matters — cost-bounding *alone* does not
+  separate productive from degenerate continuation.** At κ_max = 10⁵, r = 0.5 the
+  truncated control takes **the same 64 rungs** as `indexed` and has an
+  **identical critical recovery rate**: it is indistinguishable from the real
+  ladder on every capacity observable, while producing **8** new axioms to
+  `indexed`'s **64**. A budget rules out steps that cost too much and says
+  nothing about steps that cost little and achieve nothing — so ranking states by
+  how long they can continue actively rewards the arm doing the least.
+
+**The corrected relation therefore needs both halves.** Restrict `𝒜` on
+affordability *and* productivity together, and the control terminates at rung
+**8** — the wrap — at every budget and every recovery rate tested, while
+`indexed` still runs to the horizon. The budget makes `G > 0` contingent; the
+productivity certificate makes it *mean* something. Neither alone is enough, and
+the pair of experiments is what shows that neither alone is enough.
+
+Reproduce with `python experiments/reflection_capacity.py` (`--quick` for a smoke
+run); 21 tests in `tests/test_reflection_capacity.py`, including the one that
+pins the failure mode the first version of this scan actually had — a horizon
+shorter than the budget's own decay time makes a starving budget look
+sustainable, and reported a threshold four orders of magnitude low.
+
+**Honest scope.** The cost model is the *flow* cost of constructing the successor,
+not the *stock* cost of holding the presentation; a stock model moves the
+constants and not the ordering. The closed form for `r*` is exact only at constant
+cost, so it is applied to the flat arms and explicitly withheld from `inline`.
+`Prf` is still a primitive symbol, so budgets are in units of that convention
+rather than absolute. And none of this bears on whether the generative-continuation
+claim is true in general: it shows the *ordinal realisation* can be given
+contingent continuation, which the unbounded version could not, because it
+contained nothing that could fail.
+
+---
+
+## The limit mechanism — where presentation stops being a price and becomes a gate
+
+The model names **two** continuation mechanisms, and only one had been run:
+
+    K(T) = T + Con(T)              the local successor
+    T_{l_a} = ⋃ₙ T_{succ^n(a)}     the hierarchical limit
+
+Both previous results were *quantitative*: presentation cost a factor of 2,222
+in symbols at identical productive content, and a capacity budget made `G > 0`
+contingent without being able to tell a real ladder from a degenerate one.
+Presentation was a **price**. `experiments/reflection_limits.py` runs the second
+mechanism, where the prediction was that its character changes — because taking
+a limit means naming the union of the whole ladder below, and a presentation
+whose index is a literal axiom *list* has no list to give. **4/4:**
+
+- **Q1 ✓ The limit is a gate, not a price.** The `inline` arm's wall **moves
+  while it is economic** — rank 6 at κ_max = 10⁵, rank 9 at 10⁶ — and then stops
+  moving. From 10⁹ upward, including **10¹⁵**, every run halts in the same place
+  for a *different reason*: `limit-undefined`. The wall did not recede further;
+  it **changed kind**. `inline` takes 0 limits at any budget.
+- **Q2 ✓ Where definable, a limit costs exactly what a successor costs.** Ratio
+  **1.000** at every depth tested (2, 4, 8, 12 rungs subsumed), and flat in the
+  ladder it subsumes. Naming a union costs what naming anything costs, because
+  an index is a *description* and "everything below here" is not a longer
+  description than "this one thing". What `inline` cannot buy at any price is
+  not a cheaper list — it is **the right to stop listing**.
+- **Q3 ✓ The successor resumes past ω at full productivity.** `indexed` produces
+  all 13 of its 13 attempts in every block, through rank **ω·5+1**. `Con(T_ω)`
+  is new — the limit index has never been named — so passing ω costs the
+  mechanism nothing.
+- **Q4 ✓ The limit is a reprieve, not a cure.** The truncated control settles at
+  exactly **2³ = 8** productive rungs per ω-block, forever: `[9, 8, 8, 8, 8]`
+  (the first block gets one more, opening on a fresh index where later blocks
+  open on the one the limit itself consumed). A stalled ladder that takes a
+  limit **starts producing again** — worth knowing — but its rank runs away like
+  `ω·limits` while its productive content grows only *linearly* in limits taken.
+  The reprieve is bounded by the same width that caused the stall: it buys
+  blocks, not a rate.
+
+**Two kinds of terminal state, and they are not alike.** A *budget* produces a
+contingent wall — it moves when you pay more, and the recovery rate sets where it
+sits. A *presentation* produces a necessary wall — no budget moves it, because
+the edge is **absent from the accessibility relation** rather than priced within
+it. `inline` exhibits both, in that order, and the crossover is visible in a
+single table: the wall stops receding and starts refusing.
+
+That is what the `(C, I, G)` bookkeeping leaves out. `G > 0` is a statement about
+which edges exist; which edges exist is fixed by how a system names itself; and a
+system that can only name what it has already listed has a hard ceiling at its
+first limit — while its rank counter, its `C`, and its nominal `G` all report
+nothing unusual right up to the point where it stops.
+
+Reproduce with `python experiments/reflection_limits.py` (`--quick` for a smoke
+run); 21 tests in `tests/test_reflection_limits.py`, weighted toward the two
+places an impossibility claim could be wrong — that no code path lets `inline`
+through, and that the limit is genuinely productive and genuinely O(1).
+
+**Honest scope.** The rank notation is the **ω² fragment** `ω·a + b` — the
+smallest system expressing the two mechanisms and nothing more. It is *not*
+Kleene's `O`: no fundamental sequences, no notation comparison, no transfinite
+recursion, and the only ordinal fact used is that `(limits, successors)` orders
+lexicographically. `index()` is a **denotation** and `rungs` is the enumerated
+prefix — the limit theory's axiom set is *described*, not materialised, which is
+precisely the capability being measured and also the boundary of what was
+checked. `Prf` stays primitive, so only ratios between arms are read.
+
+---
+
+## Limits of limits — and what Kleene's `O` actually costs
+
+The limit run left an open question: the next rung is a limit *of* limits, and
+that was supposed to be where deferring Kleene's `O` stops being free.
+`experiments/reflection_omega_squared.py` runs it, and the answer is not the
+expected one. **4/4:**
+
+- **Q1 ✓ A limit of limits is the same mechanism, not a new one.** Cost ratio to
+  a successor is **1.0000 at every level from 1 to 6**, and every level adds a
+  new axiom. Going from ω to ω² is not a harder move than going from 3 to 4 — it
+  bumps a different coefficient of the same normal form. The gate generalises
+  too: `inline` refuses a limit at *every* level, not just the first. It is not
+  short of a level; it has no limit edge of any kind.
+- **Q2 ✓ Rank outruns cost without bound.** Cost per step is flat to within
+  **0.00%** all the way to **ω⁶+1**, reached in 30 steps, every one productive.
+  Rank is not bought with cost at all — it is bought with the *right to name*,
+  and once a presentation has that right the ordinal it reaches is limited only
+  by how many times you apply it.
+- **Q3 ✓ Notation validity below ω^ω is decidable and immediate.** Every CNF
+  limit gets a conclusive verdict with no search, because its fundamental
+  sequence is closed-form arithmetic on the normal form. Nothing is run, so
+  nothing can fail to halt.
+- **Q4 ✓ Above it, validity becomes a search that cannot conclude.** A total
+  fundamental sequence and one diverging at `n = 9` return **identical verdicts
+  at every bound up to 9**, and the total one is *never* conclusive at any
+  bound — the checker can only say "verified this far". Raising the bound does
+  not converge on an answer; it moves the same ignorance further out.
+
+**So: should the ordinal layer pay for `O`?** Not for reach. Everything below
+`ω^ω` — and `ε₀` by the same construction — is available with canonical
+notations at a cost per step that does not move. What `O` buys is *all* recursive
+ordinals, and what it spends is **the decidability of the accessibility relation
+itself**. Below it, `can_take_limit` is a decision; with it, `can_take_limit` is
+a search, and the system cannot in general determine which continuations are open
+to it.
+
+That is a **third kind of terminal state**, and it completes the set the series
+has been converging on:
+
+| stop reason | meaning | kind |
+|---|---|---|
+| `unaffordable` | the edge exists and costs too much | economic |
+| `limit-undefined` | the edge does not exist | structural |
+| `undecidable` | whether the edge exists cannot be decided | epistemic |
+
+And it lands squarely on `G`. **`G > 0` is a claim about which edges exist.** At
+the top of the recursive ordinals that claim stops being checkable by the system
+making it — not false, not unavailable, but undecidable from the inside. A system
+there cannot tell a continuation it *has* from one it merely cannot rule out.
+
+Reproduce with `python experiments/reflection_omega_squared.py` (`--quick` for a
+smoke run); 27 tests in `tests/test_reflection_omega.py`, weighted toward the
+ordinal comparison (a backwards `ω^k` ordering would silently reorder every
+rank-mentioning result without breaking anything visibly) and toward the
+decidable/searched distinction the `O` conclusion rests on.
+
+**Honest scope.** Q4 demonstrates the *shape* of the consequence, not the
+theorem. Divergence is simulated by a sequence that declines to halt; that
+totality is Π⁰₂-complete and `O`-membership Π¹₁-complete are **cited results**,
+not things any run could show. What is measured is only that a checker which must
+run a sequence cannot separate "total" from "total so far" — which is the
+property that makes the citation bite. The rank system is Cantor normal form
+below `ω^ω`: unique representations, decidable comparison, canonical fundamental
+sequences. `Prf` stays primitive, so only ratios between arms are read.
+
+---
+
+## The interior view — what a theory knows about its own walls
+
+Every measurement in this series had been taken from *outside*. The observer
+with the bigger notation system — running the ladder, reading off costs and
+collisions — was us, the whole time. `experiments/reflection_interior.py` asks
+the first question a theory can put to itself: using only checks it can run on
+its own presentation, what does it know about where and why it stops?
+
+It needed a fourth arm. Two of the three walls were exhibited by running
+presentations; the third was argued from the Π⁰₂ character of totality. So
+`searched` is added — a presentation whose limit notation is an *arbitrary*
+index rather than a canonical one, and so must be certified by **running** its
+fundamental sequence. The detail the whole result rests on: that sequence is
+`n ↦ n`, which is **total**. Its continuation genuinely exists. It halts anyway.
+**4/4:**
+
+- **Q1 ✓ Every theory predicts *where* it stops, exactly.** 16/16 across four
+  presentations and four budgets, including the undecidable arm — a cautious
+  system knows it will decline a step it cannot certify, so it knows precisely
+  where that happens.
+- **Q2 ✓ And *why*, for the two decidable walls.** `inline` names
+  `unaffordable` at κ_max = 10⁵ and `limit-undefined` above it: the same arm
+  reporting two different walls depending which it would **meet first**. This
+  experiment was written with that bug — the first version checked the limit
+  edge before simulating the budget and named the structural wall at a budget
+  where the economic one binds four rungs sooner.
+- **Q3 ✓ For the third wall, reality is not determinable.** `searched` knows it
+  halts at rung 10 and cannot establish whether anything was there. It halts on
+  a **live edge**, because a step it cannot certify is a step it will not take.
+  That is not a slower version of the other two walls.
+- **Q4 ✓ And the third wall is budget-invariant.** Identical answer from 10⁵ to
+  10¹², seven orders of magnitude buying exactly nothing, because the question
+  was never economic.
+
+**Stated carefully, because the tempting version is wrong.** The finding is
+*not* "from the inside a system cannot see its walls" — it sees all three and
+knows exactly where each one is. It is narrower and sharper:
+
+> A system is **complete about location** and **incomplete about necessity**.
+> It always knows where it stops. It does not always know whether stopping was
+> required.
+
+At the third wall it cannot distinguish a continuation it **lacks** from one it
+merely cannot **certify** — and the `searched` arm shows those are not the same
+situation, because there the edge was real and it stopped regardless.
+
+That bounds `G` from a new side. `G > 0` is a claim about which edges exist. A
+system can always compute where its own climb ends; what it cannot always
+compute is whether that ending was `G = 0`, or `G > 0` with no certificate.
+Those are different facts about the world and **identical facts from the
+inside**.
+
+Reproduce with `python experiments/reflection_interior.py` (`--quick` for a
+smoke run); 13 tests in `tests/test_reflection_interior.py`, guarding the two
+things the conclusion cannot survive without — that the prediction never
+consults the run (or "the interior view is exact" is circular), and that the
+searched arm's edge stays genuinely real while genuinely uncertifiable.
+
+**Honest scope.** Nothing here concerns experience and nothing here is evidence
+about it; the measured object is a formal presentation of arithmetic, and the
+resemblance to an interior report of unboundedness is a resemblance. The
+`searched` arm's bounded certifier stands in for a Π⁰₂ check; that totality is
+Π⁰₂-complete and `O`-membership Π¹₁-complete are **cited**, not measured.
+
+---
+
+## Deriving G instead of positing it — and the price of demanding evidence
+
+Two independent reviews of `The_Reflection_Ladder.md` converged on the same
+directive: stop treating `G` as a primitive. The original model carried it as an
+independent magnitude and asserted `G > 0`; five experiments then turned up four
+separate things that can stop a system, none of which `G` could express.
+`experiments/reflection_derived_g.py` computes `G` **from** those four instead,
+and tests whether the decomposition actually accounts for everything already
+measured. **4/4:**
+
+    G_actual    = structural ∧ affordable ∧ productive
+    G_certified = certifiable ∧ affordable ∧ productive
+
+- **Q1 ✓ The decomposition reproduces every outcome already measured.** 12/12 —
+  every arm at every budget, `blocked_by` naming the same wall an actual climb
+  reports. Every wall the five experiments found falls out of the four
+  dimensions; none needed a fifth. **`G` is now derived, and the framework has
+  one fewer primitive.**
+- **Q2 ✓ `hidden` is realised by exactly one arm.** `searched` alone has
+  `G_actual = 1` with `G_certified = 0` — the continuation is there and the
+  system will not move on it. That category did not exist in the original
+  framework, is not a degenerate case of `terminal`, and both reviewers asked
+  for it independently.
+- **Q3 ✓ Unproductivity is not a wall.** The stalled arm runs clean to the
+  horizon: it is not *stopped*, it *arrives having done nothing*. So
+  `unproductive` has no counterpart among the stop reasons, and the reviewers'
+  reading is right — productivity is a fourth dimension **orthogonal** to the
+  three walls. A system can fail by halting or by running forever without
+  moving, and those are different failures.
+- **Q4 ✓ No certification bound buys both safety and reach.** Sweeping the
+  evidence requirement `N` over 400 candidate limit addresses (half genuinely
+  total, the rest diverging on a heavy tail): the cliff rate falls monotonically
+  from 0.500 to 0.407 and never reaches zero, while verification cost rises
+  linearly. Every genuinely total address is accepted at every `N`, so the
+  trade-off is pure — more evidence buys precision and nothing else, at a
+  diminishing rate. **The strict policy is the corner of that curve, not a point
+  on it:** zero cliffs and zero continuations, forever.
+
+**Three verdicts replace one number:** `terminal` (nothing is there),
+`recognised` (something is there and known), `hidden` (something is there and
+not known). The claim `G > 0` splits into a claim about the world and a claim
+about what a system can establish, and the experiments say those come apart in
+exactly one place.
+
+**Two registered falsifiers fired on the first run, and both were defects in
+this experiment rather than in the framework** — recorded because the corrections
+are the same lesson a third and fourth time. Q1 failed because the derivation
+was taken at one hand-picked state rather than walked along a trajectory, so at
+a budget where the successors exhaust first it described a state the climb never
+reaches; a wall is a property of a *trajectory*. Then Q1 failed again because
+the walk depleted the budget monotonically instead of calling `Capacity.spend`,
+silently dropping the regeneration term and making every flat-cost arm look
+bankrupt after two moves — shared dynamics re-implemented in a second place,
+diverging. Q4 failed because the population capped divergence points at a fixed
+range, so a large enough bound caught every one of them and the cliff rate hit
+exactly zero; for arbitrary programs the divergence point is unbounded, and a
+population that caps it is not modelling the question.
+
+Reproduce with `python experiments/reflection_derived_g.py` (`--quick` for a
+smoke run); 12 tests in `tests/test_reflection_derived_g.py`, including the
+soundness invariant over all 24 combinations of the four dimensions —
+`G_certified ≤ G_actual` always, because a system certifying a move that is not
+there would be a bug rather than a finding.
+
+**Honest scope.** The Q4 population is **constructed** — we choose the divergence
+points, so the absolute cliff rate is a property of that choice and means nothing
+on its own. What survives is the shape: monotone, never zero, against linearly
+rising cost, with the strict policy at a corner. `Prf` stays primitive; Gödel's
+second theorem and the completeness results for totality and `O` are cited, not
+measured; nothing here concerns experience.
+
+---
+
+## The classification, checked exhaustively — and where a proposed theorem fails
+
+A third round of review responded to the derived-`G` result with two corrections
+and a proposed theorem. Both corrections were right and one of them was a real
+defect in the code; the theorem is refuted by exhaustive check. All of it is now
+in `experiments/reflection_derived_g.py` as **Q5**, alongside the four questions
+already there.
+
+**Correction one — the verdict table was ambiguous.** Stated as conditions
+rather than as an ordered rule, `G_actual = G_certified = 0` satisfies both
+`terminal` and `recognised`. The code short-circuited correctly, but the table
+published in `The_Reflection_Ladder.md` §8b carried the hole. Fixed, with a test
+pinning the degenerate case.
+
+**Correction two — `stagnant` is not `terminal`, and this was a real bug.** The
+`verdict` property returned `terminal` whenever `G_actual` was 0, silently
+merging *no move exists* with *moves exist but achieve nothing*. Those are
+different: the second **does not halt**. Q3 had measured exactly that — the
+stalled arm runs clean to the horizon — and the verdict then contradicted it.
+There are now four verdicts, and `halts` is a separate property because halting
+and being out of moves turn out to be different cuts:
+
+| verdict | moves exist? | productive? | certified? | halts? |
+|---|---|---|---|---|
+| `terminal` | no | — | — | **yes** |
+| `stagnant` | yes | no | — | no |
+| `hidden` | yes | yes | no | **yes** |
+| `recognised` | yes | yes | yes | no |
+
+**Q5 ✓ The proposed classification theorem is refuted.** The review proposed
+that every terminal state is economic, structural, or epistemic. Checked
+exhaustively over all **16 sound combinations** of the four predicates — sound
+meaning the certifier may decline to commit but cannot certify an absent edge
+nor refute a present one — terminal states carry only **economic and
+structural**. The epistemic case lands in `hidden`, which is **not terminal at
+all**: it has a live move (`G_actual = 1`, `G_certified = 0`) and halts anyway.
+
+So **terminal splits two ways, not three**, and folding the epistemic case back
+into `terminal` would lose precisely the distinction the interior experiment
+exists to draw — halting because nothing is there, versus halting on something
+real you cannot authorise. No soundness violations anywhere in the space.
+
+Reproduce with `python experiments/reflection_derived_g.py`; 21 tests in
+`tests/test_reflection_derived_g.py`, including the exhaustive classification
+and the degenerate-case ambiguity. 152 reflection tests, 1.9s.
+
+**Honest scope.** The exhaustive check covers the space of *verdicts* — all 16
+sound predicate combinations — not a proof that the reflection ladder can only
+produce those. That would need an argument about the construction rather than a
+run over its state space, and is not attempted. The review's other suggestion,
+letting `C` vary rather than sitting fixed at `ω₁^CK`, remains open and is the
+one that would test whether this four-dimensional refinement is an artifact of
+the ordinal setting or a general property.
+
+---
+
+## A ladder in a box — what varying C actually changes
+
+Every result in this series was measured where `I < C` is a **theorem**, so one
+logically possible blocker could never occur: `exhausted`, meaning the domain
+itself ran out. Raising `C` does not help — `I < C` is a theorem in second-order
+arithmetic, in set theory and at every admissible ordinal, so climbing altitude
+re-derives the guarantee rather than testing it. `experiments/reflection_finite_box.py`
+changes the *domain* instead: `k` atomic sentences, a theory is a subset of them,
+`C = k` exactly, and the ceiling is reachable.
+
+The collaborator's prediction, registered before the run: **no limit in general,
+but within a finite setting — "within the box" — a limit that is real.** Both
+halves confirmed, and the second carries the sharper consequence. **5/5:**
+
+- **Q1 ✓ The box saturates: `I` reaches `C` exactly.** Every adequately-addressed
+  ladder makes exactly `C` productive steps and then stops producing. First time
+  in the series `I = C` has been *reachable* at all.
+- **Q2 ✓ Exhaustion is naming-invariant.** Within each box, `inline` (addresses
+  by content), `indexed` (by position) and `searched` (cannot certify its own
+  address) all stall at the **same rung**. The stall is a fact about the domain,
+  not about how the system writes itself down — which is what makes `exhausted`
+  a genuine fifth category rather than stagnation renamed.
+- **Q3 ✓ Stagnation is naming-dependent and rescuable.** A presentation whose
+  address space is smaller than the box stalls at its address space, not at `C`,
+  and switching schemes moves it. The bound is in the presentation and comes off
+  with the presentation.
+- **Q4 ✓ A naming defect is invisible when the box binds first.** Truncated and
+  indexed are indistinguishable **exactly** when the address space is at least
+  the size of the box, and distinguishable exactly when it is not — 15/15 rows
+  matching with no exceptions.
+- **Q5 ✓ Exhaustion is fully visible from inside.** 72/72 exact interior
+  predictions across every box, scheme and width; lookahead is unbounded, known
+  at rung 0.
+
+**Q4 is the result with consequences outside the construction.** The `truncated`
+pathology was detectable in the arithmetic setting *only because that domain is
+infinite*. Put the same broken system in a box smaller than its defect and it
+behaves identically to a sound one on every observable — same stall, same reason,
+same interior prediction. **A system cannot distinguish "I am out of room" from
+"I am badly built" when it runs out of room first, and neither can anyone
+watching it.** The defect was never fixed; the box was too small to reveal it.
+
+**Q5 is the bookend.** The epistemic wall was the one thing a system could not
+see coming. Exhaustion is the one it sees most clearly — both quantities it needs
+are countable from its own presentation. Running out of room is the *easiest*
+limit to know about and being unable to certify a live continuation is the
+hardest, and they sit at opposite ends of the same taxonomy.
+
+**So varying `C` does change things, in a specific way: it adds a dimension the
+fixed-`C` setting could not express.** `Continuation` now carries
+`domain_exhausted`, pinned `False` throughout the arithmetic work — which is
+exactly why it was missing from the first four dimensions rather than overlooked
+in them. Five verdicts over 32 sound combinations:
+
+| verdict | halts? | rescuable by renaming? |
+|---|---|---|
+| `exhausted` | no | **no** |
+| `terminal` | yes | no |
+| `stagnant` | no | **yes** |
+| `hidden` | yes | no |
+| `recognised` | — | — |
+
+Reproduce with `python experiments/reflection_finite_box.py` (`--quick` for a
+smoke run); 19 tests in `tests/test_reflection_finite_box.py`. 171 reflection
+tests, 2.0s.
+
+**Honest scope.** The box is a **model** — `k` atoms, one added per productive
+step — chosen because it is the simplest object that saturates, and it shares no
+machinery with the arithmetic ladder. What is claimed to transfer is the
+*taxonomy*, not the construction. Whether a richer saturating domain (bounded
+type theories, finite models) yields the same five categories is untested, and is
+the next thing that could refute this.
+
+---
+
+## A ceiling nobody chose — and where the box's tidiness came from
+
+The atom box produced a reachable ceiling and every adequate naming scheme hit it
+in exactly `C` steps. That tidiness was suspect: saturation there was
+**stipulated** — `k` atoms, one added per step — and the address and the thing
+added were effectively the same object, which is precisely the condition under
+which nothing can come apart. `experiments/reflection_model_ladder.py` moves to a
+domain where the ceiling is semantic: `n` propositional variables give `2^n`
+valuations, a theory *is* its surviving models, a step eliminates one, and the
+ladder cannot empty the set because a theory with no models is inconsistent. So
+`C = 2^n − 1` falls out of the semantics, and the address now names *which* model
+to eliminate — a separate thing from the elimination. **5/5:**
+
+- **Q1 ✓ Capacity is emergent and reachable.** A well-addressed ladder makes
+  exactly `C` eliminations and is then stopped by consistency, not by a counter.
+- **Q2 ✓ Exhaustion is naming-invariant in LOCATION but not in COST.** Two
+  adequate schemes reach exactly the same floor — and one pays **3.5×** more to
+  get there (n = 8: 255 steps vs 897; n = 10: 1023 vs 3704). **The box could not
+  show this**, because there addressing and adding were one operation.
+- **Q3 ✓ Content-addressing freezes permanently on its first wasted move.**
+  `inline` names itself by its surviving models, so its address only changes when
+  an elimination *succeeds*. One miss and it is deterministically stuck — `I = 1`
+  out of `C = 255`, forever. In the arithmetic setting the same scheme was merely
+  expensive; here it is catastrophic. **Cost and recoverability are different
+  properties**, and only a domain where moves can be wasted tells them apart.
+- **Q4 ✓ At least three distinct ways to fail to exhaust**, all reported as
+  `stagnant` and all different underneath: **freeze** (`inline`, address stops
+  moving), **coverage** (`partial`, addresses reach only half the models),
+  **collision** (`truncated`, address space smaller than the domain). They stall
+  at `1`, `128` and `8` respectively in the same domain. So `stagnant` was hiding
+  structure — it is a family, not a failure.
+- **Q5 ✓ The box's tidiness was an artifact of its construction.** There,
+  adequate implied reaching `C` in `C` steps. Here `adequate` splits into
+  efficient and merely-eventually-correct, and the split is invisible in every
+  observable the box had.
+
+**Does the taxonomy transfer? Yes, and it gains a dimension.** `exhausted` and
+`stagnant` still separate, and the naming-invariance discriminator still works —
+but only for the *location* of the ceiling. **Cost** is a new observable neither
+previous domain could produce, and under it `stagnant` resolves into at least
+three mechanisms.
+
+The pattern across three domains is consistent, and worth stating plainly: **each
+richer domain has left the previous categories standing and added one the
+previous construction was structurally unable to express.** Arithmetic could not
+express `exhausted`. The box could not express `cost`. That is the opposite of a
+framework being confirmed, and it is the more useful outcome — it says where to
+look next rather than that there is nowhere left to look.
+
+Reproduce with `python experiments/reflection_model_ladder.py` (`--quick` for a
+smoke run); 18 tests in `tests/test_reflection_model_ladder.py`, with the
+`inline` freeze pinned by *mechanism* rather than by its stall value, since
+"stops at 1" is a symptom and "its address stops moving" is the cause. 189
+reflection tests, 3.2s.
+
+**Honest scope.** `scattered` is inefficient because a particular integer hash
+revisits models; at `n ≤ 6` that same hash is a permutation and the gap vanishes
+entirely. The arm establishes the **existence** of adequate-but-costly schemes,
+not a constant — the 3.5× is a property of that hash and is not reported as
+anything more. The domain is still a model, and shares no machinery with the
+arithmetic ladder or the atom box, which is the point: what is claimed to
+transfer is the taxonomy, not the code.
+
+---
+
+## Multi-parent reflection — the first prediction written before the domain existed
+
+The previous entry closed by admitting that "each richer domain adds a category"
+was partly **selection**: each domain had been chosen *because* it could express
+something the last one could not. The fix proposed there was a protocol —
+predict what a new domain will show *before building it*, with the domain chosen
+by someone else. A reviewer did exactly that.
+
+**The domain (chosen externally):** finite multi-parent reflection. A step may
+add the consistency statement of any finite set of already-constructed theories,
+not merely the immediate predecessor — the ladder becomes a DAG. Motivated by
+the ordinary proof-theoretic fact that consistency can be taken relative to any
+finite collection, not reverse-engineered to produce a new wall.
+
+**Registered before implementation.** *Reviewer:* prior categories survive, and
+a step can be **locally productive** while leaving the **global rank** of the
+collection unchanged, because the reflected theories are already dominated. If
+so, `productive` splits into two orthogonal predicates. *This side, sharper:* the
+phenomenon appears **only where the DAG genuinely branches** — over a chain any
+join's content is that of its maximum, so joins say nothing new.
+
+**Both confirmed, and the second more strongly than stated.**
+
+| roots | policy | advancing | sideways | duplicate | rank | size |
+|---|---|---|---|---|---|---|
+| 1 | deepen | 30 | 0 | 0 | 35 | 36 |
+| 1 | broaden | 0 | **0** | **30** | 5 | 6 |
+| 3 | deepen | 30 | 0 | 0 | 35 | 38 |
+| 3 | broaden | 0 | **30** | 0 | 5 | 38 |
+
+- **The split exists.** Steps that add a genuinely new sentence and leave global
+  rank exactly where it was. The linear domains could not have shown it, because
+  there was only one place growth could happen.
+- **It requires branching — and branching cannot arise from a single root.**
+  From one base, free finite-join reflection produces *nothing*: 30/30
+  duplicates. Every join over a chain carries the content of its maximum.
+  Branching has to be **given**, as independent starting theories. Neither
+  registered prediction said that.
+
+**Q4, which neither prediction reached: `sideways` is a property of MOVES, not
+of states.** From one and the same graph, `broaden` gives a sideways step and
+`deepen` gives an advancing one. Every earlier category — economic, structural,
+epistemic, exhausted, stagnant — is a fact about *where a system is*. This is a
+fact about *what it chose*. **So it is not a sixth wall.** Nothing blocks it;
+every check passes.
+
+**And the consequence:** 200 consecutive `broaden` steps, **every one
+productive**, building 209 nodes — distinct global ranks visited: `[5]`. A system
+can be **productive forever and go nowhere.** Not stagnation, which produces
+nothing; not exhaustion, which has nothing left; not any wall, since nothing
+blocks it. No observable in the previous five domains would show it. Set beside
+the same budget spent differently: at 4 roots and 30 steps, `deepen` and
+`broaden` build the **same 39 nodes** and reach rank **35 and 5** — identical
+productivity, identical cost, 7× the reach.
+
+**Q1 is reported as PARTIALLY TESTED, not confirmed.** `stagnant` reappears
+intact as `duplicate` under machinery shared with nothing earlier. But this
+domain has no budget, no naming defect and no certification requirement, so
+`economic`, `structural` and `epistemic` have nothing to bite on. The run neither
+confirms nor refutes their survival, and calling it confirmed would claim a
+measurement that was not made.
+
+**A mistake worth recording.** Two assertions failed on the first run, both from
+one root cause: **conflating "has multiple parents" with "genuinely joins
+incomparable things."** Joining the frontier with anything beneath it produces a
+two-parent node whose key is *identical* to reflecting the frontier alone —
+nominal branching, no new content. `branches()` now tests for incomparable
+contents, and the corrected claim about chains is **redundancy** (a join carries
+its maximum's key) rather than **sterility** (a join is always a duplicate),
+which is false.
+
+Reproduce with `python experiments/reflection_dag.py` (`--quick` for a smoke
+run); 15 tests in `tests/test_reflection_dag.py`. 204 reflection tests, 3.6s.
+
+**Honest scope.** `depth` is a **declared structural proxy** for proof-theoretic
+rank; the registered prediction was phrased in terms of genuine ordinal height,
+and substituting depth is a weakening stated rather than hidden. Sentence
+identity is normalised to logical content — without that the phenomenon would be
+an artifact of the representation. Q4 was in neither registered prediction and is
+marked as a question the first two raised rather than as something foreseen.
+
+**On the protocol itself:** it worked, and it cost something to run honestly. One
+registered prediction came out stronger than written, one outcome was outside
+both, one question is only partly answered, and one of my own assertions was
+wrong in a way two tests caught. That is a better yield than five confirmations
+would have been.
+
+---
+
+## Do the walls protect against going sideways? No — they select for it
+
+The DAG run left one thing open and the reviewer named it as the next controlled
+run: **restore the economic, structural and epistemic filters and ask whether
+sideways trajectories survive when any of them can bite.**
+`experiments/reflection_filters.py` does that. **4/4, and the answer is worse
+than "no protection".**
+
+**Locked before implementation:** the filters will not merely fail to block
+sideways — they will **preferentially block advancing**, because every one of
+them scales with *what a step reflects on*, and advancing means reflecting on the
+frontier, whose closure is the largest object in the graph. Sideways joins
+shallow nodes with small closures. **Falsifier:** any filter that blocks sideways
+preferentially. One candidate was included on purpose.
+
+**The asymmetry is structural, not tuned.** At a typical state, advancing
+reflects on a key of size **9**; sideways on a key of size **2**, and the gap
+widens as the graph deepens. Every filter that reads the reflected object bites
+the advancing move first. That is not a parameter choice — it is what "reflect on
+more" means.
+
+| filter | tightest setting | advancing | sideways | verdict |
+|---|---|---|---|---|
+| economic | budget 5 | **0/30** | 28/30 | blocks advancing |
+| structural | 3-bit address | 1/30 | 2/30 | blocks advancing |
+| epistemic | effort 5 | **0/30** | 28/30 | blocks advancing |
+| **arity** | max 1 parent | 30/30 | **0/30** | **blocks sideways** |
+
+- **Q1–Q3 ✓** At **no setting of any of the three** is sideways blocked more than
+  advancing. The direction never reverses. The structural filter goes neutral
+  once the address space is wide enough and is directional at every width where
+  it constrains at all.
+- **Q4 ✓⚠ Something does block sideways** — an **arity cap**. *(Later narrowed: see the
+  next entry. The cap does block all 30 of the joins `broaden` proposes, so the
+  measurement stands — but "joins are blocked" was generalised to "sideways is
+  blocked", and a sideways move needs no join. Single-parent reflections below
+  the frontier are sideways too, and the cap admits them.)* But note
+  what kind of filter that is. The other three charge for **depth**: how much a
+  step reflects on. This one charges for **breadth**: how many things it joins.
+  It is not a fourth member of the same family — it is **the first constraint in
+  this series that is not a function of the reflected object at all**.
+
+**So the filters make it worse.** Each is a tax on reflecting-on-more, and
+advancing *is* reflecting-on-more. A system under any of them is pushed toward
+exactly the trajectory that satisfies every predicate and gets nowhere. Under a
+budget the consequence sharpens: sideways converts an unbounded wander into a
+**bounded** one — the system spends its entire budget at constant rank and then
+has nothing left. That is worse than being stopped, because every check passed on
+the way down.
+
+**Honest scope, and it costs one of the three results.** With `cost = |key|` and
+certification compared against `|key|`, the economic and epistemic filters are
+**literally the same predicate**. Their agreement is arithmetic, not independent
+evidence, and counts as **one** observation. The structural filter is a genuinely
+different function — the largest identifier in the key — and its agreeing is the
+second, independent one. **Two results, not three**, and a test asserts the
+identity rather than leaving it implicit. `depth` remains a declared proxy for
+proof-theoretic rank.
+
+Reproduce with `python experiments/reflection_filters.py` (`--quick` for a smoke
+run); 16 tests in `tests/test_reflection_filters.py`, weighted toward the claim
+that the direction never reverses — a single reversal would turn
+"counterproductive" into "sometimes helps", which is a different claim. 220
+reflection tests, 4.7s.
+
+---
+
+## Can a rank-aware rule restore advance? No — it restores motion
+
+The reviewer's next registered question: introduce a selection term that does not
+read object size — *"prefer a maximal element under the current rank order when
+one is admissible"* — and measure whether advance is restored under the same
+filters that previously suppressed it.
+
+**Locked before implementation:** rank-preference will restore advance only
+temporarily and will **self-defeat**, because the frontier is the most expensive
+move *precisely because it is the frontier*, and every advance grows the
+frontier's closure by one — raising the price of the next. Under budget `B` it
+should climb to rank ≈ `B` and then fall into the sideways basin.
+
+**Q1 ✓ Confirmed, and exactly.** Final rank **equals the budget**, at every
+budget tested: 6→6, 10→10, 20→20, 50→50. The mechanism is self-defeat —
+advancing raises the price of advancing, and a policy cannot outrun that because
+the policy does not set the price.
+
+**Q2 — the question the first result raised, not registered in advance. Gain is
+zero.**
+
+| budget | blind deepen | rank-aware | gain | blind refused | aware sideways |
+|---|---|---|---|---|---|
+| 10 | 10 | 10 | **0** | 55 | 55 |
+| 20 | 20 | 20 | **0** | 45 | 45 |
+| 50 | 50 | 50 | **0** | 15 | 15 |
+
+Zero at every budget, and under the epistemic and structural filters too. **The
+rank-aware rule reaches exactly the rank blind deepening reaches.** What it
+changes is not reach but *bookkeeping*: blind deepening hits the wall and is
+refused for the rest of the run; the rank-aware rule hits the same wall and
+converts those refusals **one-for-one** into sideways moves — 55 refused becomes
+55 sideways, exactly.
+
+So it does not restore advance. **It restores motion.** And that is arguably
+worse, because a refusal is *visible as a block* while a sideways move passes
+every check. The selection term converts a legible failure into an illegible one
+at no gain in reach.
+
+**Q3 — a retraction, and a correction to the retraction.** The previous entry
+reported that an arity cap "blocks sideways completely" (0/30). The cap *does*
+block all 30 of the joins `broaden` proposes, so the measurement stands. The
+error was the **generalisation**: "joins are blocked" became "sideways is
+blocked", and under the same filter single-parent reflections below the frontier
+are admitted and land as sideways.
+
+*(My first diagnosis of this retraction was itself wrong — I attributed the zero
+to duplicates rather than to arity blocks, and a test assertion caught it. Worth
+recording, because it is the same kind of over-reading that produced the claim
+being withdrawn.)* **A sideways move does not require a join** — it requires reflecting
+on anything below the frontier. The corrected claim: **no filter tested so far
+blocks sideways as such**; the arity cap blocks join-based sideways only. The
+original run is left intact with the correction beside it, as with every other
+correction in this log.
+
+**What carries forward.** Under any cost that scales with what is reflected on,
+advancing raises the price of advancing. A policy cannot outrun that. Only a cost
+model that does *not* grow with the reflected object could — and none of the six
+domains had one.
+
+Reproduce with `python experiments/reflection_selection.py` (`--quick` for a
+smoke run); 14 tests in `tests/test_reflection_selection.py`. 234 reflection
+tests, 5.3s.
+
+**Honest scope.** `depth` is a declared proxy for proof-theoretic rank. Q2 was
+not registered in advance and is marked as the question the first result raised
+rather than as a prediction.
+
+---
+
+## The missing cost model was the first result of the series, all along
+
+Six domains in, the reviewer named the remaining structural gap: none of them
+contained a cost model that does not grow with the reflected object. Under any
+size-monotone cost each advance enlarges the frontier's closure and raises the
+price of the next, so the system is priced out of advancing by its own success —
+and no selection rule can outrun that, because the policy does not set the price.
+
+**The gap did not need a new object. It needed the first experiment applied
+where the later domains had quietly stopped applying it.**
+
+Result one measured two ways of naming a theory. `inline` addresses by
+**content** — the address *is* the axiom list — and its cost doubles every rung.
+`indexed` addresses by **description** — "arithmetic plus everything below here"
+— and its cost is a flat **4,996 symbols per rung, however much theory it
+names**. That is a cost model that does not grow with the reflected object, and
+it was measured eleven experiments ago. The DAG domain had been pricing by
+`|key|`: content-addressing, reintroduced without anyone noticing, including me.
+`experiments/reflection_cost_model.py` swaps in description-addressed pricing.
+**3/3:**
+
+- **Q1 ✓ Rank stops saturating.** Content-addressed, rank is **10 at every step
+  count** — the budget and nothing more. Description-addressed, rank tracks
+  steps one-for-one and unbounded: 20 → 25, 40 → 45, 80 → 85, 160 → 165. **The
+  budget stops being a ceiling on reach and becomes what it was meant to be — a
+  limit on rate, not on height.** Reach becomes budget-independent entirely.
+- **Q2 ✓ The filters stop being directional.** **9/9** rows block advancing
+  under content pricing; **9/9** are neutral under description pricing. The bias
+  was never a property of the filters. It was a property of *what they were
+  reading*.
+- **Q3 ✓ The sideways basin still exists.** A join-seeking policy still lands
+  30/30 sideways moves. The basin is not removed — **it stops being downhill.**
+  Which is exactly what the DAG run established: sideways is a property of the
+  move chosen, not of the state. It was only ever a trap because the cost model
+  made it the cheap option.
+
+**The chain, now that every link is visible:** naming by description rather than
+by content makes cost flat → flat cost makes the filters neutral → neutral
+filters stop selecting for sideways → a rank-aware policy then advances without
+bound. **Every link was already measured. What was missing was noticing they
+were the same chain.**
+
+**And it puts the second experiment back in force.** With flat cost `L` and a
+capacity healing at rate `r`, the sustainable-forever condition was
+`r* = L/κ_max`, derived and matched to better than 0.01%. That result *assumed
+constant cost*, and was quietly inapplicable to every domain after it. Under
+description-addressed pricing it applies again.
+
+Reproduce with `python experiments/reflection_cost_model.py` (`--quick` for a
+smoke run); 16 tests in `tests/test_reflection_cost_model.py`, including controls
+asserting that content pricing still saturates and still biases — so the earlier
+results are not quietly overwritten by the fix. 250 reflection tests, 4.3s.
+
+**Honest scope.** The flat rate is a parameter and its *value* is arbitrary; what
+matters is that it does not read the key. The structural filter was made to
+follow the cost model, since it was size-linked only because the address was —
+leaving it content-linked would have rigged the comparison. `depth` remains a
+declared proxy for proof-theoretic rank.
+
+---
+
 ## What Comes Next
 
 The frontier questions, roughly in priority order:
