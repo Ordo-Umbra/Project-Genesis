@@ -621,6 +621,47 @@ naming defect and no certification requirement, so they have nothing to bite on.
 
 ---
 
+## 8f. Result ten — the walls select for going nowhere
+
+*The reviewer's next registered run: restore the three filters and ask whether
+sideways trajectories survive when any of them can bite.*
+
+### What was predicted, before building
+
+Not merely that they'd fail, but that they'd **preferentially block advancing** —
+because every filter scales with *what a step reflects on*, and advancing means
+reflecting on the frontier, the largest object in the graph.
+
+### What was measured
+
+| filter | advancing | sideways |
+|---|---|---|
+| budget 5 | **0/30** | 28/30 |
+| 3-bit address | 1/30 | 2/30 |
+| certify effort 5 | **0/30** | 28/30 |
+| **max 1 parent** | 30/30 | **0/30** |
+
+**At no setting of any of the three does the direction reverse.** Advancing
+reflects on a key of size 9 where sideways reflects on 2, and the gap widens with
+depth. Every filter reading the reflected object bites advancing first.
+
+**One thing does block sideways: an arity cap.** But it charges for **breadth**,
+not depth — it is the first constraint in this series that is *not a function of
+the reflected object*.
+
+So the walls meant to make `G` meaningful push a system toward the one trajectory
+that satisfies every predicate and gets nowhere. Under a budget it's sharper
+still: sideways converts an unbounded wander into a **bounded** one, spending the
+whole budget at constant rank with every check passing on the way down.
+
+### What it does not show
+
+With `cost = |key|` and certification compared against `|key|`, the economic and
+epistemic filters are the **same predicate** — their agreement is arithmetic, not
+evidence. Two independent results here, not three.
+
+---
+
 ## 9. What this does not say
 
 Kept separate deliberately, because the results are aesthetically suggestive and

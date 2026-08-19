@@ -2220,6 +2220,69 @@ would have been.
 
 ---
 
+## Do the walls protect against going sideways? No — they select for it
+
+The DAG run left one thing open and the reviewer named it as the next controlled
+run: **restore the economic, structural and epistemic filters and ask whether
+sideways trajectories survive when any of them can bite.**
+`experiments/reflection_filters.py` does that. **4/4, and the answer is worse
+than "no protection".**
+
+**Locked before implementation:** the filters will not merely fail to block
+sideways — they will **preferentially block advancing**, because every one of
+them scales with *what a step reflects on*, and advancing means reflecting on the
+frontier, whose closure is the largest object in the graph. Sideways joins
+shallow nodes with small closures. **Falsifier:** any filter that blocks sideways
+preferentially. One candidate was included on purpose.
+
+**The asymmetry is structural, not tuned.** At a typical state, advancing
+reflects on a key of size **9**; sideways on a key of size **2**, and the gap
+widens as the graph deepens. Every filter that reads the reflected object bites
+the advancing move first. That is not a parameter choice — it is what "reflect on
+more" means.
+
+| filter | tightest setting | advancing | sideways | verdict |
+|---|---|---|---|---|
+| economic | budget 5 | **0/30** | 28/30 | blocks advancing |
+| structural | 3-bit address | 1/30 | 2/30 | blocks advancing |
+| epistemic | effort 5 | **0/30** | 28/30 | blocks advancing |
+| **arity** | max 1 parent | 30/30 | **0/30** | **blocks sideways** |
+
+- **Q1–Q3 ✓** At **no setting of any of the three** is sideways blocked more than
+  advancing. The direction never reverses. The structural filter goes neutral
+  once the address space is wide enough and is directional at every width where
+  it constrains at all.
+- **Q4 ✓ Something does block sideways** — an **arity cap**, completely. But note
+  what kind of filter that is. The other three charge for **depth**: how much a
+  step reflects on. This one charges for **breadth**: how many things it joins.
+  It is not a fourth member of the same family — it is **the first constraint in
+  this series that is not a function of the reflected object at all**.
+
+**So the filters make it worse.** Each is a tax on reflecting-on-more, and
+advancing *is* reflecting-on-more. A system under any of them is pushed toward
+exactly the trajectory that satisfies every predicate and gets nowhere. Under a
+budget the consequence sharpens: sideways converts an unbounded wander into a
+**bounded** one — the system spends its entire budget at constant rank and then
+has nothing left. That is worse than being stopped, because every check passed on
+the way down.
+
+**Honest scope, and it costs one of the three results.** With `cost = |key|` and
+certification compared against `|key|`, the economic and epistemic filters are
+**literally the same predicate**. Their agreement is arithmetic, not independent
+evidence, and counts as **one** observation. The structural filter is a genuinely
+different function — the largest identifier in the key — and its agreeing is the
+second, independent one. **Two results, not three**, and a test asserts the
+identity rather than leaving it implicit. `depth` remains a declared proxy for
+proof-theoretic rank.
+
+Reproduce with `python experiments/reflection_filters.py` (`--quick` for a smoke
+run); 16 tests in `tests/test_reflection_filters.py`, weighted toward the claim
+that the direction never reverses — a single reversal would turn
+"counterproductive" into "sometimes helps", which is a different claim. 220
+reflection tests, 4.7s.
+
+---
+
 ## What Comes Next
 
 The frontier questions, roughly in priority order:

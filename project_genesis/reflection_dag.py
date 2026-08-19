@@ -226,3 +226,93 @@ def run_policy(policy, steps: int, *, roots: int = 1,
             "branching": graph.branches(),
             "nominal_multiparent": any(len(n.parents) > 1
                                        for n in graph.nodes)}
+
+
+# ------------------------------------------------------ the three filters
+#
+# Restoring the walls the DAG domain lacked, so that sideways trajectories can
+# be asked whether they survive when anything can bite.
+#
+# Every filter here scales with *what is being reflected upon*, which is not a
+# free choice — it is what the arithmetic domain did (cost was the symbol count
+# of an address that encoded the theory) and what the box did. Reflecting on
+# more costs more, takes longer to certify, and needs a bigger name.
+
+
+@dataclass(frozen=True)
+class Filters:
+    """Economic, structural and epistemic constraints on a reflection step."""
+
+    #: Symbols available per step. `None` disables the economic filter.
+    budget: float | None = None
+    #: Bits of address space. `None` disables the structural filter.
+    address_bits: int | None = None
+    #: Certification effort available per step. `None` disables the epistemic
+    #: filter. A step is certifiable when `effort >= |key|`.
+    certify_effort: int | None = None
+    #: Maximum parents a step may join. `None` disables it. Unlike the three
+    #: above this charges for **breadth** rather than depth, and it is the one
+    #: candidate defence against sideways trajectories — included precisely so
+    #: the pessimistic reading has something that could refute it.
+    max_arity: int | None = None
+
+    def cost(self, key: frozenset[int]) -> int:
+        """What this step costs: the size of what it reflects on.
+
+        Not a free choice — it is what the arithmetic domain did (cost was the
+        symbol count of an address encoding the theory) and what the box did.
+        Reflecting on more costs more. The consequence, which is the finding, is
+        that it makes *advancing* the expensive move.
+        """
+        return len(key)
+
+    def admits(self, key: frozenset[int], address: int,
+               arity: int = 1) -> tuple[bool, str | None]:
+        """Does every filter let this step through, and if not, which bit?"""
+        if self.budget is not None and self.cost(key) > self.budget:
+            return False, "economic"
+        if self.address_bits is not None and address >= (1 << self.address_bits):
+            return False, "structural"
+        if self.certify_effort is not None and len(key) > self.certify_effort:
+            return False, "epistemic"
+        if self.max_arity is not None and arity > self.max_arity:
+            return False, "arity"
+        return True, None
+
+
+def filtered_step(graph: ReflectionGraph, parents: frozenset[int],
+                  filters: Filters):
+    """Attempt a reflection subject to the three filters.
+
+    Returns `(step_or_None, blocked_by)`. A blocked step changes nothing — the
+    filters refuse it before any content is added.
+    """
+    key = frozenset().union(*(graph.node(p).content for p in parents))
+    address = max(key) if key else 0
+    ok, blocked = filters.admits(key, address, arity=len(parents))
+    if not ok:
+        return None, blocked
+    return reflect(graph, parents), None
+
+
+def run_filtered(policy, steps: int, *, roots: int = 3, warmup: int = 5,
+                 filters: Filters | None = None) -> dict:
+    """Run a policy under filters and count what got through and what advanced."""
+    filters = filters or Filters()
+    graph = ReflectionGraph.base(roots=roots)
+    for _ in range(warmup):
+        graph = reflect(graph, deepen(graph)).graph_after
+
+    tally = {"advancing": 0, "sideways": 0, "duplicate": 0}
+    blocks = {"economic": 0, "structural": 0, "epistemic": 0, "arity": 0}
+    for _ in range(steps):
+        parents = policy(graph)
+        s, blocked = filtered_step(graph, parents, filters)
+        if s is None:
+            blocks[blocked] += 1
+            continue
+        tally[s.kind] += 1
+        graph = s.graph_after
+    return {"tally": tally, "blocks": blocks, "final_rank": graph.rank,
+            "final_size": graph.size,
+            "passed": sum(tally.values()), "refused": sum(blocks.values())}
