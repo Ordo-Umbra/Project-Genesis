@@ -712,6 +712,51 @@ withdrawn.
 
 ---
 
+## 8h. Result twelve — the missing piece was §3
+
+*The reviewer named the last structural gap: no domain had a cost model that
+doesn't grow with the reflected object. It turned out not to need a new object.*
+
+### What the math actually says
+
+**§3 already measured one.** `inline` prices by *content* — the address is the
+axiom list — and doubles every rung. `indexed` prices by *description* —
+"arithmetic plus everything below here" — and stays flat at 4,996 symbols per
+rung **however much theory it names.**
+
+The later domains had reverted to content-addressed pricing (`|key|`) without
+anyone noticing, me included. So: swap in description pricing and re-run.
+
+### What was measured
+
+**Saturation disappears.** Content-addressed, rank is 10 at every step count —
+the budget, and nothing more. Description-addressed: 20 → 25, 40 → 45, 80 → 85,
+160 → 165. Unbounded, and **independent of the budget entirely.**
+
+**The filters go neutral.** 9/9 rows block advancing under content pricing; 9/9
+are neutral under description pricing. *The bias was never a property of the
+filters — it was a property of what they were reading.*
+
+**The sideways basin survives.** A join-seeking policy still lands 30/30 sideways
+moves. It isn't removed; **it stops being downhill.**
+
+### The chain, with every link now visible
+
+Naming by description → flat cost → neutral filters → no selection pressure
+toward sideways → unbounded advance. **Every link had been measured. What was
+missing was noticing they were one chain.**
+
+It also reinstates §4: `r* = L/κ_max` assumed *constant cost*, so it was quietly
+inapplicable to every domain after it. Under description pricing it applies
+again.
+
+### What it does not show
+
+The flat rate is a parameter; its value is arbitrary. What matters is that it
+doesn't read the key.
+
+---
+
 ## 9. What this does not say
 
 Kept separate deliberately, because the results are aesthetically suggestive and

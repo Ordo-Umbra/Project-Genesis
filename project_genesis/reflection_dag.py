@@ -255,15 +255,35 @@ class Filters:
     #: candidate defence against sideways trajectories — included precisely so
     #: the pessimistic reading has something that could refute it.
     max_arity: int | None = None
+    #: How a step is priced. `"content"` charges for the size of what is
+    #: reflected on; `"description"` charges a flat rate.
+    cost_model: str = "content"
+    #: The flat rate, when pricing by description.
+    description_cost: int = 2
 
     def cost(self, key: frozenset[int]) -> int:
-        """What this step costs: the size of what it reflects on.
+        """What this step costs.
 
-        Not a free choice — it is what the arithmetic domain did (cost was the
-        symbol count of an address encoding the theory) and what the box did.
-        Reflecting on more costs more. The consequence, which is the finding, is
-        that it makes *advancing* the expensive move.
+        `content` — the size of what it reflects on. This is what the
+        arithmetic domain's `inline` presentation did (the address *was* the
+        axiom list, so cost grew with the theory) and it is why advancing
+        becomes the expensive move: each advance enlarges the frontier's
+        closure, raising the price of the next.
+
+        `description` — a flat rate, independent of what is reflected on. This
+        is not a hypothetical: it is exactly what the `indexed` presentation
+        measured in the very first experiment of this series, a constant 4,996
+        symbols per rung however much theory it names. Naming by description
+        rather than by content is what buys it.
+
+        So the "cost model that does not grow with the reflected object" is not
+        a new object to invent — it is the first result of the series, applied
+        where the later domains had quietly reverted to content-addressing.
         """
+        if self.cost_model == "description":
+            return self.description_cost
+        if self.cost_model != "content":
+            raise ValueError(f"unknown cost model {self.cost_model!r}")
         return len(key)
 
     def admits(self, key: frozenset[int], address: int,
@@ -271,9 +291,12 @@ class Filters:
         """Does every filter let this step through, and if not, which bit?"""
         if self.budget is not None and self.cost(key) > self.budget:
             return False, "economic"
-        if self.address_bits is not None and address >= (1 << self.address_bits):
-            return False, "structural"
-        if self.certify_effort is not None and len(key) > self.certify_effort:
+        if self.address_bits is not None:
+            named = (self.description_cost if self.cost_model == "description"
+                     else address)
+            if named >= (1 << self.address_bits):
+                return False, "structural"
+        if self.certify_effort is not None and self.cost(key) > self.certify_effort:
             return False, "epistemic"
         if self.max_arity is not None and arity > self.max_arity:
             return False, "arity"

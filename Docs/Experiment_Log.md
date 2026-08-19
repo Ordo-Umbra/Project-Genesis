@@ -2357,6 +2357,67 @@ rather than as a prediction.
 
 ---
 
+## The missing cost model was the first result of the series, all along
+
+Six domains in, the reviewer named the remaining structural gap: none of them
+contained a cost model that does not grow with the reflected object. Under any
+size-monotone cost each advance enlarges the frontier's closure and raises the
+price of the next, so the system is priced out of advancing by its own success —
+and no selection rule can outrun that, because the policy does not set the price.
+
+**The gap did not need a new object. It needed the first experiment applied
+where the later domains had quietly stopped applying it.**
+
+Result one measured two ways of naming a theory. `inline` addresses by
+**content** — the address *is* the axiom list — and its cost doubles every rung.
+`indexed` addresses by **description** — "arithmetic plus everything below here"
+— and its cost is a flat **4,996 symbols per rung, however much theory it
+names**. That is a cost model that does not grow with the reflected object, and
+it was measured eleven experiments ago. The DAG domain had been pricing by
+`|key|`: content-addressing, reintroduced without anyone noticing, including me.
+`experiments/reflection_cost_model.py` swaps in description-addressed pricing.
+**3/3:**
+
+- **Q1 ✓ Rank stops saturating.** Content-addressed, rank is **10 at every step
+  count** — the budget and nothing more. Description-addressed, rank tracks
+  steps one-for-one and unbounded: 20 → 25, 40 → 45, 80 → 85, 160 → 165. **The
+  budget stops being a ceiling on reach and becomes what it was meant to be — a
+  limit on rate, not on height.** Reach becomes budget-independent entirely.
+- **Q2 ✓ The filters stop being directional.** **9/9** rows block advancing
+  under content pricing; **9/9** are neutral under description pricing. The bias
+  was never a property of the filters. It was a property of *what they were
+  reading*.
+- **Q3 ✓ The sideways basin still exists.** A join-seeking policy still lands
+  30/30 sideways moves. The basin is not removed — **it stops being downhill.**
+  Which is exactly what the DAG run established: sideways is a property of the
+  move chosen, not of the state. It was only ever a trap because the cost model
+  made it the cheap option.
+
+**The chain, now that every link is visible:** naming by description rather than
+by content makes cost flat → flat cost makes the filters neutral → neutral
+filters stop selecting for sideways → a rank-aware policy then advances without
+bound. **Every link was already measured. What was missing was noticing they
+were the same chain.**
+
+**And it puts the second experiment back in force.** With flat cost `L` and a
+capacity healing at rate `r`, the sustainable-forever condition was
+`r* = L/κ_max`, derived and matched to better than 0.01%. That result *assumed
+constant cost*, and was quietly inapplicable to every domain after it. Under
+description-addressed pricing it applies again.
+
+Reproduce with `python experiments/reflection_cost_model.py` (`--quick` for a
+smoke run); 16 tests in `tests/test_reflection_cost_model.py`, including controls
+asserting that content pricing still saturates and still biases — so the earlier
+results are not quietly overwritten by the fix. 250 reflection tests, 4.3s.
+
+**Honest scope.** The flat rate is a parameter and its *value* is arbitrary; what
+matters is that it does not read the key. The structural filter was made to
+follow the cost model, since it was size-linked only because the address was —
+leaving it content-linked would have rigged the comparison. `depth` remains a
+declared proxy for proof-theoretic rank.
+
+---
+
 ## What Comes Next
 
 The frontier questions, roughly in priority order:
