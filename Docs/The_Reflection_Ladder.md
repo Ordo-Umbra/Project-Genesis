@@ -1,6 +1,6 @@
 # The Reflection Ladder
 
-### What five experiments actually showed, in plain language
+### What twelve experiments actually showed, in plain language
 
 *A companion to [`The_Generative_Gap.md`](The_Generative_Gap.md), written to be
 read cold. No proof theory assumed. Every claim here is either something a
@@ -715,7 +715,9 @@ withdrawn.
 ## 8h. Result twelve — the missing piece was §3
 
 *The reviewer named the last structural gap: no domain had a cost model that
-doesn't grow with the reflected object. It turned out not to need a new object.*
+doesn't grow with the reflected object. It turned out not to need a new object —
+and swapping the cost model exposed a category that had been mislabelled since
+the filters were built.*
 
 ### What the math actually says
 
@@ -750,10 +752,61 @@ It also reinstates §4: `r* = L/κ_max` assumed *constant cost*, so it was quiet
 inapplicable to every domain after it. Under description pricing it applies
 again.
 
+### And a wall that turned out not to be a wall
+
+The reviewer's closing sentence contained a clause nobody had checked: that a
+rank-following policy advances without bound *until an independent wall
+intervenes* — undecidability of an address being one such wall. Checking it
+broke something on my side, not theirs.
+
+The DAG domain's "epistemic" filter admits a step when `cost(key) ≤ effort`.
+**That is the same number the budget reads.** Under content pricing you can't
+see it, because everything reads size and the three filters look like three
+things. Under flat pricing the disguise falls off: a 2-element key and a
+20-element key are priced identically, so *no* effort level tells them apart —
+every bound admits both or refuses both. It was a third size tax with an
+epistemic label on it.
+
+So a real one was built: `opaque`, addresses whose validity **cannot be
+settled** — §3's `searched` arm, where certification is a *search that cannot
+conclude* rather than a fee that grows. The test it has to pass is simple. A
+wall that doesn't read size must not care what size costs.
+
+**It doesn't. 3/3 rows identical across both cost models**, every count matching
+exactly.
+
+Two things follow that a size tax cannot do:
+
+- **Its direction is set by placement, not by size.** A size tax always blocks
+  advancing, because advancing always enlarges the key — that is not a choice it
+  makes, it's arithmetic. This wall has no direction of its own. Mark the root
+  the deepening chain runs through and everything stops (30/30 refused, both
+  policies). Mark a root off that chain and only the joins are refused (0 vs
+  29/30). Same wall, opposite effect, decided entirely by *where the
+  unsettleable thing sits*.
+- **You can walk around it, for a price.** One unsettleable root costs 5 rungs
+  out of 35: the rank-following policy abandons that region and rebuilds
+  elsewhere. A detour, not a ceiling. **Unless there is nowhere to go** — mark
+  every root opaque and the climb stops dead with all 30 attempts refused, which
+  is precisely §3's `searched` arm, where the search runs over the whole address
+  space.
+
+**The reviewer was right and my model was wrong.** Those are two findings, not
+one, and the second is the more useful: a category can be wrong for eleven
+experiments and look fine, as long as nothing ever forces its label and its
+behaviour apart. The cost-model swap was what forced them apart. This is the
+same failure shape as the three earlier bugs — a well-formed, confident answer
+to a *different question* — and it was caught the same way: by a second,
+independent route to the number.
+
 ### What it does not show
 
 The flat rate is a parameter; its value is arbitrary. What matters is that it
 doesn't read the key.
+
+`opaque` is a **declared** unsettleable set. Nothing here proves any address
+undecidable — it models what a policy does when one is. The citation for genuine
+undecidability is still a citation.
 
 ---
 
@@ -804,14 +857,22 @@ python experiments/reflection_capacity.py        # the budget, and r* = L/κ_max
 python experiments/reflection_limits.py          # price becomes gate
 python experiments/reflection_omega_squared.py   # limits of limits, and O's real cost
 python experiments/reflection_interior.py        # what a theory knows about itself
+python experiments/reflection_derived_g.py       # G derived rather than posited
+python experiments/reflection_finite_box.py      # a ladder in a box
+python experiments/reflection_model_ladder.py    # a ceiling nobody chose
+python experiments/reflection_dag.py             # productive forever, going nowhere
+python experiments/reflection_filters.py         # the walls select for sideways
+python experiments/reflection_selection.py       # rank-aware selection
+python experiments/reflection_cost_model.py      # description pricing, and a fake wall
 ```
 
 Add `--quick` to any of them for a smoke run. Every experiment states its
 predictions and their falsifiers in its own docstring *before* reporting
 results, and prints its honest scope alongside its verdicts.
 
-The machinery is `project_genesis/reflection.py`; 131 tests across the four
-`tests/test_reflection_*.py` files run in about 1.6 seconds. Most of them are
+The machinery is `project_genesis/reflection.py`, `finite_ladder.py`,
+`model_ladder.py` and `reflection_dag.py`; 262 tests across the twelve
+`tests/test_reflection_*.py` files run in about 5.4 seconds. Most of them are
 adversarial rather than confirmatory — the claim that an added rule is a
 *capability* rests entirely on the proof checker refusing malformed derivations,
 and the claim that the interior view is exact rests on the prediction never

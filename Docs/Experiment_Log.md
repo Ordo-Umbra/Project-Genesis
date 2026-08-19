@@ -2376,7 +2376,9 @@ names**. That is a cost model that does not grow with the reflected object, and
 it was measured eleven experiments ago. The DAG domain had been pricing by
 `|key|`: content-addressing, reintroduced without anyone noticing, including me.
 `experiments/reflection_cost_model.py` swaps in description-addressed pricing.
-**3/3:**
+**3/3 as registered, plus a fourth question added afterwards** — a reviewer's
+closing sentence contained a claim nobody had tested, and testing it found a
+fault in this module rather than in the claim.
 
 - **Q1 ✓ Rank stops saturating.** Content-addressed, rank is **10 at every step
   count** — the budget and nothing more. Description-addressed, rank tracks
@@ -2393,6 +2395,40 @@ it was measured eleven experiments ago. The DAG domain had been pricing by
   move chosen, not of the state. It was only ever a trap because the cost model
   made it the cheap option.
 
+- **Q4 ✓ The epistemic filter was not epistemic.** The reviewer closed by
+  saying a rank-following policy advances without bound *until an independent
+  wall intervenes* — naming undecidability of an address as one such wall. That
+  parenthetical had never been tested here, and testing it exposed the problem.
+  `certify_effort` admits a step when `cost(key) ≤ effort`. **It reads exactly
+  the number the economic filter reads.** Under flat pricing, no bound separates
+  a 2-element key from a 20-element one: every effort level admits both or
+  refuses both. It was **a third size tax wearing an epistemic label**, and that
+  was invisible while all three filters read the same number. Swapping the cost
+  model is what made it visible — which is the point of ever swapping one.
+
+  So a genuine epistemic wall was added: `opaque`, a set of addresses whose
+  validity **cannot be settled**, ported from result one's `searched` arm where
+  certification is a *search that cannot conclude* rather than a tax that scales
+  with size. Prediction: because it does not read size, it must fire identically
+  under both cost models. **3/3 rows identical**, every count matching exactly.
+
+  Two further things fall out. **Direction is set by placement, not by size.** A
+  size tax always blocks advancing, because advancing always enlarges the key.
+  This wall has no intrinsic direction: marking the root the deepening chain runs
+  through blocks everything (30/30 refused, both policies); marking a root off
+  that chain blocks only the joins (0 refused deepening, 29/30 refused
+  broadening). And **a rank-following policy routes around it at a bounded
+  price** — one unsettleable root costs 5 rungs out of 35, the policy abandoning
+  that region and rebuilding elsewhere. A detour, not a ceiling. But mark *every*
+  root opaque and the climb stops dead at the warm-up rank with all 30 attempts
+  refused, which is the arithmetic domain's `searched` arm exactly: when
+  certification is a search over the whole address space, there is nowhere to
+  route to.
+
+  **The reviewer's claim holds for a real epistemic wall, and this module did not
+  contain one until now.** The claim was right; the model was wrong. Both halves
+  are the result.
+
 **The chain, now that every link is visible:** naming by description rather than
 by content makes cost flat → flat cost makes the filters neutral → neutral
 filters stop selecting for sideways → a rank-aware policy then advances without
@@ -2406,14 +2442,18 @@ constant cost*, and was quietly inapplicable to every domain after it. Under
 description-addressed pricing it applies again.
 
 Reproduce with `python experiments/reflection_cost_model.py` (`--quick` for a
-smoke run); 16 tests in `tests/test_reflection_cost_model.py`, including controls
+smoke run); 28 tests in `tests/test_reflection_cost_model.py`, including controls
 asserting that content pricing still saturates and still biases — so the earlier
-results are not quietly overwritten by the fix. 250 reflection tests, 4.3s.
+results are not quietly overwritten by the fix — and a test pinning that
+`certify_effort` and `budget` return the same verdict on the same key, which is
+the degeneracy stated as an assertion. 262 reflection tests, 5.4s.
 
 **Honest scope.** The flat rate is a parameter and its *value* is arbitrary; what
 matters is that it does not read the key. The structural filter was made to
 follow the cost model, since it was size-linked only because the address was —
-leaving it content-linked would have rigged the comparison. `depth` remains a
+leaving it content-linked would have rigged the comparison. `opaque` is a
+*declared* unsettleable set, not a decidability result: nothing here proves any
+address undecidable, it models what a policy does when one is. `depth` remains a
 declared proxy for proof-theoretic rank.
 
 ---

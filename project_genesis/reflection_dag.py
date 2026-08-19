@@ -255,6 +255,18 @@ class Filters:
     #: candidate defence against sideways trajectories — included precisely so
     #: the pessimistic reading has something that could refute it.
     max_arity: int | None = None
+    #: Addresses whose validity cannot be settled. A step whose key touches
+    #: one is uncertifiable — the genuine epistemic wall, ported from
+    #: `reflection.py`'s `searched` arm, where certification is a *search* that
+    #: cannot conclude rather than a tax that scales with size.
+    #:
+    #: This exists because `certify_effort` turned out **not** to be an
+    #: epistemic wall at all. It compares `cost(key)` against a bound, so under
+    #: description pricing — where cost is constant — it degenerates to
+    #: all-or-nothing, firing for every step or none regardless of the graph.
+    #: It was a third size tax wearing the label. The distinction only became
+    #: visible once the cost model was swapped, which is itself the point.
+    opaque: frozenset[int] = frozenset()
     #: How a step is priced. `"content"` charges for the size of what is
     #: reflected on; `"description"` charges a flat rate.
     cost_model: str = "content"
@@ -298,6 +310,8 @@ class Filters:
                 return False, "structural"
         if self.certify_effort is not None and self.cost(key) > self.certify_effort:
             return False, "epistemic"
+        if self.opaque and (key & self.opaque):
+            return False, "uncertifiable"
         if self.max_arity is not None and arity > self.max_arity:
             return False, "arity"
         return True, None
@@ -327,7 +341,8 @@ def run_filtered(policy, steps: int, *, roots: int = 3, warmup: int = 5,
         graph = reflect(graph, deepen(graph)).graph_after
 
     tally = {"advancing": 0, "sideways": 0, "duplicate": 0}
-    blocks = {"economic": 0, "structural": 0, "epistemic": 0, "arity": 0}
+    blocks = {"economic": 0, "structural": 0, "epistemic": 0, "arity": 0,
+              "uncertifiable": 0}
     for _ in range(steps):
         parents = policy(graph)
         s, blocked = filtered_step(graph, parents, filters)
@@ -372,7 +387,8 @@ def run_adaptive(steps: int, *, roots: int = 3, warmup: int = 5,
         graph = reflect(graph, deepen(graph)).graph_after
 
     tally = {"advancing": 0, "sideways": 0, "duplicate": 0}
-    blocks = {"economic": 0, "structural": 0, "epistemic": 0, "arity": 0}
+    blocks = {"economic": 0, "structural": 0, "epistemic": 0, "arity": 0,
+              "uncertifiable": 0}
     last_advance, rank_trace = None, []
     for i in range(steps):
         parents = rank_aware(graph, filters)
