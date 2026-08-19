@@ -316,3 +316,54 @@ def run_filtered(policy, steps: int, *, roots: int = 3, warmup: int = 5,
     return {"tally": tally, "blocks": blocks, "final_rank": graph.rank,
             "final_size": graph.size,
             "passed": sum(tally.values()), "refused": sum(blocks.values())}
+
+
+def rank_aware(graph: ReflectionGraph, filters: "Filters"):
+    """Prefer the deepest **admissible** node; fall back to a join if refused.
+
+    The reviewer's proposal: a selection term that does not read object size but
+    reads the *rank order* instead. It asks for a maximal element whenever one
+    is admissible, and only then settles for something else.
+
+    Note what it is up against. The frontier is the most expensive move
+    precisely *because* it is the frontier, and every advance grows the
+    frontier's closure by one — so each success raises the price of the next.
+    Whether that self-defeats is the measurement.
+    """
+    ordered = sorted(graph.nodes, key=lambda n: n.depth, reverse=True)
+    for node in ordered:
+        parents = frozenset({node.ident})
+        key = node.content
+        ok, _ = filters.admits(key, max(key), arity=1)
+        if ok and key not in graph.asserted:
+            return parents
+    return broaden(graph)
+
+
+def run_adaptive(steps: int, *, roots: int = 3, warmup: int = 5,
+                 filters: "Filters | None" = None) -> dict:
+    """Run the rank-aware policy, recording when it stops being able to advance."""
+    filters = filters or Filters()
+    graph = ReflectionGraph.base(roots=roots)
+    for _ in range(warmup):
+        graph = reflect(graph, deepen(graph)).graph_after
+
+    tally = {"advancing": 0, "sideways": 0, "duplicate": 0}
+    blocks = {"economic": 0, "structural": 0, "epistemic": 0, "arity": 0}
+    last_advance, rank_trace = None, []
+    for i in range(steps):
+        parents = rank_aware(graph, filters)
+        s, blocked = filtered_step(graph, parents, filters)
+        if s is None:
+            blocks[blocked] += 1
+            rank_trace.append(graph.rank)
+            continue
+        tally[s.kind] += 1
+        if s.kind == "advancing":
+            last_advance = i
+        graph = s.graph_after
+        rank_trace.append(graph.rank)
+    return {"tally": tally, "blocks": blocks, "final_rank": graph.rank,
+            "final_size": graph.size, "last_advance_at": last_advance,
+            "rank_trace": rank_trace,
+            "passed": sum(tally.values()), "refused": sum(blocks.values())}

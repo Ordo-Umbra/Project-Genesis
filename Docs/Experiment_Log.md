@@ -2252,7 +2252,11 @@ more" means.
   advancing. The direction never reverses. The structural filter goes neutral
   once the address space is wide enough and is directional at every width where
   it constrains at all.
-- **Q4 ✓ Something does block sideways** — an **arity cap**, completely. But note
+- **Q4 ✓⚠ Something does block sideways** — an **arity cap**. *(Later narrowed: see the
+  next entry. The cap does block all 30 of the joins `broaden` proposes, so the
+  measurement stands — but "joins are blocked" was generalised to "sideways is
+  blocked", and a sideways move needs no join. Single-parent reflections below
+  the frontier are sideways too, and the cap admits them.)* But note
   what kind of filter that is. The other three charge for **depth**: how much a
   step reflects on. This one charges for **breadth**: how many things it joins.
   It is not a fourth member of the same family — it is **the first constraint in
@@ -2280,6 +2284,76 @@ run); 16 tests in `tests/test_reflection_filters.py`, weighted toward the claim
 that the direction never reverses — a single reversal would turn
 "counterproductive" into "sometimes helps", which is a different claim. 220
 reflection tests, 4.7s.
+
+---
+
+## Can a rank-aware rule restore advance? No — it restores motion
+
+The reviewer's next registered question: introduce a selection term that does not
+read object size — *"prefer a maximal element under the current rank order when
+one is admissible"* — and measure whether advance is restored under the same
+filters that previously suppressed it.
+
+**Locked before implementation:** rank-preference will restore advance only
+temporarily and will **self-defeat**, because the frontier is the most expensive
+move *precisely because it is the frontier*, and every advance grows the
+frontier's closure by one — raising the price of the next. Under budget `B` it
+should climb to rank ≈ `B` and then fall into the sideways basin.
+
+**Q1 ✓ Confirmed, and exactly.** Final rank **equals the budget**, at every
+budget tested: 6→6, 10→10, 20→20, 50→50. The mechanism is self-defeat —
+advancing raises the price of advancing, and a policy cannot outrun that because
+the policy does not set the price.
+
+**Q2 — the question the first result raised, not registered in advance. Gain is
+zero.**
+
+| budget | blind deepen | rank-aware | gain | blind refused | aware sideways |
+|---|---|---|---|---|---|
+| 10 | 10 | 10 | **0** | 55 | 55 |
+| 20 | 20 | 20 | **0** | 45 | 45 |
+| 50 | 50 | 50 | **0** | 15 | 15 |
+
+Zero at every budget, and under the epistemic and structural filters too. **The
+rank-aware rule reaches exactly the rank blind deepening reaches.** What it
+changes is not reach but *bookkeeping*: blind deepening hits the wall and is
+refused for the rest of the run; the rank-aware rule hits the same wall and
+converts those refusals **one-for-one** into sideways moves — 55 refused becomes
+55 sideways, exactly.
+
+So it does not restore advance. **It restores motion.** And that is arguably
+worse, because a refusal is *visible as a block* while a sideways move passes
+every check. The selection term converts a legible failure into an illegible one
+at no gain in reach.
+
+**Q3 — a retraction, and a correction to the retraction.** The previous entry
+reported that an arity cap "blocks sideways completely" (0/30). The cap *does*
+block all 30 of the joins `broaden` proposes, so the measurement stands. The
+error was the **generalisation**: "joins are blocked" became "sideways is
+blocked", and under the same filter single-parent reflections below the frontier
+are admitted and land as sideways.
+
+*(My first diagnosis of this retraction was itself wrong — I attributed the zero
+to duplicates rather than to arity blocks, and a test assertion caught it. Worth
+recording, because it is the same kind of over-reading that produced the claim
+being withdrawn.)* **A sideways move does not require a join** — it requires reflecting
+on anything below the frontier. The corrected claim: **no filter tested so far
+blocks sideways as such**; the arity cap blocks join-based sideways only. The
+original run is left intact with the correction beside it, as with every other
+correction in this log.
+
+**What carries forward.** Under any cost that scales with what is reflected on,
+advancing raises the price of advancing. A policy cannot outrun that. Only a cost
+model that does *not* grow with the reflected object could — and none of the six
+domains had one.
+
+Reproduce with `python experiments/reflection_selection.py` (`--quick` for a
+smoke run); 14 tests in `tests/test_reflection_selection.py`. 234 reflection
+tests, 5.3s.
+
+**Honest scope.** `depth` is a declared proxy for proof-theoretic rank. Q2 was
+not registered in advance and is marked as the question the first result raised
+rather than as a prediction.
 
 ---
 

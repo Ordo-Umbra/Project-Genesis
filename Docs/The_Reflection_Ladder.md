@@ -662,6 +662,56 @@ evidence. Two independent results here, not three.
 
 ---
 
+## 8g. Result eleven — a rank-aware rule restores motion, not advance
+
+*The reviewer's next registered question: does a selection term that reads the
+rank order rather than object size restore advance under the filters that
+suppressed it?*
+
+### What was predicted, before building
+
+It restores advance only temporarily and **self-defeats** — the frontier is the
+most expensive move *because* it is the frontier, and every advance grows the
+frontier's closure by one, raising the price of the next.
+
+### What was measured
+
+**Rank saturates at exactly the budget.** 6→6, 10→10, 20→20, 50→50.
+
+**And the gain over blind frontier-seeking is zero.**
+
+| budget | blind deepen | rank-aware | gain | blind refused | aware sideways |
+|---|---|---|---|---|---|
+| 10 | 10 | 10 | **0** | 55 | 55 |
+| 50 | 50 | 50 | **0** | 15 | 15 |
+
+Zero at every budget and under all three filters. The rank-aware rule reaches
+**exactly** the rank blind deepening reaches. What it changes is bookkeeping:
+blind deepening hits the wall and is *refused* for the rest of the run; the
+rank-aware rule hits the same wall and converts those refusals **one-for-one**
+into sideways moves.
+
+So it restores **motion**, not advance — and that is arguably worse, because a
+refusal is visible as a block while a sideways move passes every check.
+
+**A policy cannot outrun this, because the policy does not set the price.** Only
+a cost model that does not grow with the reflected object could, and none of the
+six domains had one.
+
+### A retraction, and a correction to the retraction
+
+§8f reported that an arity cap "blocks sideways completely". The cap *does* block
+all thirty joins that policy proposed — the measurement stands. The error was
+generalising *"joins are blocked"* to *"sideways is blocked"*: a sideways move
+needs no join, and single-parent reflections below the frontier are admitted.
+
+My first diagnosis of that retraction was itself wrong — I attributed the zero to
+duplicates rather than to arity blocks, and a test assertion caught it. Recorded
+because it is the same kind of over-reading that produced the claim being
+withdrawn.
+
+---
+
 ## 9. What this does not say
 
 Kept separate deliberately, because the results are aesthetically suggestive and

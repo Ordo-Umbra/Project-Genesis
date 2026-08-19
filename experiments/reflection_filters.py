@@ -27,6 +27,14 @@ Q4. **Something blocks sideways.** If nothing does, the filters are not merely
     insufficient but actively counterproductive, and there is no defence in this
     family at all.
 
+    **NARROWED — see `reflection_selection.py` Q3.** The 0/30 below is real: the
+    cap blocks all thirty of the joins `broaden` proposes. What does not follow
+    is the generalisation. A sideways move needs no join — reflecting on any
+    single node below the frontier is one — and the cap admits those. The
+    corrected claim is that **no filter tested blocks sideways as such**; this
+    one blocks join-shaped sideways only. The original run is left intact here
+    with the correction beside it.
+
 Why the cost model is not a free choice
 ---------------------------------------
 `cost(key) = |key|` — the size of what a step reflects on. That is what the
