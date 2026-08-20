@@ -1,6 +1,6 @@
 # The Reflection Ladder
 
-### What thirteen experiments actually showed, in plain language
+### What fourteen experiments actually showed, in plain language
 
 *A companion to [`The_Generative_Gap.md`](The_Generative_Gap.md), written to be
 read cold. No proof theory assumed. Every claim here is either something a
@@ -906,6 +906,108 @@ the opacity walls. Two perturbations, two bits.
 
 ---
 
+## 8j. Result fourteen — options are real, and they are not height
+
+*Every result so far measured reach as height. This asks what that measure
+cannot see, and finds something — just not what was predicted.*
+
+### The intuition
+
+If you keep several lines of thought going at once instead of pushing one as far
+as it will go, you're doing something. You're just not doing the thing our ruler
+measures. Our ruler is `rank` — the longest chain — so anything that widens the
+base rather than raising the top reads as **zero**.
+
+That is exactly the shape of mistake the last two sections caught twice. So:
+count the options and see.
+
+### What was measured
+
+**A single chain generates no alternatives at all.** Grow from one starting point
+and you have exactly one available move, forever — every combination of what you
+have is just the biggest piece of it, which you already said. Two independent
+starting points after 25 steps: 26 available joins. Three: 53. **Independent
+starting points aren't an optimisation. They're the precondition for a whole
+class of move existing.**
+
+**But the prediction about *which* moves create options was wrong**, and the way
+it was wrong is the useful part:
+
+| policy | options created per advancing step | per sideways step |
+|---|---|---|
+| extend one lineage | **+2.00** | — |
+| grow lineages in parallel | **+10.00** | +10.50 |
+| join below the frontier | +1.50 | **+9.47** |
+
+The middle row breaks the theory. **That policy only ever advances**, and it
+creates options at the same rate as the best sideways move. So it isn't
+advancing-versus-sideways that generates options. It's whether the move creates
+**incomparable material** — two things neither of which contains the other — and
+that has nothing to do with whether you gained height.
+
+*You can do both at once.* Growing several lines in parallel gains height **and**
+opens options. Pushing one line gains height and opens almost none.
+
+### And then the hard part: it doesn't cash in
+
+Invest 20 steps in width, then climb for 80:
+
+| invested in | rank after investing | options built | rank after climbing | gained |
+|---|---|---|---|---|
+| one lineage | 20 | 46 | 100 | **80** |
+| parallel lineages | 7 | 179 | 87 | **80** |
+| joins below the frontier | 2 | 170 | 82 | **80** |
+
+**Exactly the same gain in all three.** Four times the options bought nothing.
+The climb doesn't spend the width, so every step of width is a step of height
+forgone.
+
+### So what is width for?
+
+Insurance. Let a wall land on one lineage **after** the strategy is committed —
+which is the honest setup, because §7 already showed a system cannot tell from
+inside which of its lines is the one that won't settle:
+
+| | concentrate | diversify |
+|---|---|---|
+| **mean** outcome | **wins, every configuration tested** | |
+| **worst** outcome | | **wins, almost every configuration** |
+
+That gap is the whole thing. **Concentration is better on average. Diversifying
+is better if you're wrong.** And no amount of thinking harder resolves it,
+because *which line fails* is precisely what the interior view cannot see. So the
+choice isn't a fact about the domain — it's a decision about what you can afford
+to lose.
+
+### One assumption underneath all of it
+
+It turned out to matter enormously whether a wall **freezes** your work or
+**retracts** it:
+
+- **freeze** — the wall stops you building further on that line; what you already
+  built still stands. Under this, concentration wins on *both* measures at short
+  horizons.
+- **retract** — a tower built over a base that turns out unsettleable is itself
+  unsettleable, so the height goes with it. Under this, the concentrated
+  strategy's floor collapses to whatever it can rebuild in the time left.
+
+For reflection towers, **retract is the faithful one** — and it's the only case
+where the insurance visibly pays at a short horizon. That assumption had never
+been made explicit in any earlier result. Both are now run rather than one being
+chosen.
+
+### What it does not show
+
+The options counted are single reflections and pairwise joins — what the policies
+actually propose, not every possible subset. A wider count would be a different
+number.
+
+And **nothing here models research programmes, funding, careers, or belief.** The
+resemblance to how one decides where to place intellectual effort is a
+resemblance, in exactly the sense §9 means it. It was not tested.
+
+---
+
 ## 9. What this does not say
 
 Kept separate deliberately, because the results are aesthetically suggestive and
@@ -961,6 +1063,7 @@ python experiments/reflection_filters.py         # the walls select for sideways
 python experiments/reflection_selection.py       # rank-aware selection
 python experiments/reflection_cost_model.py      # description pricing, and a fake wall
 python experiments/reflection_wall_audit.py      # what does each wall actually read?
+python experiments/reflection_options.py         # options, and what they buy
 ```
 
 Add `--quick` to any of them for a smoke run. Every experiment states its
@@ -968,8 +1071,8 @@ predictions and their falsifiers in its own docstring *before* reporting
 results, and prints its honest scope alongside its verdicts.
 
 The machinery is `project_genesis/reflection.py`, `finite_ladder.py`,
-`model_ladder.py` and `reflection_dag.py`; 285 tests across the thirteen
-`tests/test_reflection_*.py` files run in about 4.8 seconds. Most of them are
+`model_ladder.py` and `reflection_dag.py`; 305 tests across the fourteen
+`tests/test_reflection_*.py` files run in about 6.2 seconds. Most of them are
 adversarial rather than confirmatory — the claim that an added rule is a
 *capability* rests entirely on the proof checker refusing malformed derivations,
 and the claim that the interior view is exact rests on the prediction never

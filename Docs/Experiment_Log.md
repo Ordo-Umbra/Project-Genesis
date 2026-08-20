@@ -2539,6 +2539,105 @@ remains a declared proxy for proof-theoretic rank.
 
 ---
 
+## Do options convert into height? No — they buy a floor
+
+Every result in this series measured reach with one number: `rank`, the longest
+path from the base. **Height, and nothing else.** So a move that widens the base
+— creating material that makes more future moves possible — scores zero and gets
+called `sideways`. That is structurally the same error the last two runs caught
+twice: a quantity measured, a different quantity named, nothing forcing them
+apart. `experiments/reflection_options.py` counts the options and asks whether
+they ever turn into height. Move space counted: singletons and incomparable
+pairs, which is what the policies actually propose. **3/4, and the refuted one
+is the most useful.**
+
+- **Q1 ✓ A chain generates no join options, ever.** Free generation from one
+  root stays totally ordered (`join options = 0` at every step count, `single =
+  1`), because every union is the larger member and is already asserted. Two
+  roots give 26 join options after 25 steps, three give 53. **Independent
+  starting points are not an optimisation, they are the precondition for a whole
+  class of move existing at all.**
+
+- **Q2 ✗ REFUTED — and the prediction inherited the framing it was meant to
+  test.** Registered: sideways moves generate more options per step than
+  advancing ones. Measured, options created per step:
+
+  | policy | advancing | sideways |
+  |---|---|---|
+  | `deepen` — extend one lineage | **+2.00** | — |
+  | `spread` — grow lineages in parallel | **+10.00** | +10.50 |
+  | `broaden` — join below the frontier | +1.50 | **+9.47** |
+
+  The five-to-one effect is real between `deepen` and `broaden`. But `spread`,
+  **whose every move is a single-parent advance**, generates options at the
+  sideways rate. So the advancing/sideways axis does not explain the count.
+  **What explains it is whether a move creates incomparable material** — two
+  theories neither of which contains the other — and that is orthogonal to
+  whether the move gains height. *You can have both.*
+
+- **Q3 ✓ The options do not convert into height.** Invest 20 steps, then climb
+  80 with a rank-following policy:
+
+  | invested in | rank after invest | options built | rank after climb | gained |
+  |---|---|---|---|---|
+  | `deepen` | 20 | 46 | 100 | **80** |
+  | `spread` | 7 | 179 | 87 | **80** |
+  | `broaden` | 2 | 170 | 82 | **80** |
+
+  **Exactly the same gain, whatever was built and however many options exist.**
+  A depth-following policy never spends the width. Options are real and they are
+  not height — so the sideways-as-trap reading survives, but only for the
+  quantity it was ever about.
+
+- **Q4 ✓ What options buy is a floor, and the premium is measurable.** A wall
+  lands on a lineage chosen *after* the strategy is committed — the honest setup,
+  since result five showed a system cannot tell from inside which of its lineages
+  will not settle. Averaged over every placement, 20 invested steps, 3 roots:
+
+  | model | horizon | concentrate mean / worst | diversify mean / worst |
+  |---|---|---|---|
+  | freeze | 5 | 23.3 / **20** | 12.0 / 12 |
+  | freeze | 40 | **53.3** / 40 | 47.0 / **47** |
+  | retract | 5 | **18.3** / 5 | 12.0 / **12** |
+  | retract | 40 | **53.3** / 40 | 47.0 / **47** |
+
+  **Concentration wins the mean in every configuration tested. Diversification
+  wins the worst case in almost all of them.** That gap *is* the trade, and it is
+  not resolvable by gathering more information — the interior result says which
+  lineage fails is exactly what cannot be known from inside. So the choice is
+  between optimising the mean and optimising the floor, which is a decision about
+  what one is willing to lose rather than a fact about the domain.
+
+**Whether a wall freezes or retracts is load-bearing, and had never been made
+explicit.** Under `freeze` the height already reached still stands, and
+concentration wins on *both* measures at a short horizon. Under `retract` — a
+tower over a base whose consistency cannot be settled is itself uncertified,
+which is the faithful reading for reflection towers — the concentrated
+strategy's floor collapses to what it can rebuild in the time remaining (5
+against diversification's 12). Both are run rather than one being chosen.
+
+**A second prediction came out backwards** and is recorded rather than dropped:
+the guess was that a short horizon favours diversification, because there is no
+time to rebuild. The opposite holds under `freeze`, where what matters at a short
+horizon is the height already standing and the concentrated strategy has more of
+it.
+
+Reproduce with `python experiments/reflection_options.py` (`--quick` for a smoke
+run); 20 tests in `tests/test_reflection_options.py`, including one pinning the
+corrected Q2 claim so it cannot rot back to the framing it replaced, and one
+pinning the freeze/retract divergence as the load-bearing choice it is. **305
+reflection tests, 6.2s.**
+
+**Honest scope.** The move space counted is singletons and incomparable pairs —
+not the full subset lattice, which no policy searches; a count over a larger
+space would be a different number. `opaque` remains a **declared** unsettleable
+set; nothing here proves any address undecidable. `depth` remains a declared
+proxy for proof-theoretic rank. And nothing in this run models research
+programmes, funding or belief — the resemblance to how one decides where to place
+intellectual effort is a resemblance, and it was not tested.
+
+---
+
 ## What Comes Next
 
 The frontier questions, roughly in priority order:

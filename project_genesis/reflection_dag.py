@@ -38,6 +38,8 @@ nothing here computes one.
 
 from __future__ import annotations
 
+from itertools import combinations
+
 from dataclasses import dataclass, field, replace
 
 
@@ -176,6 +178,49 @@ def reflect(graph: ReflectionGraph, parents: frozenset[int]) -> DagStep:
                    rank_after=after.rank, graph_after=after)
 
 
+def options(graph: ReflectionGraph, filters: "Filters | None" = None) -> dict:
+    """How many distinct productive moves are available right now.
+
+    The move space is singletons and incomparable pairs — what the policies
+    here actually propose. That restriction is declared rather than derived: the
+    full space is every subset, which is exponential and which no policy
+    searches. A count over a larger space would be a different number.
+
+    This exists because `rank` measures **height only**. A move that widens the
+    base, and so makes more future moves possible, scores zero on it. Whether
+    that is a real capability the rank measure cannot see — or whether option
+    growth simply never converts into height — is the question, and it cannot
+    be asked without counting the options.
+    """
+    f = filters or Filters()
+    single = sum(1 for n in graph.nodes
+                 if n.content not in graph.asserted
+                 and f.admits(n.content, max(n.content), 1)[0])
+    join = 0
+    for a, b in combinations(graph.nodes, 2):
+        if a.content <= b.content or b.content <= a.content:
+            continue
+        key = a.content | b.content
+        if key not in graph.asserted and f.admits(key, max(key), 2)[0]:
+            join += 1
+    return {"single": single, "join": join, "total": single + join}
+
+
+def certified_rank(graph: ReflectionGraph, filters: "Filters") -> int:
+    """Height the system can still stand behind.
+
+    `rank` counts every node ever built. But a reflection tower over a base
+    whose consistency cannot be settled is itself unsettleable — the height is
+    there, and none of it is certified. Which of the two measures is right is
+    not a detail: it decides whether a wall *freezes* your work or *retracts*
+    it, and that turns out to be what the whole concentrate-or-diversify
+    question hinges on.
+    """
+    live = [n.depth for n in graph.nodes
+            if filters.admits(n.content, max(n.content), 1)[0]]
+    return max(live) if live else 0
+
+
 # --------------------------------------------------------------- strategies
 #
 # How a system chooses what to reflect on. Not a naming scheme — a content set
@@ -185,6 +230,20 @@ def reflect(graph: ReflectionGraph, parents: frozenset[int]) -> DagStep:
 
 def deepen(graph: ReflectionGraph) -> frozenset[int]:
     """Always reflect on the deepest node: the linear ladder, recovered."""
+    return frozenset({graph.frontier()[0].ident})
+
+
+def spread(graph: ReflectionGraph) -> frozenset[int]:
+    """Grow every lineage evenly: reflect on the shallowest unasserted node.
+
+    Deliberate diversification — many shallow towers rather than one tall one.
+    It is not a join-seeking policy; every move it makes is a single-parent
+    reflection, so what it buys is not new *kinds* of content but a spread of
+    live frontiers.
+    """
+    for n in sorted(graph.nodes, key=lambda n: (n.depth, n.ident)):
+        if n.content not in graph.asserted:
+            return frozenset({n.ident})
     return frozenset({graph.frontier()[0].ident})
 
 
@@ -388,6 +447,64 @@ def run_filtered(policy, steps: int, *, roots: int = 3, warmup: int = 5,
     return {"tally": tally, "blocks": blocks, "final_rank": graph.rank,
             "final_size": graph.size, "joins": joins(graph),
             "passed": sum(tally.values()), "refused": sum(blocks.values())}
+
+
+def run_options(policy, steps: int, *, roots: int = 3,
+                filters: "Filters | None" = None) -> dict:
+    """Trace how the option count moves, split by what kind of step moved it."""
+    f = filters or Filters()
+    graph = ReflectionGraph.base(roots=roots)
+    deltas: dict[str, list[int]] = {}
+    trace = []
+    for _ in range(steps):
+        before = options(graph, f)["total"]
+        step = reflect(graph, policy(graph))
+        graph = step.graph_after
+        after = options(graph, f)["total"]
+        deltas.setdefault(step.kind, []).append(after - before)
+        trace.append({"kind": step.kind, "before": before, "after": after})
+    return {"final": options(graph, f), "final_rank": graph.rank,
+            "final_size": graph.size, "joins": joins(graph), "trace": trace,
+            "mean_delta": {k: sum(v) / len(v) for k, v in deltas.items()},
+            "counts": {k: len(v) for k, v in deltas.items()}}
+
+
+def two_phase(invest_policy, invest_steps: int, horizon: int, *,
+              roots: int = 3, opaque: int | None = None,
+              retract: bool = False,
+              cost_model: str = "description") -> int:
+    """Invest, then have a wall land somewhere, then climb with what is left.
+
+    The point of the two phases is that the wall arrives **after** the strategy
+    is committed. Nothing in the interior view tells a system which of its
+    lineages will turn out to be the unsettleable one — that was result five —
+    so the honest comparison is over every placement, not a chosen one.
+    """
+    filters = Filters(cost_model=cost_model,
+                      opaque=frozenset() if opaque is None else frozenset({opaque}))
+    graph = ReflectionGraph.base(roots=roots)
+    for _ in range(invest_steps):
+        graph = reflect(graph, invest_policy(graph)).graph_after
+    for _ in range(horizon):
+        step, _ = filtered_step(graph, rank_aware(graph, filters), filters)
+        if step is not None:
+            graph = step.graph_after
+    return certified_rank(graph, filters) if retract else graph.rank
+
+
+def strategy_table(invest_steps: int, horizon: int, *, roots: int = 3,
+                   retract: bool = False) -> dict:
+    """Concentrate against diversify, over every place the wall could land."""
+    out = {}
+    for name, policy in (("concentrate", deepen), ("diversify", spread)):
+        ranks = [two_phase(policy, invest_steps, horizon, roots=roots,
+                           opaque=o, retract=retract) for o in range(roots)]
+        out[name] = {"by_placement": ranks, "mean": sum(ranks) / len(ranks),
+                     "worst": min(ranks), "best": max(ranks),
+                     "no_wall": two_phase(policy, invest_steps, horizon,
+                                          roots=roots, opaque=None,
+                                          retract=retract)}
+    return out
 
 
 def rank_aware(graph: ReflectionGraph, filters: "Filters"):
