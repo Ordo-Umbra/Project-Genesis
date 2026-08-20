@@ -2458,6 +2458,87 @@ declared proxy for proof-theoretic rank.
 
 ---
 
+## Classify walls by what they read — and a second mislabelled one
+
+The previous run found the DAG domain's "epistemic" filter was a size tax
+wearing an epistemic label. The reviewer's response was to promote the accident
+into an instrument: **classify walls by the quantity they actually read, by
+perturbing that quantity and seeing which walls move.** They also settled the
+locality question, against the earlier model — totality is Π⁰₂-complete and
+`O`-membership Π¹₁-complete, so the hardness is *uniform over the address space*
+and nothing privileges a proper subset of addresses as decidable. Marking
+particular nodes opaque is a stipulation, not a consequence of undecidability.
+
+`experiments/reflection_wall_audit.py` builds the instrument, points it at every
+wall in the module, and adds `opaque_form="join"` — opacity attached to the
+**form of the move** rather than to addresses, which is the case the mathematics
+forces. Two perturbations, each leaving the graph's shape untouched: swap the
+cost model (does it read price?), and shift every identifier by a constant with
+the filter relabelled to match (does it read the raw number?). **3/3:**
+
+- **Q1 ✓ The audit separates three groups — and convicts a wall nobody had
+  complained about.**
+
+  | wall | reads price | reads identity | |
+  |---|---|---|---|
+  | `budget` | yes | no | size tax |
+  | `certify_effort` | yes | no | size tax (the known one) |
+  | `address_bits` | **yes** | **yes** | price **+ encoding artifact** |
+  | `opaque` | no | no | reads neither |
+  | `opaque_form` | no | no | reads neither |
+  | `max_arity` | no | no | reads neither |
+
+  `address_bits` compares `max(key)` against `2^bits` — **it is reading the
+  largest raw identifier.** Relabel the graph without changing its shape and its
+  verdict changes: `{0,1,2}` is admitted at 3 bits, `{8,9,10}` is refused. It is
+  called *structural*, and part of what it enforces is an artifact of how nodes
+  happen to be numbered. **Found by the instrument built to catch the first
+  one**, which is the argument for keeping the instrument.
+
+- **Q2 ✓ Uniform opacity leaves no detour; local opacity does.** Joins certified
+  under a filter-aware policy, 40 steps: with no wall, 40. Form-attached
+  opacity: **0 at every root count.** Address-attached opacity: **40 at every
+  placement** for 6 and 10 roots — the marked address removes the pairs that
+  touch it and leaves the class intact. There is no non-opaque move of that form
+  to detour to, which is exactly the reviewer's point.
+
+- **Q3 ✓ Removing the class does not stop the climb.** Rank under form opacity
+  equals rank with no wall at all (25 vs 25 at 20 steps, both pricings), with
+  **zero refusals** — a rank-following policy never attempts a join, so nothing
+  is refused. Meanwhile a joining policy has 40 available and certifies none.
+  **What a uniform epistemic wall costs is not height. It is a kind of
+  content:** no theory whose content is the union of two incomparable theories
+  is ever certified, however long the climb runs. That is result five's `hidden`
+  verdict recovered in a second domain.
+
+**A correction to the previous entry.** Those refusal counts — "0 refused
+deepening, 29/30 refused broadening" — used `broaden`, which checks whether a
+join is *new* but not whether it is *admissible*, so it re-offers a refused pair
+forever. Under it, local opacity looks as destructive as uniform opacity
+(`[0, 0, 1, 2, 3, 4]` joins at 6 roots); with a filter-aware policy the same
+walls give `[40, 40, 40, 40, 40, 40]`. **The wall did not remove those joins;
+the policy deadlocked on them.** A blocked-move count measures the policy as
+much as the wall whenever the policy cannot see the wall. The claims that used
+`rank_aware` — the 5-rungs-of-35 detour, the halt under total opacity, and the
+pricing invariance — are unaffected, because that policy does check
+admissibility.
+
+Reproduce with `python experiments/reflection_wall_audit.py` (`--quick` for a
+smoke run); 23 tests in `tests/test_reflection_wall_audit.py`, the first four of
+which are the control the whole audit rests on — that shifting the first
+identifier is a *pure relabelling*, so the `reads identity` column measures a
+wall rather than a bug in the graph. 285 reflection tests, 4.8s.
+
+**Honest scope.** `opaque_form` is a **declared** uniform opacity; nothing here
+proves any address undecidable, it models what a policy does when a whole move
+class cannot be certified. The instrument gives **two bits, not a taxonomy**: it
+separates price-readers and identity-readers from everything else, and does not
+distinguish a placement-reader from any other magnitude-reader — which is why
+`max_arity`, reading `|parents|`, sits alongside the opacity walls. `depth`
+remains a declared proxy for proof-theoretic rank.
+
+---
+
 ## What Comes Next
 
 The frontier questions, roughly in priority order:

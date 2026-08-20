@@ -1,6 +1,6 @@
 # The Reflection Ladder
 
-### What twelve experiments actually showed, in plain language
+### What thirteen experiments actually showed, in plain language
 
 *A companion to [`The_Generative_Gap.md`](The_Generative_Gap.md), written to be
 read cold. No proof theory assumed. Every claim here is either something a
@@ -810,6 +810,102 @@ undecidability is still a citation.
 
 ---
 
+## 8i. Result thirteen — ask what a wall reads, not what it is called
+
+*The mislabelled filter was an accident. This turns the accident into a tool,
+points it at everything, and catches a second one.*
+
+### The intuition
+
+You can't tell what a rule is enforcing by reading its name. You can tell by
+**changing one thing and seeing whether the rule notices.**
+
+Two changes, each leaving the structure alone:
+
+- **Change the price.** Swap content-addressed for description-addressed
+  pricing. A wall that moves was reading the price.
+- **Change the numbering.** Shift every node's identifier by 8 and relabel the
+  wall to match. Same graph, same wall, different numbers. A wall that moves was
+  reading *the number*, which is an artifact of how things are written down, not
+  a fact about them.
+
+### What was measured
+
+| wall | reads price | reads numbering | what it actually is |
+|---|---|---|---|
+| `budget` | yes | no | a size tax, honestly labelled |
+| `certify_effort` | yes | no | a size tax, labelled epistemic |
+| `address_bits` | **yes** | **yes** | a size tax **plus an encoding artifact** |
+| `opaque` | no | no | reads neither |
+| `opaque_form` | no | no | reads neither |
+| `max_arity` | no | no | reads neither |
+
+**The instrument caught one nobody had complained about.** `address_bits` — the
+*structural* wall, the one that decides whether an address can be written down
+at all — compares the largest identifier in the key against `2^bits`. So
+`{0,1,2}` fits in 3 bits and `{8,9,10}` does not, *for the same graph shape*.
+Part of what it enforces is how the nodes happen to be numbered.
+
+### Local walls versus uniform ones
+
+The reviewer settled the question left open last time, and settled it against my
+model. Undecidability of totality is **complete** for its class — the hardness is
+spread uniformly over the whole address space. Nothing makes some addresses
+decidable and others not. Marking particular nodes as unsettleable is an *extra
+assumption I added*; it isn't what undecidability gives you.
+
+What undecidability gives you is opacity attached to the **form of the move**. A
+join names an arbitrary set, exactly as a limit names an arbitrary fundamental
+sequence. If certifying that is a search that cannot conclude, then it cannot
+conclude for *any* join — all of them at once, with nothing of that kind left to
+detour to.
+
+Measured, with a policy that can see the walls (40 steps, joins certified):
+
+- **no wall** — 40
+- **one address marked unsettleable** — 40, at every placement, for 6 and 10
+  roots. The class survives; only the pairs touching that address die.
+- **the form marked unsettleable** — **0**, at every root count.
+
+### And the climb doesn't stop
+
+Rank under form opacity is **identical** to rank with no wall at all, with zero
+refusals — a depth-following policy never attempts a join, so nothing is ever
+refused. Meanwhile a joining policy has 40 of them available and certifies none.
+
+**What a uniform epistemic wall costs is not height. It is a kind of content.**
+The system climbs forever and never certifies the one move that would join two
+things it knows independently. That is §7's `hidden` verdict again, in a second
+domain: complete about where it is, permanently unable to close one gap.
+
+### A correction to §8h
+
+The refusal counts in the previous section — "29 of 30 refused" — used a policy
+that checks whether a join is *new* but not whether it is *allowed*, so it
+re-offered a refused move forever. Under it, a local wall looks as destructive as
+a uniform one. With a policy that can see the wall, the same configuration leaves
+every join available.
+
+**The wall didn't remove those moves; the policy deadlocked on them.** A count of
+blocked moves measures the policy as much as the wall, whenever the policy can't
+see the wall. The claims made with the depth-following policy — the 5-rung
+detour, the halt under total opacity, the pricing invariance — are unaffected,
+because that one does check.
+
+### What it does not show
+
+`opaque_form` is a **declared** uniform opacity. Nothing here proves any address
+undecidable; it models what a system does when a whole class of move cannot be
+certified.
+
+And the instrument gives **two bits, not a taxonomy.** It separates price-readers
+and numbering-readers from everything else. It does *not* distinguish a wall that
+reads placement from any other wall that reads some magnitude — which is why
+`max_arity`, which reads how many parents a move has, sits in the same column as
+the opacity walls. Two perturbations, two bits.
+
+---
+
 ## 9. What this does not say
 
 Kept separate deliberately, because the results are aesthetically suggestive and
@@ -864,6 +960,7 @@ python experiments/reflection_dag.py             # productive forever, going now
 python experiments/reflection_filters.py         # the walls select for sideways
 python experiments/reflection_selection.py       # rank-aware selection
 python experiments/reflection_cost_model.py      # description pricing, and a fake wall
+python experiments/reflection_wall_audit.py      # what does each wall actually read?
 ```
 
 Add `--quick` to any of them for a smoke run. Every experiment states its
@@ -871,8 +968,8 @@ predictions and their falsifiers in its own docstring *before* reporting
 results, and prints its honest scope alongside its verdicts.
 
 The machinery is `project_genesis/reflection.py`, `finite_ladder.py`,
-`model_ladder.py` and `reflection_dag.py`; 262 tests across the twelve
-`tests/test_reflection_*.py` files run in about 5.4 seconds. Most of them are
+`model_ladder.py` and `reflection_dag.py`; 285 tests across the thirteen
+`tests/test_reflection_*.py` files run in about 4.8 seconds. Most of them are
 adversarial rather than confirmatory — the claim that an added rule is a
 *capability* rests entirely on the proof checker refusing malformed derivations,
 and the claim that the interior view is exact rests on the prediction never
@@ -897,3 +994,24 @@ That is the reason this document can distinguish what was measured from what was
 assumed — not care, but redundancy. It is also why every experiment here carries
 a deliberately broken arm. An instrument that cannot fail has not told you
 anything when it succeeds.
+
+Two later bugs had a different shape, and produced a second rule. A filter called
+*epistemic* and a filter called *structural* were both partly reading size, and
+both read correctly for eleven experiments — because nothing ever separated what
+they were named from what they did. What separated them was **perturbing one
+quantity and seeing which rules noticed**: swap the pricing, shift the numbering,
+watch what moves.
+
+So the standing rule for anything added after this: **classify a constraint by
+the quantity it reads, not by the name it was given, and demonstrate the
+classification.** `tests/test_reflection_wall_audit.py` enforces it — a new wall
+that is not in the audited set fails a test. The cost is one line of
+configuration; the alternative is carrying a wrong label indefinitely, which is
+what happened twice.
+
+A third rule falls out of the same run. **A count of blocked moves measures the
+policy as much as the wall, whenever the policy cannot see the wall.** A
+join-seeking policy that re-offered a refused move forever made a local
+constraint look like a global one. The fix is not to trust a refusal count until
+the policy proposing the moves is filter-aware — and both behaviours are pinned
+in tests, so the artefact stays visible rather than being quietly corrected.

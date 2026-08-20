@@ -62,9 +62,14 @@ class ReflectionGraph:
     nodes: tuple[Node, ...] = ()
     #: Sentence-keys already asserted, so a repeat is detectable in O(1).
     asserted: frozenset[frozenset[int]] = frozenset()
+    #: Identifier of the first root. Shifting it relabels every node without
+    #: touching the graph's shape, which is what makes an encoding artifact
+    #: visible: any wall whose counts move under a pure relabelling is reading
+    #: the raw identifier rather than anything structural.
+    first_id: int = 0
 
     @classmethod
-    def base(cls, roots: int = 1) -> "ReflectionGraph":
+    def base(cls, roots: int = 1, first_id: int = 0) -> "ReflectionGraph":
         """Start from `roots` mutually independent theories.
 
         `roots = 1` is the free generation from a single base, and it is worth
@@ -75,11 +80,11 @@ class ReflectionGraph:
         """
         nodes = tuple(Node(ident=i, parents=frozenset(),
                            content=frozenset({i}), depth=0)
-                      for i in range(roots))
-        return cls(nodes=nodes, asserted=frozenset())
+                      for i in range(first_id, first_id + roots))
+        return cls(nodes=nodes, asserted=frozenset(), first_id=first_id)
 
     def node(self, ident: int) -> Node:
-        return self.nodes[ident]
+        return self.nodes[ident - self.first_id]
 
     @property
     def rank(self) -> int:
@@ -159,7 +164,7 @@ def reflect(graph: ReflectionGraph, parents: frozenset[int]) -> DagStep:
     productive = key not in graph.asserted
     rank_before = graph.rank
     if productive:
-        ident = graph.size
+        ident = graph.first_id + graph.size
         node = Node(ident=ident, parents=parents, content=key | {ident},
                     depth=depth)
         after = replace(graph, nodes=graph.nodes + (node,),
@@ -228,6 +233,17 @@ def run_policy(policy, steps: int, *, roots: int = 1,
                                        for n in graph.nodes)}
 
 
+def joins(graph: ReflectionGraph) -> int:
+    """How many nodes were built by joining two or more theories.
+
+    This is the capability a chain does not have: a node whose content is the
+    union of two incomparable theories asserts something no single reflection
+    asserts. Counting it separates "the climb continued" from "the climb kept
+    everything it could reach", which rank alone cannot see.
+    """
+    return sum(1 for n in graph.nodes if len(n.parents) > 1)
+
+
 # ------------------------------------------------------ the three filters
 #
 # Restoring the walls the DAG domain lacked, so that sideways trajectories can
@@ -267,6 +283,20 @@ class Filters:
     #: It was a third size tax wearing the label. The distinction only became
     #: visible once the cost model was swapped, which is itself the point.
     opaque: frozenset[int] = frozenset()
+    #: Opacity attached to the **form of the move** rather than to particular
+    #: addresses. `"join"` marks every step joining two or more parents as
+    #: uncertifiable, whatever it joins and wherever it sits.
+    #:
+    #: This is the reviewer's correction to `opaque`, and it is the case the
+    #: mathematics actually forces. Totality is Π⁰₂-complete and `O`-membership
+    #: Π¹₁-complete: the hardness is *uniform over the address space*, so nothing
+    #: privileges a proper subset of addresses as decidable while the rest are
+    #: not. Marking particular nodes opaque is an extra stipulation. When the
+    #: opacity instead attaches to the form of the notation — a join names an
+    #: arbitrary set, exactly as a limit names an arbitrary fundamental sequence
+    #: — every move of that form is opaque at once, and there is no
+    #: non-opaque move of that form left to detour to.
+    opaque_form: str | None = None
     #: How a step is priced. `"content"` charges for the size of what is
     #: reflected on; `"description"` charges a flat rate.
     cost_model: str = "content"
@@ -312,6 +342,10 @@ class Filters:
             return False, "epistemic"
         if self.opaque and (key & self.opaque):
             return False, "uncertifiable"
+        if self.opaque_form == "join" and arity > 1:
+            return False, "uncertifiable"
+        if self.opaque_form not in (None, "join"):
+            raise ValueError(f"unknown opaque form {self.opaque_form!r}")
         if self.max_arity is not None and arity > self.max_arity:
             return False, "arity"
         return True, None
@@ -333,10 +367,10 @@ def filtered_step(graph: ReflectionGraph, parents: frozenset[int],
 
 
 def run_filtered(policy, steps: int, *, roots: int = 3, warmup: int = 5,
-                 filters: Filters | None = None) -> dict:
+                 filters: Filters | None = None, first_id: int = 0) -> dict:
     """Run a policy under filters and count what got through and what advanced."""
     filters = filters or Filters()
-    graph = ReflectionGraph.base(roots=roots)
+    graph = ReflectionGraph.base(roots=roots, first_id=first_id)
     for _ in range(warmup):
         graph = reflect(graph, deepen(graph)).graph_after
 
@@ -352,7 +386,7 @@ def run_filtered(policy, steps: int, *, roots: int = 3, warmup: int = 5,
         tally[s.kind] += 1
         graph = s.graph_after
     return {"tally": tally, "blocks": blocks, "final_rank": graph.rank,
-            "final_size": graph.size,
+            "final_size": graph.size, "joins": joins(graph),
             "passed": sum(tally.values()), "refused": sum(blocks.values())}
 
 
@@ -378,11 +412,40 @@ def rank_aware(graph: ReflectionGraph, filters: "Filters"):
     return broaden(graph)
 
 
+def join_aware(filters: "Filters"):
+    """A join-seeking policy that respects the filters, as `rank_aware` does for
+    depth. Returns a `policy(graph)` closure.
+
+    This exists because plain `broaden` re-offers a refused pair forever: it
+    checks whether a join is *new*, not whether it is *admissible*. So a zero
+    join count under `broaden` can mean the policy deadlocked rather than the
+    wall removed the move class — and telling those apart is the whole point of
+    asking whether opacity is local or uniform. When no admissible join is left
+    it falls back to deepening, so the system does something rather than stall.
+    """
+
+    def policy(graph: ReflectionGraph) -> frozenset[int]:
+        pool = graph.nodes
+        for i in range(len(pool)):
+            for j in range(i + 1, len(pool)):
+                a, b = pool[i], pool[j]
+                if a.content <= b.content or b.content <= a.content:
+                    continue
+                key = a.content | b.content
+                if key in graph.asserted:
+                    continue
+                if filters.admits(key, max(key), arity=2)[0]:
+                    return frozenset({a.ident, b.ident})
+        return frozenset({graph.frontier()[0].ident})
+
+    return policy
+
+
 def run_adaptive(steps: int, *, roots: int = 3, warmup: int = 5,
-                 filters: "Filters | None" = None) -> dict:
+                 filters: "Filters | None" = None, first_id: int = 0) -> dict:
     """Run the rank-aware policy, recording when it stops being able to advance."""
     filters = filters or Filters()
-    graph = ReflectionGraph.base(roots=roots)
+    graph = ReflectionGraph.base(roots=roots, first_id=first_id)
     for _ in range(warmup):
         graph = reflect(graph, deepen(graph)).graph_after
 
@@ -404,5 +467,5 @@ def run_adaptive(steps: int, *, roots: int = 3, warmup: int = 5,
         rank_trace.append(graph.rank)
     return {"tally": tally, "blocks": blocks, "final_rank": graph.rank,
             "final_size": graph.size, "last_advance_at": last_advance,
-            "rank_trace": rank_trace,
+            "rank_trace": rank_trace, "joins": joins(graph),
             "passed": sum(tally.values()), "refused": sum(blocks.values())}
