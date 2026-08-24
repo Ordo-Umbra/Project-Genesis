@@ -38,7 +38,11 @@ nothing here computes one.
 
 from __future__ import annotations
 
+from itertools import combinations
+
 from dataclasses import dataclass, field, replace
+
+from project_genesis.reflection import Continuation
 
 
 @dataclass(frozen=True)
@@ -62,9 +66,14 @@ class ReflectionGraph:
     nodes: tuple[Node, ...] = ()
     #: Sentence-keys already asserted, so a repeat is detectable in O(1).
     asserted: frozenset[frozenset[int]] = frozenset()
+    #: Identifier of the first root. Shifting it relabels every node without
+    #: touching the graph's shape, which is what makes an encoding artifact
+    #: visible: any wall whose counts move under a pure relabelling is reading
+    #: the raw identifier rather than anything structural.
+    first_id: int = 0
 
     @classmethod
-    def base(cls, roots: int = 1) -> "ReflectionGraph":
+    def base(cls, roots: int = 1, first_id: int = 0) -> "ReflectionGraph":
         """Start from `roots` mutually independent theories.
 
         `roots = 1` is the free generation from a single base, and it is worth
@@ -75,11 +84,11 @@ class ReflectionGraph:
         """
         nodes = tuple(Node(ident=i, parents=frozenset(),
                            content=frozenset({i}), depth=0)
-                      for i in range(roots))
-        return cls(nodes=nodes, asserted=frozenset())
+                      for i in range(first_id, first_id + roots))
+        return cls(nodes=nodes, asserted=frozenset(), first_id=first_id)
 
     def node(self, ident: int) -> Node:
-        return self.nodes[ident]
+        return self.nodes[ident - self.first_id]
 
     @property
     def rank(self) -> int:
@@ -149,6 +158,28 @@ class DagStep:
         return "advancing" if self.rank_advanced else "sideways"
 
 
+def as_continuation(step: "DagStep", *,
+                    certifiable: bool | None = True) -> Continuation:
+    """Read a graph step through the arithmetic domain's `Continuation` object.
+
+    The point is not tidiness. `Continuation` gained an `advancing` axis so that
+    productivity and directional advance could be separated, and the two
+    dissociations that motivate it live in *different domains*: the arithmetic
+    ladder's `truncated` arm advances without producing, and this domain's
+    sideways move produces without advancing. Mapping a step across makes the
+    second one expressible in the same object as the first, so the 2x2 is
+    something the code can be asked about rather than something the prose
+    asserts.
+
+    A step that has been executed was admitted, so `structural` and `affordable`
+    are `True` by construction here; `certifiable` is a parameter because this
+    domain settles it with the opacity filters rather than inside the step.
+    """
+    return Continuation(structural=True, affordable=True,
+                        productive=step.productive, certifiable=certifiable,
+                        advancing=step.rank_advanced)
+
+
 def reflect(graph: ReflectionGraph, parents: frozenset[int]) -> DagStep:
     """Add `Con(parents)` — the consistency of everything they transitively
     assert — as a new node, if that sentence is not already present."""
@@ -159,7 +190,7 @@ def reflect(graph: ReflectionGraph, parents: frozenset[int]) -> DagStep:
     productive = key not in graph.asserted
     rank_before = graph.rank
     if productive:
-        ident = graph.size
+        ident = graph.first_id + graph.size
         node = Node(ident=ident, parents=parents, content=key | {ident},
                     depth=depth)
         after = replace(graph, nodes=graph.nodes + (node,),
@@ -171,6 +202,48 @@ def reflect(graph: ReflectionGraph, parents: frozenset[int]) -> DagStep:
                    rank_after=after.rank, graph_after=after)
 
 
+def options(graph: ReflectionGraph, filters: "Filters | None" = None) -> dict:
+    """How many distinct productive moves are available right now.
+
+    The move space is singletons and incomparable pairs — what the policies
+    here actually propose. That restriction is declared rather than derived: the
+    full space is every subset, which is exponential and which no policy
+    searches. A count over a larger space would be a different number.
+
+    This exists because `rank` measures **height only**. A move that widens the
+    base, and so makes more future moves possible, scores zero on it. Whether
+    that is a real capability the rank measure cannot see — or whether option
+    growth simply never converts into height — is the question, and it cannot
+    be asked without counting the options.
+    """
+    f = filters or Filters()
+    single = sum(1 for n in graph.nodes
+                 if n.content not in graph.asserted
+                 and f.admits(n.content, max(n.content), 1)[0])
+    join = 0
+    for a, b in combinations(graph.nodes, 2):
+        if a.content <= b.content or b.content <= a.content:
+            continue
+        key = a.content | b.content
+        if key not in graph.asserted and f.admits(key, max(key), 2)[0]:
+            join += 1
+    return {"single": single, "join": join, "total": single + join}
+
+
+def certified_rank(graph: ReflectionGraph, filters: "Filters") -> int:
+    """Height the system can still stand behind.
+
+    `rank` counts every node ever built. But a reflection tower over a base
+    whose consistency cannot be settled is itself unsettleable — the height is
+    there, and none of it is certified. Which of the two measures is right is
+    not a detail: it decides whether a wall *freezes* your work or *retracts*
+    it, and that turns out to be what the whole concentrate-or-diversify
+    question hinges on.
+    """
+    live = [n.depth for n in graph.nodes if not filters.retracts(n.content)]
+    return max(live) if live else 0
+
+
 # --------------------------------------------------------------- strategies
 #
 # How a system chooses what to reflect on. Not a naming scheme — a content set
@@ -180,6 +253,20 @@ def reflect(graph: ReflectionGraph, parents: frozenset[int]) -> DagStep:
 
 def deepen(graph: ReflectionGraph) -> frozenset[int]:
     """Always reflect on the deepest node: the linear ladder, recovered."""
+    return frozenset({graph.frontier()[0].ident})
+
+
+def spread(graph: ReflectionGraph) -> frozenset[int]:
+    """Grow every lineage evenly: reflect on the shallowest unasserted node.
+
+    Deliberate diversification — many shallow towers rather than one tall one.
+    It is not a join-seeking policy; every move it makes is a single-parent
+    reflection, so what it buys is not new *kinds* of content but a spread of
+    live frontiers.
+    """
+    for n in sorted(graph.nodes, key=lambda n: (n.depth, n.ident)):
+        if n.content not in graph.asserted:
+            return frozenset({n.ident})
     return frozenset({graph.frontier()[0].ident})
 
 
@@ -228,6 +315,17 @@ def run_policy(policy, steps: int, *, roots: int = 1,
                                        for n in graph.nodes)}
 
 
+def joins(graph: ReflectionGraph) -> int:
+    """How many nodes were built by joining two or more theories.
+
+    This is the capability a chain does not have: a node whose content is the
+    union of two incomparable theories asserts something no single reflection
+    asserts. Counting it separates "the climb continued" from "the climb kept
+    everything it could reach", which rank alone cannot see.
+    """
+    return sum(1 for n in graph.nodes if len(n.parents) > 1)
+
+
 # ------------------------------------------------------ the three filters
 #
 # Restoring the walls the DAG domain lacked, so that sideways trajectories can
@@ -255,6 +353,32 @@ class Filters:
     #: candidate defence against sideways trajectories — included precisely so
     #: the pessimistic reading has something that could refute it.
     max_arity: int | None = None
+    #: Addresses whose validity cannot be settled. A step whose key touches
+    #: one is uncertifiable — the genuine epistemic wall, ported from
+    #: `reflection.py`'s `searched` arm, where certification is a *search* that
+    #: cannot conclude rather than a tax that scales with size.
+    #:
+    #: This exists because `certify_effort` turned out **not** to be an
+    #: epistemic wall at all. It compares `cost(key)` against a bound, so under
+    #: description pricing — where cost is constant — it degenerates to
+    #: all-or-nothing, firing for every step or none regardless of the graph.
+    #: It was a third size tax wearing the label. The distinction only became
+    #: visible once the cost model was swapped, which is itself the point.
+    opaque: frozenset[int] = frozenset()
+    #: Opacity attached to the **form of the move** rather than to particular
+    #: addresses. `"join"` marks every step joining two or more parents as
+    #: uncertifiable, whatever it joins and wherever it sits.
+    #:
+    #: This is the reviewer's correction to `opaque`, and it is the case the
+    #: mathematics actually forces. Totality is Π⁰₂-complete and `O`-membership
+    #: Π¹₁-complete: the hardness is *uniform over the address space*, so nothing
+    #: privileges a proper subset of addresses as decidable while the rest are
+    #: not. Marking particular nodes opaque is an extra stipulation. When the
+    #: opacity instead attaches to the form of the notation — a join names an
+    #: arbitrary set, exactly as a limit names an arbitrary fundamental sequence
+    #: — every move of that form is opaque at once, and there is no
+    #: non-opaque move of that form left to detour to.
+    opaque_form: str | None = None
     #: How a step is priced. `"content"` charges for the size of what is
     #: reflected on; `"description"` charges a flat rate.
     cost_model: str = "content"
@@ -286,6 +410,18 @@ class Filters:
             raise ValueError(f"unknown cost model {self.cost_model!r}")
         return len(key)
 
+    def retracts(self, key: frozenset[int]) -> bool:
+        """Does this key stop *counting*, as opposed to merely being refused?
+
+        Only unsettleability retracts. A move you cannot afford is still true —
+        the budget says you cannot take it, not that what you already have is
+        void. Conflating the two would make every economic wall look like a
+        collapse, which is the mistake this method exists to prevent; an earlier
+        version of `certified_rank` made exactly that mistake by testing
+        `admits`, and it inflated the collapse it was supposed to measure.
+        """
+        return bool(self.opaque and (key & self.opaque))
+
     def admits(self, key: frozenset[int], address: int,
                arity: int = 1) -> tuple[bool, str | None]:
         """Does every filter let this step through, and if not, which bit?"""
@@ -298,6 +434,12 @@ class Filters:
                 return False, "structural"
         if self.certify_effort is not None and self.cost(key) > self.certify_effort:
             return False, "epistemic"
+        if self.opaque and (key & self.opaque):
+            return False, "uncertifiable"
+        if self.opaque_form == "join" and arity > 1:
+            return False, "uncertifiable"
+        if self.opaque_form not in (None, "join"):
+            raise ValueError(f"unknown opaque form {self.opaque_form!r}")
         if self.max_arity is not None and arity > self.max_arity:
             return False, "arity"
         return True, None
@@ -319,15 +461,16 @@ def filtered_step(graph: ReflectionGraph, parents: frozenset[int],
 
 
 def run_filtered(policy, steps: int, *, roots: int = 3, warmup: int = 5,
-                 filters: Filters | None = None) -> dict:
+                 filters: Filters | None = None, first_id: int = 0) -> dict:
     """Run a policy under filters and count what got through and what advanced."""
     filters = filters or Filters()
-    graph = ReflectionGraph.base(roots=roots)
+    graph = ReflectionGraph.base(roots=roots, first_id=first_id)
     for _ in range(warmup):
         graph = reflect(graph, deepen(graph)).graph_after
 
     tally = {"advancing": 0, "sideways": 0, "duplicate": 0}
-    blocks = {"economic": 0, "structural": 0, "epistemic": 0, "arity": 0}
+    blocks = {"economic": 0, "structural": 0, "epistemic": 0, "arity": 0,
+              "uncertifiable": 0}
     for _ in range(steps):
         parents = policy(graph)
         s, blocked = filtered_step(graph, parents, filters)
@@ -337,8 +480,183 @@ def run_filtered(policy, steps: int, *, roots: int = 3, warmup: int = 5,
         tally[s.kind] += 1
         graph = s.graph_after
     return {"tally": tally, "blocks": blocks, "final_rank": graph.rank,
-            "final_size": graph.size,
+            "final_size": graph.size, "joins": joins(graph),
             "passed": sum(tally.values()), "refused": sum(blocks.values())}
+
+
+def run_options(policy, steps: int, *, roots: int = 3,
+                filters: "Filters | None" = None) -> dict:
+    """Trace how the option count moves, split by what kind of step moved it."""
+    f = filters or Filters()
+    graph = ReflectionGraph.base(roots=roots)
+    deltas: dict[str, list[int]] = {}
+    trace = []
+    for _ in range(steps):
+        before = options(graph, f)["total"]
+        step = reflect(graph, policy(graph))
+        graph = step.graph_after
+        after = options(graph, f)["total"]
+        deltas.setdefault(step.kind, []).append(after - before)
+        trace.append({"kind": step.kind, "before": before, "after": after})
+    return {"final": options(graph, f), "final_rank": graph.rank,
+            "final_size": graph.size, "joins": joins(graph), "trace": trace,
+            "mean_delta": {k: sum(v) / len(v) for k, v in deltas.items()},
+            "counts": {k: len(v) for k, v in deltas.items()}}
+
+
+def two_phase(invest_policy, invest_steps: int, horizon: int, *,
+              roots: int = 3, opaque: int | None = None,
+              retract: bool = False,
+              cost_model: str = "description") -> int:
+    """Invest, then have a wall land somewhere, then climb with what is left.
+
+    The point of the two phases is that the wall arrives **after** the strategy
+    is committed. Nothing in the interior view tells a system which of its
+    lineages will turn out to be the unsettleable one — that was result five —
+    so the honest comparison is over every placement, not a chosen one.
+    """
+    filters = Filters(cost_model=cost_model,
+                      opaque=frozenset() if opaque is None else frozenset({opaque}))
+    graph = ReflectionGraph.base(roots=roots)
+    for _ in range(invest_steps):
+        graph = reflect(graph, invest_policy(graph)).graph_after
+    for _ in range(horizon):
+        step, _ = filtered_step(graph, rank_aware(graph, filters), filters)
+        if step is not None:
+            graph = step.graph_after
+    return certified_rank(graph, filters) if retract else graph.rank
+
+
+def strategy_table(invest_steps: int, horizon: int, *, roots: int = 3,
+                   retract: bool = False) -> dict:
+    """Concentrate against diversify, over every place the wall could land."""
+    out = {}
+    for name, policy in (("concentrate", deepen), ("diversify", spread)):
+        ranks = [two_phase(policy, invest_steps, horizon, roots=roots,
+                           opaque=o, retract=retract) for o in range(roots)]
+        out[name] = {"by_placement": ranks, "mean": sum(ranks) / len(ranks),
+                     "worst": min(ranks), "best": max(ranks),
+                     "no_wall": two_phase(policy, invest_steps, horizon,
+                                          roots=roots, opaque=None,
+                                          retract=retract)}
+    return out
+
+
+# ------------------------------------------------------------ the interior
+#
+# Everything above is written from outside: `rank_aware` is *handed* the filter
+# object and consults it before proposing, so it routes around walls it was told
+# about. A system inside its own construction has no such object. It proposes,
+# is refused, and has to work out what the refusal meant.
+#
+# That gap is the whole subject here. The exterior knows whether a wall retracts
+# what was built; the interior sees a refusal.
+
+
+def foundation(graph: ReflectionGraph,
+               node: "Node | None" = None) -> "Node":
+    """The cheapest theory the given node rests on.
+
+    A node's content is its whole ancestry, so the roots it depends on are the
+    parentless nodes inside it. The cheapest of those is the cheapest key that
+    exists anywhere in the graph — which is what makes re-deriving it an
+    informative thing to attempt.
+    """
+    node = node or graph.frontier()[0]
+    roots = [n for n in graph.nodes if not n.parents and n.ident in node.content]
+    if not roots:
+        roots = [n for n in graph.nodes if not n.parents]
+    return min(roots, key=lambda n: (len(n.content), n.ident))
+
+
+def probe(graph: ReflectionGraph, filters: "Filters",
+          node: "Node | None" = None) -> dict:
+    """Re-derive the foundation, and see whether it still goes through.
+
+    This is the only interior move that can distinguish a wall which retracts
+    from one which merely blocks, and the reason is an inequality rather than an
+    insight: the foundation is the *cheapest* key in the graph and carries the
+    *smallest* address, so if it is refused while anything else is admitted, the
+    refusal cannot be economic and cannot be structural.
+
+    The qualifier matters. If nothing at all is admitted the system is simply
+    halted, and the probe says nothing — a budget below the minimum cost refuses
+    the foundation too. So the inference is conditional on an alternative
+    existing, and `interior_verdict` will not draw it otherwise.
+    """
+    target = foundation(graph, node)
+    key = target.content
+    admitted = filters.admits(key, max(key), 1)[0]
+    alternatives = any(
+        filters.admits(n.content, max(n.content), 1)[0]
+        for n in graph.nodes if n.ident != target.ident)
+    return {"probed": target.ident, "cost": filters.cost(key),
+            "admitted": admitted, "alternatives_admitted": alternatives}
+
+
+def interior_verdict(result: dict) -> str:
+    """What a system may conclude from a probe, using only the probe.
+
+    `retracted`   — the cheapest move is refused while others are admitted, so
+                    the refusal reads on validity rather than on price.
+    `halted`      — nothing is admitted; the probe is uninformative, and saying
+                    so is the point.
+    `no evidence` — the foundation still derives. Note what this does *not*
+                    license: it rules out retraction of that foundation, and
+                    nothing else.
+    """
+    if result["admitted"]:
+        return "no evidence"
+    return "retracted" if result["alternatives_admitted"] else "halted"
+
+
+def blind_climb(graph: ReflectionGraph, filters: "Filters", steps: int, *,
+                probe_every: int = 0, wall_at: int | None = None,
+                filters_after: "Filters | None" = None) -> dict:
+    """Climb without being told where the walls are.
+
+    The agent proposes the deepest thing it has not already been refused, learns
+    from refusals, and — if `probe_every` is set — spends every nth step
+    re-deriving its own foundation instead of climbing. Attempts cost a step
+    whether or not they succeed, which is what makes probing a real price rather
+    than free scepticism.
+    """
+    refused: set[frozenset[int]] = set()
+    observations, detected_at = [], None
+    for i in range(steps):
+        active = (filters if wall_at is None or i < wall_at
+                  else (filters_after or filters))
+        if probe_every and i % probe_every == 0:
+            result = probe(graph, active)
+            verdict = interior_verdict(result)
+            observations.append({"kind": "probe", "admitted": result["admitted"],
+                                 "verdict": verdict})
+            if verdict == "retracted" and detected_at is None:
+                detected_at = i
+            continue
+        pick = None
+        for n in sorted(graph.nodes, key=lambda n: -n.depth):
+            candidate = frozenset({n.ident})
+            if candidate not in refused and n.content not in graph.asserted:
+                pick = candidate
+                break
+        if pick is None:
+            observations.append({"kind": "exhausted", "admitted": False})
+            continue
+        step, _ = filtered_step(graph, pick, active)
+        observations.append({"kind": "move", "admitted": step is not None})
+        if step is None:
+            refused.add(pick)
+        else:
+            graph = step.graph_after
+    final = (filters if wall_at is None else (filters_after or filters))
+    return {"observations": observations, "detected_at": detected_at,
+            "latency": (None if detected_at is None or wall_at is None
+                        else detected_at - wall_at),
+            "believed_rank": graph.rank,
+            "certified_rank": certified_rank(graph, final),
+            "graph": graph,
+            "record": [(o["kind"], o["admitted"]) for o in observations]}
 
 
 def rank_aware(graph: ReflectionGraph, filters: "Filters"):
@@ -363,16 +681,46 @@ def rank_aware(graph: ReflectionGraph, filters: "Filters"):
     return broaden(graph)
 
 
+def join_aware(filters: "Filters"):
+    """A join-seeking policy that respects the filters, as `rank_aware` does for
+    depth. Returns a `policy(graph)` closure.
+
+    This exists because plain `broaden` re-offers a refused pair forever: it
+    checks whether a join is *new*, not whether it is *admissible*. So a zero
+    join count under `broaden` can mean the policy deadlocked rather than the
+    wall removed the move class — and telling those apart is the whole point of
+    asking whether opacity is local or uniform. When no admissible join is left
+    it falls back to deepening, so the system does something rather than stall.
+    """
+
+    def policy(graph: ReflectionGraph) -> frozenset[int]:
+        pool = graph.nodes
+        for i in range(len(pool)):
+            for j in range(i + 1, len(pool)):
+                a, b = pool[i], pool[j]
+                if a.content <= b.content or b.content <= a.content:
+                    continue
+                key = a.content | b.content
+                if key in graph.asserted:
+                    continue
+                if filters.admits(key, max(key), arity=2)[0]:
+                    return frozenset({a.ident, b.ident})
+        return frozenset({graph.frontier()[0].ident})
+
+    return policy
+
+
 def run_adaptive(steps: int, *, roots: int = 3, warmup: int = 5,
-                 filters: "Filters | None" = None) -> dict:
+                 filters: "Filters | None" = None, first_id: int = 0) -> dict:
     """Run the rank-aware policy, recording when it stops being able to advance."""
     filters = filters or Filters()
-    graph = ReflectionGraph.base(roots=roots)
+    graph = ReflectionGraph.base(roots=roots, first_id=first_id)
     for _ in range(warmup):
         graph = reflect(graph, deepen(graph)).graph_after
 
     tally = {"advancing": 0, "sideways": 0, "duplicate": 0}
-    blocks = {"economic": 0, "structural": 0, "epistemic": 0, "arity": 0}
+    blocks = {"economic": 0, "structural": 0, "epistemic": 0, "arity": 0,
+              "uncertifiable": 0}
     last_advance, rank_trace = None, []
     for i in range(steps):
         parents = rank_aware(graph, filters)
@@ -388,5 +736,5 @@ def run_adaptive(steps: int, *, roots: int = 3, warmup: int = 5,
         rank_trace.append(graph.rank)
     return {"tally": tally, "blocks": blocks, "final_rank": graph.rank,
             "final_size": graph.size, "last_advance_at": last_advance,
-            "rank_trace": rank_trace,
+            "rank_trace": rank_trace, "joins": joins(graph),
             "passed": sum(tally.values()), "refused": sum(blocks.values())}

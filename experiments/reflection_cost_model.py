@@ -37,6 +37,22 @@ Q3. **The sideways basin still exists.** It is no longer *selected for*, but
     the earlier finding — that sideways is a property of moves rather than
     states — wrong.
 
+Q4. **The epistemic wall is not one.** Added after a reviewer closed with a
+    claim I had not tested: that a rank-following policy advances without bound
+    *until an independent wall intervenes* — naming undecidability of an address
+    as one such wall. Checking it exposed a fault in this module rather than in
+    the claim. `certify_effort` compares `cost(key)` against a bound, so it reads
+    exactly what the economic filter reads; under flat pricing it must degenerate
+    to all-or-nothing. It was a third size tax wearing an epistemic label.
+
+    So a genuine epistemic wall is added — `opaque`, a set of addresses whose
+    validity cannot be settled, ported from result one's `searched` arm where
+    certification is a *search that cannot conclude* rather than a tax that
+    scales with size. The prediction: because it does not read size, it must
+    fire **identically under both cost models**, in every row.
+    **Falsifier:** any row where the two columns differ, which would mean it
+    reads size after all and is a fourth tax.
+
 Honest scope
 ------------
 The flat rate is a parameter (`description_cost`), and its *value* is arbitrary;
@@ -111,6 +127,70 @@ def directionality(steps: int) -> list[dict]:
                                           "blocks sideways" if s < a
                                           else "neutral")}
             rows.append(row)
+    return rows
+
+
+def certifier_degeneracy() -> list[dict]:
+    """What `certify_effort` actually reads, shown directly.
+
+    A small key and a large one, priced under both models, put through the
+    filter. Under content pricing the two differ — the filter separates them.
+    Under description pricing they are priced the same, so no bound can separate
+    them: every effort level admits both or refuses both.
+    """
+    small, big = frozenset({0, 1}), frozenset(range(20))
+    rows = []
+    for model in MODELS:
+        for effort in (1, 2, 20):
+            f = Filters(certify_effort=effort, cost_model=model)
+            rows.append({
+                "cost_model": model, "effort": effort,
+                "cost_small": f.cost(small), "cost_big": f.cost(big),
+                "admits_small": f.admits(small, max(small), 1)[0],
+                "admits_big": f.admits(big, max(big), 1)[0],
+            })
+    return rows
+
+
+def genuine_wall(steps: int, roots: int = 3) -> list[dict]:
+    """A wall that does not read size: one address whose validity is unsettleable.
+
+    Swept over which root is opaque, because *placement* is what determines
+    which policy it bites — unlike a size tax, whose direction is fixed by the
+    fact that advancing enlarges the key.
+    """
+    rows = []
+    for opaque in range(roots):
+        row = {"opaque": opaque}
+        for model in MODELS:
+            f = Filters(cost_model=model, opaque=frozenset({opaque}))
+            d = run_filtered(deepen, steps, roots=roots, filters=f)
+            b = run_filtered(broaden, steps, roots=roots, filters=f)
+            row[model] = {
+                "deepen_advancing": d["tally"]["advancing"],
+                "deepen_blocked": d["blocks"]["uncertifiable"],
+                "broaden_sideways": b["tally"]["sideways"],
+                "broaden_blocked": b["blocks"]["uncertifiable"],
+            }
+        row["identical"] = row["content"] == row["description"]
+        rows.append(row)
+    return rows
+
+
+def detour(steps: int, roots: int = 3) -> list[dict]:
+    """Can a rank-following policy route around an unsettleable address?"""
+    rows = []
+    for opaque in (None, 0, 1, 2, "all"):
+        marked = (frozenset() if opaque is None else
+                  frozenset(range(roots)) if opaque == "all" else
+                  frozenset({opaque}))
+        r = run_adaptive(steps, roots=roots,
+                         filters=Filters(cost_model="description",
+                                         opaque=marked))
+        rows.append({"opaque": opaque, "rank": r["final_rank"],
+                     "advancing": r["tally"]["advancing"],
+                     "sideways": r["tally"]["sideways"],
+                     "blocked": r["blocks"]["uncertifiable"]})
     return rows
 
 
@@ -191,6 +271,87 @@ def main(argv: list[str] | None = None) -> int:
     print(f"     option.")
     print()
 
+    deg = certifier_degeneracy()
+    print("  Q4. Is the epistemic filter epistemic? (a reviewer's closing claim)")
+    print()
+    print("  `certify_effort` admits a step when cost(key) <= effort. It reads the")
+    print("  same number the economic filter reads, so swapping the cost model")
+    print("  says what it was measuring all along:")
+    print()
+    print(f"  {'cost model':<12} {'effort':>7} {'cost(small)':>12} {'cost(big)':>10}"
+          f"  {'admits':<18}")
+    for r in deg:
+        verdict = ("both" if r["admits_small"] and r["admits_big"] else
+                   "neither" if not r["admits_small"] else "small only")
+        print(f"  {r['cost_model']:<12} {r['effort']:>7} {r['cost_small']:>12} "
+              f"{r['cost_big']:>10}  {verdict:<18}")
+    flat = [r for r in deg if r["cost_model"] == "description"]
+    degenerate = all(r["admits_small"] == r["admits_big"] for r in flat)
+    print()
+    print(f"  Under flat pricing it never separates the two keys: "
+          f"{'CONFIRMED' if degenerate else 'REFUTED'}")
+    print("  It was a third size tax wearing an epistemic label. That was")
+    print("  invisible while every filter read the same number — the cost model")
+    print("  swap is what made it visible, which is the point of running one.")
+    print()
+
+    wall = genuine_wall(args.steps)
+    print("  So here is a wall that genuinely does not read size: an address")
+    print("  whose validity cannot be settled, ported from result one's `searched`")
+    print("  arm — certification as a search that cannot conclude.")
+    print()
+    print(f"  {'opaque':>7} | {'content-addressed':^21} | "
+          f"{'description-addressed':^21}")
+    print(f"  {'root':>7} | {'deepen     broaden':^21} | "
+          f"{'deepen     broaden':^21}")
+    print(f"  {'':>7} | {'adv/blk    side/blk':^21} | "
+          f"{'adv/blk    side/blk':^21}")
+
+    def fmt(c):
+        return (f"{c['deepen_advancing']:>3}/{c['deepen_blocked']:<3}    "
+                f"{c['broaden_sideways']:>3}/{c['broaden_blocked']:<3}")
+
+    for r in wall:
+        print(f"  {r['opaque']:>7} | {fmt(r['content']):^21} | "
+              f"{fmt(r['description']):^21}")
+    q4 = all(r["identical"] for r in wall)
+    print()
+    print(f"  Q4 a real epistemic wall fires identically under both models .... "
+          f"{'CONFIRMED' if q4 else 'REFUTED'}")
+    print(f"     {sum(r['identical'] for r in wall)}/{len(wall)} rows identical.")
+    print("     It does not read size, so pricing cannot move it. Note what")
+    print("     decides its direction instead: *placement*. Marking root 0 —")
+    print("     the one the deepening chain runs through — blocks everything;")
+    print("     marking root 2 blocks only the joins. A size tax has a fixed")
+    print("     direction because advancing always enlarges the key. This one")
+    print("     has no intrinsic direction at all.")
+    print()
+
+    det = detour(args.steps)
+    print("  And can a rank-following policy route around it?")
+    print()
+    print(f"  {'opaque':>7} {'rank':>6} {'advancing':>10} {'sideways':>9} {'blocked':>8}")
+    for r in det:
+        print(f"  {str(r['opaque']):>7} {r['rank']:>6} {r['advancing']:>10} "
+              f"{r['sideways']:>9} {r['blocked']:>8}")
+    clean = det[0]["rank"]
+    partial = [r for r in det[1:] if r["opaque"] != "all"]
+    total = det[-1]
+    print()
+    print(f"     Yes, at a bounded price. A single unsettleable root costs at")
+    print(f"     most {clean - min(r['rank'] for r in partial)} rungs out of "
+          f"{clean} — the policy abandons the region and rebuilds")
+    print(f"     elsewhere. It is a detour, not a ceiling. But mark *every* root")
+    print(f"     opaque and the climb stops dead at rank {total['rank']}, with all")
+    print(f"     {total['blocked']} attempts refused. Which is the arithmetic")
+    print(f"     domain's `searched` arm exactly: when certification is a search")
+    print(f"     over the whole address space, there is nowhere to route to.")
+    print()
+    print("     So the reviewer's parenthetical holds for a real epistemic wall,")
+    print("     and this module did not contain one until now. The claim was")
+    print("     right; the model was wrong. Both halves are the result.")
+    print()
+
     print("  What this closes")
     print()
     print("  The gap was not a missing object. Result one of this series measured")
@@ -225,9 +386,12 @@ def main(argv: list[str] | None = None) -> int:
         out.write_text(json.dumps({
             "params": vars(args) | {"output_dir": str(args.output_dir)},
             "saturation": sat, "growth": grow, "directionality": dirs,
-            "basin": basin,
+            "basin": basin, "certifier_degeneracy": deg,
+            "genuine_wall": wall, "detour": det,
             "verdicts": {"Q1_no_saturation": q1, "Q2_filters_neutral": q2,
-                         "Q3_basin_survives": q3},
+                         "Q3_basin_survives": q3,
+                         "Q4_wall_is_pricing_invariant": q4,
+                         "Q4_certify_effort_degenerates": degenerate},
         }, indent=2, default=str))
         print(f"\n  wrote {out}")
     return 0

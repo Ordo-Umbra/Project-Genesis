@@ -2376,7 +2376,9 @@ names**. That is a cost model that does not grow with the reflected object, and
 it was measured eleven experiments ago. The DAG domain had been pricing by
 `|key|`: content-addressing, reintroduced without anyone noticing, including me.
 `experiments/reflection_cost_model.py` swaps in description-addressed pricing.
-**3/3:**
+**3/3 as registered, plus a fourth question added afterwards** — a reviewer's
+closing sentence contained a claim nobody had tested, and testing it found a
+fault in this module rather than in the claim.
 
 - **Q1 ✓ Rank stops saturating.** Content-addressed, rank is **10 at every step
   count** — the budget and nothing more. Description-addressed, rank tracks
@@ -2393,6 +2395,40 @@ it was measured eleven experiments ago. The DAG domain had been pricing by
   move chosen, not of the state. It was only ever a trap because the cost model
   made it the cheap option.
 
+- **Q4 ✓ The epistemic filter was not epistemic.** The reviewer closed by
+  saying a rank-following policy advances without bound *until an independent
+  wall intervenes* — naming undecidability of an address as one such wall. That
+  parenthetical had never been tested here, and testing it exposed the problem.
+  `certify_effort` admits a step when `cost(key) ≤ effort`. **It reads exactly
+  the number the economic filter reads.** Under flat pricing, no bound separates
+  a 2-element key from a 20-element one: every effort level admits both or
+  refuses both. It was **a third size tax wearing an epistemic label**, and that
+  was invisible while all three filters read the same number. Swapping the cost
+  model is what made it visible — which is the point of ever swapping one.
+
+  So a genuine epistemic wall was added: `opaque`, a set of addresses whose
+  validity **cannot be settled**, ported from result one's `searched` arm where
+  certification is a *search that cannot conclude* rather than a tax that scales
+  with size. Prediction: because it does not read size, it must fire identically
+  under both cost models. **3/3 rows identical**, every count matching exactly.
+
+  Two further things fall out. **Direction is set by placement, not by size.** A
+  size tax always blocks advancing, because advancing always enlarges the key.
+  This wall has no intrinsic direction: marking the root the deepening chain runs
+  through blocks everything (30/30 refused, both policies); marking a root off
+  that chain blocks only the joins (0 refused deepening, 29/30 refused
+  broadening). And **a rank-following policy routes around it at a bounded
+  price** — one unsettleable root costs 5 rungs out of 35, the policy abandoning
+  that region and rebuilding elsewhere. A detour, not a ceiling. But mark *every*
+  root opaque and the climb stops dead at the warm-up rank with all 30 attempts
+  refused, which is the arithmetic domain's `searched` arm exactly: when
+  certification is a search over the whole address space, there is nowhere to
+  route to.
+
+  **The reviewer's claim holds for a real epistemic wall, and this module did not
+  contain one until now.** The claim was right; the model was wrong. Both halves
+  are the result.
+
 **The chain, now that every link is visible:** naming by description rather than
 by content makes cost flat → flat cost makes the filters neutral → neutral
 filters stop selecting for sideways → a rank-aware policy then advances without
@@ -2406,15 +2442,381 @@ constant cost*, and was quietly inapplicable to every domain after it. Under
 description-addressed pricing it applies again.
 
 Reproduce with `python experiments/reflection_cost_model.py` (`--quick` for a
-smoke run); 16 tests in `tests/test_reflection_cost_model.py`, including controls
+smoke run); 28 tests in `tests/test_reflection_cost_model.py`, including controls
 asserting that content pricing still saturates and still biases — so the earlier
-results are not quietly overwritten by the fix. 250 reflection tests, 4.3s.
+results are not quietly overwritten by the fix — and a test pinning that
+`certify_effort` and `budget` return the same verdict on the same key, which is
+the degeneracy stated as an assertion. 262 reflection tests, 5.4s.
 
 **Honest scope.** The flat rate is a parameter and its *value* is arbitrary; what
 matters is that it does not read the key. The structural filter was made to
 follow the cost model, since it was size-linked only because the address was —
-leaving it content-linked would have rigged the comparison. `depth` remains a
+leaving it content-linked would have rigged the comparison. `opaque` is a
+*declared* unsettleable set, not a decidability result: nothing here proves any
+address undecidable, it models what a policy does when one is. `depth` remains a
 declared proxy for proof-theoretic rank.
+
+---
+
+## Classify walls by what they read — and a second mislabelled one
+
+The previous run found the DAG domain's "epistemic" filter was a size tax
+wearing an epistemic label. The reviewer's response was to promote the accident
+into an instrument: **classify walls by the quantity they actually read, by
+perturbing that quantity and seeing which walls move.** They also settled the
+locality question, against the earlier model — totality is Π⁰₂-complete and
+`O`-membership Π¹₁-complete, so the hardness is *uniform over the address space*
+and nothing privileges a proper subset of addresses as decidable. Marking
+particular nodes opaque is a stipulation, not a consequence of undecidability.
+
+`experiments/reflection_wall_audit.py` builds the instrument, points it at every
+wall in the module, and adds `opaque_form="join"` — opacity attached to the
+**form of the move** rather than to addresses, which is the case the mathematics
+forces. Two perturbations, each leaving the graph's shape untouched: swap the
+cost model (does it read price?), and shift every identifier by a constant with
+the filter relabelled to match (does it read the raw number?). **3/3:**
+
+- **Q1 ✓ The audit separates three groups — and convicts a wall nobody had
+  complained about.**
+
+  | wall | reads price | reads identity | |
+  |---|---|---|---|
+  | `budget` | yes | no | size tax |
+  | `certify_effort` | yes | no | size tax (the known one) |
+  | `address_bits` | **yes** | **yes** | price **+ encoding artifact** |
+  | `opaque` | no | no | reads neither |
+  | `opaque_form` | no | no | reads neither |
+  | `max_arity` | no | no | reads neither |
+
+  `address_bits` compares `max(key)` against `2^bits` — **it is reading the
+  largest raw identifier.** Relabel the graph without changing its shape and its
+  verdict changes: `{0,1,2}` is admitted at 3 bits, `{8,9,10}` is refused. It is
+  called *structural*, and part of what it enforces is an artifact of how nodes
+  happen to be numbered. **Found by the instrument built to catch the first
+  one**, which is the argument for keeping the instrument.
+
+- **Q2 ✓ Uniform opacity leaves no detour; local opacity does.** Joins certified
+  under a filter-aware policy, 40 steps: with no wall, 40. Form-attached
+  opacity: **0 at every root count.** Address-attached opacity: **40 at every
+  placement** for 6 and 10 roots — the marked address removes the pairs that
+  touch it and leaves the class intact. There is no non-opaque move of that form
+  to detour to, which is exactly the reviewer's point.
+
+- **Q3 ✓ Removing the class does not stop the climb.** Rank under form opacity
+  equals rank with no wall at all (25 vs 25 at 20 steps, both pricings), with
+  **zero refusals** — a rank-following policy never attempts a join, so nothing
+  is refused. Meanwhile a joining policy has 40 available and certifies none.
+  **What a uniform epistemic wall costs is not height. It is a kind of
+  content:** no theory whose content is the union of two incomparable theories
+  is ever certified, however long the climb runs. That is result five's `hidden`
+  verdict recovered in a second domain.
+
+**A correction to the previous entry.** Those refusal counts — "0 refused
+deepening, 29/30 refused broadening" — used `broaden`, which checks whether a
+join is *new* but not whether it is *admissible*, so it re-offers a refused pair
+forever. Under it, local opacity looks as destructive as uniform opacity
+(`[0, 0, 1, 2, 3, 4]` joins at 6 roots); with a filter-aware policy the same
+walls give `[40, 40, 40, 40, 40, 40]`. **The wall did not remove those joins;
+the policy deadlocked on them.** A blocked-move count measures the policy as
+much as the wall whenever the policy cannot see the wall. The claims that used
+`rank_aware` — the 5-rungs-of-35 detour, the halt under total opacity, and the
+pricing invariance — are unaffected, because that policy does check
+admissibility.
+
+Reproduce with `python experiments/reflection_wall_audit.py` (`--quick` for a
+smoke run); 23 tests in `tests/test_reflection_wall_audit.py`, the first four of
+which are the control the whole audit rests on — that shifting the first
+identifier is a *pure relabelling*, so the `reads identity` column measures a
+wall rather than a bug in the graph. 285 reflection tests, 4.8s.
+
+**Honest scope.** `opaque_form` is a **declared** uniform opacity; nothing here
+proves any address undecidable, it models what a policy does when a whole move
+class cannot be certified. The instrument gives **two bits, not a taxonomy**: it
+separates price-readers and identity-readers from everything else, and does not
+distinguish a placement-reader from any other magnitude-reader — which is why
+`max_arity`, reading `|parents|`, sits alongside the opacity walls. `depth`
+remains a declared proxy for proof-theoretic rank.
+
+---
+
+## Do options convert into height? No — they buy a floor
+
+Every result in this series measured reach with one number: `rank`, the longest
+path from the base. **Height, and nothing else.** So a move that widens the base
+— creating material that makes more future moves possible — scores zero and gets
+called `sideways`. That is structurally the same error the last two runs caught
+twice: a quantity measured, a different quantity named, nothing forcing them
+apart. `experiments/reflection_options.py` counts the options and asks whether
+they ever turn into height. Move space counted: singletons and incomparable
+pairs, which is what the policies actually propose. **3/4, and the refuted one
+is the most useful.**
+
+- **Q1 ✓ A chain generates no join options, ever.** Free generation from one
+  root stays totally ordered (`join options = 0` at every step count, `single =
+  1`), because every union is the larger member and is already asserted. Two
+  roots give 26 join options after 25 steps, three give 53. **Independent
+  starting points are not an optimisation, they are the precondition for a whole
+  class of move existing at all.**
+
+- **Q2 ✗ REFUTED — and the prediction inherited the framing it was meant to
+  test.** Registered: sideways moves generate more options per step than
+  advancing ones. Measured, options created per step:
+
+  | policy | advancing | sideways |
+  |---|---|---|
+  | `deepen` — extend one lineage | **+2.00** | — |
+  | `spread` — grow lineages in parallel | **+10.00** | +10.50 |
+  | `broaden` — join below the frontier | +1.50 | **+9.47** |
+
+  The five-to-one effect is real between `deepen` and `broaden`. But `spread`,
+  **whose every move is a single-parent advance**, generates options at the
+  sideways rate. So the advancing/sideways axis does not explain the count.
+  **What explains it is whether a move creates incomparable material** — two
+  theories neither of which contains the other — and that is orthogonal to
+  whether the move gains height. *You can have both.*
+
+- **Q3 ✓ The options do not convert into height.** Invest 20 steps, then climb
+  80 with a rank-following policy:
+
+  | invested in | rank after invest | options built | rank after climb | gained |
+  |---|---|---|---|---|
+  | `deepen` | 20 | 46 | 100 | **80** |
+  | `spread` | 7 | 179 | 87 | **80** |
+  | `broaden` | 2 | 170 | 82 | **80** |
+
+  **Exactly the same gain, whatever was built and however many options exist.**
+  A depth-following policy never spends the width. Options are real and they are
+  not height — so the sideways-as-trap reading survives, but only for the
+  quantity it was ever about.
+
+- **Q4 ✓ What options buy is a floor, and the premium is measurable.** A wall
+  lands on a lineage chosen *after* the strategy is committed — the honest setup,
+  since result five showed a system cannot tell from inside which of its lineages
+  will not settle. Averaged over every placement, 20 invested steps, 3 roots:
+
+  | model | horizon | concentrate mean / worst | diversify mean / worst |
+  |---|---|---|---|
+  | freeze | 5 | 23.3 / **20** | 12.0 / 12 |
+  | freeze | 40 | **53.3** / 40 | 47.0 / **47** |
+  | retract | 5 | **18.3** / 5 | 12.0 / **12** |
+  | retract | 40 | **53.3** / 40 | 47.0 / **47** |
+
+  **Concentration wins the mean in every configuration tested. Diversification
+  wins the worst case in almost all of them.** That gap *is* the trade, and it is
+  not resolvable by gathering more information — the interior result says which
+  lineage fails is exactly what cannot be known from inside. So the choice is
+  between optimising the mean and optimising the floor, which is a decision about
+  what one is willing to lose rather than a fact about the domain.
+
+**Whether a wall freezes or retracts is load-bearing, and had never been made
+explicit.** Under `freeze` the height already reached still stands, and
+concentration wins on *both* measures at a short horizon. Under `retract` — a
+tower over a base whose consistency cannot be settled is itself uncertified,
+which is the faithful reading for reflection towers — the concentrated
+strategy's floor collapses to what it can rebuild in the time remaining (5
+against diversification's 12). Both are run rather than one being chosen.
+
+**A second prediction came out backwards** and is recorded rather than dropped:
+the guess was that a short horizon favours diversification, because there is no
+time to rebuild. The opposite holds under `freeze`, where what matters at a short
+horizon is the height already standing and the concentrated strategy has more of
+it.
+
+Reproduce with `python experiments/reflection_options.py` (`--quick` for a smoke
+run); 20 tests in `tests/test_reflection_options.py`, including one pinning the
+corrected Q2 claim so it cannot rot back to the framing it replaced, and one
+pinning the freeze/retract divergence as the load-bearing choice it is. **305
+reflection tests, 6.2s.**
+
+**Honest scope.** The move space counted is singletons and incomparable pairs —
+not the full subset lattice, which no policy searches; a count over a larger
+space would be a different number. `opaque` remains a **declared** unsettleable
+set; nothing here proves any address undecidable. `depth` remains a declared
+proxy for proof-theoretic rank. And nothing in this run models research
+programmes, funding or belief — the resemblance to how one decides where to place
+intellectual effort is a resemblance, and it was not tested.
+
+---
+
+## The interior cannot see a retraction — and repairs it anyway
+
+The previous run found that whether a wall **freezes** or **retracts** decides
+the whole concentrate-or-diversify result, and that the distinction had never
+been made explicit. It left one question open: can a system tell, from inside,
+that its foundation stopped counting? That is the right thing to be nervous
+about, because the failure mode is not a crash — the system keeps climbing at the
+same rate and its ledger silently zeroes.
+
+**A modelling bug had to be fixed first, and it is the same shape as everything
+else in this stretch.** `certified_rank` tested `admits`, so an *unaffordable*
+tower read as retracted. A move you cannot afford is still true; the budget says
+you cannot take it, not that what you have is void. `Filters.retracts` now names
+the narrower predicate, and a test pins that only unsettleability retracts. The
+earlier version inflated the very collapse it was measuring.
+
+What "from inside" means is also now explicit. Every policy in the module before
+this is written from outside: `rank_aware` is **handed the filter object** and
+consults it before proposing, so it routes around walls it was told about. The
+interior agent `blind_climb` gets the graph and nothing else — it proposes, is
+refused, and learns only by attempting, and a failed attempt costs a step exactly
+like a successful one. `experiments/reflection_retraction.py`. **4/4:**
+
+- **Q1 ✓ Forward motion cannot detect it.** A retracting wall and an economic
+  wall that refuses the same frontier produce records that are **identical,
+  attempt for attempt** — same proposals, same successes, same refusals — while
+  the exterior truth differs. From inside, *"I cannot extend this line"* is
+  equally compatible with *"and everything under it stands"* and with *"and none
+  of it ever counted."* **The system is not missing a subtle signal. There is no
+  signal.**
+
+- **Q2 ✓ Re-deriving the foundation detects it, by an inequality rather than an
+  insight.** The foundation is the **cheapest key in the graph** and carries the
+  **smallest address**, so if it is refused while anything else is admitted, the
+  refusal cannot be economic and cannot be structural. What is left is validity.
+
+  | scenario | probe cost | admitted | others ok | verdict |
+  |---|---|---|---|---|
+  | retracting base | 1 | no | yes | **`retracted`** |
+  | economic, frontier too dear | 1 | yes | yes | `no evidence` |
+  | economic, below every cost | 1 | no | **no** | **`halted`** |
+
+  The third row is why the rule carries a condition. A budget below every cost
+  refuses the foundation too, so the inference only runs **while something else
+  is still admitted**. Without that clause the probe would report a collapse
+  every time a system merely ran out of money. It returns `halted` — the honest
+  answer that the probe has told you nothing.
+
+- **Q3 ✓ Scepticism is a dial, not a right answer.** Averaged over 12 wall
+  arrival times, so nothing turns on a probe landing on the wall:
+
+  | probe every | mean latency | height forgone | product |
+  |---|---|---|---|
+  | 2 | 0.50 | 15.00 | 7.5 |
+  | 4 | 1.50 | 8.08 | 12.1 |
+  | 8 | 3.83 | 4.33 | 16.6 |
+  | 16 | 8.50 | 2.00 | 17.0 |
+
+  Latency falls and cost rises, both roughly linearly, and the product moves by
+  **2.3× across an 8× range**. No free lunch and no cliff: each probe buys a
+  bounded delay and costs a step of height. The right rate is whatever a
+  tolerance for being wrong is worth — **the same shape of answer as the
+  mean-versus-floor trade**, which is the second time this domain has returned a
+  preference rather than a fact.
+
+- **Q4 ✓ The gap closes, and is never diagnosed.** Belief stays at 32 in every
+  row; certified height runs from **0** with no horizon left to **39** with
+  plenty; `ever detected` is **False** throughout.
+
+  | horizon after the wall | believed | certified | gap |
+  |---|---|---|---|
+  | 0 | 32 | **0** | 32 |
+  | 10 | 32 | 9 | 23 |
+  | 40 | 39 | 39 | **0** |
+
+  **The system repairs itself without ever making the diagnosis.** Routing around
+  a refusal is what the policy does anyway; given enough steps that happens to
+  rebuild certified height somewhere else. Its belief about itself was wrong at
+  every point in between, is right again at the end, and never changed. And the
+  top row is the half worth keeping: with no time to rebuild, the belief simply
+  stays wrong — not through carelessness, but because nothing in forward motion
+  was ever going to tell it.
+
+Reproduce with `python experiments/reflection_retraction.py` (`--quick` for a
+smoke run); 19 tests in `tests/test_reflection_retraction.py`, including the pin
+on `retracts` being narrower than `admits`, a test that the interior agent is
+genuinely blind (a refused attempt still costs a step), and one asserting that
+probing displaces climbing one-for-one so the price is real. **324 reflection
+tests, 3.9s.**
+
+**Honest scope.** `opaque` remains a **declared** unsettleable set; nothing here
+proves any address undecidable, and the completeness results this leans on remain
+citations. The probe's inference is conditional on an alternative being admitted,
+and that condition is measured rather than assumed away. `depth` remains a
+declared proxy for proof-theoretic rank.
+
+---
+
+## The arc of failed proxies — and the dimension it exposed
+
+A review of the companion document made two points worth acting on rather than
+agreeing with. The first: its real finding is not the taxonomy of walls but **the
+sequence of proxies for progress that came apart**. The second: the framework now
+carries more independent structure than `(C, I, G)` can express, and specifically
+lacks a *directional advance* variable.
+
+Both are right. Writing the first out in order is what made the second obvious.
+
+| proxy | what killed it |
+|---|---|
+| more representation | 2,222× more symbols, identical productive content |
+| more steps | the counter climbs to 11 while the axiom set freezes at 16 |
+| continued motion | `stagnant`: moves exist, none achieves anything, nothing halts |
+| local productivity | productive forever, global position unchanged |
+| more rank | height costs breadth, and breadth buys the worst case |
+| **your own measurement** | the interior's record is identical whether the ground held or not |
+
+The last row is the one that unsettles the rest: every earlier proxy fails against
+an external check, and that one *is* the external check failing.
+
+**The missing dimension.** `G` had four — `structural ∧ affordable ∧ productive`,
+plus `certifiable` for the interior reading — and **none of them is direction**,
+so the object could not express row five at all. `Continuation` now carries
+`advancing`, defaulting to `True` because every earlier result was measured in a
+linear domain where a step increments the rung by construction.
+
+**But it could not be a sixth verdict, and the reason is a bug this class already
+had.** An early version returned `terminal` whenever `g_actual` was 0, silently
+merging "no move exists" with "moves exist and achieve nothing". Folding
+direction into the same ordered list repeats that exactly: a state that is
+productive, non-advancing **and** uncertifiable would report one of those facts
+and lose the other. So it is a second axis (`direction` ∈ advancing / circling /
+halted), and the anti-merge property is asserted directly in the tests.
+
+Every cell of the resulting 2×2 is occupied by something already measured:
+
+| | advancing | not advancing |
+|---|---|---|
+| **productive** | the real thing (`recognised` / `hidden`) | **sideways** — new content, position unchanged (DAG) |
+| **not productive** | **nominal** — counter climbs, nothing added (`truncated` arm) | stuck (`stagnant` / `terminal`) |
+
+The off-diagonal cells are **different dissociations found in different domains**,
+and neither implies the other. `reflection_dag.as_continuation` maps a graph step
+into the arithmetic domain's object so the table is something the code can be
+asked about rather than something the prose asserts.
+
+**What was deliberately not built.** The review proposed reading success as
+`D = G_actual ∧ A`. That is withheld, and the options run is why: breadth costs
+height and never earns it back, while what it buys is the worst case —
+concentration wins the mean, diversification wins the floor. Ranking advancing
+above sideways encodes a preference about which to optimise. `g_advancing` is
+exposed as a measurement; no scalar "development" is defined on top of it.
+
+### And the probe, applied to this repository
+
+The retraction run found that a system cannot tell by climbing whether its
+foundation still counts, and that the one test which works is re-deriving the
+foundation — the cheapest thing in the structure. That is not a metaphor here, so
+it was run.
+
+The two founding experiments were measured with machinery that has since changed
+substantially: new filters, a new cost model, a relabelled graph, a corrected
+notion of certified height. **The test suite passing is not evidence** — those
+tests were written alongside the claims, which is forward motion. So both were
+re-run and their headline numbers checked against this log.
+
+**They reproduce exactly.** 11,103,120 against 4,996 — the factor of 2,222. Growth
+×2.00 against ×1.00. The truncated index first repeating at rung 8, axioms
+freezing at 16 while the counter climbs to 11, the twelve-rung conjunction
+checking in 45 lines, closure saturating at 20 formulas. Reach at
+2/6/9/12/16/19/22 rungs, 1.000 rungs per doubling of capacity. `r* = L/κ_max`
+matched with a **worst departure of 0.00%**. The degenerate arm still taking the
+same 64 rungs as the real one at an identical critical recovery rate, 8 new
+axioms against 64, terminating at rung 8 once productivity is required.
+
+By the retraction run's own vocabulary that verdict is **`no evidence`** — which
+rules out retraction of *that* foundation and, precisely, nothing else.
+
+335 reflection tests, 3.6s.
 
 ---
 
