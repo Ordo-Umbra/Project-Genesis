@@ -1,6 +1,6 @@
 # The Reflection Ladder
 
-### What fourteen experiments actually showed, in plain language
+### What fifteen experiments actually showed, in plain language
 
 *A companion to [`The_Generative_Gap.md`](The_Generative_Gap.md), written to be
 read cold. No proof theory assumed. Every claim here is either something a
@@ -1008,6 +1008,124 @@ resemblance, in exactly the sense §9 means it. It was not tested.
 
 ---
 
+## 8k. Result fifteen — the collapse you cannot see, and the repair you cannot claim
+
+*The previous section found that whether a wall freezes your work or retracts it
+decides everything. This asks whether the system can tell which happened to it.*
+
+### The intuition
+
+Every wall so far **blocks**: it stops your next move. One of them also
+**retracts**: if the ground you built on turns out not to hold, the building
+doesn't fall down — it stays exactly where it is and stops counting.
+
+That's a nasty failure mode precisely because it isn't dramatic. Nothing
+crashes. Nothing slows. The system climbs at the same rate it always did, and its
+ledger quietly zeroes.
+
+### First, a bug of exactly the kind this document keeps describing
+
+Our measure of "certified height" was testing *"is this move allowed?"* — so a
+tower you merely **couldn't afford** read as retracted.
+
+That's wrong, and the reason is worth stating plainly: **a move you can't afford
+is still true.** The budget says you can't take the next step. It says nothing
+about whether what you already have holds. Only unsettleability retracts. Fixed,
+and pinned in a test, because it inflated the exact collapse it was measuring.
+
+### What "from inside" means, made explicit
+
+Everything in this module before now was written from **outside**. The
+depth-following policy is *handed the rules* and checks them before proposing —
+so it glides around walls it was told about, never bumping into anything.
+
+A system inside its own construction has no such thing. It proposes, gets
+refused, and has to work out what the refusal meant. So the interior agent here
+gets the graph and nothing else, and a failed attempt costs a step exactly like a
+successful one.
+
+### The answer: no, and not because it wasn't paying attention
+
+Two situations — the ground not holding, and the next step being unaffordable —
+produce records that are **identical, attempt for attempt.** Same proposals, same
+successes, same refusals. Different truth.
+
+From inside, *"I can't extend this line"* is equally compatible with:
+
+- *"...and everything under it stands"*
+- *"...and none of it ever counted"*
+
+**The system isn't missing a subtle signal. There is no signal.**
+
+### But there is one thing that works
+
+**Re-derive your own foundation.** Not to learn anything new — you already have
+it. To see whether it still goes through.
+
+And the reason it works is an inequality, not an insight. The foundation is the
+**cheapest thing in the whole structure** and has the **shortest name**. So if
+*that* gets refused while anything else still passes, the refusal can't be about
+price and can't be about writing the name down. What's left is validity.
+
+| what's happening | foundation re-derives? | anything else work? | conclusion |
+|---|---|---|---|
+| ground doesn't hold | **no** | yes | **retracted** |
+| next step unaffordable | yes | yes | no evidence |
+| out of money entirely | no | **no** | **can't tell** |
+
+That last row is why the rule needs its condition. If you're broke, you can't
+afford to re-derive your foundation either — and a rule without the clause would
+scream "collapse!" every time a system merely ran out of budget. The honest
+output there is *"this test told you nothing."*
+
+### It costs, and there's no right amount
+
+Steps spent re-checking what you have are steps not spent building. Averaged over
+when the wall arrives:
+
+| re-check every | delay before noticing | height given up |
+|---|---|---|
+| 2 steps | 0.5 | 15.0 |
+| 4 steps | 1.5 | 8.1 |
+| 8 steps | 3.8 | 4.3 |
+| 16 steps | 8.5 | 2.0 |
+
+Delay falls, cost rises, and the product barely moves — a factor of 2.3 across an
+8× range. **No free lunch and no cliff.** How often to check is worth whatever
+being wrong is worth to you, which is the *second* time this domain has answered
+a question with a preference instead of a fact.
+
+### And the strangest part
+
+Given enough time, the gap closes **on its own** — and is never noticed.
+
+| time left after the ground fails | thinks it has | actually has |
+|---|---|---|
+| none | 32 | **0** |
+| some | 32 | 9 |
+| plenty | 39 | **39** |
+
+The belief never moves. It's simply wrong for a while and then right again.
+
+**The system repairs itself without ever making the diagnosis** — routing around
+a refusal is what it does anyway, and given enough steps that happens to rebuild
+certified height somewhere else. It never knew it was hurt and it can't claim
+credit for healing.
+
+Which cuts both ways, and the top row is the half to keep. **With no time to
+rebuild, the belief just stays wrong.** Not from carelessness. Because nothing in
+forward motion was ever going to tell it.
+
+### What it does not show
+
+The unsettleable set is **declared**, not derived — nothing here proves any
+address undecidable, and the completeness results this leans on stay citations.
+
+And the probe's inference is conditional, with a real condition: it only runs
+while something else still works. That limit is measured, not assumed away.
+
+---
+
 ## 9. What this does not say
 
 Kept separate deliberately, because the results are aesthetically suggestive and
@@ -1064,6 +1182,7 @@ python experiments/reflection_selection.py       # rank-aware selection
 python experiments/reflection_cost_model.py      # description pricing, and a fake wall
 python experiments/reflection_wall_audit.py      # what does each wall actually read?
 python experiments/reflection_options.py         # options, and what they buy
+python experiments/reflection_retraction.py      # can the inside see a collapse?
 ```
 
 Add `--quick` to any of them for a smoke run. Every experiment states its
@@ -1071,8 +1190,8 @@ predictions and their falsifiers in its own docstring *before* reporting
 results, and prints its honest scope alongside its verdicts.
 
 The machinery is `project_genesis/reflection.py`, `finite_ladder.py`,
-`model_ladder.py` and `reflection_dag.py`; 305 tests across the fourteen
-`tests/test_reflection_*.py` files run in about 6.2 seconds. Most of them are
+`model_ladder.py` and `reflection_dag.py`; 324 tests across the fifteen
+`tests/test_reflection_*.py` files run in about 3.9 seconds. Most of them are
 adversarial rather than confirmatory — the claim that an added rule is a
 *capability* rests entirely on the proof checker refusing malformed derivations,
 and the claim that the interior view is exact rests on the prediction never

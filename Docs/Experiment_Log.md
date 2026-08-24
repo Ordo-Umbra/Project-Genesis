@@ -2638,6 +2638,104 @@ intellectual effort is a resemblance, and it was not tested.
 
 ---
 
+## The interior cannot see a retraction — and repairs it anyway
+
+The previous run found that whether a wall **freezes** or **retracts** decides
+the whole concentrate-or-diversify result, and that the distinction had never
+been made explicit. It left one question open: can a system tell, from inside,
+that its foundation stopped counting? That is the right thing to be nervous
+about, because the failure mode is not a crash — the system keeps climbing at the
+same rate and its ledger silently zeroes.
+
+**A modelling bug had to be fixed first, and it is the same shape as everything
+else in this stretch.** `certified_rank` tested `admits`, so an *unaffordable*
+tower read as retracted. A move you cannot afford is still true; the budget says
+you cannot take it, not that what you have is void. `Filters.retracts` now names
+the narrower predicate, and a test pins that only unsettleability retracts. The
+earlier version inflated the very collapse it was measuring.
+
+What "from inside" means is also now explicit. Every policy in the module before
+this is written from outside: `rank_aware` is **handed the filter object** and
+consults it before proposing, so it routes around walls it was told about. The
+interior agent `blind_climb` gets the graph and nothing else — it proposes, is
+refused, and learns only by attempting, and a failed attempt costs a step exactly
+like a successful one. `experiments/reflection_retraction.py`. **4/4:**
+
+- **Q1 ✓ Forward motion cannot detect it.** A retracting wall and an economic
+  wall that refuses the same frontier produce records that are **identical,
+  attempt for attempt** — same proposals, same successes, same refusals — while
+  the exterior truth differs. From inside, *"I cannot extend this line"* is
+  equally compatible with *"and everything under it stands"* and with *"and none
+  of it ever counted."* **The system is not missing a subtle signal. There is no
+  signal.**
+
+- **Q2 ✓ Re-deriving the foundation detects it, by an inequality rather than an
+  insight.** The foundation is the **cheapest key in the graph** and carries the
+  **smallest address**, so if it is refused while anything else is admitted, the
+  refusal cannot be economic and cannot be structural. What is left is validity.
+
+  | scenario | probe cost | admitted | others ok | verdict |
+  |---|---|---|---|---|
+  | retracting base | 1 | no | yes | **`retracted`** |
+  | economic, frontier too dear | 1 | yes | yes | `no evidence` |
+  | economic, below every cost | 1 | no | **no** | **`halted`** |
+
+  The third row is why the rule carries a condition. A budget below every cost
+  refuses the foundation too, so the inference only runs **while something else
+  is still admitted**. Without that clause the probe would report a collapse
+  every time a system merely ran out of money. It returns `halted` — the honest
+  answer that the probe has told you nothing.
+
+- **Q3 ✓ Scepticism is a dial, not a right answer.** Averaged over 12 wall
+  arrival times, so nothing turns on a probe landing on the wall:
+
+  | probe every | mean latency | height forgone | product |
+  |---|---|---|---|
+  | 2 | 0.50 | 15.00 | 7.5 |
+  | 4 | 1.50 | 8.08 | 12.1 |
+  | 8 | 3.83 | 4.33 | 16.6 |
+  | 16 | 8.50 | 2.00 | 17.0 |
+
+  Latency falls and cost rises, both roughly linearly, and the product moves by
+  **2.3× across an 8× range**. No free lunch and no cliff: each probe buys a
+  bounded delay and costs a step of height. The right rate is whatever a
+  tolerance for being wrong is worth — **the same shape of answer as the
+  mean-versus-floor trade**, which is the second time this domain has returned a
+  preference rather than a fact.
+
+- **Q4 ✓ The gap closes, and is never diagnosed.** Belief stays at 32 in every
+  row; certified height runs from **0** with no horizon left to **39** with
+  plenty; `ever detected` is **False** throughout.
+
+  | horizon after the wall | believed | certified | gap |
+  |---|---|---|---|
+  | 0 | 32 | **0** | 32 |
+  | 10 | 32 | 9 | 23 |
+  | 40 | 39 | 39 | **0** |
+
+  **The system repairs itself without ever making the diagnosis.** Routing around
+  a refusal is what the policy does anyway; given enough steps that happens to
+  rebuild certified height somewhere else. Its belief about itself was wrong at
+  every point in between, is right again at the end, and never changed. And the
+  top row is the half worth keeping: with no time to rebuild, the belief simply
+  stays wrong — not through carelessness, but because nothing in forward motion
+  was ever going to tell it.
+
+Reproduce with `python experiments/reflection_retraction.py` (`--quick` for a
+smoke run); 19 tests in `tests/test_reflection_retraction.py`, including the pin
+on `retracts` being narrower than `admits`, a test that the interior agent is
+genuinely blind (a refused attempt still costs a step), and one asserting that
+probing displaces climbing one-for-one so the price is real. **324 reflection
+tests, 3.9s.**
+
+**Honest scope.** `opaque` remains a **declared** unsettleable set; nothing here
+proves any address undecidable, and the completeness results this leans on remain
+citations. The probe's inference is conditional on an alternative being admitted,
+and that condition is measured rather than assumed away. `depth` remains a
+declared proxy for proof-theoretic rank.
+
+---
+
 ## What Comes Next
 
 The frontier questions, roughly in priority order:

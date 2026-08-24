@@ -216,8 +216,7 @@ def certified_rank(graph: ReflectionGraph, filters: "Filters") -> int:
     it, and that turns out to be what the whole concentrate-or-diversify
     question hinges on.
     """
-    live = [n.depth for n in graph.nodes
-            if filters.admits(n.content, max(n.content), 1)[0]]
+    live = [n.depth for n in graph.nodes if not filters.retracts(n.content)]
     return max(live) if live else 0
 
 
@@ -387,6 +386,18 @@ class Filters:
             raise ValueError(f"unknown cost model {self.cost_model!r}")
         return len(key)
 
+    def retracts(self, key: frozenset[int]) -> bool:
+        """Does this key stop *counting*, as opposed to merely being refused?
+
+        Only unsettleability retracts. A move you cannot afford is still true —
+        the budget says you cannot take it, not that what you already have is
+        void. Conflating the two would make every economic wall look like a
+        collapse, which is the mistake this method exists to prevent; an earlier
+        version of `certified_rank` made exactly that mistake by testing
+        `admits`, and it inflated the collapse it was supposed to measure.
+        """
+        return bool(self.opaque and (key & self.opaque))
+
     def admits(self, key: frozenset[int], address: int,
                arity: int = 1) -> tuple[bool, str | None]:
         """Does every filter let this step through, and if not, which bit?"""
@@ -505,6 +516,123 @@ def strategy_table(invest_steps: int, horizon: int, *, roots: int = 3,
                                           roots=roots, opaque=None,
                                           retract=retract)}
     return out
+
+
+# ------------------------------------------------------------ the interior
+#
+# Everything above is written from outside: `rank_aware` is *handed* the filter
+# object and consults it before proposing, so it routes around walls it was told
+# about. A system inside its own construction has no such object. It proposes,
+# is refused, and has to work out what the refusal meant.
+#
+# That gap is the whole subject here. The exterior knows whether a wall retracts
+# what was built; the interior sees a refusal.
+
+
+def foundation(graph: ReflectionGraph,
+               node: "Node | None" = None) -> "Node":
+    """The cheapest theory the given node rests on.
+
+    A node's content is its whole ancestry, so the roots it depends on are the
+    parentless nodes inside it. The cheapest of those is the cheapest key that
+    exists anywhere in the graph — which is what makes re-deriving it an
+    informative thing to attempt.
+    """
+    node = node or graph.frontier()[0]
+    roots = [n for n in graph.nodes if not n.parents and n.ident in node.content]
+    if not roots:
+        roots = [n for n in graph.nodes if not n.parents]
+    return min(roots, key=lambda n: (len(n.content), n.ident))
+
+
+def probe(graph: ReflectionGraph, filters: "Filters",
+          node: "Node | None" = None) -> dict:
+    """Re-derive the foundation, and see whether it still goes through.
+
+    This is the only interior move that can distinguish a wall which retracts
+    from one which merely blocks, and the reason is an inequality rather than an
+    insight: the foundation is the *cheapest* key in the graph and carries the
+    *smallest* address, so if it is refused while anything else is admitted, the
+    refusal cannot be economic and cannot be structural.
+
+    The qualifier matters. If nothing at all is admitted the system is simply
+    halted, and the probe says nothing — a budget below the minimum cost refuses
+    the foundation too. So the inference is conditional on an alternative
+    existing, and `interior_verdict` will not draw it otherwise.
+    """
+    target = foundation(graph, node)
+    key = target.content
+    admitted = filters.admits(key, max(key), 1)[0]
+    alternatives = any(
+        filters.admits(n.content, max(n.content), 1)[0]
+        for n in graph.nodes if n.ident != target.ident)
+    return {"probed": target.ident, "cost": filters.cost(key),
+            "admitted": admitted, "alternatives_admitted": alternatives}
+
+
+def interior_verdict(result: dict) -> str:
+    """What a system may conclude from a probe, using only the probe.
+
+    `retracted`   — the cheapest move is refused while others are admitted, so
+                    the refusal reads on validity rather than on price.
+    `halted`      — nothing is admitted; the probe is uninformative, and saying
+                    so is the point.
+    `no evidence` — the foundation still derives. Note what this does *not*
+                    license: it rules out retraction of that foundation, and
+                    nothing else.
+    """
+    if result["admitted"]:
+        return "no evidence"
+    return "retracted" if result["alternatives_admitted"] else "halted"
+
+
+def blind_climb(graph: ReflectionGraph, filters: "Filters", steps: int, *,
+                probe_every: int = 0, wall_at: int | None = None,
+                filters_after: "Filters | None" = None) -> dict:
+    """Climb without being told where the walls are.
+
+    The agent proposes the deepest thing it has not already been refused, learns
+    from refusals, and — if `probe_every` is set — spends every nth step
+    re-deriving its own foundation instead of climbing. Attempts cost a step
+    whether or not they succeed, which is what makes probing a real price rather
+    than free scepticism.
+    """
+    refused: set[frozenset[int]] = set()
+    observations, detected_at = [], None
+    for i in range(steps):
+        active = (filters if wall_at is None or i < wall_at
+                  else (filters_after or filters))
+        if probe_every and i % probe_every == 0:
+            result = probe(graph, active)
+            verdict = interior_verdict(result)
+            observations.append({"kind": "probe", "admitted": result["admitted"],
+                                 "verdict": verdict})
+            if verdict == "retracted" and detected_at is None:
+                detected_at = i
+            continue
+        pick = None
+        for n in sorted(graph.nodes, key=lambda n: -n.depth):
+            candidate = frozenset({n.ident})
+            if candidate not in refused and n.content not in graph.asserted:
+                pick = candidate
+                break
+        if pick is None:
+            observations.append({"kind": "exhausted", "admitted": False})
+            continue
+        step, _ = filtered_step(graph, pick, active)
+        observations.append({"kind": "move", "admitted": step is not None})
+        if step is None:
+            refused.add(pick)
+        else:
+            graph = step.graph_after
+    final = (filters if wall_at is None else (filters_after or filters))
+    return {"observations": observations, "detected_at": detected_at,
+            "latency": (None if detected_at is None or wall_at is None
+                        else detected_at - wall_at),
+            "believed_rank": graph.rank,
+            "certified_rank": certified_rank(graph, final),
+            "graph": graph,
+            "record": [(o["kind"], o["admitted"]) for o in observations]}
 
 
 def rank_aware(graph: ReflectionGraph, filters: "Filters"):
