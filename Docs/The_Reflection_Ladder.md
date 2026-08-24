@@ -1126,6 +1126,74 @@ while something else still works. That limit is measured, not assumed away.
 
 ---
 
+## 8l. The arc — every proxy for progress came apart
+
+*A reviewer suggested the document's real finding is not the taxonomy of walls
+but the sequence of failed proxies. That is right, and writing it out in order
+made a missing dimension obvious.*
+
+Each of these was a reasonable thing to measure. Each was then dissociated from
+what it was standing in for, by a run built to make it fail.
+
+| proxy | what killed it |
+|---|---|
+| **more representation** | §3 — 2,222× more symbols, identical productive content |
+| **more steps** | §3 — the counter climbs to 11 while the axiom set freezes at 16 |
+| **continued motion** | §8b — `stagnant`: moves exist, none achieves anything, nothing halts |
+| **local productivity** | §8e — productive forever, global position unchanged |
+| **more rank** | §8j — height costs breadth, and breadth buys the worst case |
+| **your own measurement** | §8k — the interior's record is identical whether the ground held or not |
+
+The last row is the one that unsettles the rest. Every earlier proxy fails
+against an external check. That one *is* the external check failing: a system's
+record of its own progress reads the same whether the progress still counts or
+not.
+
+And the mechanism that survives all of it is the one from §3: **description-
+addressing, where the cost of referring to something does not scale with the
+thing referred to.** Flat cost is what makes the walls non-directional, which is
+what removes the pull toward sideways, which is what lets a rank-following policy
+climb without bound.
+
+### The dimension the arc exposed
+
+Writing the list out makes a gap visible. `G` had four dimensions —
+`structural ∧ affordable ∧ productive`, plus `certifiable` for the interior
+reading. **None of them is direction.** So the object could not express row five
+of that table at all.
+
+It has one now, and the interesting part is that it could not be a sixth verdict.
+Adding it to the ordered verdict list would repeat a bug this exact class already
+had: an early version returned `terminal` whenever `G` was 0, silently merging
+"no move exists" with "moves exist and achieve nothing". Folding direction into
+the same list does the same thing — a state that is productive, non-advancing
+**and** uncertifiable would report one of those and lose the other.
+
+So it is a **second axis**, and every cell of the resulting 2×2 is occupied by
+something already measured:
+
+| | advancing | not advancing |
+|---|---|---|
+| **productive** | the real thing | **sideways** — new content, position unchanged (§8e) |
+| **not productive** | **nominal** — the counter climbs, nothing added (§3) | stuck |
+
+The two off-diagonal cells are *different* dissociations, neither implies the
+other, and each was found in a different domain. A step from the graph domain can
+now be read through the same object as a rung of the arithmetic ladder, so the
+table is something the code can be asked about rather than something the prose
+asserts.
+
+### One thing deliberately not built
+
+The natural next move is to define success as `G_actual ∧ advancing`. **That is
+withheld, and §8j is why.** Breadth costs height and never earns it back — but
+what it buys is the worst case, and concentration wins the mean while
+diversification wins the floor. Ranking advancing above sideways encodes a
+preference about which of those to optimise. It is not a fact about the domain,
+and this object measures rather than prefers.
+
+---
+
 ## 9. What this does not say
 
 Kept separate deliberately, because the results are aesthetically suggestive and
@@ -1190,8 +1258,8 @@ predictions and their falsifiers in its own docstring *before* reporting
 results, and prints its honest scope alongside its verdicts.
 
 The machinery is `project_genesis/reflection.py`, `finite_ladder.py`,
-`model_ladder.py` and `reflection_dag.py`; 324 tests across the fifteen
-`tests/test_reflection_*.py` files run in about 3.9 seconds. Most of them are
+`model_ladder.py` and `reflection_dag.py`; 335 tests across the fifteen
+`tests/test_reflection_*.py` files run in about 3.6 seconds. Most of them are
 adversarial rather than confirmatory — the claim that an added rule is a
 *capability* rests entirely on the proof checker refusing malformed derivations,
 and the claim that the interior view is exact rests on the prediction never
@@ -1237,3 +1305,27 @@ join-seeking policy that re-offered a refused move forever made a local
 constraint look like a global one. The fix is not to trust a refusal count until
 the policy proposing the moves is filter-aware — and both behaviours are pinned
 in tests, so the artefact stays visible rather than being quietly corrected.
+
+### The probe, applied to this document
+
+§8k found that a system cannot tell by climbing whether its foundation still
+counts, and that the one test which works is re-deriving the foundation itself —
+the cheapest thing in the structure.
+
+That is not a metaphor here, so it was run. The earliest results were measured
+with machinery that has since changed substantially: new filters, a new cost
+model, a relabelled graph, a corrected notion of certified height. The test suite
+passing is *not* evidence — those tests were written alongside the claims, which
+is forward motion. So the two founding experiments were re-run and their
+headline numbers checked against what this document says they were.
+
+**They reproduce exactly.** 11,103,120 symbols against 4,996 — the factor of
+2,222. Growth ×2.00 per rung against ×1.00. The truncated arm's index first
+repeating at rung 8, its axiom count freezing at 16 while the counter climbs to
+11. Reach at 2/6/9/12/16/19/22 rungs across six orders of magnitude of budget,
+1.000 rungs per doubling. `r* = L/κ_max` matched with a worst departure of
+**0.00%**. The degenerate arm still taking the same 64 rungs as the real one with
+an identical critical recovery rate, at 8 new axioms against 64.
+
+By §8k's own vocabulary the verdict is `no evidence` — which rules out retraction
+of *that* foundation and, precisely, nothing else.

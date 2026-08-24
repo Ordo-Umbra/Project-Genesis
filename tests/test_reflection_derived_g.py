@@ -14,7 +14,16 @@ measured dimensions. Two things have to hold for that to be worth anything:
    distinct from `terminal` — an earlier version merged them, which contradicted
    the measurement that found a stalled arm running to the horizon.
 
-3. **The classification must be checked exhaustively.** A review proposed that
+3. **Directional advance must be a second axis, not a sixth verdict.** A
+   review asked for it in the verdict list. It cannot go there: an earlier
+   version of this class merged `stagnant` into `terminal` by exactly that
+   route, and folding `advancing` in would repeat it — a state that is
+   productive, non-advancing *and* uncertifiable would report one fact and lose
+   the other. So the anti-merge property is asserted directly, and so is the
+   2x2 whose off-diagonal cells are the two dissociations this series found in
+   two different domains.
+
+4. **The classification must be checked exhaustively.** A review proposed that
    every terminal state is economic, structural, or epistemic. Over the whole
    sound predicate space that is false, and the way it fails is the finding, so
    it is pinned here rather than left to a run.
@@ -232,6 +241,111 @@ class TestClassification(unittest.TestCase):
     def test_no_soundness_violation_anywhere_in_the_space(self):
         for k in _sound_space():
             self.assertLessEqual(k.g_certified, k.g_actual)
+
+
+# ------------------------------------------ 4. the advancing axis
+
+from project_genesis.reflection_dag import (  # noqa: E402
+    ReflectionGraph, as_continuation, broaden, deepen, reflect,
+)
+
+
+def _live(**kw):
+    base = dict(structural=True, affordable=True, productive=True,
+                certifiable=True)
+    return Continuation(**(base | kw))
+
+
+class TestAdvancingIsASecondAxis(unittest.TestCase):
+
+    def test_it_defaults_to_true_so_no_earlier_verdict_moves(self):
+        """Every result before this one was measured in a linear domain where
+        every step increments the rung by construction."""
+        self.assertTrue(Continuation(True, True, True, True).advancing)
+        self.assertEqual(Continuation(True, True, True, True).verdict,
+                         "recognised")
+
+    def test_the_verdict_does_not_read_it(self):
+        """The anti-merge property. Turning advance off must not change what the
+        world/knowledge axis reports, or the two are not separable."""
+        for c in (True, False, None):
+            a = _live(certifiable=c, advancing=True)
+            b = _live(certifiable=c, advancing=False)
+            self.assertEqual(a.verdict, b.verdict, c)
+            self.assertNotEqual(a.direction, b.direction, c)
+
+    def test_a_circling_and_uncertifiable_state_keeps_both_facts(self):
+        """Exactly the state a sixth verdict slot would have flattened."""
+        k = _live(certifiable=None, advancing=False)
+        self.assertEqual(k.verdict, "hidden")
+        self.assertEqual(k.direction, "circling")
+
+    def test_direction_is_halted_when_no_move_exists(self):
+        dead = Continuation(structural=False, affordable=True, productive=True,
+                            certifiable=False)
+        self.assertEqual(dead.direction, "halted")
+        self.assertFalse(dead.moves_exist)
+
+    def test_g_advancing_never_exceeds_g_actual(self):
+        for s, a, p, c, adv in itertools.product(
+                (True, False), (True, False), (True, False),
+                (True, False, None), (True, False)):
+            if c and not s:
+                continue
+            k = Continuation(structural=s, affordable=a, productive=p,
+                             certifiable=c, advancing=adv)
+            self.assertLessEqual(k.g_advancing, k.g_actual)
+
+    def test_advance_is_not_a_wall(self):
+        """`blocked_by` names what stops a system. Circling does not stop it —
+        that is the same argument that kept unproductivity off the wall list."""
+        self.assertIsNone(_live(advancing=False).blocked_by)
+
+
+class TestTheTwoDissociations(unittest.TestCase):
+    """Both off-diagonal cells, each measured in the domain that produces it."""
+
+    def test_the_arithmetic_ladder_advances_without_producing(self):
+        stalled = climb(peano("truncated", width=3), 9)
+        k = derive_continuation(stalled, move="successor")
+        self.assertTrue(k.advancing)
+        self.assertFalse(k.productive)
+        self.assertEqual((k.verdict, k.direction), ("stagnant", "advancing"))
+
+    def test_the_graph_domain_produces_without_advancing(self):
+        g = ReflectionGraph.base(roots=3)
+        for _ in range(5):
+            g = reflect(g, deepen(g)).graph_after
+        k = as_continuation(reflect(g, broaden(g)))
+        self.assertTrue(k.productive)
+        self.assertFalse(k.advancing)
+        self.assertEqual((k.verdict, k.direction), ("recognised", "circling"))
+
+    def test_the_two_are_different_states(self):
+        stalled = derive_continuation(climb(peano("truncated", width=3), 9),
+                                      move="successor")
+        g = ReflectionGraph.base(roots=3)
+        for _ in range(5):
+            g = reflect(g, deepen(g)).graph_after
+        sideways = as_continuation(reflect(g, broaden(g)))
+        self.assertNotEqual((stalled.verdict, stalled.direction),
+                            (sideways.verdict, sideways.direction))
+        self.assertEqual(stalled.g_actual, 0)
+        self.assertEqual(sideways.g_actual, 1)
+
+    def test_an_advancing_graph_step_reads_as_the_real_thing(self):
+        g = ReflectionGraph.base(roots=3)
+        for _ in range(5):
+            g = reflect(g, deepen(g)).graph_after
+        k = as_continuation(reflect(g, deepen(g)))
+        self.assertEqual((k.verdict, k.direction), ("recognised", "advancing"))
+        self.assertEqual(k.g_advancing, 1)
+
+    def test_all_four_cells_are_distinguishable(self):
+        cells = {(p, a): (_live(productive=p, advancing=a).verdict,
+                          _live(productive=p, advancing=a).direction)
+                 for p in (True, False) for a in (True, False)}
+        self.assertEqual(len(set(cells.values())), 4)
 
 
 if __name__ == "__main__":

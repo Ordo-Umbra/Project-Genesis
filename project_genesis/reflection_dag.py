@@ -42,6 +42,8 @@ from itertools import combinations
 
 from dataclasses import dataclass, field, replace
 
+from project_genesis.reflection import Continuation
+
 
 @dataclass(frozen=True)
 class Node:
@@ -154,6 +156,28 @@ class DagStep:
         if not self.productive:
             return "duplicate"
         return "advancing" if self.rank_advanced else "sideways"
+
+
+def as_continuation(step: "DagStep", *,
+                    certifiable: bool | None = True) -> Continuation:
+    """Read a graph step through the arithmetic domain's `Continuation` object.
+
+    The point is not tidiness. `Continuation` gained an `advancing` axis so that
+    productivity and directional advance could be separated, and the two
+    dissociations that motivate it live in *different domains*: the arithmetic
+    ladder's `truncated` arm advances without producing, and this domain's
+    sideways move produces without advancing. Mapping a step across makes the
+    second one expressible in the same object as the first, so the 2x2 is
+    something the code can be asked about rather than something the prose
+    asserts.
+
+    A step that has been executed was admitted, so `structural` and `affordable`
+    are `True` by construction here; `certifiable` is a parameter because this
+    domain settles it with the opacity filters rather than inside the step.
+    """
+    return Continuation(structural=True, affordable=True,
+                        productive=step.productive, certifiable=certifiable,
+                        advancing=step.rank_advanced)
 
 
 def reflect(graph: ReflectionGraph, parents: frozenset[int]) -> DagStep:

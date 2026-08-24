@@ -2736,6 +2736,90 @@ declared proxy for proof-theoretic rank.
 
 ---
 
+## The arc of failed proxies — and the dimension it exposed
+
+A review of the companion document made two points worth acting on rather than
+agreeing with. The first: its real finding is not the taxonomy of walls but **the
+sequence of proxies for progress that came apart**. The second: the framework now
+carries more independent structure than `(C, I, G)` can express, and specifically
+lacks a *directional advance* variable.
+
+Both are right. Writing the first out in order is what made the second obvious.
+
+| proxy | what killed it |
+|---|---|
+| more representation | 2,222× more symbols, identical productive content |
+| more steps | the counter climbs to 11 while the axiom set freezes at 16 |
+| continued motion | `stagnant`: moves exist, none achieves anything, nothing halts |
+| local productivity | productive forever, global position unchanged |
+| more rank | height costs breadth, and breadth buys the worst case |
+| **your own measurement** | the interior's record is identical whether the ground held or not |
+
+The last row is the one that unsettles the rest: every earlier proxy fails against
+an external check, and that one *is* the external check failing.
+
+**The missing dimension.** `G` had four — `structural ∧ affordable ∧ productive`,
+plus `certifiable` for the interior reading — and **none of them is direction**,
+so the object could not express row five at all. `Continuation` now carries
+`advancing`, defaulting to `True` because every earlier result was measured in a
+linear domain where a step increments the rung by construction.
+
+**But it could not be a sixth verdict, and the reason is a bug this class already
+had.** An early version returned `terminal` whenever `g_actual` was 0, silently
+merging "no move exists" with "moves exist and achieve nothing". Folding
+direction into the same ordered list repeats that exactly: a state that is
+productive, non-advancing **and** uncertifiable would report one of those facts
+and lose the other. So it is a second axis (`direction` ∈ advancing / circling /
+halted), and the anti-merge property is asserted directly in the tests.
+
+Every cell of the resulting 2×2 is occupied by something already measured:
+
+| | advancing | not advancing |
+|---|---|---|
+| **productive** | the real thing (`recognised` / `hidden`) | **sideways** — new content, position unchanged (DAG) |
+| **not productive** | **nominal** — counter climbs, nothing added (`truncated` arm) | stuck (`stagnant` / `terminal`) |
+
+The off-diagonal cells are **different dissociations found in different domains**,
+and neither implies the other. `reflection_dag.as_continuation` maps a graph step
+into the arithmetic domain's object so the table is something the code can be
+asked about rather than something the prose asserts.
+
+**What was deliberately not built.** The review proposed reading success as
+`D = G_actual ∧ A`. That is withheld, and the options run is why: breadth costs
+height and never earns it back, while what it buys is the worst case —
+concentration wins the mean, diversification wins the floor. Ranking advancing
+above sideways encodes a preference about which to optimise. `g_advancing` is
+exposed as a measurement; no scalar "development" is defined on top of it.
+
+### And the probe, applied to this repository
+
+The retraction run found that a system cannot tell by climbing whether its
+foundation still counts, and that the one test which works is re-deriving the
+foundation — the cheapest thing in the structure. That is not a metaphor here, so
+it was run.
+
+The two founding experiments were measured with machinery that has since changed
+substantially: new filters, a new cost model, a relabelled graph, a corrected
+notion of certified height. **The test suite passing is not evidence** — those
+tests were written alongside the claims, which is forward motion. So both were
+re-run and their headline numbers checked against this log.
+
+**They reproduce exactly.** 11,103,120 against 4,996 — the factor of 2,222. Growth
+×2.00 against ×1.00. The truncated index first repeating at rung 8, axioms
+freezing at 16 while the counter climbs to 11, the twelve-rung conjunction
+checking in 45 lines, closure saturating at 20 formulas. Reach at
+2/6/9/12/16/19/22 rungs, 1.000 rungs per doubling of capacity. `r* = L/κ_max`
+matched with a **worst departure of 0.00%**. The degenerate arm still taking the
+same 64 rungs as the real one at an identical critical recovery rate, 8 new
+axioms against 64, terminating at rung 8 once productivity is required.
+
+By the retraction run's own vocabulary that verdict is **`no evidence`** — which
+rules out retraction of *that* foundation and, precisely, nothing else.
+
+335 reflection tests, 3.6s.
+
+---
+
 ## What Comes Next
 
 The frontier questions, roughly in priority order:

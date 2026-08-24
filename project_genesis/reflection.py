@@ -1052,16 +1052,50 @@ class Continuation:
     - `productive` — would it actually enlarge the axiom set?
     - `certifiable` — can the *system itself* establish `structural`?
       `None` means it cannot determine that either way.
+    - `advancing` — does the move move the system's *position* in the ordering?
 
     The first three are facts about the world; the fourth is a fact about what
     the system can know, which is why `G` splits in two. The gap between them
     is the finding of experiment five, and it has a name in each direction.
+
+    Why `advancing` is a separate axis and not a sixth verdict
+    ----------------------------------------------------------
+    A review proposed folding directional advance into the verdict list. It
+    cannot go there, and the reason is a bug this class already had once: an
+    earlier version returned `terminal` whenever `g_actual` was 0, silently
+    merging "no move exists" with "moves exist and achieve nothing". Adding
+    `advancing` to the same ordered list would repeat that exactly — a system
+    that is productive, non-advancing *and* uncertifiable would report one of
+    those two facts and lose the other.
+
+    So it is a second axis, and every cell of the resulting 2x2 is occupied by
+    something already measured:
+
+    ====================  ==========================  =========================
+    ..                    advancing                   not advancing
+    ====================  ==========================  =========================
+    **productive**        the real thing              **sideways** — new content,
+                          (`recognised` / `hidden`)   position unchanged (DAG)
+    **not productive**    **nominal** — the counter   stuck: `stagnant` or
+                          climbs, nothing is added    `terminal`
+                          (the `truncated` arm)
+    ====================  ==========================  =========================
+
+    The two off-diagonal cells are the two dissociations this series is about,
+    and they are *different* dissociations. Neither implies the other and each
+    was found in a different domain.
     """
 
     structural: bool
     affordable: bool
     productive: bool
     certifiable: bool | None
+    #: Does the move change the system's position in the ordering it is
+    #: measured by? Defaults to `True` because in a linear ladder every step
+    #: increments the rung by construction — which is precisely why this
+    #: dimension stayed invisible until a domain existed where a move could be
+    #: productive without moving the system anywhere.
+    advancing: bool = True
     #: Has the *domain* run out — `I = C`? Always `False` in the arithmetic
     #: setting, where `I < C` is a theorem and the ceiling is unreachable.
     #: It took a saturating domain (`finite_ladder.py`) to produce a state
@@ -1080,6 +1114,32 @@ class Continuation:
         — a system cannot certify a move that is not there, which is asserted
         in the tests rather than assumed here."""
         return int(bool(self.certifiable) and self.affordable and self.productive)
+
+    @property
+    def g_advancing(self) -> int:
+        """`G` restricted to moves that also change the system's position.
+
+        The review that asked for this proposed reading it as *success* —
+        development being `G_actual and advancing`. That reading is withheld
+        deliberately, and `reflection_options.py` is why: breadth costs height
+        and never earns it back, and what it buys instead is the worst case.
+        Concentration wins the mean; diversification wins the floor. So ranking
+        advancing above sideways encodes a preference about which of those to
+        optimise, and this class measures rather than prefers.
+        """
+        return int(self.g_actual and self.advancing)
+
+    @property
+    def direction(self) -> str:
+        """`advancing` | `circling` | `halted` — the second axis.
+
+        Orthogonal to `verdict`, which reads the world/knowledge axis. A full
+        state is the pair, and collapsing them into one label loses exactly the
+        information the pair exists to keep.
+        """
+        if not self.moves_exist:
+            return "halted"
+        return "advancing" if self.advancing else "circling"
 
     @property
     def moves_exist(self) -> bool:
@@ -1160,6 +1220,10 @@ def derive_continuation(theory: Theory, *, move: str = "limit",
         s = step(theory)
         structural, certifiable = True, True
         productive, cost = s.new_axiom, cost_of(s)
+        # The counter increments whether or not anything was added. That is not
+        # an artifact to be tidied away — it is the `truncated` arm's entire
+        # finding, and it is what makes `advancing` and `productive` two things.
+        advancing = s.theory_after.rung > theory.rung
     elif move == "limit":
         status = theory.limit_status()
         structural = status.status != "absent"
@@ -1168,8 +1232,9 @@ def derive_continuation(theory: Theory, *, move: str = "limit",
         if structural:
             probe = limit_step(replace(theory, kind="indexed"))
             productive, cost = probe.new_axiom, cost_of(probe)
+            advancing = probe.theory_after.rank > theory.rank
         else:
-            productive, cost = False, 0
+            productive, cost, advancing = False, 0, False
     else:
         raise ValueError(f"unknown move {move!r}")
 
@@ -1177,7 +1242,8 @@ def derive_continuation(theory: Theory, *, move: str = "limit",
         capacity.kappa_max if capacity else None)
     affordable = budget is None or budget >= cost
     return Continuation(structural=structural, affordable=affordable,
-                        productive=productive, certifiable=certifiable)
+                        productive=productive, certifiable=certifiable,
+                        advancing=advancing)
 
 
 def productive_increment(s: Step) -> int:
