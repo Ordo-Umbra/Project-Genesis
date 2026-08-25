@@ -12,22 +12,77 @@ The dynamics that hold reliable junction networks elsewhere in the repo are
 slack, pinning the network where load is high).  Conserved multiphase alone
 fixed the ordered noise window (P1 ✓) but light-form *density* still fell with
 size — a surface-to-volume geometry effect, not necessarily a failure of
-self-repair.  κ-gating is the next structure-holding mechanism to test: larger
-systems have more capacity budget and more room for recovery away from walls,
-so self-repair may show up once coarsening is capacity-limited rather than
-purely curvature-limited.
+self-repair.  With the domain width now reported alongside the density, that
+reading has direct evidence: across sizes 20/28/36 the density falls while the
+diameter *rises*, so the structure is not degrading with the box.
+
+**κ-gating, run: the recovery rate decides, and the default is below the
+knee.**  The hypothesis was that capacity-limited coarsening would hold the
+network where curvature-limited coarsening could not.  At the default recovery
+rate it does the opposite — capacity is consumed faster than it regenerates,
+⟨κ⟩ sits at ≈ 0.020, the coupling is gated to near zero everywhere and the
+initial random configuration never coarsens at all.  Every field in that scan
+is texture, at every noise level including zero.  That is not κ-gating failing
+to hold structure; it is κ-gating starving the field before structure exists.
+Raise the rate and the hypothesis lands as written:
+
+================  =========  ======================  ========
+kappa_recovery    ⟨κ⟩        diameter at zero noise  score
+================  =========  ======================  ========
+0.1 (default)     0.020      2.23 — texture          0/3
+0.8               0.41-0.55  7.95                    **3/3**
+3.0               0.83       7.16                    ordered throughout
+================  =========  ======================  ========
+
+At ``r = 0.8`` this is the only arm that passes P2, and it passes by the
+predicted mechanism: across sizes 20/28/36 the capacity buffer holds and grows
+(⟨κ⟩ = 0.407 → 0.436 → 0.435) with the domain width rising alongside it
+(4.31 → 4.67 → 4.73).  ``r = 0.8`` is not a new constant — it is the setting at
+which the memory-recall work found recall outliving order, and at which 3-D
+fertile soil re-percolates.
 
 Primary default remains conserved; κ and conserved+κ are first-class options.
+
+**The texture guard.**  P1's whole content is "ordered structure, not noise",
+so it lives or dies on what separates the two.  Until this revision that job
+was done by ``n_phases`` — the number of distinct sector labels present
+anywhere on the lattice.  It cannot do it: salt-and-pepper texture carries
+every label too, so ``n_phases`` reads ``3.0`` at *every* noise level scanned,
+including at literal texture.  Measured, size 16, 3-D, conserved, 3 seeds:
+
+====== ========== ==========
+noise  n_phases   diameter
+====== ========== ==========
+0.00   3.0        7.76
+0.02   3.0        5.76
+0.08   3.0        4.67
+0.20   3.0        2.56
+0.40   3.0        1.00
+====== ========== ==========
+
+``n_phases`` is flat across the entire range; ``domain_diameter`` — the repo's
+dimension-corrected texture guard, which reads ``1.0`` for pure noise in every
+dimension — falls monotonically and reaches noise at 0.40.  The old predicate
+therefore passed P1 on the noise = 0.20 point, where the domains are ~2.5 cells
+wide and the light-form gain is mostly the lattice fragmenting.
+
+The floor is ``3.0`` lattice units and it is **derived, not chosen**: the
+light-form census reads ``local_dimension`` off a ``3^d`` neighbourhood, so a
+domain narrower than three cells cannot be resolved as a domain by the very
+instrument counting its cells.  Below that floor the count is a fact about the
+lattice.
 
 Pre-registered predictions:
 
 P1. **Noise window for persistence.**  At fixed small lattice, intermediate
     noise raises late-time light-form density above the zero-noise baseline
-    while keeping the multi-domain structure ordered (n_phases near palette).
-P2. **Finite-size self-repair.**  At fixed intermediate noise, larger lattices
-    retain higher late-time light-form density *or* (under κ dynamics) higher
-    mean capacity / more stable multi-domain counts — statistical buffering
-    against local collapse.
+    while the field is still *tessellated* — domains wide enough for a
+    junction reading to mean anything (see the texture guard below).
+P2. **Finite-size self-repair.**  At fixed intermediate noise — the densest
+    still-tessellated point in the sweep — larger lattices retain higher
+    late-time light-form density *or* (under κ dynamics) a higher capacity
+    buffer, on fields that are still tessellated at every size.  Statistical
+    buffering against local collapse.
 P3. **Baseline without noise.**  With noise = 0 the light-form density sits at
     a low floor (conserved multi-domain residual, or coarsened state under
     unconstrained / κ-only dynamics).
@@ -38,6 +93,8 @@ Usage::
     python experiments/n3_form_persistence.py --quick
     python experiments/n3_form_persistence.py --dynamics kappa
     python experiments/n3_form_persistence.py --dynamics conserved_kappa
+    python experiments/n3_form_persistence.py --dynamics conserved_kappa \
+        --kappa-recovery 0.8      # above the knee; below it the field never forms
     python experiments/n3_form_persistence.py --dynamics unconstrained
 """
 
@@ -54,11 +111,58 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from project_genesis.dimensional_forms import dimensional_census, local_dimension
 from project_genesis.multiphase import (
+    domain_diameter,
     sector_labels,
     step_multiphase,
     step_multiphase_conserved,
     step_multiphase_kappa,
 )
+
+
+#: Minimum domain width, in lattice units, for a light-form count to be a
+#: statement about structure rather than about the lattice.  The census reads
+#: ``local_dimension`` off a ``3^d`` neighbourhood, so a domain narrower than
+#: three cells is not resolvable as a domain by the instrument counting it.
+#: ``domain_diameter`` is dimension-corrected and reads ``1.0`` for pure noise
+#: in 2-, 3- and 4-D alike, which is the property that makes it usable here
+#: where the raw ``domain_scale`` (floor 2.5) would mean a different thing in
+#: each dimension.
+MIN_DOMAIN_DIAMETER = 3.0
+
+
+def tessellated(n_phases: float, diameter: float, palette: int) -> bool:
+    """Is this a multi-domain tessellation, or is it texture?
+
+    Both halves are load-bearing and neither is sufficient.  ``n_phases``
+    alone cannot see texture — noise carries every label.  ``diameter`` alone
+    cannot see collapse — a single domain has no walls and reads ``inf``.
+    """
+    return (
+        n_phases >= max(2.0, palette - 1.1)
+        and diameter >= MIN_DOMAIN_DIAMETER
+    )
+
+
+def pick_size_scan_noise(mids: list, palette: int) -> float:
+    """Which noise level P2's size scan runs at.
+
+    Third site of the same blind predicate, and the one that did the most
+    damage.  This used to filter on ``n_phases`` — which admits everything —
+    and then take the *highest* light-form density, i.e. it deliberately ran
+    the size scan on the most fragmented field in the sweep.  Since texture
+    reads higher on that quantity than structure does, the selection reliably
+    picked the point least able to say anything about self-repair.
+
+    P2 asks whether a persistent network repairs itself as the box grows, so it
+    has to be run where P1 found a network: the densest point that is still
+    tessellated.  Falls back to the raw maximum only when nothing in the sweep
+    is tessellated, in which case P2's own guard refuses it anyway.
+    """
+    ordered = [
+        r for r in mids
+        if tessellated(r["n_phases_mean"], r["diameter_mean"], palette)
+    ]
+    return float(max(ordered or mids, key=lambda r: r["late_mean"])["noise"])
 
 
 def light_form_density(labels: np.ndarray) -> float:
@@ -162,6 +266,7 @@ def evolve(
         "cells": {str(k): int(v) for k, v in census["cells"].items()},
         "euler": int(census["euler"]),
         "n_phases": int(len(np.unique(labels))),
+        "domain_diameter": float(domain_diameter(labels)),
         "valence_by_dim": {
             str(k): float(v) for k, v in census.get("valence_by_dim", {}).items()
         },
@@ -194,6 +299,7 @@ def mean_over_seeds(args, *, size: int, noise: float) -> dict:
         "late_std": float(np.std([r["late_mean_light_density"] for r in rows])),
         "final_mean": float(np.mean([r["final_light_density"] for r in rows])),
         "n_phases_mean": float(np.mean([r["n_phases"] for r in rows])),
+        "diameter_mean": float(np.mean([r["domain_diameter"] for r in rows])),
         "late_kappa_mean": float(np.mean(kappas)) if kappas else None,
         "runs": rows,
     }
@@ -272,29 +378,40 @@ def main() -> None:
         )
         print(
             f"    noise={r['noise']:.3f}: late_light={r['late_mean']:.4f} "
-            f"± {r['late_std']:.4f}  n_phases={r['n_phases_mean']:.1f}{kmsg}",
+            f"± {r['late_std']:.4f}  n_phases={r['n_phases_mean']:.1f}  "
+            f"diam={r['diameter_mean']:.2f}"
+            f"{'' if tessellated(r['n_phases_mean'], r['diameter_mean'], args.palette) else '  [texture]'}"
+            f"{kmsg}",
             flush=True,
         )
 
     by_noise = {r["noise"]: r for r in noise_scan}
     zero = by_noise[0.0]
     mids = [r for r in noise_scan if 0.0 < r["noise"] < max(args.noises)]
-    strong = by_noise[max(args.noises)]
 
+    # P1 passes on an intermediate noise that raises the light-form density
+    # above the zero-noise baseline *while the field is still tessellated*.
+    # The second half used to be `n_phases`, which cannot see texture at all;
+    # it is now the domain width.  There is no third clause: the previous
+    # version carried `(below strong) or ordered` with `ordered` already
+    # required in the conjunction, so it could never change an outcome.
     p1 = False
-    if mids:
-        for r in mids:
-            ordered = r["n_phases_mean"] >= max(2.0, args.palette - 1.1)
-            above_zero = r["late_mean"] > zero["late_mean"] * 1.4 + 1e-4
-            below_strong_or_ordered = (
-                r["late_mean"] < strong["late_mean"] * 0.85 or ordered
-            )
-            if above_zero and ordered and below_strong_or_ordered:
-                p1 = True
-                break
-            if above_zero and r["late_mean"] > strong["late_mean"] * 1.2 and ordered:
-                p1 = True
-                break
+    p1_at = None
+    for r in mids:
+        above_zero = r["late_mean"] > zero["late_mean"] * 1.4 + 1e-4
+        if above_zero and tessellated(
+            r["n_phases_mean"], r["diameter_mean"], args.palette
+        ):
+            p1 = True
+            p1_at = r
+            break
+    # What the guard rejected, reported rather than left implicit.
+    rejected = [
+        r
+        for r in noise_scan
+        if r["noise"] > 0.0
+        and not tessellated(r["n_phases_mean"], r["diameter_mean"], args.palette)
+    ]
 
     floor = 0.08 if args.dynamics in ("conserved", "conserved_kappa") else (
         0.06 if args.ndim == 3 else 0.08
@@ -305,13 +422,7 @@ def main() -> None:
     )
 
     if mids:
-        ordered_mids = [
-            r for r in mids
-            if r["n_phases_mean"] >= max(2.0, args.palette - 1.1)
-        ]
-        pool = ordered_mids if ordered_mids else mids
-        best_mid = max(pool, key=lambda r: r["late_mean"])
-        mid_noise = best_mid["noise"]
+        mid_noise = pick_size_scan_noise(mids, args.palette)
     else:
         mid_noise = args.noises[len(args.noises) // 2]
 
@@ -327,21 +438,34 @@ def main() -> None:
         )
         print(
             f"    size={r['size']}: late_light={r['late_mean']:.4f} "
-            f"± {r['late_std']:.4f}  n_phases={r['n_phases_mean']:.1f}{kmsg}",
+            f"± {r['late_std']:.4f}  n_phases={r['n_phases_mean']:.1f}  "
+            f"diam={r['diameter_mean']:.2f}"
+            f"{'' if tessellated(r['n_phases_mean'], r['diameter_mean'], args.palette) else '  [texture]'}"
+            f"{kmsg}",
             flush=True,
         )
 
     lates = [r["late_mean"] for r in size_scan]
     # Density-based self-repair OR (under kappa) non-decreasing mean kappa
     # with non-collapsing phases — capacity buffer grows with system size.
-    p2_density = len(lates) >= 2 and lates[-1] >= lates[0] * 0.95 and (
+    #
+    # Both arms are gated on tessellation, for the same reason P1 is: a
+    # light-form density measured on a field of unresolvable domains is a fact
+    # about the lattice, and it *rises* as the structure degrades, so an
+    # ungated P2 is passed most readily by the runs that have least to do with
+    # the claim.  The κ arm at default consumption is exactly such a run.
+    size_scan_ok = all(
+        tessellated(r["n_phases_mean"], r["diameter_mean"], args.palette)
+        for r in size_scan
+    )
+    p2_density = size_scan_ok and len(lates) >= 2 and lates[-1] >= lates[0] * 0.95 and (
         lates[-1] > lates[0] * 1.05 or max(lates) == lates[-1]
     )
     kappas = [r["late_kappa_mean"] for r in size_scan if r["late_kappa_mean"] is not None]
     p2_kappa = (
-        len(kappas) >= 2
+        size_scan_ok
+        and len(kappas) >= 2
         and kappas[-1] >= kappas[0] * 0.98
-        and all(r["n_phases_mean"] >= max(2.0, args.palette - 1.1) for r in size_scan)
     )
     p2 = p2_density or p2_kappa
 
@@ -353,17 +477,31 @@ def main() -> None:
         f"size={small}, late light-form densities across noises {args.noises} "
         f"are "
         + "/".join(f"{r['late_mean']:.4f}" for r in noise_scan)
-        + " (n_phases "
+        + " (domain diameter "
+        + "/".join(f"{r['diameter_mean']:.2f}" for r in noise_scan)
+        + ", n_phases "
         + "/".join(f"{r['n_phases_mean']:.1f}" for r in noise_scan)
         + ") — "
         + (
-            "✓ intermediate noise sustains more ordered light structure than "
-            "pure coarsening, without collapsing to single-domain or pure "
-            "texture."
+            f"✓ at noise={p1_at['noise']:.3f} the light-form density is "
+            f"{p1_at['late_mean'] / max(zero['late_mean'], 1e-12):.2f}x the "
+            f"zero-noise baseline on a field still tessellated at "
+            f"{p1_at['diameter_mean']:.2f} lattice units."
             if p1
-            else "✗ no clear ordered intermediate peak on this lattice and window."
+            else "✗ no intermediate noise raises the density on a field that "
+            "is still tessellated."
         )
     )
+    if rejected:
+        lines.append(
+            "    texture guard rejected noise "
+            + "/".join(f"{r['noise']:.2f}" for r in rejected)
+            + " (domain diameter "
+            + "/".join(f"{r['diameter_mean']:.2f}" for r in rejected)
+            + f" < {MIN_DOMAIN_DIAMETER:.1f}); n_phases reads "
+            + "/".join(f"{r['n_phases_mean']:.1f}" for r in rejected)
+            + " there, which is why it cannot do this job."
+        )
     kappa_str = ""
     if kappas:
         kappa_str = (
@@ -380,6 +518,11 @@ def main() -> None:
             "✓ larger lattices retain higher density and/or capacity buffer "
             "— statistical self-repair."
             if p2
+            else "✗ the size scan is not tessellated (domain diameter "
+            + "/".join(f"{r['diameter_mean']:.2f}" for r in size_scan)
+            + "), so the density trend is a fact about the lattice rather "
+            "than about self-repair."
+            if not size_scan_ok
             else "✗ size dependence does not show the expected self-repair trend "
             "(density often falls as surface/volume; κ path may still buffer)."
         )
@@ -412,7 +555,12 @@ def main() -> None:
         "pin that arrests coarsening where load is high (same rule as the "
         "thermal capacity program).  Density vs size is partly geometric "
         "(surface/volume); under κ dynamics P2 can also pass via a stable or "
-        "rising mean capacity with ordered phases.  Finite window; primary "
+        "rising mean capacity on fields that are still tessellated.  The "
+        f"texture guard is a domain width of {MIN_DOMAIN_DIAMETER:.1f} lattice "
+        "units, derived from the 3^d census neighbourhood rather than chosen, "
+        "and it is a guard against texture, not a general-purpose length "
+        "scale — it over-reads on anisotropic (slab-like) morphologies by "
+        "roughly a factor of d.  Finite window; primary "
         f"path 3-D (ndim={args.ndim}); no continuum limit."
     )
     text = "\n".join(lines)
