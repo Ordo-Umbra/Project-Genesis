@@ -1183,6 +1183,30 @@ now be read through the same object as a rung of the arithmetic ladder, so the
 table is something the code can be asked about rather than something the prose
 asserts.
 
+### What the arc is, and what it is not
+
+The rows above are **existence proofs, and they should be read as exactly
+that.** Each says: *here is a case where this proxy and the thing it stands for
+come apart.* None says the proxy is always wrong, and none is a theorem about
+reflection ladders in general.
+
+That distinction matters more here than in the individual results, because the
+table reads in a general voice that the runs behind it do not license. Almost
+every wall in this series is **declared** rather than derived — `opaque` and
+`opaque_form` are stipulated unsettleable sets, not addresses shown
+undecidable. `depth` is a declared proxy for proof-theoretic rank. The cost
+models are two chosen conventions, not a derivation of what naming must cost.
+So what the arc establishes is that *within a class of models with declared
+costs and declared opacity*, each proxy for progress admits a dissociating
+instance.
+
+That is a weaker claim than the table's phrasing suggests and a stronger one
+than it might look. A single counterexample is enough to retire a measure you
+were about to trust, and six of them, each found in a different domain and
+several of them contradicting the prediction written before the run, is a
+result about what one should be willing to infer from a progress signal. It is
+not a result about arithmetic.
+
 ### One thing deliberately not built
 
 The natural next move is to define success as `G_actual ∧ advancing`. **That is

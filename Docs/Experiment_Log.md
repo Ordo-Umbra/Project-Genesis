@@ -50,6 +50,8 @@ A running tally of what the instruments have actually measured — the verdicts,
 | The S-functional carries a critical signature — and can select criticality | **Measured** — on the unpinned ensembles across T_c: the distinction term **ΔC peaks exactly at the transition** (0.0342 at T = 0.115 vs 0.0288/0.0178 on the flanks, L = 48) while the standing coherence I falls through it order-parameter-like (0.48 → 0.334). The S = ΔC + κ·w·I optimum therefore **sweeps across T_c as the integration weight varies** — sitting just above T_c for w = 0.02, *at* T_c for w ≈ 0.05, and at the ordered end for w ≥ 0.1: there is a weight window in which the theory's own functional selects the critical neighbourhood | [S at criticality](#the-s-functional-at-criticality) |
 | The melting boundary in the (g_m, T) plane: crossover or transition? | **Mapped — and the crossover is confirmed by finite-size scaling** — T_melt(g_m) rises monotonically with the matter–gauge coupling (0.093 → 0.132 for g_m = 1 → 8: the coupling *stabilises* the junction network). The four-size ladder L ∈ {24, 32, 48, 64} gives χ_max(L) ∝ L^b with **b = −0.09 ± 0.30** — consistent with zero at 0.3σ and **6.0σ away** from 2-D-Ising-like transition scaling (b = 1.75). Nothing diverges: the junction network dissolves smoothly, as expected where the sector basis is explicitly (not spontaneously) selected | [Melting boundary](#the-melting-boundary--tg_m-map-and-the-crossover-verdict) |
 | The N⋆=3 selection survives a *fluctuating* (thermodynamic) gauge sector | **Measured crossover** — with the converged P-sector networks quench-coupled to SU(P) Wilson ensembles, the integration retention R(g_m) is rank-ordered (bigger palettes pay a higher gauge tax) and selection at three survives exactly where κ·w·neutrality·R exceeds the ΔC gap — washing out to P=4 below a sharp (w, g_m) threshold. **Negative sub-verdict**: curvature does *not* localize on walls or junctions in equilibrium (quenched sector matter never frustrates the gauge field — the per-link constraints are integrable); the deterministic 2.6× wall enrichment is a relaxation-dynamics effect, not a thermodynamic one | [Thermal N⋆=3 selection](#thermal-n3-selection--the-sector-field-in-a-fluctuating-gauge-ensemble) |
+| Does noise sustain a living junction network against coarsening, and does the network repair itself as the box grows? | **Yes to both, but only under capacity gating above a recovery threshold** — conserved multiphase alone gives the noise window (P1 ✓ at noise 0.06, 1.50× the zero-noise baseline on domains 5.87 lattice units wide) but no self-repair: density falls 0.0613 → 0.0458 → 0.0321 across sizes 20/28/36 while the domain *width* rises 4.76 → 5.21 → 5.61, so the falling density is surface-to-volume geometry rather than decay. κ-gating at its **default** recovery rate scores **0/3 and produces texture at every noise including zero** (⟨κ⟩ ≈ 0.020 — capacity is consumed faster than it regenerates, so the field never coarsens at all). At `r = 0.8` it scores **3/3** and is the only arm that passes self-repair, by the predicted mechanism: ⟨κ⟩ = 0.407 → 0.436 → 0.435 rising with size, domain width 4.31 → 4.67 → 4.73 alongside it. Same `r = 0.8` as the recall rescue and the 3-D re-percolation | [Backfill](#backfill--two-field-experiments-that-were-built-run-and-never-recorded) |
+| Does a Chern–Simons-style term dynamically bind flux to charge? | **Not established — the run scores 0/3 and the primary metric fails its own control.** `argmax\|B\|` reads a flux–core separation of **43.84 on a 64² lattice** (max possible 45.25) for an *unperturbed* vortex whose `core_flux` is simultaneously −0.9998 quanta. The two diagnostics disagree completely on the baseline, so CS1–CS3 report the instrument, not the physics. The fermion arc's named boundary stands exactly where it stood | [Backfill](#backfill--two-field-experiments-that-were-built-run-and-never-recorded) |
 | The S-functional rewards an interior sector optimum | **Achieved in 2-D and 3-D** — with volume-conserving dynamics (persistent junctions) and a *topological* neutrality term (full-palette junctions, non-collinear with ΔC), `S = ΔC + κ·neutrality` is maximized at **exactly three sectors**, robust across seeds/weights. In 3-D three wins ~10× over four (triple *lines* vs sparse quadruple *points*) | [Topological selection](#topological-selection--an-interior-optimum-at-three) |
 
 The honest through-line: the *machinery* of URP sectorisation is reproducible, the boundary-cost half of its free-energy argument is measured, and — after localizing why naive selection failed (ΔI vanishes at equilibrium; coherence magnitude is collinear with ΔC) — a junction-resolving dynamics plus a topological neutrality term reproduces an interior optimum at **three in both 2-D and 3-D**, echoing the gauge paper's §6. The count is no longer a free parameter; it falls out of the junction geometry.
@@ -2820,14 +2822,200 @@ rules out retraction of *that* foundation and, precisely, nothing else.
 
 ---
 
+## Backfill — two field experiments that were built, run, and never recorded
+
+*Written after a review of the repository found seven experiment files
+documented nowhere in `Docs/`, two of them the most recent field work in the
+programme. Both were properly pre-registered and both had been run; neither
+verdict existed anywhere but in a terminal. Recording them turned out to be
+worth more than the tidiness, because in both cases the run says something the
+experiment file does not.*
+
+The programme's own habit — **ask what a predicate reads, not what it is
+called** — was developed on the formal half, where it found two of six walls
+mislabelled. Pointed at these two, it finds the same failure shape twice: a
+well-formed, confident answer to a different question.
+
+### Form persistence — the texture guard could not see texture
+
+`n3_form_persistence` asks whether noise sustains a living junction network
+against curvature-driven coarsening. P1's claim is that intermediate noise
+raises the light-form density *"without collapsing to single-domain or pure
+texture"*, so the entire content of the prediction sits in whatever separates
+structure from noise.
+
+That job was being done by `n_phases` — the count of distinct sector labels
+present anywhere on the lattice. It cannot do it. Salt-and-pepper noise carries
+every label too. Measured, 3-D, conserved, size 20:
+
+| noise | light density | `n_phases` | domain diameter |
+|---|---|---|---|
+| 0.00 | 0.0212 | 3.0 | 9.66 |
+| 0.01 | 0.0209 | 3.0 | 7.40 |
+| 0.03 | 0.0242 | 3.0 | 6.57 |
+| 0.06 | 0.0319 | 3.0 | 5.87 |
+| 0.12 | 0.0613 | 3.0 | 4.76 |
+| 0.25 | **0.3628** | **3.0** | **2.28** |
+
+`n_phases` is **flat at 3.0 across the entire range**, including where the field
+has fragmented to domains two cells wide. `domain_diameter` — the repo's own
+dimension-corrected guard, built in the `d = 4` work and until now used nowhere
+— falls monotonically and reads exactly `1.0` on pure noise in 2-, 3- and 4-D
+alike.
+
+The consequence was not cosmetic. **Texture reads *higher* on the measured
+quantity than structure does**, so the unguarded predicate was preferentially
+passed by the runs with least to do with the claim: P1 was passing on the
+`noise = 0.25` point, where the light-form gain is the lattice coming apart.
+
+**The same blind predicate turned out to sit at three sites**, and the third was
+the expensive one:
+
+1. P1's own pass condition.
+2. P2's κ arm, where it gated the capacity reading.
+3. **The choice of which noise P2's size scan runs at** — which filtered on
+   `n_phases` and then took the *highest* light-form density. Since texture
+   scores highest on that quantity, the selection reliably ran the self-repair
+   test on the most fragmented field in the sweep.
+
+A fourth defect sat next to the first: the predicate carried a clause
+`(below strong) or ordered` with `ordered` already required in the same
+conjunction, so it could never change an outcome.
+
+Guard replaced at all three sites, floor **derived rather than chosen**: the
+light-form census reads `local_dimension` off a `3^d` neighbourhood, so a domain
+narrower than three cells is not resolvable as a domain by the instrument
+counting it. Re-run, full sweeps, 3-D, sizes 20/28/36:
+
+- **conserved — 2/3.** P1 passes at `noise = 0.06`, `1.50×` the zero-noise
+  baseline on a field tessellated at 5.87 lattice units; `0.25` is rejected and
+  the rejection is printed. P2 fails: density falls `0.0613 → 0.0458 → 0.0321`
+  with size. But the diameter *rises* over the same scan,
+  `4.76 → 5.21 → 5.61` — the first direct evidence for the reading the
+  experiment file had only asserted. The falling density is surface-to-volume
+  geometry; the structure is not degrading with the box.
+
+### And the κ arm inverted its own hypothesis — then confirmed it
+
+The file's stated next step was that κ-gating should *hold* the network where
+purely curvature-limited dynamics could not. Run with the real guard, at the
+**default** recovery rate `r = 0.1`, it scores **0/3 — and every field in the
+scan is texture**, at every noise level including zero, with `⟨κ⟩ ≈ 0.020`.
+
+That is not κ-gating failing to hold structure. It is κ-gating **starving the
+field before any structure exists**: capacity is consumed faster than it
+regenerates, the coupling is gated to near zero everywhere, and the initial
+random configuration never coarsens at all. Under the old guard this same run
+scored 2/3 and its P2 read as *"statistical self-repair"* — a self-repair claim
+about fields of unresolvable domains, `⟨κ⟩` pinned at 0.020 across every size.
+
+**The recovery rate is the dial, and the default sits below the knee:**
+
+| `kappa_recovery` | ⟨κ⟩ | diameter at zero noise | score |
+|---|---|---|---|
+| 0.1 (default) | 0.020 | 2.23 — texture | **0/3** |
+| 0.8 | 0.41–0.55 | 7.95 | **3/3** |
+| 3.0 | 0.83 | 7.16 | ordered throughout |
+
+At `r = 0.8` the hypothesis lands exactly as written. P1 passes at `2.58×`
+baseline on a field tessellated at 4.31 units. And **P2 passes — the only arm in
+the experiment that does — by precisely the predicted mechanism:** across sizes
+20/28/36 the capacity buffer holds and grows, `⟨κ⟩ = 0.407 → 0.436 → 0.435`, with
+the domain width rising alongside it, `4.31 → 4.67 → 4.73`. Larger systems have
+more room to recover away from walls, so coarsening becomes capacity-limited
+rather than curvature-limited, and the network survives with size where the
+conserved arm's did not.
+
+This is the one place the guard changed a verdict in the claim's favour. The
+blind predicate had been failing in both directions at once: passing the runs
+that had nothing to say, and — through the size-scan selection — preventing the
+run that did from ever being tested at a noise level where its network existed.
+
+`r = 0.8` is not a new constant. It is the setting at which the memory-recall
+work found recall outliving order, and at which 3-D fertile soil re-percolates.
+Three unrelated instruments, one dial, same value — which is either the most
+interesting incidental result in this entry or a coincidence of default
+parameter scales, and nothing here separates those.
+
+### Chern–Simons flux attachment — 0/3, and the primary metric is the reason
+
+`n3_cs_flux_attachment` scores **0 of 3** pre-registered predictions. Recorded as
+such, and then not read as a physics result, because of the baseline control:
+
+| configuration | peak offset | core flux, quanta |
+|---|---|---|
+| baseline, unperturbed vortex | **43.84** | **−0.9998** |
+| after a deliberate shift of 6 | 41.11 | −0.9505 |
+| re-relaxed, `γ = 0.5` | 31.02 | −0.9989 |
+| re-relaxed, `γ = 0` | 44.55 | −0.9998 |
+
+The maximum possible separation on a 64² periodic lattice is `√(32² + 32²) =
+45.25`. The primary metric reads **43.84 — 97% of maximum — on an unperturbed
+vortex carrying exactly one flux quantum through its core.** The two
+diagnostics disagree completely on the control: `core_flux` says locked to four
+decimal places, `argmax|B|` says maximally displaced.
+
+So the metric is not measuring flux–core separation. `argmax|B|` is a global
+maximum over a field that is nearly flat away from the core, which makes its
+location close to arbitrary; the deliberate 6-cell displacement moves it by
+`2.7`, less than the seed-to-seed noise it would need to beat. **CS1–CS3 are
+therefore uninterpretable rather than negative** — they report the failure of
+their own instrument.
+
+Worth noting how this arrived: the metric was *switched to* peak-based in
+`b0504a5`, on the grounds that centroid offsets were too noisy at "~6 even on
+quantised vortices". The replacement reads 43.84 on the same control. The switch
+was made and the baseline it was meant to fix was never re-checked — which is
+the same shape as the `certify_effort` mislabelling on the formal half, and it
+survived for the same reason: **nothing forced the two diagnostics to disagree
+out loud until someone ran it and looked at the control row.**
+
+The repair is item 2 under *What Comes Next*. Until then the fermion arc's named
+boundary — *"no Chern–Simons term dynamically binds flux to charge"* — stands
+exactly where it stood, neither advanced nor refuted.
+
+### What the backfill itself measured
+
+Seven experiment files exist that `Docs/` does not mention. Two are recorded
+here. The remaining five — `n3_kappa_photon_channel`, `n3_planting_success`,
+`analyse_confinement`, `monte_carlo_confinement_urp`,
+`kernel_moment_extraction` — are named so the gap is visible rather than
+implicit, and are not claimed to have been checked.
+
+A programme whose method is *pre-register, run, record the verdict* has a
+failure mode that no single experiment can catch: the last step being skipped.
+Both experiments here were built well and both were run. Neither result existed.
+The habit that keeps this honest is cheap — an experiment without a log entry is
+not finished — and both of the defects above were sitting in plain sight in
+output nobody had written down.
+
+---
+
 ## What Comes Next
 
 The frontier questions, roughly in priority order:
 
-1. **Monte-Carlo confinement.** Gradient-flow Yang–Mills dynamics are now in (`gauge.flow_step`: S-ascent → YM residual 0, gluon-like wall modes). The remaining lattice signatures — Wilson-loop **area law**, **string tension**, the **deconfinement temperature** the derivation quotes (~150–170 MeV) — are properties of the finite-temperature ensemble, so they need a Monte-Carlo sampler (heat-bath / Metropolis on the Wilson action) rather than deterministic flow. That is the natural next build on top of the existing `gauge.py` primitives.
-3. **Promote the F(N) fit to two free coefficients** by measuring an independent information-gain proxy for `b(β, κ)`, rather than inverting stationarity — the missing half of a non-circular free-energy test.
-4. Higher-order field dynamics — second-order time derivatives (∂²φ/∂t²) for the wave-like behavior in the full Lagrangian (the current model is the overdamped limit).
-5. Replace the sine pinning potential with the true `−(β/4)(∇φ)⁴` gradient-quartic via an implicit/stabilized integrator.
+1. **Is flat cost one mechanism or two?** The formal half's surviving result is
+   description-addressing: `inline` pricing doubles with what it refers to,
+   `indexed` stays flat at 4,996 symbols however much theory it names, and that
+   flatness is what makes the walls non-directional, which is what lets a climb
+   continue without bound. The field half's surviving result is a scaling gap:
+   distinction is volume-law (`n = 1.99`), integration is surface-law
+   (`n = 0.95`). Both are the statement *cost that does not scale with the thing
+   referred to is what buys unbounded structure* — and nobody has tested whether
+   they are the same mechanism or a pun. This is the cheapest experiment on the
+   list that would make the bridge between the halves a measurement rather than
+   a resemblance, and it has a clean falsifier: if the surface-law exponent
+   moves when the addressing convention changes, they are connected; if it is
+   invariant under every convention the naming sweep can express, they are not.
+2. **Repair the CS attachment diagnostic**, whose primary metric saturates on
+   its own baseline control (below). The 0/3 recorded there is uninterpretable
+   until `argmax|B|` is replaced by a core-localised flux marker; the secondary
+   `core_flux` reading already works and is the obvious starting point.
+3. **Monte-Carlo confinement.** Gradient-flow Yang–Mills dynamics are now in (`gauge.flow_step`: S-ascent → YM residual 0, gluon-like wall modes). The remaining lattice signatures — Wilson-loop **area law**, **string tension**, the **deconfinement temperature** the derivation quotes (~150–170 MeV) — are properties of the finite-temperature ensemble, so they need a Monte-Carlo sampler (heat-bath / Metropolis on the Wilson action) rather than deterministic flow. That is the natural next build on top of the existing `gauge.py` primitives.
+4. **Promote the F(N) fit to two free coefficients** by measuring an independent information-gain proxy for `b(β, κ)`, rather than inverting stationarity — the missing half of a non-circular free-energy test.
+5. Higher-order field dynamics — second-order time derivatives (∂²φ/∂t²) for the wave-like behavior in the full Lagrangian (the current model is the overdamped limit).
+6. Replace the sine pinning potential with the true `−(β/4)(∇φ)⁴` gradient-quartic via an implicit/stabilized integrator.
 
 Earlier roadmap items now implemented: ~~coherence potential V(x,t)~~, ~~nonlocal integration functional I[φ]~~, ~~agent-agent interaction~~, ~~S-functional-driven agents~~, ~~matplotlib visualization~~, ~~emergent gauge sectorisation (measurement + wall tension + Ψ∈ℂ³ Y-junctions)~~, ~~dynamical capacity field κ~~, ~~κ-as-soil corpus coupling~~, ~~`(c, r, β)` phase diagram~~, ~~κ × Ψ∈ℂ³ coupling~~, ~~standing nonlocal coherence~~, ~~junction-resolving dynamics + topological selection of three (2-D and 3-D)~~, ~~gauge connection on the Ψ∈ℂ³ sectors~~, ~~Yang–Mills gradient-flow dynamics (S-ascent → YM residual 0, boundary-mode curvature)~~.
 
