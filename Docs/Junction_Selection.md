@@ -261,6 +261,63 @@ Relaxed vertices are generic *because degenerate ones are unstable*. The
 selection therefore holds for any tessellation that is generic, and the
 dynamics are one way, not the only way, of getting there.
 
+## Are the relaxed fields actually generic?
+
+The null reduces the claim to one assumption: relaxed fields are *generic*. No
+point carries more than `d + 1` sectors, and no edge carries more than its
+codimension allows. `experiments/n3_junction_genericity.py` tests that
+assumption directly, using two instruments, and reads both against a Voronoi
+baseline at matched domain width. Voronoi is generic with probability one, so
+whatever it scores is lattice artefact and nothing else.
+
+- **`excess`** is, among cells with `≥ d + 1` sectors in view, the share with
+  `≥ d + 2`. It catches over-valent *points*.
+- **`blob`** is the mean connected-component size of those cells. It catches
+  over-valent *edges*, which join vertex blobs into extended runs.
+
+The second instrument was added mid-run, after the pre-registered positive
+control **failed** in 3-D. An 8-colour cubic checkerboard, which is degenerate
+by construction, scored an `excess` of only `0.10`. Its four-fold *edges* put
+valence-4 cells along whole lines, and `excess` reads those as ordinary
+vertices. That blindness matters, because an over-valent edge is exactly what
+would let a non-generic field inflate the `P = d + 1` count. `blob` sees it at
+once: the checkerboard reads `3430–5120` cells against Voronoi's `14–29`.
+
+| `d` | `P` | relaxed `excess` | Voronoi `excess` | relaxed `blob` | Voronoi `blob` |
+|---|---|---|---|---|---|
+| 2 | 3 | `0` | `0` | 4.6 | 4.6 |
+| 2 | 4 | `0.0054` | `0.0137` | 5.1 | 4.8 |
+| 2 | 5 | `0.0309` | `0.0296` | 5.6 | 5.2 |
+| 2 | 6 | `0.0148` | `0.0260` | 4.6 | 5.0 |
+| 3 | 4 | `0` | `0` | 15.0 | 14.1 |
+| 3 | 5 | `0` | `0.0193` | 12.6 | 17.0 |
+| 3 | 6 | `0.0307` | `0.0369` | 14.0 | 22.2 |
+<!-- d4 -->
+
+On both instruments, the relaxed fields are **no less generic than random
+Voronoi** at every palette tested. They are often more generic, which fits
+degenerate contacts being actively unstable rather than merely improbable.
+
+**The 3-D degenerate start splits.** The 8-colour checkerboard (`32³`, block 8),
+relaxed with the published dynamics:
+
+| step | 0–300 | 800 | 1500 | 2500 |
+|---|---|---|---|---|
+| valence `≥ 5` (impossible at a generic 3-D point) | `0.0156` | `0.00095` | `0.00024` | `0` |
+| `blob` | 5120 | 18.4 | 13.7 | 12.8 |
+| domain width | 8.0 | 10.0 | 11.9 | 12.2 |
+
+The eight-fold vertices and four-fold edges both dissolve, and the field ends
+with blobs the size of Voronoi's. This is the 2-D checkerboard result, one
+dimension up, and it covers the defect that 2-D could not show: degenerate
+*edges* as well as degenerate points.
+
+**Limits.** These boxes are small (`72²`, `28³`), with 2–3 trials. The Voronoi
+match for the relaxed checkerboard is loose (width 9.3 against 12.2). The
+narrower width should, if anything, *raise* the baseline's artefact rate. And
+"no less generic than Voronoi" is a lattice-level statement: it bounds
+degeneracy to below what the `3^d` probe can resolve, not to zero.
+
 ## What would refute it
 
 - A palette other than `d + 1` scoring higher at `m = d + 1`, in any dimension,
