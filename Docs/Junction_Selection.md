@@ -328,6 +328,38 @@ narrower width should, if anything, *raise* the baseline's artefact rate. And
 "no less generic than Voronoi" is a lattice-level statement: it bounds
 degeneracy to below what the `3^d` probe can resolve, not to zero.
 
+## The seeding problem
+
+The published seeding, uniform noise on `[0, 0.1]`, conserves each sector's mean
+at `0.05`. For any `P ≤ 20` that is far too little volume to tile space at `+1`.
+The relaxed field makes up the balance with sectors sitting at **`−1`**:
+
+| field | `+1` cover | `−1` only | median argmax margin in `−1` regions |
+|---|---|---|---|
+| `P = 3`, 2-D | 0.563 | **0.415** | 0.027 |
+| `P = 4`, 2-D | 0.595 | **0.385** | 0.007 |
+| `P = 4`, 3-D | 0.540 | **0.397** | 0.017 |
+
+In those regions every other sector is near zero, and `argmax` picks a label
+from residuals of order `0.01`. So about 40% of every published field carries a
+label that is not a phase. In the 3-D `P = 4` field, two of the four sectors
+barely reach `+1` at all (`0.5%` and `3.3%` of cells).
+
+With **volume-filling seeding** (noise on `[0, 2/P]`, so each mean is `1/P`),
+the `−1` regions vanish (`+1` cover `0.955–1.000`, `−1` only `0`). The selection
+then gets cleaner:
+
+| | `P=2` | `P=3` | `P=4` | `P=5` | `P=6` |
+|---|---|---|---|---|---|
+| 2-D, `m = 3` (72², 3 trials) | `0` | **0.01530** | `0` | `0` | `0` |
+| 3-D, `m = 4` (28³, 2 trials) | `0` | `0` | **0.00271** | `0` | `0` |
+
+The 3-D `P = 5` rival, live at `10×` behind in the published table, is now
+identically zero. So the published argmax survived a labelling defect rather
+than depending on it. The published *densities* are not quantities of a clean
+tessellation, though, and should not be quoted as such. The tables above this
+section are left as published, for the record.
+
 ## What would refute it
 
 - A palette other than `d + 1` scoring higher at `m = d + 1`, in any dimension,
