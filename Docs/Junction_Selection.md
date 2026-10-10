@@ -210,6 +210,57 @@ radius tested while the **margin** does not.
 **Three trials per palette**, one relaxation protocol, one seeding scheme. This
 is not a study of universality across dynamics.
 
+## Geometry or dynamics? A null with no dynamics at all
+
+The rivals *below* `d + 1` are zero by counting. That leaves two questions:
+what keeps the rivals *above* `d + 1` down, and do the relaxation dynamics do
+any of the work? `experiments/n3_junction_null.py` checks three things.
+
+**N1: a random Voronoi tessellation already selects `d + 1`.** Random seeds,
+random colours, no energy, no conservation, same probe, `m = d + 1`:
+
+| `d` | box | `P=d−1` | `P=d` | `P=d+1` | `P=d+2` | `P=d+3` | margin |
+|---|---|---|---|---|---|---|---|
+| 2 | 160², 70 seeds | `0` | `0` | **0.00562** | `0.00016` | `0` | `36×` |
+| 3 | 56³, 40 seeds | `0` | `0` | **0.00246** | `0.00013` | `0` | `18.5×` |
+| 4 | 26⁴, 24 seeds | `0` | `0` | **0.00437** | `0.00097` | `0.00004` | `4.5×` |
+
+So "geometric, not energetic" holds in the strongest form available: the
+selection appears with **no dynamics at all**. The other side of that result is
+that the ranking in the relaxed fields is not *evidence about* the dynamics. It
+is what any generic tessellation does. The non-zero `P = d + 2` readings here
+are lattice artefacts: a `3^d` window can straddle two nearby generic vertices.
+They are also a caution about the relaxed `d = 4` table. Its rivals reading
+exactly zero is a sampling floor at 30–90 qualifying cells, not a property of
+the field.
+
+**N2: point junctions are not rare for large palettes.** Drop the full-palette
+condition and count every neighbourhood with `≥ d + 1` sectors. The density is
+non-zero for every `P ≥ d + 1` and **rises** with `P` (2-D: `0.0056 → 0.0090 →
+0.0118 → 0.0140` for `P = 3…6`). What `d + 1` selects is not *whether point
+junctions exist*. It is whether a point junction carries **the whole palette**.
+`P = d + 1` is the only palette whose generic vertices are always
+palette-complete.
+
+**N3: the dynamics' real contribution is removing degenerate vertices.** Seed
+a 2-D field as a 4-colour checkerboard of `18×18` blocks, so every vertex is
+four-fold and `P = 4` scores at a vertex. Then relax it with the published
+dynamics:
+
+| step | 0–600 | 700 | 800 | 1000 | 1200 | 1500 | 2000 |
+|---|---|---|---|---|---|---|---|
+| four-fold density | `0.01235` | `0.01042` | `0.00424` | `0.00154` | `0.00077` | `0` | `0` |
+| triple-junction cells | 64 | 82 | 122 | 124 | 142 | 138 | 138 |
+
+Phase volumes stay conserved to within 1%, and the domain width stays at
+`16–18`. The four-fold vertices hold as a metastable state for about 600 steps,
+then split into triple junctions, and the triple-junction count roughly
+doubles. That is Plateau's law operating, and it is the one part of the result
+that a random null cannot supply. Voronoi vertices are generic *by chance*.
+Relaxed vertices are generic *because degenerate ones are unstable*. The
+selection therefore holds for any tessellation that is generic, and the
+dynamics are one way, not the only way, of getting there.
+
 ## What would refute it
 
 - A palette other than `d + 1` scoring higher at `m = d + 1`, in any dimension,
