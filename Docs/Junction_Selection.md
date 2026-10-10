@@ -210,6 +210,156 @@ radius tested while the **margin** does not.
 **Three trials per palette**, one relaxation protocol, one seeding scheme. This
 is not a study of universality across dynamics.
 
+## Geometry or dynamics? A null with no dynamics at all
+
+The rivals *below* `d + 1` are zero by counting. That leaves two questions:
+what keeps the rivals *above* `d + 1` down, and do the relaxation dynamics do
+any of the work? `experiments/n3_junction_null.py` checks three things.
+
+**N1: a random Voronoi tessellation already selects `d + 1`.** Random seeds,
+random colours, no energy, no conservation, same probe, `m = d + 1`:
+
+| `d` | box | `P=d−1` | `P=d` | `P=d+1` | `P=d+2` | `P=d+3` | margin |
+|---|---|---|---|---|---|---|---|
+| 2 | 160², 70 seeds | `0` | `0` | **0.00562** | `0.00016` | `0` | `36×` |
+| 3 | 56³, 40 seeds | `0` | `0` | **0.00246** | `0.00013` | `0` | `18.5×` |
+| 4 | 26⁴, 24 seeds | `0` | `0` | **0.00437** | `0.00097` | `0.00004` | `4.5×` |
+
+So "geometric, not energetic" holds in the strongest form available: the
+selection appears with **no dynamics at all**. The other side of that result is
+that the ranking in the relaxed fields is not *evidence about* the dynamics. It
+is what any generic tessellation does. The non-zero `P = d + 2` readings here
+are lattice artefacts: a `3^d` window can straddle two nearby generic vertices.
+They are also a caution about the relaxed `d = 4` table. Its rivals reading
+exactly zero is a sampling floor at 30–90 qualifying cells, not a property of
+the field.
+
+**N2: point junctions are not rare for large palettes.** Drop the full-palette
+condition and count every neighbourhood with `≥ d + 1` sectors. The density is
+non-zero for every `P ≥ d + 1` and **rises** with `P` (2-D: `0.0056 → 0.0090 →
+0.0118 → 0.0140` for `P = 3…6`). What `d + 1` selects is not *whether point
+junctions exist*. It is whether a point junction carries **the whole palette**.
+`P = d + 1` is the only palette whose generic vertices are always
+palette-complete.
+
+**N3: the dynamics' real contribution is removing degenerate vertices.** Seed
+a 2-D field as a 4-colour checkerboard of `18×18` blocks, so every vertex is
+four-fold and `P = 4` scores at a vertex. Then relax it with the published
+dynamics:
+
+| step | 0–600 | 700 | 800 | 1000 | 1200 | 1500 | 2000 |
+|---|---|---|---|---|---|---|---|
+| four-fold density | `0.01235` | `0.01042` | `0.00424` | `0.00154` | `0.00077` | `0` | `0` |
+| triple-junction cells | 64 | 82 | 122 | 124 | 142 | 138 | 138 |
+
+Phase volumes stay conserved to within 1%, and the domain width stays at
+`16–18`. The four-fold vertices hold as a metastable state for about 600 steps,
+then split into triple junctions, and the triple-junction count roughly
+doubles. That is Plateau's law operating, and it is the one part of the result
+that a random null cannot supply. Voronoi vertices are generic *by chance*.
+Relaxed vertices are generic *because degenerate ones are unstable*. The
+selection therefore holds for any tessellation that is generic, and the
+dynamics are one way, not the only way, of getting there.
+
+## Are the relaxed fields actually generic?
+
+The null reduces the claim to one assumption: relaxed fields are *generic*. No
+point carries more than `d + 1` sectors, and no edge carries more than its
+codimension allows. `experiments/n3_junction_genericity.py` tests that
+assumption directly, using two instruments, and reads both against a Voronoi
+baseline at matched domain width. Voronoi is generic with probability one, so
+whatever it scores is lattice artefact and nothing else.
+
+- **`excess`** is, among cells with `≥ d + 1` sectors in view, the share with
+  `≥ d + 2`. It catches over-valent *points*.
+- **`blob`** is the mean connected-component size of those cells. It catches
+  over-valent *edges*, which join vertex blobs into extended runs.
+
+The second instrument was added mid-run, after the pre-registered positive
+control **failed** in 3-D. An 8-colour cubic checkerboard, which is degenerate
+by construction, scored an `excess` of only `0.10`. Its four-fold *edges* put
+valence-4 cells along whole lines, and `excess` reads those as ordinary
+vertices. That blindness matters, because an over-valent edge is exactly what
+would let a non-generic field inflate the `P = d + 1` count. `blob` sees it at
+once: the checkerboard reads `3430–5120` cells against Voronoi's `14–29`.
+
+| `d` | `P` | relaxed `excess` | Voronoi `excess` | relaxed `blob` | Voronoi `blob` |
+|---|---|---|---|---|---|
+| 2 | 3 | `0` | `0` | 4.6 | 4.6 |
+| 2 | 4 | `0.0054` | `0.0137` | 5.1 | 4.8 |
+| 2 | 5 | `0.0309` | `0.0296` | 5.6 | 5.2 |
+| 2 | 6 | `0.0148` | `0.0260` | 4.6 | 5.0 |
+| 3 | 4 | `0` | `0` | 15.0 | 14.1 |
+| 3 | 5 | `0` | `0.0193` | 12.6 | 17.0 |
+| 3 | 6 | `0.0307` | `0.0369` | 14.0 | 22.2 |
+| 4 | 5 | — (0 junction cells) | `0` | — | 100 |
+| 4 | 6 | `0` (n = 207) | `0.0924`† | 25.9 | 656† |
+
+† **Not a matched baseline.** A `24⁴` box cannot hold Voronoi cells at the
+relaxed width (`16.7`): the seed count bottoms out at the palette size, and the
+baseline runs at width `9.9`, where neighbouring vertices crowd into each other's
+windows. The `d = 4` arm therefore shows only that the one relaxed `P = 6` field
+has **no over-valent points among 207 junction cells**. The single `P = 5` field
+had no junction cells at all. The 4-D checkerboard control reads `excess = 1`
+and `blob = 36864`, so the instruments do work there. What's missing is the
+statistics and a box large enough to match. Treat `d = 4` as not yet tested.
+
+On both instruments, the relaxed fields are **no less generic than random
+Voronoi** at every palette tested. They are often more generic, which fits
+degenerate contacts being actively unstable rather than merely improbable.
+
+**The 3-D degenerate start splits.** The 8-colour checkerboard (`32³`, block 8),
+relaxed with the published dynamics:
+
+| step | 0–300 | 800 | 1500 | 2500 |
+|---|---|---|---|---|
+| valence `≥ 5` (impossible at a generic 3-D point) | `0.0156` | `0.00095` | `0.00024` | `0` |
+| `blob` | 5120 | 18.4 | 13.7 | 12.8 |
+| domain width | 8.0 | 10.0 | 11.9 | 12.2 |
+
+The eight-fold vertices and four-fold edges both dissolve, and the field ends
+with blobs the size of Voronoi's. This is the 2-D checkerboard result, one
+dimension up, and it covers the defect that 2-D could not show: degenerate
+*edges* as well as degenerate points.
+
+**Limits.** These boxes are small (`72²`, `28³`), with 2–3 trials. The Voronoi
+match for the relaxed checkerboard is loose (width 9.3 against 12.2). The
+narrower width should, if anything, *raise* the baseline's artefact rate. And
+"no less generic than Voronoi" is a lattice-level statement: it bounds
+degeneracy to below what the `3^d` probe can resolve, not to zero.
+
+## The seeding problem
+
+The published seeding, uniform noise on `[0, 0.1]`, conserves each sector's mean
+at `0.05`. For any `P ≤ 20` that is far too little volume to tile space at `+1`.
+The relaxed field makes up the balance with sectors sitting at **`−1`**:
+
+| field | `+1` cover | `−1` only | median argmax margin in `−1` regions |
+|---|---|---|---|
+| `P = 3`, 2-D | 0.563 | **0.415** | 0.027 |
+| `P = 4`, 2-D | 0.595 | **0.385** | 0.007 |
+| `P = 4`, 3-D | 0.540 | **0.397** | 0.017 |
+
+In those regions every other sector is near zero, and `argmax` picks a label
+from residuals of order `0.01`. So about 40% of every published field carries a
+label that is not a phase. In the 3-D `P = 4` field, two of the four sectors
+barely reach `+1` at all (`0.5%` and `3.3%` of cells).
+
+With **volume-filling seeding** (noise on `[0, 2/P]`, so each mean is `1/P`),
+the `−1` regions vanish (`+1` cover `0.955–1.000`, `−1` only `0`). The selection
+then gets cleaner:
+
+| | `P=2` | `P=3` | `P=4` | `P=5` | `P=6` |
+|---|---|---|---|---|---|
+| 2-D, `m = 3` (72², 3 trials) | `0` | **0.01530** | `0` | `0` | `0` |
+| 3-D, `m = 4` (28³, 2 trials) | `0` | `0` | **0.00271** | `0` | `0` |
+
+The 3-D `P = 5` rival, live at `10×` behind in the published table, is now
+identically zero. So the published argmax survived a labelling defect rather
+than depending on it. The published *densities* are not quantities of a clean
+tessellation, though, and should not be quoted as such. The tables above this
+section are left as published, for the record.
+
 ## What would refute it
 
 - A palette other than `d + 1` scoring higher at `m = d + 1`, in any dimension,
@@ -218,6 +368,10 @@ is not a study of universality across dynamics.
   rival is the vulnerable one).
 - The `d = 4` arm reversing at a box large enough to hold a proper tiling. This
   is the most likely place for it to fail, because it is the least resolved.
+- A relaxed field scoring clearly above a matched Voronoi baseline on `excess`
+  or `blob` (`experiments/n3_junction_genericity.py`). That would mean the
+  dynamics stabilise degenerate contacts and the zeros above `d + 1` are
+  partly luck of sampling.
 - Any demonstration that `domain_diameter` is not distinguishing tessellation
   from texture, which would invalidate every arm at once.
 
