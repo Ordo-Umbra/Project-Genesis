@@ -292,7 +292,17 @@ once: the checkerboard reads `3430–5120` cells against Voronoi's `14–29`.
 | 3 | 4 | `0` | `0` | 15.0 | 14.1 |
 | 3 | 5 | `0` | `0.0193` | 12.6 | 17.0 |
 | 3 | 6 | `0.0307` | `0.0369` | 14.0 | 22.2 |
-<!-- d4 -->
+| 4 | 5 | — (0 junction cells) | `0` | — | 100 |
+| 4 | 6 | `0` (n = 207) | `0.0924`† | 25.9 | 656† |
+
+† **Not a matched baseline.** A `24⁴` box cannot hold Voronoi cells at the
+relaxed width (`16.7`): the seed count bottoms out at the palette size, and the
+baseline runs at width `9.9`, where neighbouring vertices crowd into each other's
+windows. The `d = 4` arm therefore shows only that the one relaxed `P = 6` field
+has **no over-valent points among 207 junction cells**. The single `P = 5` field
+had no junction cells at all. The 4-D checkerboard control reads `excess = 1`
+and `blob = 36864`, so the instruments do work there. What's missing is the
+statistics and a box large enough to match. Treat `d = 4` as not yet tested.
 
 On both instruments, the relaxed fields are **no less generic than random
 Voronoi** at every palette tested. They are often more generic, which fits
@@ -326,6 +336,10 @@ degeneracy to below what the `3^d` probe can resolve, not to zero.
   rival is the vulnerable one).
 - The `d = 4` arm reversing at a box large enough to hold a proper tiling. This
   is the most likely place for it to fail, because it is the least resolved.
+- A relaxed field scoring clearly above a matched Voronoi baseline on `excess`
+  or `blob` (`experiments/n3_junction_genericity.py`). That would mean the
+  dynamics stabilise degenerate contacts and the zeros above `d + 1` are
+  partly luck of sampling.
 - Any demonstration that `domain_diameter` is not distinguishing tessellation
   from texture, which would invalidate every arm at once.
 
