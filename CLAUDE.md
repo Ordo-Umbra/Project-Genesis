@@ -22,6 +22,13 @@ result most likely to be read by outsiders, see `Docs/Junction_Selection.md`.
   pushback, not agreement. Keep their interpretation and the measurements
   clearly apart. Say which claims are **measured**, which are **consistent
   with** the measurements, and which the measurements **don't speak to**.
+- **Pace matters as much as content.** The lead has said the speed at which
+  results arrive is hard to keep up with. Do one thing per session unless
+  asked for more. After it, stop and give a short summary: what changed, what
+  it means, and the one thing worth deciding next. Don't chain into the next
+  experiment without being asked. When a finding is large (one that changes
+  what earlier results mean), say so plainly and let it settle before building
+  on it.
 - Ups and downs are expected. What matters is that each failure is specific,
   recorded, and traced to a cause. **The same type of failure recurring means
   something systemic is wrong**: look for the pattern, not just the instance.

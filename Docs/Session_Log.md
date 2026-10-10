@@ -89,3 +89,12 @@ understanding is the basis for the next. They asked for this log so the work
 has continuity across sessions. Treat it as theirs as much as yours, and keep
 it honest. They work from a phone, so keep replies short and lead with
 the answer.
+
+### Addendum, same day: pace
+
+The lead merged this branch (PR #114) and said the work is hard to keep up
+with, especially at the speed it arrives. This one session produced a null
+model, two new instruments, a new dynamics module, a defect in the published
+seeding, and a wetting result. That is too much for one sitting. Added a pace
+rule to `CLAUDE.md`: one thing per session, a short summary, then stop. The
+constants audit is still next, but only when the lead asks for it.
