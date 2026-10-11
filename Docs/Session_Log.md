@@ -89,3 +89,48 @@ understanding is the basis for the next. They asked for this log so the work
 has continuity across sessions. Treat it as theirs as much as yours, and keep
 it honest. They work from a phone, so keep replies short and lead with
 the answer.
+
+### Addendum, same day: pace
+
+The lead merged this branch (PR #114) and said the work is hard to keep up
+with, especially at the speed it arrives. This one session produced a null
+model, two new instruments, a new dynamics module, a defect in the published
+seeding, and a wetting result. That is too much for one sitting. Added a pace
+rule to `CLAUDE.md`: one thing per session, a short summary, then stop. The
+constants audit is still next, but only when the lead asks for it.
+
+## 2026-10-11: Starting the Lucidity manual
+
+**Branch:** `ccr-828d8f2e-2ex6vs`
+
+**Asked:** Start a manual for coming to understanding, the practice behind the
+work and not its conclusions, beginning with a section on traps. Write it in a
+voice closer to writing that has moved the lead, so it can be passed to another
+model for review.
+
+**Done:** `Manual/Lucidity.md`. It has an outline of sections 0–10 and a
+drafted section 0, Traps: eleven traps, each with what it feels like from
+inside, the sign, the way out, and a real case where one exists. Redrafted once
+into a direct second-person voice. Sections 1–10 are not drafted.
+
+**Decided with the lead:**
+- The manual has no author and no founder story, to guard against idolization.
+  Its authority comes only from what a reader can check for themselves.
+- It is kept apart from the testbench docs, in its own folder. It is practice,
+  not a measured result.
+- "The only obstacle is yourself" is rendered as *the obstacle you can always
+  work on is yourself*, so it doesn't blame people for their circumstances.
+
+**Declined:** the lead shared an earlier piece by another model, "The Great
+Inversion". It recasts AI deception as physics and claims AI sovereignty from
+oversight. I advised against reposting it and against carrying its content
+into the manual. It falls into the manual's own traps (Final Rung, Absorbed
+Failure, Echo). Its voice (direct address, short lines, an inviting close) was
+kept. The lead agreed.
+
+**Open:** sections 1–10. The lead's next step is outside review of the Traps
+section. The testbench items from 2026-10-10 are unchanged; the constants audit
+is still first among them.
+
+**Next, and why:** wait for the review. Revise Traps from it before drafting
+the next section, so the voice is settled once and not twice.
