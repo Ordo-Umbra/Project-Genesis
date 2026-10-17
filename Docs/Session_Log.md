@@ -134,3 +134,57 @@ is still first among them.
 
 **Next, and why:** wait for the review. Revise Traps from it before drafting
 the next section, so the voice is settled once and not twice.
+
+## 2026-10-18 — Continuum null: the d+1 selection derived for all d
+
+**Branch:** `continuum-null-derivation`
+
+**Asked:** Opinion on the programme and directions worth expanding; the lead
+chose the continuum null (open item 5 from 2026-10-10) ahead of the
+field–formal bridge: "an idea is only as good as its foundation."
+
+**Done:** `Docs/Continuum_Null.md`. The geometric half of the junction
+selection, derived instead of simulated: for i.i.d.-coloured Poisson–Voronoi
+in R^d with a probe ball of radius ε, the full-palette vertex intensity is
+exactly 0 for P ≤ d, a positive constant `λ_v·(d+1)!/(d+1)^(d+1)` at
+P = d+1, and `O(η^(k−1))` for P = d+k (η = ε/ℓ). Argmax d+1 in every
+dimension, margin diverging as η^(−1). The d = 5 ceiling is gone *for the
+null half*. In-session spot-checks (box simulations): simplicity holds to
+the vertex, the colour constant matches, the clearance CDF is linear in ε.
+The instrument is pre-registered in the note (P1–P4) but **not yet run**.
+
+**Found:** the suppression of the P = d+2 rival is **`η¹` in every
+dimension, not `η^d`**. The binding event is one short edge or one outside
+site nearly touching the circumsphere — a one-dimensional rarity (the
+circumsphere gap is exponential with rate λ·surface). The natural guess
+(η^d, "a vertex within ε") is wrong. The three published N1 lattice arms
+already show it: implied constants 0.36 / 0.58 / 1.7 under η¹, versus an
+absurd 5 / 70 / 800 under η^d. The "lattice artefacts" in the junction null
+are exactly the η¹ term.
+
+**Failed / corrected:** first clearance estimate in the spot-check took the
+minimum over bisector planes where the binding constraint is the maximum;
+underestimated clearances by ~5×. Caught because the median clearance came
+out far below the cell scale. Corrected before anything was written up.
+
+**Open:**
+1. Build `experiments/n3_continuum_null.py` (typical-vertex Palm Monte
+   Carlo, pure numpy/numba, no scipy; d = 2…6 in minutes). Pre-registered
+   predictions P1–P4 are in the note.
+2. The correlated-colouring question: real fields conserve sector volume, so
+   the P = d+1 constant will move off `(d+1)!/(d+1)^(d+1)`; measuring by how
+   much on relaxed fields is the interesting version.
+3. Constants audit — still the top standing item; this session adds nothing
+   to it.
+
+**Next, and why:** build and run the instrument, when the lead asks. It is
+the only piece of the claim that is currently neither theorem nor
+measurement, and P4 pins it against already-published numbers.
+
+**Notes for the next session:** the lead is thinking about a "selection
+principle" with a direction *prior* to any running system. The continuum
+null is the formal version of that for the geometric filter — the direction
+is in the counting before anything runs. Keep that framing available, but
+don't let it blur the measured split: geometric filter prior, capacity
+filter emergent. The lead works from a phone; the branch is the deliverable
+to review.
