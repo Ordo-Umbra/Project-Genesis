@@ -281,3 +281,20 @@ on it.
 §6. The three candidates that depend on κ's own dynamics (self-repair at
 `r = 0.8`, continual learning, memory percolation) need nulls without κ. These
 connect to the self-set dial: `r = 0.8` was set by hand.
+
+### Addendum, same day: does the field forget?
+
+The lead asked whether the memory results (structure reproducible after
+collapse, given recovery) mean the field doesn't forget. Checked the code:
+"recall" in `n3_seed_rooting` / `n3_recall_recovery` is the fertile-soil
+fraction (κ ≥ 0.3), i.e. whether a seed from the external corpus *could* root.
+The layout comes back from the corpus, not the field. `n3_planting_success`,
+which tests whether planted seeds survive, is still unrecorded (see backfill).
+
+Candidate experiment, not run: relax, melt fully, re-relax with nothing
+planted, and score the overlap of the new layout with the old against an
+unrelated field. Arms with and without κ. Mechanism: κ is depleted on walls
+(`0.22` vs `0.39` bulk) and refills over ~`1/r`, so it may carry a trace of the
+old walls after ψ melts. If only the κ arm remembers, that is the first
+URP-specific result with a null built in. Expected trade-off: longer memory at
+low `r`, less fertile soil.
