@@ -244,3 +244,14 @@ result. Read against the measurements:
 - **Not spoken to:** purpose arising, and treating the other like yourself.
 - **Testable:** whether a system finds the in-between by itself. This is open
   item 4 from 2026-10-10 (responsive coupling).
+
+### Addendum, same day: who sets the dial
+
+From discussing purpose and capacity with the lead: in each place this repo
+finds structure appearing, the dial that lets it appear was set by hand. The
+wetting window (`g = 0.52–0.60`) was swept, not found. Self-repair under
+κ-gating needs `r = 0.8`, while the default `r = 0.1` starves the field before
+anything forms. No instrument here lets a system set its own dial. "Can a
+system find the setting that lets it build?" is the shared untested question
+behind open item 4 (responsive coupling), and the lead names it as the
+current problem.
