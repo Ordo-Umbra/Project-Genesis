@@ -2991,6 +2991,47 @@ output nobody had written down.
 
 ---
 
+## Null audit — what a field with no URP in it scores — 8/8, and none of it is evidence for URP
+
+*2026-10-28. `experiments/n3_null_audit.py`; full write-up in
+[`Null_Audit.md`](Null_Audit.md). Predictions committed (`d02d961`) before any
+arm ran; two arms disclosed in advance as not fresh.*
+
+Principle 4 (null models before interpretation) was adopted after most of
+`The_Principle.md`'s `[measured]` claims existed, and only the `d + 1`
+selection had been checked against a baseline. Four arms feed baselines with
+no capacity, no S and no relaxation into the published instruments, unchanged.
+
+- **A1, the cliff.** `φ(3) = 1` on **pure noise**, in 2-D and 3-D: a cell that
+  sees 3 of 3 sectors sees them all, so it is an identity. Noise at `P = 4`
+  reads `0.72`; Voronoi collapses it to `0.008`. Identity, then generic geometry.
+- **A2, the gap.** Field `1.042` (reproducing the published `1.03–1.04`, with the
+  bias reproducing at `+0.119`). Smoothed Voronoi `1.035–1.060`, Gaussian
+  `0.979–1.007`. The field sits inside the null range: the gap is the
+  instrument's area-versus-edge geometry on any stationary short-range field.
+- **A3, the radius sweep.** Voronoi keeps `argmax = 3` at radius 1, 2, 3. *Post
+  hoc:* its margins (`57.7, 20.6, 10.5`) sit below the relaxed field's
+  (`∞, 45.5, 16.6`), the one edge the dynamics show here. Those dynamics are
+  plain Allen–Cahn with no κ.
+- **A4, the eviction condition.** On 2,000 random curves meeting the
+  transplants' design premises: driven 100% evicted, free 0%, `evictable`
+  agreeing with the ladder 100%. With κ applied post hoc this is a theorem, so
+  reproducing it on three substrates is not evidence that they share anything.
+
+By inspection, not run: the spin/statistics results are textbook nematic
+topology (κ enters only as an imposed pinning well); the κ-gravity results
+follow from a linear screened equation; dark energy is a non-diluting term by
+construction; `2:3:1` is Euler's formula.
+
+**What this does to the record:** no measurement changes; what several are
+evidence *for* does. Item 1 of *What Comes Next* assumed the gap was a fact
+about URP's field; it is a fact about the instrument. Left as candidates for
+evidence specific to URP: κ-gated self-repair at `r = 0.8`, capacity-gated
+continual learning (beats SGD, loses to replay), and memory percolation below
+random `p_c`. None has been compared against a mechanism without κ.
+
+---
+
 ## What Comes Next
 
 The frontier questions, roughly in priority order:

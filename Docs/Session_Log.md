@@ -255,3 +255,29 @@ anything forms. No instrument here lets a system set its own dial. "Can a
 system find the setting that lets it build?" is the shared untested question
 behind open item 4 (responsive coupling), and the lead names it as the
 current problem.
+
+### Addendum, same day: the null audit
+
+**Asked:** the lead agreed to the recommended next step, the null audit.
+
+**Done:** `experiments/n3_null_audit.py`, pre-registered and committed
+(`d02d961`) before any arm ran; `tests/test_null_audit.py` (5 tests);
+`Docs/Null_Audit.md`; an entry in `Experiment_Log.md`. README and
+`The_Principle.md` deliberately not edited.
+
+**Found:** 8/8 predictions held. Every run claim credited to URP is reproduced
+by a baseline with no URP in it. The cliff's `φ(3) = 1` is an identity even on
+pure noise. The gap on smoothed Voronoi (`1.035–1.060`) brackets the field's
+(`1.042`). The radius-sweep ranking survives on Voronoi. The eviction toggle is
+a theorem once κ is applied post hoc (100% / 0% on random curves). Post hoc:
+the relaxed field's radius-sweep margins beat Voronoi's at every radius, from
+plain Allen–Cahn with no κ.
+
+**This is a large finding** in `CLAUDE.md`'s sense. It changes what the
+headline results mean, not what they measured. Let it settle before building
+on it.
+
+**Open:** whether and how to revise README and `The_Principle.md` §2, §3, §5,
+§6. The three candidates that depend on κ's own dynamics (self-repair at
+`r = 0.8`, continual learning, memory percolation) need nulls without κ. These
+connect to the self-set dial: `r = 0.8` was set by hand.
