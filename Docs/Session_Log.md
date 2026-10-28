@@ -224,3 +224,22 @@ produces doesn't depend on its constants for its meaning.
 **Notes for the next session:** none of the above changed a file other than
 this log. The scratch checks took under two minutes in total. If any becomes
 a claim, it needs a pre-registered experiment file first.
+
+### Addendum, same day: the compass
+
+The lead shared "A Compass for the Third Thing", a short piece on practice
+(three movements: poles, play, emergence; then a four-step practice). It is
+**not in the repo**, pending the lead's decision on whether and where to put
+it. Read against the measurements:
+
+- **Consistent:** "don't choose a pole" matches the wetting window, where
+  three-sector junctions exist only between C sealing every wall and C never
+  switching on. "Passed between forms" matches §5: the condition transplants,
+  the route doesn't.
+- **Contradicted unless qualified:** "make one thing better, then the next;
+  the rest builds itself". The ladder's §8e and §8f are counterexamples:
+  local productivity forever with no advance. The qualifier the ladder
+  supports is flat reference cost (§3, §8h).
+- **Not spoken to:** purpose arising, and treating the other like yourself.
+- **Testable:** whether a system finds the in-between by itself. This is open
+  item 4 from 2026-10-10 (responsive coupling).
