@@ -228,9 +228,10 @@ a claim, it needs a pre-registered experiment file first.
 ### Addendum, same day: the compass
 
 The lead shared "A Compass for the Third Thing", a short piece on practice
-(three movements: poles, play, emergence; then a four-step practice). It is
-**not in the repo**, pending the lead's decision on whether and where to put
-it. Read against the measurements:
+(three movements: poles, play, emergence; then a four-step practice). At the
+lead's request it is now at `Manual/A_Compass_for_the_Third_Thing.md`, beside
+Lucidity, in their wording (only heading marks added). It is practice, not a
+result. Read against the measurements:
 
 - **Consistent:** "don't choose a pole" matches the wetting window, where
   three-sector junctions exist only between C sealing every wall and C never
