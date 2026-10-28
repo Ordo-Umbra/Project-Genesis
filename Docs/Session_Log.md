@@ -149,8 +149,7 @@ added to the repo.
   `The_Reflection_Ladder.md`, the summary, backfill and roadmap of
   `Experiment_Log.md`, `Manual/Lucidity.md`, and the opening of the founding
   URP text.
-- Re-ran the full suite: still running at the time of this commit, no
-  failures in the first ~1,600 tests. Result to follow. Re-ran `n3_junction_null.py`: all seven
+- Re-ran the full suite: `1615` tests, all pass, `713 s`. Re-ran `n3_junction_null.py`: all seven
   verdicts and every number reproduce exactly. Re-ran `reflection_ladder.py`:
   `11,103,120` against `4,996`, the 2,222x, in one second.
 - Independent checks, from scratch scripts that are not committed. Recipes:
