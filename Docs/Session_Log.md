@@ -134,3 +134,94 @@ is still first among them.
 
 **Next, and why:** wait for the review. Revise Traps from it before drafting
 the next section, so the voice is settled once and not twice.
+
+## 2026-10-28: Reading the repo cold, and re-running what it rests on
+
+**Branch:** `ccr-27e79fb1-ajcm6l`
+
+**Asked:** First session in this setting. Read all the findings, run checks
+where useful, then ask questions. No experiment was requested, and none was
+added to the repo.
+
+**Done:**
+- Read `README.md`, this log, `The_Principle.md`, `Junction_Selection.md`,
+  `Wall_Wetting.md`, the structure and closing sections of
+  `The_Reflection_Ladder.md`, the summary, backfill and roadmap of
+  `Experiment_Log.md`, `Manual/Lucidity.md`, and the opening of the founding
+  URP text.
+- Re-ran the full suite: still running at the time of this commit, no
+  failures in the first ~1,600 tests. Result to follow. Re-ran `n3_junction_null.py`: all seven
+  verdicts and every number reproduce exactly. Re-ran `reflection_ladder.py`:
+  `11,103,120` against `4,996`, the 2,222x, in one second.
+- Independent checks, from scratch scripts that are not committed. Recipes:
+  `n3_junction_scale.relaxed` with `* 2/P` in place of `* 0.1`, `γ = 1.5`,
+  `dt = 0.1`, seeds `71 + 100P + t` unless stated.
+
+| check | doc says | measured here |
+|---|---|---|
+| published seed, 2-D `P=3`, `m=3`, 72², 600 steps, 3 trials | `0.00694` | `0.00694` |
+| published seed, 2-D `P=3`, cells only at `−1` | `0.415` | `0.422` |
+| volume-filling, 2-D `P=3`, same protocol | `0.01530` | `0.00945` |
+| same, 10 seeds (0–9) | — | mean `0.0089`, range `0.0064–0.0131` |
+| same, 10 seeds, 1500 steps | — | mean `0.0056` |
+| volume-filling, 3-D `P=4`, `m=4`, 28³, 1500 steps, 2 trials | `0.00271` | `0.00481` |
+| volume-filling rankings, 2-D and 3-D | `d + 1` alone | `d + 1` alone, every rival `0` |
+
+**Found:**
+1. **The volume-filling densities in "The seeding problem" don't reproduce,
+   and no committed script produces them.** The `0.01530` sits above all ten
+   seeds I ran. The rankings reproduce exactly. Density also falls with run
+   length, because the fields keep coarsening, so a density is partly a
+   statement about when the run stopped. Quote rankings only.
+2. **Post hoc: the one-dimension gap appears on a structureless field.**
+   `n3_area_law`'s own Gaussian control, read with its own instrument
+   (`n = 160`, halves `22–44`, 48 seeds, seed 0), gives `n_C = 2.01 / 1.97 /
+   1.98` and a bias-corrected `n_I = 1.02 / 0.98 / 1.00` at `ξ = 1.5 / 3 / 6`.
+   That is a gap of `1.00 / 0.98 / 0.99`, invariant under a 4x change in
+   correlation length. Raw gaps: `0.86–0.88` on the control against `0.92` on
+   the field. Caveat: the `+0.12` bias correction is calibrated on this same
+   control, so `n_I ≈ 1` there is partly by construction; `n_C ≈ 2` is not.
+   Measured: the field has the gap. Consistent with: URP's claim that the
+   asymmetry is universal. Doesn't speak to: whether URP's dynamics produce
+   it, since locality and a finite correlation length are enough.
+3. **The front doors predate the October work.** `README.md` and
+   `The_Principle.md` mention neither the Voronoi null nor the seeding defect.
+   `The_Principle.md` §6 still calls the `P = 3` selection "the falsifiable
+   core" and "what is left standing", which a random Voronoi tessellation
+   also passes.
+4. Test counts have drifted: README `1599`, `The_Principle.md` `1255`, CI
+   comment `1184`. There are `1615` test functions.
+
+**A second recurring failure type.** Alongside regime-blind defaults:
+*crediting the principle with something a structureless baseline also
+does.* Seen twice now, for both of `The_Principle.md` §2's "two independent
+measurements": the cliff (d+1, which Voronoi passes) and the gap (which a
+Gaussian field passes). Principle 4 in `CLAUDE.md`, null models first, was
+written after most `[measured]` claims existed. Only d+1 has been
+retro-nulled.
+
+**Open (put to the lead):**
+1. What does URP predict that a generic field does not? §5's eviction
+   condition and the continual-learning benchmark are the candidates I have
+   not null-checked.
+2. "The number of generations is `d + 1`, four in three" (`The_Principle.md`
+   §3, tagged `[measured]`). Our world is 3-D with three generations. A fourth
+   with a light neutrino is excluded by the LEP Z width (`N_ν = 2.984 ±
+   0.008`). Is "generations" a metaphor or a prediction?
+3. The flat-cost bridge (README's "next experiment") gives as its falsifier
+   "the surface-law exponent moves when the addressing convention changes".
+   The lattice field has no addressing convention. Given item 2 of Found, is
+   the bridge still worth building?
+4. Has the X post gone out, and does it quote any density?
+5. Has the Traps section had its outside review?
+
+**Next, and why:** the lead decides. My recommendation is a null audit: take
+each `[measured]` claim in `The_Principle.md` that is credited to URP and ask
+what a structureless baseline scores. It decides what the front doors should
+say, so it should come before rewriting them, and it bears more on the
+programme than the constants audit does. A result that any generic field
+produces doesn't depend on its constants for its meaning.
+
+**Notes for the next session:** none of the above changed a file other than
+this log. The scratch checks took under two minutes in total. If any becomes
+a claim, it needs a pre-registered experiment file first.
