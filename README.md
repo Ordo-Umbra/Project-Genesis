@@ -183,7 +183,7 @@ python experiments/reflection_cost_model.py   # flat pricing, and the filters go
 python experiments/reflection_options.py      # breadth buys the floor, not the height
 python experiments/reflection_retraction.py   # what the interior cannot see
 
-python -m unittest discover -s tests      # 1615 checks, ~15 min
+python -m unittest discover -s tests      # 1629 checks, ~15 min
 python tools/make_figures.py              # regenerate the figures above
 ```
 
@@ -198,7 +198,7 @@ project_genesis/     the instruments — field dynamics, capacity, gauge sector,
                      substrates (Hopfield, Kuramoto), and the measures;
                      reflection*.py and *_ladder.py are the formal half
 experiments/         one file per question, each self-scoring
-tests/               ~1615 checks pinning the central claims so they cannot
+tests/               ~1629 checks pinning the central claims so they cannot
                      drift silently
 Docs/                the theory, the standalone results, the full record
 tools/               figure generation
