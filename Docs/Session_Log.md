@@ -345,3 +345,28 @@ tests passed on their own. The count is now 1,629.
 **Next, and why:** the lead's call. Either re-run the seeded experiments (S1,
 the last live defect) or keep going with the explainer: a shareable page, or
 versions for specific readers.
+
+### Addendum 5, same day: the lead's ideas on dimension (discussion only)
+
+The lead floated these as exploration, not claims:
+- a full junction is where the foundations needed for enumeration intersect;
+- full junctions get rarer above 3-D;
+- 6- and 9-palette interactions might exist in higher dimensions;
+- 3-D may hold the most structure, being the most stable home for the
+  interaction that infinite ascent needs.
+
+What I said, for the record:
+- Rarity above 3-D is measured but mostly geometric. After the `(3/L)^d`
+  correction the decline is 3–8× and not monotone (published seeding, so
+  rough).
+- Generic point junctions in `d` dimensions carry `d + 1` sectors, so 6
+  corresponds to 5-D and 9 to 8-D. That is a theorem, not a new interaction.
+  Multiples of 3 as composites of triple junctions would be different.
+- Nothing measured here singles out 3-D. Established support for "3-D is
+  special for held structure" comes from Ehrenfest (stable orbits) and knot
+  theory (knots only in 3-D). Those are different mechanisms, and no link to
+  `S` has been tested.
+
+A candidate experiment, not started: **persistence by dimension.** Under
+matched noise and matched domain width, do junction networks last longer in
+3-D than in 2-D or 4-D? It would need a smaller `dt` in noisy 4-D runs (R3).
