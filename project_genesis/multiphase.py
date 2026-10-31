@@ -37,6 +37,55 @@ def periodic_laplacian(field: np.ndarray) -> np.ndarray:
     return out
 
 
+def junction_valence(ndim: int, min_valence: int | None = None) -> int:
+    """The junction test's valence, refusing the 2-D default outside 2-D.
+
+    The published junction test is ``distinct >= 3``, the number of sectors
+    that meet at a point in the plane. In ``d`` dimensions a point junction
+    needs ``d + 1``, and in 3-D three sectors meet along a *line*, so the
+    default silently reads edges there (`Docs/Constants_Audit.md`, M1). The
+    default therefore applies only in 2-D. Elsewhere the caller must say what
+    they mean: ``d + 1`` for point junctions, or ``3`` to reproduce the
+    published reading.
+    """
+    if min_valence is not None:
+        return int(min_valence)
+    if int(ndim) != 2:
+        raise ValueError(
+            f"the default junction test `distinct >= 3` is the 2-D vertex "
+            f"number, and this field is {ndim}-D. Pass min_valence explicitly: "
+            f"{int(ndim) + 1} for a point junction (d + 1), or 3 to reproduce "
+            f"the published reading, which in 3-D counts triple lines. "
+            f"See Docs/Constants_Audit.md.")
+    return 3
+
+
+def check_time_step(dt: float, ndim: int, diffusion_max: float,
+                    stiffness: float = 2.0) -> None:
+    """Refuse a time step at which the explicit update is unstable.
+
+    Forward Euler multiplies a grid-scale mode near a pure phase by
+    ``1 − dt·(4·d·D + s)``, where ``4d`` is the Laplacian's largest eigenvalue
+    on the ``2d + 1`` stencil and ``s`` is the stiffness of the wells
+    (``max(2, 2γ − 1)`` for this potential). Once that factor reaches ``−1``,
+    grid noise grows instead of decaying. ``dt = 0.1`` with ``D = 1`` gives
+    ``−0.8`` in 4-D and ``−1.2`` in 5-D (`Docs/Constants_Audit.md`, R3).
+    """
+    rate = float(dt) * (4.0 * int(ndim) * float(diffusion_max) + float(stiffness))
+    if rate >= 2.0:
+        raise ValueError(
+            f"dt = {dt} is unstable here: the grid-scale factor per step is "
+            f"{1.0 - rate:+.2f} (needs to stay above -1). With d = {ndim}, "
+            f"D = {diffusion_max:g} and stiffness {stiffness:g}, dt must be "
+            f"below {2.0 / (4.0 * int(ndim) * float(diffusion_max) + float(stiffness)):.4f}. "
+            f"See Docs/Constants_Audit.md, R3.")
+
+
+def well_stiffness(gamma_max: float) -> float:
+    """Largest curvature of the free energy at a pure phase or a wall."""
+    return max(2.0, 2.0 * float(gamma_max) - 1.0)
+
+
 def step_multiphase(
     fields: np.ndarray,
     *,
@@ -66,6 +115,7 @@ def step_multiphase(
     """
     if fields.ndim < 2:
         raise ValueError("fields must have shape (P, *spatial) with P >= 1 component axis")
+    check_time_step(dt, fields.ndim - 1, diffusion, well_stiffness(gamma))
     sum_sq = np.sum(fields * fields, axis=0)
     new = np.empty_like(fields)
     for a in range(fields.shape[0]):
@@ -116,6 +166,8 @@ def step_multiphase_conserved(
         raise ValueError("fields must have shape (P, *spatial) with P >= 1 component axis")
     if kappa is not None and kappa.shape != fields.shape[1:]:
         raise ValueError("kappa must have the spatial shape of the field")
+    d_max = diffusion if kappa is None else diffusion * max(float(kappa.max()), 0.0)
+    check_time_step(dt, fields.ndim - 1, d_max, well_stiffness(gamma))
     sum_sq = np.sum(fields * fields, axis=0)
     new = np.empty_like(fields)
     load = np.zeros(fields.shape[1:], dtype=np.float64)
@@ -176,6 +228,8 @@ def step_multiphase_kappa(
         raise ValueError("fields must have shape (P, *spatial) with P >= 1 component axis")
     if kappa.shape != fields.shape[1:]:
         raise ValueError("kappa must have the spatial shape of the field")
+    check_time_step(dt, fields.ndim - 1,
+                    diffusion * max(float(kappa.max()), 0.0), well_stiffness(gamma))
 
     sum_sq = np.sum(fields * fields, axis=0)
     new = np.empty_like(fields)
@@ -371,7 +425,8 @@ def count_triple_junctions(labels: np.ndarray) -> int:
     return int(np.sum(_popcount(_neighbourhood_label_bits(labels)) >= 3))
 
 
-def full_palette_junction_density(labels: np.ndarray, n_palette: int) -> float:
+def full_palette_junction_density(labels: np.ndarray, n_palette: int, *,
+                                  min_valence: int | None = None) -> float:
     """Density of junctions that represent the *complete* colour palette.
 
     A cell qualifies when its neighbourhood contains a genuine junction
@@ -387,11 +442,16 @@ def full_palette_junction_density(labels: np.ndarray, n_palette: int) -> float:
     ``n_palette = 3`` — the non-collinear, topological selector the coherence
     magnitude lacked. (This is a 2-D structural argument; 3-D junction lines
     have different valence and the clean selection need not transfer.)
+
+    ``min_valence`` (added 2026-10-31): the default ``3`` applies only to 2-D
+    labels. Any other dimension raises unless it is given; see
+    :func:`junction_valence`.
     """
+    m = junction_valence(labels.ndim, min_valence)
     bits = _neighbourhood_label_bits(labels)
     full = (1 << n_palette) - 1
     distinct = _popcount(bits)
-    return float(np.mean((bits == full) & (distinct >= 3)))
+    return float(np.mean((bits == full) & (distinct >= m)))
 
 
 def domain_scale(labels: np.ndarray) -> float:
@@ -487,7 +547,8 @@ def resolved_palette_junction_density(
     n_palette: int,
     *,
     passes: int = 1,
-    min_scale: float = 2.5,
+    min_scale: float | None = None,
+    min_valence: int | None = None,
 ) -> dict:
     """Full-palette junction density, with a guard against lattice-scale texture.
 
@@ -520,11 +581,26 @@ def resolved_palette_junction_density(
 
     Returns ``density`` (guarded), ``raw`` (unguarded, for comparison),
     ``scale`` and ``resolved``.
+
+    Since 2026-10-31 the floor ``min_scale = 2.5`` applies only to 2-D labels.
+    It was tuned on 2-D domains, and the raw scale falls with dimension at a
+    fixed domain width (`Docs/Constants_Audit.md`, G1). Any other dimension
+    raises unless ``min_scale`` is given. :func:`domain_diameter` is the
+    dimension-independent reading. ``min_valence`` is passed to
+    :func:`full_palette_junction_density`.
     """
+    if min_scale is None:
+        if labels.ndim != 2:
+            raise ValueError(
+                f"the texture floor 2.5 was tuned on 2-D domains, and this field "
+                f"is {labels.ndim}-D. Pass min_scale explicitly, or judge "
+                f"resolution with domain_diameter. See Docs/Constants_Audit.md.")
+        min_scale = 2.5
     scale = domain_scale(labels)
-    raw = full_palette_junction_density(labels, n_palette)
+    raw = full_palette_junction_density(labels, n_palette, min_valence=min_valence)
     smoothed = majority_filter(labels, n_palette, passes=passes)
-    guarded = full_palette_junction_density(smoothed, n_palette)
+    guarded = full_palette_junction_density(smoothed, n_palette,
+                                            min_valence=min_valence)
     return {"density": guarded,
             "raw": raw,
             "scale": scale,
@@ -538,6 +614,7 @@ def topological_s_functional(
     beta: float = 0.09,
     kappa_field: np.ndarray | None = None,
     weight: float = 1.0,
+    min_valence: int | None = None,
 ) -> dict[str, float]:
     """S = ΔC + κ·w·(full-palette junction density).
 
@@ -551,7 +628,8 @@ def topological_s_functional(
     mean_load = float(load.mean())
     delta_c = float(beta * mean_load)
     kappa = float(kappa_field.mean()) if kappa_field is not None else 1.0 / (1.0 + mean_load)
-    neutrality = full_palette_junction_density(sector_labels(fields), n)
+    neutrality = full_palette_junction_density(sector_labels(fields), n,
+                                               min_valence=min_valence)
     return {
         "delta_c": delta_c,
         "kappa": kappa,

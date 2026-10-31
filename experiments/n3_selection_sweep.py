@@ -68,6 +68,16 @@ So the selection is dimension-robust in its *winner* and not in its *strength*.
 In 3-D it clears its own falsifier (3×) by very little.  Anyone weighing this
 argument should weigh the 3-D number, not the 2-D one.
 
+*Note added 2026-10-31.* The 3-D reading above is kept as recorded, but it does
+not stand. The integration axis is ``full_palette_junction_density``, whose
+junction test is hardcoded to ``distinct >= 3``, the 2-D vertex number.  In 3-D
+that test asks whether an *edge* carries the whole palette, which every triple
+line of a three-sector field does, so ``P = 3`` wins by counting alone.  At the
+vertex test ``distinct >= 4`` the 3-D winner is ``P = 4``
+(``n3_junction_scale``).  "``P = d + 1`` is ruled out" is therefore wrong.  The
+joint criterion has not been run at the vertex test in 3-D.  See
+``Docs/Constants_Audit.md``.
+
 Usage::
 
     python experiments/n3_selection_sweep.py --output-dir artifacts/n3_selection
@@ -364,6 +374,12 @@ def main():
     p.add_argument("--no-figure", action="store_true")
     p.add_argument("--quick", action="store_true")
     args = p.parse_args()
+    if args.ndim != 2:
+        p.error("--ndim 3 is disabled (2026-10-31). The 3-D arm used the 2-D junction test (distinct >= 3), "
+                "which in 3-D counts triple lines, so P = 3 wins by counting "
+                "alone. A 3-D run needs the point-junction test (d + 1), which "
+                "this script does not implement yet. See Docs/Constants_Audit.md.")
+
     if args.ndim == 3 and args.size > 44:
         args.size = 40          # 3-D lattices are expensive
         args.steps = min(args.steps, 400)

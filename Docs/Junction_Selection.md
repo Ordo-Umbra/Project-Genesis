@@ -6,6 +6,24 @@
 reports what was measured, and says what would refute it. It is extracted from a
 larger programme, but nothing here depends on that programme being right.*
 
+## Where it stands (2026-10-31)
+
+The sections below are in the order the work was done. In short:
+
+- **The ranking holds.** At the point-junction test `m = d + 1`, the palette
+  `P = d + 1` wins in `d = 1, 2, 3, 4`. `d = 4` is weak, resting on 30–90
+  qualifying cells.
+- **It is geometry, not dynamics.** A random Voronoi tessellation with no
+  dynamics selects `d + 1` in `d = 2, 3, 4`. What the relaxation adds is
+  genericity: degenerate junctions split, and relaxed fields are no less generic
+  than random ones (2-D and 3-D; `d = 4` untested).
+- **The published densities should not be quoted.** The published seeding left
+  about 40% of each field at `−1`. With seeding that fills the volume, the
+  ranking gets cleaner: the 3-D rival goes to zero. The 1-D and 4-D arms have
+  not been re-run that way. See "The seeding problem".
+- **`d = 5` is out of reach** for two reasons: point vertices too rare to
+  sample, and a time step (`dt = 0.1`) that is unstable there.
+
 ---
 
 ## The claim
@@ -53,7 +71,9 @@ whether larger palettes do better. They do not.
 
 Fields of `P` sectors relaxed under a volume-conserving multiphase Allen–Cahn
 flow (`γ = 1.5`, `dt = 0.1`, unit diffusion), seeded from uniform noise on
-`[0, 0.1]`, labelled by `argmax` over the sector index. Three trials per palette.
+`[0, 0.1]`, labelled by `argmax` over the sector index. *That seeding turned out
+to be defective (see "The seeding problem"). The tables in this section are kept
+as published; quote their rankings, not their densities.* Three trials per palette.
 Neighbourhood is the immediate `3^d` ring — the smallest window in which a
 junction can appear at all.
 
@@ -378,7 +398,10 @@ section are left as published, for the record.
 `d = 5` is the frontier and is **not reachable by this approach**. Extrapolating
 the tier falloff puts its point-vertex density near `1e-6`, below what any
 affordable box can sample — so the failure there would be a measurement ceiling,
-not evidence about the structure. Answering whether `d + 1` continues past four
+not evidence about the structure. There is a second barrier as well. With
+`dt = 0.1`, a grid-scale wiggle near a pure phase is multiplied by
+`1 − dt·(4d + 2)` per step. That factor is `−0.8` in 4-D and `−1.2` in 5-D, so
+the relaxation itself is unstable there (`Docs/Constants_Audit.md`). Answering whether `d + 1` continues past four
 dimensions needs a different instrument, not a bigger lattice.
 
 ## Reproducing it
@@ -392,7 +415,11 @@ The `d = 4` arm is opt-in because a 4-D box big enough to hold a tiling is
 expensive; the default run stays affordable.
 
 Prints its pre-registered predictions and every verdict, including the one that
-failed. The measurement lives in `project_genesis/junction_scale.py`; the
+failed. The 3-D result itself is pinned in `tests/test_junction_scale.py`
+(`TestThreeDimensionalVertexReading`): on the same small relaxed fields, the
+vertex test picks `P = 4` and the edge test picks `P = 3`. Since 2026-10-31
+the junction test refuses to default outside 2-D, so every 3-D or 4-D reading
+states its valence. The measurement lives in `project_genesis/junction_scale.py`; the
 `radius = 1`, `min_valence = None` case is pinned bit-identical to the original
 published measure in `tests/test_junction_scale.py`, so widening the probe is
 demonstrably widening *that* measure and not some other one.

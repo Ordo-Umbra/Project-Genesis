@@ -154,7 +154,10 @@ def run_point(
         for _ in range(n_skip):
             psi, links, acc = joint_sweep(psi, links, rng, **kw(step))
         amps = sector_amplitudes(psi)
-        tj = thermal_junction_analysis(amps, n)
+        # The junction test is stated explicitly (2026-10-31): `--dim 3`
+        # measures junction *lines* by design, so 3 is the intended valence in
+        # both dimensions. It is not a point-junction (d + 1) reading in 3-D.
+        tj = thermal_junction_analysis(amps, n, min_valence=3)
         junc = tj["junctions"]
         walls = interface_mask(amps) & ~junc
         bulk = ~interface_mask(amps) & ~junc

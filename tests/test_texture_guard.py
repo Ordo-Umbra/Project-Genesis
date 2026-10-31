@@ -65,7 +65,9 @@ class TestTextureGuard(unittest.TestCase):
         """
         rng = np.random.default_rng(1)
         mush = rng.integers(0, 4, (24, 24, 24))
-        raw = full_palette_junction_density(mush, 4)
+        # 3-D noise with the published (2-D) constants stated explicitly; since
+        # 2026-10-31 they no longer default outside 2-D.
+        raw = full_palette_junction_density(mush, 4, min_valence=3)
         assert raw > 0.9
         assert domain_scale(mush) < 1.5
 
@@ -73,7 +75,8 @@ class TestTextureGuard(unittest.TestCase):
     def test_guard_flags_the_artifact_as_unresolved(self):
         rng = np.random.default_rng(2)
         mush = rng.integers(0, 4, (24, 24, 24))
-        out = resolved_palette_junction_density(mush, 4)
+        out = resolved_palette_junction_density(mush, 4, min_valence=3,
+                                                min_scale=2.5)
         assert out["resolved"] is False
         assert out["scale"] < 1.5
 
@@ -82,7 +85,8 @@ class TestTextureGuard(unittest.TestCase):
         """Honest bookkeeping: the filter helps, the resolved flag is the real guard."""
         rng = np.random.default_rng(3)
         mush = rng.integers(0, 4, (24, 24, 24))
-        out = resolved_palette_junction_density(mush, 4)
+        out = resolved_palette_junction_density(mush, 4, min_valence=3,
+                                                min_scale=2.5)
         assert out["density"] < out["raw"]          # filtering helps
         assert out["density"] > 0.3                 # but nowhere near enough alone
         assert out["resolved"] is False             # so the flag must carry it
@@ -96,7 +100,8 @@ class TestTextureGuard(unittest.TestCase):
         labels[12:, :12] = 1
         labels[:12, 12:] = 2
         labels[12:, 12:] = 3
-        out = resolved_palette_junction_density(labels, 4)
+        out = resolved_palette_junction_density(labels, 4, min_valence=3,
+                                                min_scale=2.5)
         assert out["resolved"] is True
         self.assertAlmostEqual(out["density"], out["raw"], delta=abs(out["raw"]) * (1e-6) + 1e-12)
 
@@ -138,8 +143,10 @@ class TestTextureGuard(unittest.TestCase):
     def test_filter_passes_are_cumulative(self):
         rng = np.random.default_rng(5)
         mush = rng.integers(0, 4, (20, 20, 20))
-        d1 = full_palette_junction_density(majority_filter(mush, 4, passes=1), 4)
-        d2 = full_palette_junction_density(majority_filter(mush, 4, passes=2), 4)
+        d1 = full_palette_junction_density(majority_filter(mush, 4, passes=1), 4,
+                                           min_valence=3)
+        d2 = full_palette_junction_density(majority_filter(mush, 4, passes=2), 4,
+                                           min_valence=3)
         assert d2 < d1
 
 

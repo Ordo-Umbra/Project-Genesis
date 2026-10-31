@@ -142,7 +142,11 @@ def build_sector_network(
         "junctions": _popcount(_neighbourhood_label_bits(labels)) >= 3,
         "delta_c": float(beta * mean_load),
         "kappa": 1.0 / (1.0 + mean_load),
-        "neutrality": full_palette_junction_density(labels, n_phases),
+        # Stated explicitly (2026-10-31): `dim=3` reads junction *lines* by
+        # design (see the docstring), so the valence is 3 in both dimensions.
+        # In 3-D this is not a point-junction (d + 1) reading.
+        "neutrality": full_palette_junction_density(labels, n_phases,
+                                                    min_valence=3),
     }
 
 

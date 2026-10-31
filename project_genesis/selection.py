@@ -110,7 +110,8 @@ def evolve_palette_gated(n_palette: int, size: int, steps: int, rng, *,
 def measure_window_gated(fields, kappa, n_palette: int, window: int, rng, *,
                          consumption=None, noise: float = 0.0,
                          gamma: float = 1.5, dt: float = 0.1,
-                         baseline: float = 1.0, recovery: float = 0.1) -> dict:
+                         baseline: float = 1.0, recovery: float = 0.1,
+                         min_valence=None, min_scale=None) -> dict:
     """:func:`measure_window` under either law, plus the realised capacity.
 
     ``kappa_mean`` is the *measured* abundance, not the nominal setting — a
@@ -128,8 +129,11 @@ def measure_window_gated(fields, kappa, n_palette: int, window: int, rng, *,
         new = sector_labels(fields)
         churn.append(float((new != labels).mean()))
         labels = new
-        integ.append(float(full_palette_junction_density(labels, int(n_palette))))
-        g = resolved_palette_junction_density(labels, int(n_palette))
+        integ.append(float(full_palette_junction_density(
+            labels, int(n_palette), min_valence=min_valence)))
+        g = resolved_palette_junction_density(labels, int(n_palette),
+                                              min_scale=min_scale,
+                                              min_valence=min_valence)
         guarded.append(g["density"])
         scales.append(g["scale"])
         resolved.append(g["resolved"])
@@ -165,8 +169,13 @@ def evolve_palette(n_palette: int, size: int, steps: int, rng, *,
 
 
 def measure_window(fields, n_palette: int, window: int, rng, *,
-                   noise: float = 0.0, gamma: float = 1.5, dt: float = 0.1) -> dict:
+                   noise: float = 0.0, gamma: float = 1.5, dt: float = 0.1,
+                   min_valence=None, min_scale=None) -> dict:
     """The three axes, averaged over a late-time window.
+
+    ``min_valence`` and ``min_scale`` (added 2026-10-31) are passed to the
+    junction measures. Their defaults hold only in 2-D; a field of any other
+    dimension raises unless both are given (`Docs/Constants_Audit.md`).
 
     Returns ``distinction`` (mean gradient energy), ``integration`` (mean
     full-palette junction density), ``churn`` (mean fraction of sites changing
@@ -184,11 +193,14 @@ def measure_window(fields, n_palette: int, window: int, rng, *,
         new = sector_labels(fields)
         churn.append(float((new != labels).mean()))
         labels = new
-        integ.append(float(full_palette_junction_density(labels, int(n_palette))))
+        integ.append(float(full_palette_junction_density(
+            labels, int(n_palette), min_valence=min_valence)))
         # The same quantity with the texture guard applied.  Reported
         # alongside rather than instead of, so the effect of the guard on the
         # published numbers is visible rather than silently folded in.
-        g = resolved_palette_junction_density(labels, int(n_palette))
+        g = resolved_palette_junction_density(labels, int(n_palette),
+                                              min_scale=min_scale,
+                                              min_valence=min_valence)
         guarded.append(g["density"])
         scales.append(g["scale"])
         resolved.append(g["resolved"])

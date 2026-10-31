@@ -47,22 +47,68 @@ result most likely to be read by outsiders, see `Docs/Junction_Selection.md`.
    (for example random Voronoi) scores before crediting the dynamics.
 5. **Quote rankings over magnitudes** when sample counts are small, and say
    how small.
+6. **Keep the record; keep the core current.** This is the lead's rule
+   (2026-10-31), and the next section says how to apply it.
+7. **A default holds only where it was chosen.** Outside its home regime it
+   must refuse, not run silently, and the caller states the value. Fix a
+   defect by guarding the default, not only by adding an opt-in beside it.
+   Examples: `multiphase.junction_valence` and `multiphase.check_time_step`.
+
+## Record and core documents
+
+Two kinds of document, handled differently.
+
+**Record** is what was run and what was found, as it was found. It is never
+rewritten or deleted. If a later result changes what an entry means, add a
+short dated note at that entry pointing to the correction, and leave the entry
+itself alone. Record documents:
+
+- the dated entries of `Docs/Experiment_Log.md`
+- `Docs/Session_Log.md`
+- dated working notes, such as `Docs/Narrowing_the_N3_Question.md`
+- experiment docstrings: their predictions and post-run notes
+- the other essays in `Docs/`, until the lead says otherwise
+
+**Core** is what the programme holds now. It is updated in place as results
+change, so a reader gets the current position without reading the history.
+Where a claim changed, say so briefly and point to the record. Core documents:
+
+- `README.md`
+- `Docs/In_Plain_Words.md` (for a general reader; keep it in step with the rest)
+- `Docs/The_Principle.md`
+- `Docs/Junction_Selection.md`
+- `Docs/Wall_Wetting.md`
+- `Docs/Usage.md`
+- `Docs/Constants_Audit.md` (statuses update as fixes land; findings stay listed)
+- the summary table at the top of `Docs/Experiment_Log.md`
+- this file
+
+New core documents will appear as the work grows. Add each one to this list
+when it does. When a correction lands, check every core document for the old
+claim, not just the one where it was noticed.
 
 ## The recurring failure type: regime-blind defaults
 
-The same failure has now been found three times. A constant or default is
-chosen in one setting and silently carried into settings it was never checked
-against:
+The same failure has now been found four times, and a fifth has been derived
+but not yet observed. A constant or default is chosen in one setting and
+silently carried into settings it was never checked against:
 
 | constant | chosen for | broke in | found |
 |---|---|---|---|
 | junction threshold `m = 3` | 2-D vertices | 3-D and above (needs `m = d + 1`) | before 2026-10 |
 | texture floor `domain_scale ≥ 2.5` | 2-D domains | 4-D (rejected resolved fields) | before 2026-10 |
 | seed amplitude `[0, 0.1]` | (never checked) | everywhere: 40% of each field sits at `−1` | 2026-10-10 |
+| κ recovery default `r = 0.1` | (unrecorded) | 2-D recall and 3-D form persistence: starves the field | before 2026-10 |
+| time step `dt = 0.1` | 2-D | at risk in 4-D, unstable in 5-D (derived, not observed) | 2026-10-31 |
 
 **Before trusting a new result, ask of every constant it rests on: in what
-regime was this chosen, and does this run sit in it?** A full audit of the
-measurement and relaxation constants is the top open item.
+regime was this chosen, and does this run sit in it?** The audit of the
+multiphase field stack is `Docs/Constants_Audit.md` (2026-10-31). Read it
+before trusting a field result. Its main finding about the pattern: every fix
+had been added as an opt-in, with the old default left in place, so fixed
+defects stayed live for callers who didn't opt in, and older docs still quoted
+them. Principle 7 is the structural fix; the guard found three more instances on
+its first run.
 
 ## Standing facts a session must know
 
@@ -72,6 +118,14 @@ measurement and relaxation constants is the top open item.
   `0.01`. Use **volume-filling seeding** (`* 2/P`, mean `1/P`) for new work.
   The d+1 selection survives the fix and gets cleaner. Published *densities*
   should not be quoted. See `Docs/Junction_Selection.md`, "The seeding problem".
+  Six experiments use the defective seeding with conserved dynamics; the list
+  is in `Docs/Constants_Audit.md`.
+- **The 2-D junction test `m = 3` now refuses outside 2-D** (2026-10-31), as
+  do the `2.5` texture floor and any unstable `dt`. In 3-D, `m = 3` reads
+  edges, not vertices, so `P = 3` wins there by counting alone. Pass
+  `min_valence=d+1` for point junctions, or `3` only when you mean triple lines.
+  The core docs were corrected; the record keeps the old reading, with dated
+  notes.
 - **d+1 is geometric.** Random Voronoi selects it with no dynamics at all. What
   the relaxation contributes is genericity: degenerate junctions split.
   (`experiments/n3_junction_null.py`, `experiments/n3_junction_genericity.py`)
@@ -81,7 +135,7 @@ measurement and relaxation constants is the top open item.
 ## Setup and checks
 
 ```
-pip install -r requirements.txt     # numba is required; scipy is not used
+pip install -r requirements.txt     # numba is required; scipy is used by count_domains and a few experiments
 python -m unittest discover tests   # pytest is not installed
 ```
 

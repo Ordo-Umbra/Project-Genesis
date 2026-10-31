@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from .multiphase import periodic_laplacian
+from .multiphase import check_time_step, periodic_laplacian, well_stiffness
 
 __all__ = ["coupling_matrix", "step_multiphase_pairwise", "growth_rate"]
 
@@ -72,6 +72,8 @@ def step_multiphase_pairwise(fields: np.ndarray, gamma: np.ndarray, *,
     cons = [True] * n if conserved is None else [bool(c) for c in conserved]
     if len(cons) != n:
         raise ValueError("conserved must have one entry per sector")
+    check_time_step(dt, fields.ndim - 1, diffusion,
+                    well_stiffness(float(gamma.max()) if n > 1 else 0.0))
 
     sq = fields * fields
     new = np.empty_like(fields)

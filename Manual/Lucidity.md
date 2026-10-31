@@ -2,8 +2,8 @@
 
 *A practice for coming to understanding, and for staying able to grow it.*
 
-*Working draft: an outline, plus the first section in rough form. It has no
-author on purpose. It asks to be trusted only as far as you can check it
+*Working draft: an outline, plus two sections in rough form (0 and 5). It has
+no author on purpose. It asks to be trusted only as far as you can check it
 yourself.*
 
 ---
@@ -219,6 +219,100 @@ after.
 
 ---
 
-## 1–10
+## 1–4
+
+*To be drafted.*
+
+---
+
+## 5. Perspective
+
+Every "best" is best somewhere.
+
+Best for a size. Best at a scale. Best for the tool you used to look, at the
+time you looked. Change any one of those and the best can change.
+
+Nothing is wrong with seeing from somewhere. There is nowhere else to see from.
+The trouble starts when you forget where you are standing.
+
+---
+
+### Name the space
+
+When you say something is best, or true, or all there is, say where.
+
+*Seen:* three looked like the best number of parts, in a flat sheet. Someone
+checked in space with the same test, and three still won. But in space that
+test was reading lines, not points. With a test built for space, four won.
+Neither answer was wrong for its space. The mistake was in not naming it.
+
+---
+
+### The instrument is part of the view
+
+What you can see depends on what you built to see with. A "nothing there" can
+mean that nothing is there, or that your instrument can't show it.
+
+*Seen:* a four-dimensional pattern looked like noise to a guard built in the
+plane. A new guard, made to mean the same thing in every dimension, showed it
+was well-formed all along. Five dimensions stay out of reach for now: the
+points are too rare to sample, and the steps that work in fewer dimensions
+blow up there.
+
+Some views have to be built before they can be had.
+
+---
+
+### Your home space is not the whole space
+
+You learned to see in the space you live in. Your sense of what is natural was
+trained there.
+
+That is a place to start from, not proof of what lies beyond it. It is not
+proof against what lies beyond it, either. Hold both.
+
+---
+
+### Three places an idea can stand
+
+- **Open:** held in thought, coherent, not yet tested. Keep it, and label it
+  open.
+- **Solid:** tested, with a verdict you could have lost.
+- **Released:** tested and let go, or set aside on purpose.
+
+The open space is larger than the solid one, and it should be. Thought can hold
+what isn't solid yet. That is how anything new arrives.
+
+But defining an idea well makes it *decidable*, not true. Some of the sharpest
+ideas come back *no*. That isn't a loss. Each *no* closes one path and points
+at the next.
+
+*Seen:* a sequence of failed attempts, each ruling out one explanation, turned
+out to be a corridor rather than a wall.
+
+---
+
+### Look from a second place
+
+Before you credit your idea with a pattern, ask what the pattern would look
+like if your idea had nothing to do with it.
+
+*Seen:* a pattern looked like a rule at work. A random arrangement, with no
+rule in it at all, made the same pattern. It was geometry, not the rule. Both
+were worth knowing. Only one was about the rule.
+
+---
+
+### Try this
+
+Take one thing you believe is best, or true, or simply the way things are.
+Write down the space it holds in: the scale, the setting, the instrument, the
+time.
+
+Then change one of them, and look again.
+
+---
+
+## 6–10
 
 *To be drafted.*
