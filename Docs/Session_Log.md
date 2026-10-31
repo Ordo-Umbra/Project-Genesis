@@ -370,3 +370,20 @@ What I said, for the record:
 A candidate experiment, not started: **persistence by dimension.** Under
 matched noise and matched domain width, do junction networks last longer in
 3-D than in 2-D or 4-D? It would need a smaller `dt` in noisy 4-D runs (R3).
+
+### Addendum 6, same day: Lucidity §5, Perspective
+
+**Asked:** the lead wanted the conversation about open and solid ideas turned
+into a reference on perspective in the manual.
+
+**Done:** drafted `Manual/Lucidity.md` §5 in the Traps voice (second person,
+short lines, real cases with no names). Subsections: name the space; the
+instrument is part of the view; your home space is not the whole space; three
+places an idea can stand (open / solid / released, matching [framework] /
+[measured] / [declined]); look from a second place; and a closing "Try this".
+Its cases come from this repo: the 3-D edge reading, the 4-D guard, the `dt`
+limit at 5-D, the N⋆ = 3 corridor, and the Voronoi null.
+
+**Note:** the 2026-10-11 plan was to settle the voice through outside review of
+Traps before drafting more. This section was drafted before any review came
+back, so if the review changes the voice, both sections get revised together.
