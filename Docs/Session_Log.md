@@ -134,3 +134,64 @@ is still first among them.
 
 **Next, and why:** wait for the review. Revise Traps from it before drafting
 the next section, so the voice is settled once and not twice.
+
+## 2026-10-31: Constants audit of the multiphase field stack
+
+**Branch:** `ccr-cd1f1c2a-xul24u`
+
+**Asked:** Get familiar with the repo, then start the constants audit (open
+item 1) as a written table only, with no re-runs.
+
+**Done:**
+- `Docs/Constants_Audit.md`: 24 constants across relaxation, seeding, run
+  length, measurement and guards. Each has its home regime, where it is used
+  now, and a status (live / broken / at risk / checked / derived / unchecked /
+  known limit). It also has a pointer table to the constants already swept
+  elsewhere.
+- `CLAUDE.md`: two rows added to the failure-type table (κ recovery, which was
+  already on record; `dt`, which is derived). Added a standing fact that
+  `m = 3` is still the default, and a pointer to the audit. Corrected
+  "scipy is not used": `count_domains` needs it.
+- Only one computation was run: a numerical check of the `dt` derivation
+  against `step_multiphase_conserved`. It matched to three decimals for
+  `d = 1` to `5`.
+
+**Found:**
+1. The `m = 3` threshold is still live in 3-D in current docs:
+   `The_Principle.md` §6, `Narrowing_the_N3_Question.md`, the
+   `n3_selection_sweep` docstring and `Usage.md` all say three wins in 3-D.
+   That is the edge reading that `Junction_Selection.md`'s control table
+   explains.
+2. The defective seeding is in six experiments with conserved dynamics, not
+   just one.
+3. `interface_mask` (margin `0.15`) should read published-seeding `−1` regions
+   as wall, since their top-two gap is `0.007–0.027`. This is derived and not
+   run.
+4. In 4-D, `dt = 0.1` leaves grid-scale modes decaying at only `0.8` per step,
+   and in 5-D it is unstable. That is a second reason `d = 5` is out of reach.
+5. The κ recovery default `r = 0.1` was already a recorded instance of the
+   failure type, but was missing from the table. `n3_capacity_gating`'s scarce
+   arms run at it.
+6. The pattern: every fix was added as an opt-in, with the old default left in
+   place. That keeps "pin before you extend" honest, but nothing sends a fix
+   back to older callers or docs.
+
+**Failed / corrected:** In the opening chat I said `n3_capacity_separation` is
+behind the README's capacity row. It is supporting evidence. The row rests
+mainly on `n3_capacity_gating`, which uses non-conserved dynamics and is not
+affected by the seeding. It is affected by the κ recovery default (finding 5).
+
+**Open:** the four options at the end of the audit: correct the stale 3-D
+text; make 2-D-only measures refuse other dimensions, with a `dt` check; re-run
+the six seeded experiments; sweep `γ` and step count. The audit doesn't cover
+the reflection ladder, gauge/MC, the scalar engine, or the Hopfield and
+Kuramoto code.
+
+**Next, and why:** correct the stale 3-D text first. It is the only finding
+where a current, load-bearing claim (§6, "the falsifiable core") is known to be
+wrong, and it needs no new run. The structural fix (option 2) should follow,
+because it is what stops the pattern rather than the instance. Wait for the
+lead to choose.
+
+**Notes for the next session:** the audit is built from reading. Before
+quoting any "at risk" row as a result, run the one check it names.

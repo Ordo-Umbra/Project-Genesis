@@ -50,19 +50,24 @@ result most likely to be read by outsiders, see `Docs/Junction_Selection.md`.
 
 ## The recurring failure type: regime-blind defaults
 
-The same failure has now been found three times. A constant or default is
-chosen in one setting and silently carried into settings it was never checked
-against:
+The same failure has now been found four times, and a fifth has been derived
+but not yet observed. A constant or default is chosen in one setting and
+silently carried into settings it was never checked against:
 
 | constant | chosen for | broke in | found |
 |---|---|---|---|
 | junction threshold `m = 3` | 2-D vertices | 3-D and above (needs `m = d + 1`) | before 2026-10 |
 | texture floor `domain_scale ≥ 2.5` | 2-D domains | 4-D (rejected resolved fields) | before 2026-10 |
 | seed amplitude `[0, 0.1]` | (never checked) | everywhere: 40% of each field sits at `−1` | 2026-10-10 |
+| κ recovery default `r = 0.1` | (unrecorded) | 2-D recall and 3-D form persistence: starves the field | before 2026-10 |
+| time step `dt = 0.1` | 2-D | at risk in 4-D, unstable in 5-D (derived, not observed) | 2026-10-31 |
 
 **Before trusting a new result, ask of every constant it rests on: in what
-regime was this chosen, and does this run sit in it?** A full audit of the
-measurement and relaxation constants is the top open item.
+regime was this chosen, and does this run sit in it?** The audit of the
+multiphase field stack is `Docs/Constants_Audit.md` (2026-10-31). Read it
+before trusting a field result. Its main finding about the pattern: every fix so
+far was added as an opt-in, with the old default left in place, so fixed
+defects stay live for callers who don't opt in, and older docs still quote them.
 
 ## Standing facts a session must know
 
@@ -72,6 +77,13 @@ measurement and relaxation constants is the top open item.
   `0.01`. Use **volume-filling seeding** (`* 2/P`, mean `1/P`) for new work.
   The d+1 selection survives the fix and gets cleaner. Published *densities*
   should not be quoted. See `Docs/Junction_Selection.md`, "The seeding problem".
+  Six experiments use the defective seeding with conserved dynamics; the list
+  is in `Docs/Constants_Audit.md`.
+- **The 2-D junction threshold `m = 3` is still the default** in
+  `multiphase.full_palette_junction_density`, `count_triple_junctions` and
+  `selection.py`. In 3-D it reads edges, not vertices. `The_Principle.md` §6 and
+  `Narrowing_the_N3_Question.md` still say three wins in 3-D on that reading.
+  For any `d`, use `junction_scale.full_palette_density(min_valence=d+1)`.
 - **d+1 is geometric.** Random Voronoi selects it with no dynamics at all. What
   the relaxation contributes is genericity: degenerate junctions split.
   (`experiments/n3_junction_null.py`, `experiments/n3_junction_genericity.py`)
@@ -81,7 +93,7 @@ measurement and relaxation constants is the top open item.
 ## Setup and checks
 
 ```
-pip install -r requirements.txt     # numba is required; scipy is not used
+pip install -r requirements.txt     # numba is required; scipy is used by count_domains and a few experiments
 python -m unittest discover tests   # pytest is not installed
 ```
 
