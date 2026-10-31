@@ -76,6 +76,12 @@ def main() -> None:
     p.add_argument("--seed", type=int, default=7)
     p.add_argument("--output", default="artifacts/topological_selection.json")
     args = p.parse_args()
+    if args.dim != 2:
+        p.error("--dim 3 is disabled (2026-10-31). The 3-D arm used the 2-D junction test (distinct >= 3), "
+                "which in 3-D counts triple lines, so P = 3 wins by counting "
+                "alone. A 3-D run needs the point-junction test (d + 1), which "
+                "this script does not implement yet. See Docs/Constants_Audit.md.")
+
 
     size = args.size or (72 if args.dim == 2 else 36)
     phases = [int(x) for x in args.phases.split(",") if x.strip()]

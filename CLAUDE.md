@@ -49,6 +49,10 @@ result most likely to be read by outsiders, see `Docs/Junction_Selection.md`.
    how small.
 6. **Keep the record; keep the core current.** This is the lead's rule
    (2026-10-31), and the next section says how to apply it.
+7. **A default holds only where it was chosen.** Outside its home regime it
+   must refuse, not run silently, and the caller states the value. Fix a
+   defect by guarding the default, not only by adding an opt-in beside it.
+   Examples: `multiphase.junction_valence` and `multiphase.check_time_step`.
 
 ## Record and core documents
 
@@ -99,9 +103,11 @@ silently carried into settings it was never checked against:
 **Before trusting a new result, ask of every constant it rests on: in what
 regime was this chosen, and does this run sit in it?** The audit of the
 multiphase field stack is `Docs/Constants_Audit.md` (2026-10-31). Read it
-before trusting a field result. Its main finding about the pattern: every fix so
-far was added as an opt-in, with the old default left in place, so fixed
-defects stay live for callers who don't opt in, and older docs still quote them.
+before trusting a field result. Its main finding about the pattern: every fix
+had been added as an opt-in, with the old default left in place, so fixed
+defects stayed live for callers who didn't opt in, and older docs still quoted
+them. Principle 7 is the structural fix; the guard found three more instances on
+its first run.
 
 ## Standing facts a session must know
 
@@ -113,12 +119,12 @@ defects stay live for callers who don't opt in, and older docs still quote them.
   should not be quoted. See `Docs/Junction_Selection.md`, "The seeding problem".
   Six experiments use the defective seeding with conserved dynamics; the list
   is in `Docs/Constants_Audit.md`.
-- **The 2-D junction threshold `m = 3` is still the default** in
-  `multiphase.full_palette_junction_density`, `count_triple_junctions` and
-  `selection.py`. In 3-D it reads edges, not vertices, so `P = 3` wins there by
-  counting alone. The core docs were corrected on 2026-10-31; the record still
-  shows the old reading, with dated notes. For any `d`, use
-  `junction_scale.full_palette_density(min_valence=d+1)`.
+- **The 2-D junction test `m = 3` now refuses outside 2-D** (2026-10-31), as
+  do the `2.5` texture floor and any unstable `dt`. In 3-D, `m = 3` reads
+  edges, not vertices, so `P = 3` wins there by counting alone. Pass
+  `min_valence=d+1` for point junctions, or `3` only when you mean triple lines.
+  The core docs were corrected; the record keeps the old reading, with dated
+  notes.
 - **d+1 is geometric.** Random Voronoi selects it with no dynamics at all. What
   the relaxation contributes is genericity: degenerate junctions split.
   (`experiments/n3_junction_null.py`, `experiments/n3_junction_genericity.py`)

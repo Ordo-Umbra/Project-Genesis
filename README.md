@@ -230,6 +230,11 @@ getting something wrong first:
   blind to and see whether it notices. Applied to the formal half it found two
   of six walls mislabelled; applied to the field half it found a texture guard
   that reads `3.0` on structure and `3.0` on pure noise.
+- **A default holds only where it was chosen.** The same failure was found four
+  times, with a fifth derived: a constant chosen in one setting carried silently
+  into 3-D, 4-D or a different setup. Fixes had been added as opt-ins with the old default left in place.
+  Now the 2-D defaults refuse to run anywhere else unless the caller states the
+  value, and the first run of that guard found three more instances.
 
 Corrections are kept in place rather than tidied away. A programme that never
 records having been wrong gives you no way to check the parts that are right.

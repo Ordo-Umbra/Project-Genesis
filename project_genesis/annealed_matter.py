@@ -43,6 +43,8 @@ import math
 
 import numpy as np
 
+from project_genesis.multiphase import junction_valence
+
 try:
     from project_genesis import gauge_mc_kernels as _nbk
     _HAVE_NUMBA = True
@@ -73,6 +75,7 @@ def thermal_junction_analysis(
     margin: float = 0.25,
     smooth_radius: int = 1,
     hood_radius: int = 2,
+    min_valence: int | None = None,
 ) -> dict:
     """Noise-robust junction observables for a *thermal* amplitude field.
 
@@ -96,6 +99,10 @@ def thermal_junction_analysis(
     zero (see ``tests/test_annealed_matter.py``).  The absolute scale
     differs from the deterministic measure — use it self-relatively (e.g.
     melting curves) or comparatively across palettes.
+
+    ``min_valence`` (added 2026-10-31): the junction test's valence. The
+    default ``3`` applies only in 2-D; any other dimension raises unless it is
+    given (see ``multiphase.junction_valence``).
 
     Returns a dict with ``neutrality`` (full-palette junction density),
     ``junctions`` (boolean mask), ``ordered_fraction``, and ``labels``
@@ -139,7 +146,7 @@ def thermal_junction_analysis(
 
     distinct = popcount(bits)
     full = (1 << n_palette) - 1
-    junctions = (bits == full) & (distinct >= 3)
+    junctions = (bits == full) & (distinct >= junction_valence(ndim, min_valence))
     neutrality = float(np.mean(junctions))
     return {
         "neutrality": neutrality,

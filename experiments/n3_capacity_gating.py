@@ -161,6 +161,12 @@ def main() -> int:
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--output-dir", type=Path, default=None)
     args = p.parse_args()
+    if args.ndim != 2:
+        p.error("--ndim other than 2 is disabled (2026-10-31). The 3-D arm used the 2-D junction test (distinct >= 3), "
+                "which in 3-D counts triple lines, so P = 3 wins by counting "
+                "alone. A 3-D run needs the point-junction test (d + 1), which "
+                "this script does not implement yet. See Docs/Constants_Audit.md.")
+
 
     print(BANNER)
     print("CAPACITY GATING — does scarcity choose the palette, or does geometry?")

@@ -19,7 +19,8 @@ or broken; most have not been tested at all.
 
 | status | meaning | count |
 |---|---|---|
-| **live** | known to be wrong, still in use where it is wrong | 3 |
+| **live** | known to be wrong, still in use where it is wrong | 1 |
+| **fixed** | was live; now refuses outside its home regime (2026-10-31) | 2 |
 | **broken** | shown wrong outside its home regime (on record) | 3 |
 | **at risk** | a derived reason to expect trouble; not measured | 2 |
 | **checked** | tested outside its home regime, and held | 4 |
@@ -47,7 +48,8 @@ contradicts §3 of the same document. The 2-D readings are unaffected.
 record keeps the old reading, with dated notes: the `Experiment_Log.md` entry,
 `Narrowing_the_N3_Question.md`, the `n3_selection_sweep` docstring, and the
 docstring of the 3-D test in `test_topological_selection.py`. The code default
-is still `3`, so M1 stays **live**. No test pins the 3-D vertex reading.
+was then guarded too (M1, "The structural fix"), and the 3-D vertex reading is
+now pinned by a test.
 
 **2. The seeding defect reaches six experiments, not one.** All six pair
 `rand × 0.1` seeding with volume-conserving dynamics:
@@ -120,6 +122,34 @@ is that a fixed defect stays live for every caller that doesn't opt in, and
 older documents are never re-read against the fix. Nothing in the workflow
 sends a fix back to the claims made before it. That is the systemic part.
 
+### The structural fix (2026-10-31)
+
+A default now holds only in the regime it was chosen for. Outside it, the code
+refuses and asks the caller to state the value. In 2-D every default behaves
+exactly as before, so the published numbers are unchanged.
+
+| guard | what it refuses |
+|---|---|
+| `multiphase.junction_valence` | the `distinct >= 3` default outside 2-D: in `full_palette_junction_density`, `junction_scale.full_palette_density`, `topological_s_functional`, `resolved_palette_junction_density`, `selection.py` and `annealed_matter.thermal_junction_analysis` |
+| `resolved_palette_junction_density` | the `2.5` floor outside 2-D |
+| `multiphase.check_time_step` | any `dt` at which the grid-scale factor reaches `−1`, in all four step functions (so `d = 5` at `dt = 0.1` is refused) |
+
+Callers that knowingly read triple lines in 3-D now say so: `n3_junction_scale`'s
+published rows, `n3_annealed_matter`, `n3_thermal_selection`, and four tests.
+The three scripts whose 3-D arms reported "`P = 3` wins" (`n3_selection_sweep`,
+`topological_selection`, `n3_capacity_gating`) now refuse a 3-D run, with a
+message saying why.
+
+**The guard found three more instances on its first run.** Several texture-guard
+tests ran the 2-D floor and the 2-D junction test on **3-D** noise.
+`n3_thermal_selection` built 3-D networks with the 2-D test, and so did one
+phase-boundary test. None of these was in the list above. All of them pinned
+real mechanics, so they were kept, with the 2-D values now written out.
+
+Left alone on purpose: `count_triple_junctions` and `survival.py`'s
+`junction` predictor. Both say "three or more" in their names, so they make no
+claim about vertices.
+
 ---
 
 ## The full table
@@ -132,7 +162,7 @@ Line numbers are for the commit this audit was written against.
 |---|---|---|---|
 | R1 | coupling `γ = 1.5` (`multiphase.py:44`, `:94`; `wetting.py`) | 2-D three-colour toy → every `d`, every `P` | **unchecked** |
 | R2 | diffusion `D = 1` | 2-D → every `d` | **unchecked** |
-| R3 | time step `dt = 0.1` | 2-D → 1-D to 4-D | **at risk** (`d ≥ 4`) |
+| R3 | time step `dt = 0.1` | 2-D → 1-D to 4-D | **at risk** (`d = 4`); unstable settings now refused |
 | R4 | wells at `±1` for each component | the potential's form | **derived** |
 | R5 | conservation by subtracting the mean drift | 2-D → every `d` | **unchecked** |
 | R6 | κ recovery `r = 0.1` (`multiphase.py:97`, `:156`) | unrecorded → 2-D, 3-D | **broken** |
@@ -195,14 +225,16 @@ Line numbers are for the commit this audit was written against.
 
 | # | constant | home → also used in | status |
 |---|---|---|---|
-| M1 | junction valence `m = 3` (`multiphase.py:371`, `:394`; `junction_scale.py:111`, `:128`) | 2-D → 3-D | **live** |
+| M1 | junction valence `m = 3` (`multiphase.py:371`, `:394`; `junction_scale.py:111`, `:128`) | 2-D → 3-D | **fixed** (2026-10-31) |
 | M2 | neighbourhood radius 1 (`3^d` ring) | 2-D → 3-D, 4-D | **checked** (2-D, 3-D) |
 | M3 | von Neumann window (`2d + 1` cells) in `dimensional_forms.local_dimension` | 2-D → 3-D | **unchecked** |
 | M4 | labelling by `argmax` | everywhere | **broken** (under S1) |
 | M5 | wall margin `0.15` (`multiphase.py:340`) | 2-D → five experiments | **at risk** |
 
-- **M1.** Correct only in `junction_scale.full_palette_density(min_valence=d+1)`.
-  It is still `3` in `full_palette_junction_density`, `count_triple_junctions`,
+- **M1.** *Fixed 2026-10-31: the default now refuses outside 2-D (see "The
+  structural fix"). The 3-D vertex reading is pinned by
+  `TestThreeDimensionalVertexReading`.* Before the fix: correct only in
+  `junction_scale.full_palette_density(min_valence=d+1)`. It was still `3` in `full_palette_junction_density`, `count_triple_junctions`,
   `topological_s_functional`, `resolved_palette_junction_density`,
   `valence_profile`'s `junction_fraction`, and so in `selection.py`. Those are
   reached in 3-D by `n3_selection_sweep --ndim 3`,
@@ -224,13 +256,16 @@ Line numbers are for the commit this audit was written against.
 
 | # | constant | home → also used in | status |
 |---|---|---|---|
-| G1 | raw `domain_scale ≥ 2.5` (`multiphase.py:490`) | 2-D → 3-D, 4-D | **live** |
+| G1 | raw `domain_scale ≥ 2.5` (`multiphase.py:490`) | 2-D → 3-D, 4-D | **fixed** (2026-10-31) |
 | G2 | `domain_diameter` | derived for compact domains, any `d` | **checked** |
 | G3 | diameter `≥ 3` cells (form persistence) | from the `3^d` probe | **derived** |
 | G4 | majority filter, one pass | 2-D | **known limit** |
 | G5 | `n_phases` as a texture guard | 3-D form persistence | **broken**, replaced |
 
-- **G1.** Still the default in `resolved_palette_junction_density`. Still used
+- **G1.** *Fixed 2026-10-31: `resolved_palette_junction_density` refuses the
+  default outside 2-D.* The literal `2.5` comparisons in the two scripts below
+  remain, and only run in 2-D or (in `n3_junction_scale`) as a printed flag.
+  Before the fix: still the default in `resolved_palette_junction_density`. Still used
   raw in `n3_junction_scale.py:209–211` (2-D/3-D arms) and
   `n3_selection_sweep.py:116`. In 3-D the raw scale falls at a fixed domain
   width, so this floor is *stricter* there than intended. It errs toward
@@ -281,18 +316,15 @@ sweeps above touch only some of them. This audit also doesn't re-check the
 numerical results of the experiments it lists. It says which constants they
 rest on.
 
-## What could be done with this (not done here)
+## What could be done with this
 
 1. ~~**Correct the stale 3-D text.**~~ Done 2026-10-31 (see finding 1).
-2. **Make 2-D-only measures refuse other dimensions.** For example, raise
-   if `full_palette_junction_density` is called with `labels.ndim != 2` and no
-   explicit valence, and check `dt·(4d + 2) < 2` in the step functions. That
-   fixes the pattern rather than the instances, and the published 2-D case stays
-   pinned.
+2. ~~**Make 2-D-only measures refuse other dimensions.**~~ Done 2026-10-31
+   (see "The structural fix").
 3. **Re-run the six seeded experiments** with `× 2/P`, one at a time, quick mode
    first.
 4. **Sweep `γ` and the step count** for the junction ranking in 2-D and 3-D.
    These are the two relaxation constants the headline result rests on that
    nobody has moved.
-5. **Pin the 3-D vertex reading with a test.** Only the 3-D *edge* reading is
-   pinned now (`test_topological_selection.py`).
+5. ~~**Pin the 3-D vertex reading with a test.**~~ Done 2026-10-31
+   (`TestThreeDimensionalVertexReading` in `test_junction_scale.py`).

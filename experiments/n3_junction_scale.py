@@ -114,8 +114,12 @@ def sweep(palettes, radii, *, size, ndim, steps, gamma, dt, seed, trials,
                           seed + 100 * P + t, diffusion)
                   for t in range(trials)]
         for r in radii:
+            # min_valence=3 is the published test, as Q1-Q3 registered it. Since
+            # 2026-10-31 the library refuses to default it outside 2-D, so the
+            # 3-D arm states it explicitly; in 3-D it reads triple lines.
             out[(P, r)] = float(np.mean(
-                [full_palette_density(lab, P, r) for lab in labels]))
+                [full_palette_density(lab, P, r, min_valence=3)
+                 for lab in labels]))
         out[("valence", P)] = {r: valence_profile(labels[0], r) for r in radii}
         # the texture guard: a junction count on a field that never tessellated
         # is counting lattice noise. This caught an artefact once already.
@@ -326,7 +330,7 @@ def main() -> int:
     print(f"  {'condition':<34}" + "".join(f"{'P=' + str(P):>10}"
                                            for P in args.palettes)
           + f"{'argmax':>8}")
-    for mv, label in ((None, "distinct >= 3   (published)"),
+    for mv, label in ((3, "distinct >= 3   (published)"),
                       (4, "distinct >= 4   (d+1, a vertex)")):
         dens = {P: float(np.mean([full_palette_density(lab, P, 1, mv)
                                   for lab in three[("labels", P)]]))

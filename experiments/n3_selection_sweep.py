@@ -374,6 +374,12 @@ def main():
     p.add_argument("--no-figure", action="store_true")
     p.add_argument("--quick", action="store_true")
     args = p.parse_args()
+    if args.ndim != 2:
+        p.error("--ndim 3 is disabled (2026-10-31). The 3-D arm used the 2-D junction test (distinct >= 3), "
+                "which in 3-D counts triple lines, so P = 3 wins by counting "
+                "alone. A 3-D run needs the point-junction test (d + 1), which "
+                "this script does not implement yet. See Docs/Constants_Audit.md.")
+
     if args.ndim == 3 and args.size > 44:
         args.size = 40          # 3-D lattices are expensive
         args.steps = min(args.steps, 400)

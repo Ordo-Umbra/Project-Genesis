@@ -415,7 +415,11 @@ The `d = 4` arm is opt-in because a 4-D box big enough to hold a tiling is
 expensive; the default run stays affordable.
 
 Prints its pre-registered predictions and every verdict, including the one that
-failed. The measurement lives in `project_genesis/junction_scale.py`; the
+failed. The 3-D result itself is pinned in `tests/test_junction_scale.py`
+(`TestThreeDimensionalVertexReading`): on the same small relaxed fields, the
+vertex test picks `P = 4` and the edge test picks `P = 3`. Since 2026-10-31
+the junction test refuses to default outside 2-D, so every 3-D or 4-D reading
+states its valence. The measurement lives in `project_genesis/junction_scale.py`; the
 `radius = 1`, `min_valence = None` case is pinned bit-identical to the original
 published measure in `tests/test_junction_scale.py`, so widening the probe is
 demonstrably widening *that* measure and not some other one.

@@ -139,13 +139,15 @@ class TestSelectsThreeIn3D(unittest.TestCase):
     def test_neutrality_peaks_at_three(self) -> None:
         neut = {}
         for P in (2, 3, 4, 5):
-            neut[P] = full_palette_junction_density(sector_labels(self._evolve3d(P)), P)
+            neut[P] = full_palette_junction_density(
+                sector_labels(self._evolve3d(P)), P, min_valence=3)
         self.assertGreater(neut[3], neut[2])
         self.assertGreater(neut[3], neut[4])
         self.assertGreater(neut[3], neut[5])
 
     def test_topological_s_optimum_at_three(self) -> None:
-        s = {P: topological_s_functional(self._evolve3d(P), weight=0.2)["s_increment"]
+        s = {P: topological_s_functional(self._evolve3d(P), weight=0.2,
+                                         min_valence=3)["s_increment"]
              for P in (2, 3, 4, 5)}
         self.assertEqual(max(s, key=lambda pp: s[pp]), 3)
 

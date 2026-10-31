@@ -43,7 +43,7 @@ from itertools import product
 
 import numpy as np
 
-from .multiphase import _popcount
+from .multiphase import _popcount, junction_valence
 
 __all__ = [
     "neighbourhood_offsets",
@@ -103,12 +103,13 @@ def full_palette_density(labels: np.ndarray, n_palette: int,
     ``d + 1`` sectors.  Left at ``3`` in 3-D the measure therefore asks whether
     an **edge** carries the whole palette — which a 3-palette does trivially —
     and cannot express the ``d + 1`` claim it is used to support.  ``None``
-    keeps the published behaviour so nothing silently changes underneath the
-    existing results.
+    keeps the published behaviour in 2-D. Since 2026-10-31 it raises in any
+    other dimension, so the 2-D number can no longer be applied there silently
+    (:func:`~project_genesis.multiphase.junction_valence`).
     """
     bits = neighbourhood_label_bits(labels, radius)
     full = (1 << int(n_palette)) - 1
-    m = 3 if min_valence is None else int(min_valence)
+    m = junction_valence(labels.ndim, min_valence)
     return float(np.mean((bits == full) & (_popcount(bits) >= m)))
 
 
@@ -120,12 +121,17 @@ def valence_profile(labels: np.ndarray, radius: int = 1) -> dict:
     a rising mean valence. If the mean valence barely moves and the selection
     still degrades, something else is going on and the vertex-scale story is
     wrong.
+
+    ``junction_fraction`` counts cells seeing three or more sectors, which in
+    3-D includes triple lines. ``vertex_fraction`` (added 2026-10-31) counts
+    cells seeing ``d + 1`` or more, the point-junction tier in any dimension.
     """
     d = _popcount(neighbourhood_label_bits(labels, radius))
     counts = np.bincount(d.ravel())
     return {"mean": float(d.mean()),
             "max": int(d.max()),
             "junction_fraction": float(np.mean(d >= 3)),
+            "vertex_fraction": float(np.mean(d >= labels.ndim + 1)),
             "histogram": counts.tolist()}
 
 

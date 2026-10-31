@@ -269,3 +269,50 @@ gauge sector" rests on `n3_thermal_selection`, which uses the defective seeding.
 
 **Next, and why:** the structural fix (audit option 2) is still the one that
 addresses the pattern. Ask the lead.
+
+### Addendum 3, same day: the structural fix: defaults refuse outside their regime
+
+**Asked:** fix more of the open issues. The lead also wants to explore the
+pattern conceptually at some point. That is noted here for a future session
+and was not started.
+
+**Done:**
+- **Principle 7** in `CLAUDE.md`: a default holds only where it was chosen;
+  outside its home regime it refuses, and the caller states the value.
+- `multiphase.junction_valence`: the `distinct >= 3` default refuses outside
+  2-D. It is wired into `full_palette_junction_density`,
+  `junction_scale.full_palette_density`, `topological_s_functional`,
+  `resolved_palette_junction_density`, `selection.py` and
+  `annealed_matter.thermal_junction_analysis`.
+- `resolved_palette_junction_density`: the `2.5` floor refuses outside 2-D.
+- `multiphase.check_time_step`: refuses a `dt` at which the grid-scale factor
+  reaches `−1`. It is in all four step functions, including the pairwise
+  (wetting) one. The stiffness bound `max(2, 2γ − 1)` was derived and checked.
+- `valence_profile` gains `vertex_fraction` (the `d + 1` tier).
+- Callers made explicit: `n3_junction_scale` (published rows, `min_valence=3`;
+  its JSON key `3-D_minvalence_None` is now `3-D_minvalence_3`, and nothing
+  read it), `n3_annealed_matter`, `n3_thermal_selection`, and tests.
+  `n3_selection_sweep --ndim 3`, `topological_selection --dim 3` and
+  `n3_capacity_gating --ndim ≠ 2` now refuse with an explanation.
+- **New tests:** the defaults refuse outside 2-D and are unchanged in 2-D; the
+  `dt` factor matches the real update; `d = 5` is refused; the pairwise step is
+  checked; and `TestThreeDimensionalVertexReading` (16³, 600 steps,
+  volume-filling, 2 seeds pooled; robust on seeds 0–4 before writing). On the
+  same fields the vertex test picks P = 4 and the edge test picks P = 3.
+- Core docs: audit statuses (M1 and G1 → fixed; options 2 and 5 done), plus
+  notes in the README (a new habit), `Junction_Selection` and `Usage`.
+
+**Found:** the guard found three more instances on its first run. Texture-guard
+tests ran the 2-D floor and the 2-D junction test on **3-D** noise;
+`n3_thermal_selection` built 3-D networks with the 2-D test; and so did one
+phase-boundary test. All were kept, with the values written out.
+`n3_junction_scale --quick` still runs end to end, with the same verdict shape
+(1/3).
+
+**Open:** S1 (seeding) is the one remaining *live* row. Also open: re-running
+the six seeded experiments, the 1-D/4-D clean re-runs, the `γ` and step-count
+sweeps, the `Usage` gap (31 scripts), the κ recovery default, and the 4-D
+ringing (`dt` is stable there, but only at `−0.8`).
+
+**Next, and why:** the seeded experiments (audit option 3). S1 is the last live
+defect, and the summary row on the thermal gauge sector rests on one of them.

@@ -71,10 +71,14 @@ class Test3DNetworkPath(unittest.TestCase):
                 P, size=16, steps=400, gamma=1.5, diffusion=1.0, dt=0.1,
                 seed=7, beta=0.09, dim=3)
             self.assertEqual(nets[P]["psi"].shape, (16, 16, 16, P))
+        # Valence 3 stated explicitly (2026-10-31): this pins the junction-LINE
+        # reading in 3-D, where P = 3 dominates by counting (lines outnumber
+        # points). It is not a point-junction selection; see
+        # Docs/Constants_Audit.md.
         tj3 = thermal_junction_analysis(
-            sector_amplitudes(nets[3]["psi"].astype(complex)), 3)
+            sector_amplitudes(nets[3]["psi"].astype(complex)), 3, min_valence=3)
         tj4 = thermal_junction_analysis(
-            sector_amplitudes(nets[4]["psi"].astype(complex)), 4)
+            sector_amplitudes(nets[4]["psi"].astype(complex)), 4, min_valence=3)
         self.assertGreater(tj3["neutrality"], 0.1,
                            "3-D triple lines should give a dense signal")
         self.assertLess(tj4["neutrality"], tj3["neutrality"] / 3.0,
@@ -85,7 +89,7 @@ class Test3DNetworkPath(unittest.TestCase):
         rng = np.random.default_rng(0)
         noise = sector_amplitudes(random_psi(rng, 3, (16, 16, 16)))
         self.assertLess(
-            thermal_junction_analysis(noise, 3)["neutrality"], 1e-3)
+            thermal_junction_analysis(noise, 3, min_valence=3)["neutrality"], 1e-3)
 
 
 if __name__ == "__main__":

@@ -60,9 +60,14 @@ class TestRadiusOneIsThePublishedProbe(unittest.TestCase):
         for ndim in (2, 3):
             for p in (2, 3, 4, 5, 6):
                 lab = rng.integers(0, p, (12,) * ndim)
-                self.assertAlmostEqual(full_palette_density(lab, p, 1),
-                                       full_palette_junction_density(lab, p),
-                                       places=15, msg=f"{ndim}D P={p}")
+                # explicit 3: outside 2-D the default refuses (2026-10-31)
+                self.assertAlmostEqual(
+                    full_palette_density(lab, p, 1, min_valence=3),
+                    full_palette_junction_density(lab, p, min_valence=3),
+                    places=15, msg=f"{ndim}D P={p}")
+                if ndim == 2:
+                    self.assertEqual(full_palette_density(lab, p, 1),
+                                     full_palette_junction_density(lab, p))
 
 
 class TestNeighbourhoodGrowth(unittest.TestCase):
@@ -313,6 +318,150 @@ class TestSeedScaleDefaultIsPublished(unittest.TestCase):
         a = relaxed(4, 12, 2, 15, 1.5, 0.1, seed=9)
         b = relaxed(4, 12, 2, 15, 1.5, 0.1, seed=9, seed_scale=0.1)
         np.testing.assert_array_equal(a, b)
+
+
+class TestTwoDimensionalDefaultsRefuseElsewhere(unittest.TestCase):
+    """The structural fix of 2026-10-31 (`Docs/Constants_Audit.md`).
+
+    Each fix before it was an opt-in that left the old default in place, so a
+    fixed defect stayed live for every caller that didn't opt in. Now the 2-D
+    defaults apply only in 2-D, where they reproduce the published numbers
+    exactly, and anywhere else the caller has to state what they mean.
+    """
+
+    def setUp(self):
+        rng = np.random.default_rng(3)
+        self.lab2 = rng.integers(0, 4, (14, 14))
+        self.lab3 = rng.integers(0, 4, (8, 8, 8))
+        self.lab1 = rng.integers(0, 3, (40,))
+
+    def test_the_junction_default_is_unchanged_in_2d(self):
+        from project_genesis.multiphase import junction_valence
+        self.assertEqual(junction_valence(2), 3)
+        self.assertEqual(full_palette_density(self.lab2, 4),
+                         full_palette_density(self.lab2, 4, min_valence=3))
+
+    def test_the_junction_default_refuses_outside_2d(self):
+        for lab in (self.lab1, self.lab3):
+            with self.assertRaises(ValueError):
+                full_palette_density(lab, 3)
+            with self.assertRaises(ValueError):
+                full_palette_junction_density(lab, 3)
+
+    def test_an_explicit_valence_is_accepted_anywhere(self):
+        full_palette_density(self.lab3, 4, min_valence=4)
+        full_palette_junction_density(self.lab3, 4, min_valence=3)
+        full_palette_density(self.lab1, 2, min_valence=2)
+
+    def test_the_texture_floor_refuses_outside_2d(self):
+        from project_genesis.multiphase import resolved_palette_junction_density
+        out = resolved_palette_junction_density(self.lab2, 4)
+        self.assertIn("resolved", out)
+        with self.assertRaises(ValueError):
+            resolved_palette_junction_density(self.lab3, 4, min_valence=4)
+        out3 = resolved_palette_junction_density(self.lab3, 4, min_valence=4,
+                                                 min_scale=2.5)
+        self.assertIn("resolved", out3)
+
+    def test_vertex_fraction_is_the_d_plus_one_tier(self):
+        prof = valence_profile(self.lab3, 1)
+        d = _popcount_bits(self.lab3)
+        self.assertAlmostEqual(prof["vertex_fraction"], float(np.mean(d >= 4)))
+        self.assertAlmostEqual(valence_profile(self.lab2, 1)["vertex_fraction"],
+                               valence_profile(self.lab2, 1)["junction_fraction"])
+
+
+def _popcount_bits(labels):
+    from project_genesis.multiphase import _popcount
+    return _popcount(neighbourhood_label_bits(labels, 1))
+
+
+class TestTimeStepCheck(unittest.TestCase):
+    """``dt = 0.1`` is stable to 4-D and unstable in 5-D (`Constants_Audit`, R3)."""
+
+    def test_the_factor_matches_the_real_update(self):
+        from project_genesis.multiphase import step_multiphase_conserved
+        eps = 1e-6
+        for d in (2, 3, 4):
+            f = np.zeros((3,) + (4,) * d)
+            f[0] = 1.0
+            cb = (-1.0) ** np.indices((4,) * d).sum(0)
+            g = f.copy()
+            g[0] += eps * cb
+            out, _ = step_multiphase_conserved(g, None)
+            base, _ = step_multiphase_conserved(f, None)
+            factor = float(((out[0] - base[0]) * cb).mean() / eps)
+            self.assertAlmostEqual(factor, 1 - 0.1 * (4 * d + 2), places=6)
+
+    def test_published_settings_pass_up_to_4d(self):
+        from project_genesis.multiphase import check_time_step
+        for d in (1, 2, 3, 4):
+            check_time_step(0.1, d, 1.0, 2.0)
+
+    def test_5d_is_refused(self):
+        from project_genesis.multiphase import (
+            check_time_step, step_multiphase, step_multiphase_conserved)
+        with self.assertRaises(ValueError):
+            check_time_step(0.1, 5, 1.0, 2.0)
+        f = np.zeros((2,) + (3,) * 5)
+        with self.assertRaises(ValueError):
+            step_multiphase_conserved(f, None)
+        with self.assertRaises(ValueError):
+            step_multiphase(f)
+
+    def test_the_pairwise_step_is_checked_too(self):
+        from project_genesis.wetting import coupling_matrix, step_multiphase_pairwise
+        f = np.zeros((2, 8, 8))
+        step_multiphase_pairwise(f, coupling_matrix(2, 1.5))
+        with self.assertRaises(ValueError):
+            step_multiphase_pairwise(f, coupling_matrix(2, 1.5), dt=0.25)
+
+
+class TestThreeDimensionalVertexReading(unittest.TestCase):
+    """Pins the 3-D result itself: the same fields select P = 3 at the edge
+    test and P = 4 at the vertex test.
+
+    Relaxed 3-D fields, 16^3, 600 steps, volume-filling seeding, two seeds
+    pooled. Checked before writing this on seeds 0-4: the vertex test picks
+    P = 4 in all five with every rival exactly zero, and the edge test picks
+    P = 3 in all five. Domain widths are 7-10 cells, so the fields are tiled.
+
+    The P = 3 zero at the vertex test is forced by counting: three colours
+    cannot fill a four-fold vertex. The informative comparison is P = 4
+    against P = 5 and 6. The box is small (about two domains per axis), so
+    this pins the ranking, not any density.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        sys.path.insert(0, os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "experiments"))
+        from n3_junction_scale import relaxed
+        cls.fields = {P: [relaxed(P, 16, 3, 600, 1.5, 0.1, seed=s,
+                                  seed_scale=2.0 / P) for s in (0, 1)]
+                      for P in (3, 4, 5, 6)}
+
+    def _pooled(self, m):
+        return {P: float(np.mean([full_palette_density(lab, P, 1, min_valence=m)
+                                  for lab in labs]))
+                for P, labs in self.fields.items()}
+
+    def test_the_fields_are_tiled(self):
+        for P, labs in self.fields.items():
+            for lab in labs:
+                self.assertGreater(domain_diameter(lab), 5.0, msg=f"P={P}")
+
+    def test_the_vertex_test_selects_four(self):
+        dens = self._pooled(4)
+        prof = selection_profile(dens)
+        self.assertEqual(prof["argmax"], 4, msg=str(dens))
+        self.assertGreater(dens[4], 0.0)
+        self.assertEqual(dens[3], 0.0)          # forced by counting
+
+    def test_the_edge_test_selects_three_on_the_same_fields(self):
+        dens = self._pooled(3)
+        self.assertEqual(selection_profile(dens)["argmax"], 3, msg=str(dens))
 
 
 if __name__ == "__main__":
