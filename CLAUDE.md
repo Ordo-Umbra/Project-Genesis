@@ -72,6 +72,7 @@ Where a claim changed, say so briefly and point to the record. Core documents:
 - `README.md`
 - `Docs/The_Principle.md`
 - `Docs/Junction_Selection.md`
+- `Docs/Wall_Wetting.md`
 - `Docs/Usage.md`
 - `Docs/Constants_Audit.md` (statuses update as fixes land; findings stay listed)
 - the summary table at the top of `Docs/Experiment_Log.md`

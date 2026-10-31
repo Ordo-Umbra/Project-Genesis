@@ -5,6 +5,11 @@ are generated from `n3_junction_scale.relaxed` — the exact relaxation the
 published measurements run — rather than drawn by hand or kept as loose PNGs
 whose provenance nobody can reconstruct.
 
+Since 2026-10-31 the fields use volume-filling seeding (``seed_scale = 2/P``).
+The published seeding leaves about 40% of each field at ``-1``, labelled by
+``argmax`` from residuals near zero, and the earlier figure showed those fields.
+See `Docs/Junction_Selection.md`, "The seeding problem".
+
 Light and dark variants are rendered separately, from the same categorical
 palette stepped for each surface. That is a selection, not an automatic flip:
 GitHub serves whichever matches the reader's theme via `<picture>`.
@@ -59,7 +64,8 @@ def render(mode: str, out: Path) -> None:
     series = LIGHT if mode == "light" else DARK
 
     for ax, P in zip(axes, PALETTES):
-        labels = relaxed(P, SIZE, 2, STEPS, 1.5, 0.1, SEED)
+        labels = relaxed(P, SIZE, 2, STEPS, 1.5, 0.1, SEED,
+                         seed_scale=2.0 / P)
         dens = full_palette_density(labels, P, 1)
         ax.imshow(labels, cmap=ListedColormap(series[:P]),
                   interpolation="nearest", vmin=0, vmax=P - 1)

@@ -32,6 +32,7 @@ it, runs them, and reports verdicts — including when the answer is no.
 | The full chronological record, ~100 experiments with verdicts | [`Docs/Experiment_Log.md`](Docs/Experiment_Log.md) |
 | The reflection-ladder results in plain language, no proof theory assumed | [`Docs/The_Reflection_Ladder.md`](Docs/The_Reflection_Ladder.md) |
 | To actually run the thing — CLI, agents, server, browser toys | [`Docs/Usage.md`](Docs/Usage.md) |
+| Which constants each field result rests on, and which were never checked | [`Docs/Constants_Audit.md`](Docs/Constants_Audit.md) |
 
 Every claim in `The_Principle.md` is tagged with its standing: **[measured]** —
 a pre-registered experiment with a verdict; **[framework]** — a coherent
@@ -44,17 +45,21 @@ explicitly refuses to claim.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="Docs/img/junctions-dark.png">
-  <img alt="Four relaxed multiphase sector fields at palette sizes 2, 3, 4 and 5. Only the three-sector field contains cells whose neighbourhood carries every sector at a vertex; these are circled. The others contain none." src="Docs/img/junctions-light.png">
+  <img alt="Four relaxed multiphase sector fields at palette sizes 2, 3, 4 and 5. Cells whose neighbourhood carries every sector at a vertex are circled. The three-sector field has 36 such cells. The four-sector field has one, where two ordinary triple junctions sit one cell apart. The two- and five-sector fields have none." src="Docs/img/junctions-light.png">
 </picture>
 
 Four relaxed sector fields. A circled cell is one whose immediate neighbourhood
 carries **every** sector at once, at a vertex rather than along a wall. Two
 sectors cannot form such a junction; four and five form plenty of junctions but
-essentially none that bind the whole palette. Three can, and does.
+essentially none that bind the whole palette. (The single circle at `P = 4` is
+two triple junctions one cell apart, which a `3×3` window cannot tell from a
+four-fold vertex.) Three can, and does.
 
 That picture is the shape of the central result, and it generalises: in `d`
 dimensions the palette that maximises full-palette junction density is **`d + 1`**
-— measured at `d = 1, 2, 3, 4`. ([the standalone note](Docs/Junction_Selection.md))
+— measured at `d = 1, 2, 3, 4`. A random tessellation with no dynamics at all
+makes the same selection, so it is geometry. What the relaxation adds is that
+degenerate junctions split. ([the standalone note](Docs/Junction_Selection.md))
 
 ---
 
@@ -74,11 +79,14 @@ same asymmetry can be stated without a lattice at all. They meet at exactly one
 |---|---|
 | Does a field select a palette size, and which? | **`d + 1`**, measured at `d = 1, 2, 3, 4` (`d = 4` weakly: 30–90 qualifying cells). Rivals are *identically zero* in 1-, 2- and 4-D. In 3-D one rival read `10×` behind on the published seeding; with seeding that fills the volume it is zero too |
 | Is that selection driven by capacity scarcity? | **No — refuted.** It is geometric: codimension counting, of which Plateau's trivalent vertex is the 2-D case. `P = 3` peaks at every capacity level *including no capacity field at all* |
+| Do the dynamics do the selecting? | **No.** A random Voronoi tessellation, with no energy and no dynamics, selects `d + 1` in `d = 2, 3, 4`. What relaxation adds is *genericity*: four-fold junctions split into triple ones (2-D and 3-D), and relaxed fields are no less generic than random ones at matched domain width. `d = 4` is untested: no matched baseline fits the box |
 | Does distinction outrun integration by a fixed amount? | **Yes, in 2-D.** Distinction is volume-law (`n = 1.99`), integration is surface-law (`n = 0.95`) — a gap of `1.04`, one dimension, and the worst motion under any convention swept is 38% of the experiment's own tolerance |
 | Does the capacity law transplant off the lattice? | **The eviction condition does** — to a Hopfield network and a Kuramoto oscillator population, three structurally unrelated substrates. Whether the crossing sits at a substrate-independent `κ` is **not settled** |
 | Is the optimum's *route* to criticality a substrate fact? | **No.** It moves when you change how ΔC is read. The *condition* survives; the route was measuring the dictionary |
 | Does scarcity evict an ordered optimum? | **Yes, ceiling-free**: exactly when the ordered point starts ahead and holding it costs capacity |
 | Does capacity hold structure together, or only ration it? | **It holds it — above a recovery threshold, and the default sat below one.** A noise-driven junction network self-repairs with system size only under κ-gating, and only where capacity regenerates fast enough (`r = 0.8`): `⟨κ⟩` and domain width both *rise* with the box. At the default rate the same dynamics starve the field before any structure forms |
+| Does a wall make room for a new distinction? | **Yes, narrowly, in 2-D.** A dormant third sector starts out concentrated on the walls between two others (`3.6–9.4×` at onset, for every coupling from `0.45` up). Three-sector junctions form only in a partial-wetting window, `g = 0.52–0.60`, which was located after the first run. The third sector was in the equations from the start, and `g` is a dial set by hand. 2 of 4 predictions failed ([wetting](Docs/Wall_Wetting.md)) |
+| Was the published seeding sound? | **No.** It gave each sector too little volume to tile space, so about 40% of every conserved field sat at `−1` and was labelled from noise. The `d + 1` ranking survives the fix and gets cleaner, but published densities should not be quoted. Six experiments used it ([audit](Docs/Constants_Audit.md)) |
 | Have the robustness claims themselves been checked? | **Yes, and `2/3` of the re-scoring predictions failed.** One claim — §2's gap — turned out *unevidenced by all three sweeps cited for it*; the others were genuinely tested and held |
 
 That last row is the honest headline. A claim can pass a robustness bar because
@@ -141,6 +149,7 @@ one mechanism or a pun has not been tested. It is the next experiment.
 - A palette other than `d + 1` scoring higher on a resolved field, in any dimension.
 - A capacity sweep that moves the integrated fraction (run — it does not).
 - An integration measure that scales with volume rather than surface.
+- A relaxed field less generic than a random tessellation at matched width. The dynamics would then be stabilising degenerate junctions, and the zeros above `d + 1` would be partly luck.
 - A cost model that is flat in the reflected object and *still* selects against advance — the chain in `§8h` of the ladder document is a chain, so any link breaking breaks it.
 - An interior probe that separates a retracted foundation from an unaffordable step without the condition `§8k` attaches to it.
 
@@ -156,6 +165,9 @@ pip install -r requirements.txt
 # the central result, d = 1, 2, 3
 python experiments/n3_junction_scale.py
 python experiments/n3_junction_scale.py --with-4d   # adds d = 4 (~60 min)
+python experiments/n3_junction_null.py              # the same selection, no dynamics
+python experiments/n3_junction_genericity.py        # are relaxed junctions generic?
+python experiments/n3_wetting.py                    # a wall makes room for a third sector
 
 # the scaling dimension of the gap, and its convention audit
 python experiments/n3_area_law.py

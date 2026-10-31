@@ -283,5 +283,37 @@ class TestDimensionCorrectedTextureGuard(unittest.TestCase):
                         msg=str(sizes))
 
 
+class TestSeedScaleDefaultIsPublished(unittest.TestCase):
+    """``relaxed(seed_scale=...)`` was added for volume-filling seeding.
+
+    Its default must be the published seeding, ``rng.random(...) * 0.1``, bit
+    for bit, so that every published run is unchanged by the new argument.
+    """
+
+    @staticmethod
+    def _relaxed():
+        sys.path.insert(0, os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "experiments"))
+        from n3_junction_scale import relaxed
+        return relaxed
+
+    def test_default_reproduces_the_published_seeding_exactly(self):
+        from project_genesis.multiphase import step_multiphase_conserved
+        relaxed = self._relaxed()
+        got = relaxed(3, 16, 2, 20, 1.5, 0.1, seed=5)
+        f = np.random.default_rng(5).random((3, 16, 16)) * 0.1
+        for _ in range(20):
+            f, _ = step_multiphase_conserved(f, None, diffusion=1.0,
+                                             gamma=1.5, dt=0.1)
+        np.testing.assert_array_equal(got, np.argmax(f, axis=0))
+
+    def test_explicit_published_scale_matches_the_default(self):
+        relaxed = self._relaxed()
+        a = relaxed(4, 12, 2, 15, 1.5, 0.1, seed=9)
+        b = relaxed(4, 12, 2, 15, 1.5, 0.1, seed=9, seed_scale=0.1)
+        np.testing.assert_array_equal(a, b)
+
+
 if __name__ == "__main__":
     unittest.main()

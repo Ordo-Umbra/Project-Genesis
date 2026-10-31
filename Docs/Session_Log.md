@@ -228,3 +228,44 @@ carry the Voronoi null, the genericity result, the seeding problem or wetting.
 **Next, and why:** bring the core docs up to date with the 2026-10-10 results,
 under the new rule. Or do the structural fix (audit option 2). Ask the lead
 which.
+
+### Addendum 2, same day: core documents brought up to the 2026-10-10 results
+
+**Asked:** update the core documents with the 2026-10-10 results (the Voronoi
+null, genericity, the seeding problem, wetting), under the keep-record /
+update-core rule.
+
+**Done:**
+- `README.md`: three new rows in the field table (dynamics don't select;
+  seeding wasn't sound; a wall makes room), a new refuter (relaxed fields less
+  generic than random), a Start-here row for the audit, three quickstart lines,
+  and a new figure caption.
+- **Figure regenerated** with volume-filling seeding. The old one showed
+  published-seeding fields. `relaxed()` gained `seed_scale` (default `0.1`,
+  pinned bit-for-bit by two new tests in `test_junction_scale.py`), and
+  `tools/make_figures.py` passes `2/P`. The new `P = 4` panel has one circled
+  cell. It is two triple junctions one cell apart, not a four-fold vertex
+  (checked: no 2×2 block holds four colours). The caption says so. I did not
+  choose a different seed.
+- `The_Principle.md` §3: "Three is special *in the plane*", plus blocks for the
+  Voronoi null and genericity, the seeding correction (rankings stand,
+  densities don't) and wetting, with its limits. Three lines added to §8.
+- `Junction_Selection.md`: a "Where it stands" summary at the top, a note at
+  the published tables, and the `dt` barrier at `d = 5`.
+- `Usage.md`: entries for `junction_scale.py`, `wetting.py`, the four junction
+  and wetting experiments, and their tests.
+- `Experiment_Log.md`: three summary rows (core), and a dated backfill entry
+  (record) with the verdicts of the 2026-10-10 work, which had never been
+  logged there.
+- `CLAUDE.md`: `Wall_Wetting.md` added to the core list.
+
+**Found:** `Usage.md` doesn't mention 31 of the 151 experiment scripts. The
+2026-10-10 session wrote its results into two docs but not the experiment log,
+which is the "built, run, never recorded" gap the earlier backfill named.
+
+**Open:** the Usage gap (31 scripts); the code default `m = 3`; the 1-D and 4-D
+re-runs with clean seeding; and the summary row "N⋆=3 survives a fluctuating
+gauge sector" rests on `n3_thermal_selection`, which uses the defective seeding.
+
+**Next, and why:** the structural fix (audit option 2) is still the one that
+addresses the pattern. Ask the lead.

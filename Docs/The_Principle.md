@@ -178,8 +178,8 @@ now matches it.
 If integration is the scarce term, then **the structures that persist are the
 ones that can be integrated** — not the ones that are most articulate.
 
-**Three is special.** **[measured]** Only a three-fold junction can carry a
-complete palette at once. With two kinds you cannot form such a junction at all;
+**Three is special in the plane.** **[measured]** In two dimensions, only a
+three-fold junction can carry a complete palette at once. With two kinds you cannot form such a junction at all;
 with four or more you form *more* junctions but essentially none that bind
 everything. Three sectors is not a constant put in by hand.
 
@@ -297,6 +297,42 @@ dimensions — 2-D at `5.14` and 4-D at `2.38` hold domains of `19.5` and `15.7`
 lattice units. `domain_diameter` reports the width instead, and noise then reads
 `1.0` in every dimension. A measure written in one dimension will assume that
 dimension twice over before anyone notices.*
+
+**[measured — `d + 1` needs no dynamics]** A random Voronoi tessellation, with
+random seeds, random colours, no energy and no conservation, read with the same
+probe, selects `P = d + 1` in `d = 2, 3, 4` (margins `36×`, `18.5×`, `4.5×`). So
+the selection is geometry in the strongest sense available. The other side of
+that: the ranking in relaxed fields is not evidence about the dynamics.
+
+What the dynamics do contribute is *genericity*. A 2-D field seeded as a
+four-colour checkerboard, with every vertex four-fold, holds for about 600
+steps and then splits into triple junctions. A 3-D eight-colour checkerboard
+loses its eight-fold vertices and four-fold edges the same way. Read against
+Voronoi at matched domain width on two instruments, relaxed fields are no less
+generic than random ones in 2-D and 3-D. Voronoi vertices are generic by
+chance; relaxed vertices are generic because degenerate ones are unstable.
+`d = 4` is untested, because no matched baseline fits the box.
+
+**[measured — a correction to the numbers in this section]** The published
+fields were seeded too thinly. Noise on `[0, 0.1]` conserves each sector at
+mean `0.05`, too little to tile space, so about 40% of every relaxed field sat
+at `−1` and was labelled by `argmax` from residuals near zero. With seeding
+that fills the volume (mean `1/P`), the `−1` regions vanish and the selection
+gets cleaner: in 3-D the one live rival, `P = 5`, goes to zero. The rankings
+in this section stand. The densities do not describe a clean tessellation and
+should not be quoted. The 1-D and 4-D arms have not been re-run yet.
+
+**A wall makes room.** **[measured, 2-D]** Between two sectors sits a wall
+where neither is fully on. A third sector that the bulk holds dormant is least
+suppressed there, and that is where it starts. In a narrow window of its
+coupling to the other two, `g = 0.52–0.60`, it grows into the walls without
+sealing them, and three-sector junctions form where its layers end. Below the
+window it seals the walls completely; above it, it stays dormant. That window
+was located after the first run, and two of the four predictions failed. Two
+limits bound the result. The third sector was in the equations from the start,
+so this shows a wall making room for a latent distinction, not one appearing
+from nothing. And `g` is a dial set by hand, so nothing here says why a system
+would sit in the window. Full account in `Docs/Wall_Wetting.md`.
 
 **Binding is derived, not dialled.** **[measured]** "Adding the same distinction
 twice does not expand the structure" — no-cloning — priced against the capacity
@@ -789,6 +825,9 @@ python experiments/n3_selection_sweep.py       # §6, the selection argument
 python experiments/n3_capacity_separation.py   # §2, the cliff
 python experiments/n3_junction_scale.py        # §2/§3, at what scale is 3 special?
 python experiments/n3_junction_scale.py --with-4d   # adds d=4 (~60 min)
+python experiments/n3_junction_null.py         # §3, the same selection with no dynamics
+python experiments/n3_junction_genericity.py   # §3, are relaxed junctions generic?
+python experiments/n3_wetting.py               # §3, a wall makes room
 #   -> Docs/Junction_Selection.md is this result standing alone, framework-free
 python experiments/n3_capacity_gating.py       # §3, the correction (geometry, not scarcity)
 python experiments/n3_area_law.py              # §2, the scaling dimension

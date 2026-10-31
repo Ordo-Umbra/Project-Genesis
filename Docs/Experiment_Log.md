@@ -53,6 +53,9 @@ A running tally of what the instruments have actually measured — the verdicts,
 | Does noise sustain a living junction network against coarsening, and does the network repair itself as the box grows? | **Yes to both, but only under capacity gating above a recovery threshold** — conserved multiphase alone gives the noise window (P1 ✓ at noise 0.06, 1.50× the zero-noise baseline on domains 5.87 lattice units wide) but no self-repair: density falls 0.0613 → 0.0458 → 0.0321 across sizes 20/28/36 while the domain *width* rises 4.76 → 5.21 → 5.61, so the falling density is surface-to-volume geometry rather than decay. κ-gating at its **default** recovery rate scores **0/3 and produces texture at every noise including zero** (⟨κ⟩ ≈ 0.020 — capacity is consumed faster than it regenerates, so the field never coarsens at all). At `r = 0.8` it scores **3/3** and is the only arm that passes self-repair, by the predicted mechanism: ⟨κ⟩ = 0.407 → 0.436 → 0.435 rising with size, domain width 4.31 → 4.67 → 4.73 alongside it. Same `r = 0.8` as the recall rescue and the 3-D re-percolation | [Backfill](#backfill--two-field-experiments-that-were-built-run-and-never-recorded) |
 | Does a Chern–Simons-style term dynamically bind flux to charge? | **Not established — the run scores 0/3 and the primary metric fails its own control.** `argmax\|B\|` reads a flux–core separation of **43.84 on a 64² lattice** (max possible 45.25) for an *unperturbed* vortex whose `core_flux` is simultaneously −0.9998 quanta. The two diagnostics disagree completely on the baseline, so CS1–CS3 report the instrument, not the physics. The fermion arc's named boundary stands exactly where it stood | [Backfill](#backfill--two-field-experiments-that-were-built-run-and-never-recorded) |
 | The S-functional rewards an interior sector optimum | **Achieved in 2-D** — with volume-conserving dynamics (persistent junctions) and a *topological* neutrality term (full-palette junctions, non-collinear with ΔC), `S = ΔC + κ·neutrality` is maximized at **exactly three sectors**, robust across seeds/weights. Previously recorded as *achieved in 2-D and 3-D*, with three winning ~10× in 3-D. That 3-D reading used the 2-D junction test `distinct >= 3`, which in 3-D counts triple *lines* (edges), not vertices. At the vertex test the 3-D winner is four (`d + 1`); see [the junction scale](Junction_Selection.md) and `Constants_Audit.md` | [Topological selection](#topological-selection--an-interior-optimum-at-three) |
+| Does the `d + 1` selection need the dynamics? | **No — geometry alone selects it.** A random Voronoi tessellation with no dynamics selects `d + 1` in `d = 2, 3, 4` (3/3). What relaxation adds is genericity: degenerate junctions split, and relaxed fields are no less generic than Voronoi in 2-D and 3-D. The 3-D positive control failed on the first instrument, and a second was added after the run. `d = 4` untested | [2026-10-10 backfill](#backfill--the-2026-10-10-junction-work) |
+| Was the published seeding sound? | **No.** `rand × 0.1` with conserved dynamics leaves about 40% of each field at `−1`, labelled from noise. The rankings survive and get cleaner with volume-filling seeding; the published densities should not be quoted | [2026-10-10 backfill](#backfill--the-2026-10-10-junction-work) |
+| Does a wall make room for a new distinction? | **Yes, narrowly — 2/4.** A dormant third sector starts on the walls between two others; three-sector junctions form only for `g = 0.52–0.60`, a window located after the first run. W1 and W2 failed as specified | [2026-10-10 backfill](#backfill--the-2026-10-10-junction-work) |
 
 The honest through-line: the *machinery* of URP sectorisation is reproducible, the boundary-cost half of its free-energy argument is measured, and — after localizing why naive selection failed (ΔI vanishes at equilibrium; coherence magnitude is collinear with ΔC) — a junction-resolving dynamics plus a topological neutrality term reproduces an interior optimum at **three in both 2-D and 3-D**, echoing the gauge paper's §6. The count is no longer a free parameter; it falls out of the junction geometry.
 
@@ -2992,6 +2995,77 @@ not finished — and both of the defects above were sitting in plain sight in
 output nobody had written down.
 
 ---
+
+## Backfill — the 2026-10-10 junction work
+
+*Recorded 2026-10-31. The work was done and documented on 2026-10-10 in
+[`Junction_Selection.md`](Junction_Selection.md) and
+[`Wall_Wetting.md`](Wall_Wetting.md), but never entered here. This entry gives
+the verdicts; those documents give the tables.*
+
+### The Voronoi null: `d + 1` with no dynamics — 3/3
+
+`experiments/n3_junction_null.py`. Random Voronoi tessellations, with random
+colours, no energy and no conservation, read with the same probe at
+`m = d + 1`.
+
+- **N1 holds** in `d = 2, 3, 4`: argmax is `P = d + 1`, with margins `36×`,
+  `18.5×` and `4.5×`. The non-zero `P = d + 2` readings are a lattice artefact,
+  where a `3^d` window straddles two nearby vertices.
+- **N2 holds**: point junctions exist for every `P ≥ d + 1`, and their density
+  *rises* with `P`. What `d + 1` selects is whether a generic vertex carries the
+  whole palette, not whether vertices exist.
+- **N3 holds**: a 2-D four-colour checkerboard (every vertex four-fold) holds
+  for about 600 steps of the published dynamics, then splits into triple
+  junctions. The four-fold density falls to zero by step 1,500.
+
+### Genericity: are relaxed junctions generic? — held, after a failed control
+
+`experiments/n3_junction_genericity.py`. Relaxed fields read against Voronoi at
+matched domain width.
+
+- **G1 holds** in 2-D and 3-D: relaxed `excess` (over-valent points) is within
+  `1.5×` of Voronoi at every palette tested, and often below it.
+- **G2 failed in 3-D.** The eight-colour cubic checkerboard, degenerate by
+  construction, scored `excess = 0.10`. Its four-fold *edges* read as ordinary
+  vertices. A second instrument, `blob` (mean size of connected junction
+  regions), was added after this failure and is labelled as such. It reads the
+  checkerboard at `3430–5120` cells against Voronoi's `14–29`.
+- **G3 holds**: the 3-D checkerboard, relaxed, loses all valence-5 cells by
+  step 2,500 and ends at Voronoi-sized blobs.
+- `d = 4` is **untested**: a `24⁴` box cannot hold Voronoi cells at the relaxed
+  width, so no matched baseline exists.
+
+### The seeding problem — found post hoc
+
+Found during the wetting work, not pre-registered. The published seeding,
+`rand × 0.1`, conserves each sector at mean `0.05`, too little to tile space.
+About 40% of every relaxed field sits at `−1`, labelled by `argmax` from
+residuals of order `0.01` (`+1` cover `0.54–0.60`, `−1` only `0.39–0.42`).
+With volume-filling seeding (`× 2/P`) the `−1` regions vanish. The selection
+gets cleaner: 2-D `P = 3` alone at `0.0153`, and 3-D `P = 4` alone at
+`0.00271`, with the 3-D `P = 5` rival now zero. The published rankings stand;
+the published densities are left in place but should not be quoted. On
+2026-10-31, `Constants_Audit.md` found five more experiments using this seeding
+with conserved dynamics.
+
+### Wall wetting: a wall makes room — 2/4
+
+`experiments/n3_wetting.py`, `project_genesis/wetting.py`. Two conserved
+sectors A and B, relaxed; then a free, dormant third sector C with coupling
+`g` to both.
+
+- **W1 fails**: below `g = 1/2`, C does not invade the bulk until `g` is
+  clearly below it (`0.25` cover at `g = 0.45`, against a threshold of `0.34`).
+- **W2 fails as specified.** The window came from a local linear threshold
+  (`g_lin ≈ 1.0`; the real one is near `0.62`, because a thin layer pays a
+  gradient cost). Final-state enrichment was also the wrong measure. Read at
+  onset, C is `3.6–9.4×` enriched on the walls for every `g ≥ 0.45`, but that
+  reading is post hoc.
+- **W3 holds**: dormant at the published `g = 1.5`.
+- **W4 holds**: three-sector junctions appear, but only in a partial-wetting
+  window, `g = 0.52–0.60`, located with a finer grid after the first run.
+  Below it, C seals the walls; above it, C stays dormant.
 
 ## What Comes Next
 

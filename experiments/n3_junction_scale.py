@@ -81,17 +81,24 @@ from project_genesis.multiphase import (  # noqa: E402
 BANNER = "=" * 78
 
 
-def relaxed(n_palette, size, ndim, steps, gamma, dt, seed, diffusion=1.0):
+def relaxed(n_palette, size, ndim, steps, gamma, dt, seed, diffusion=1.0,
+            seed_scale=0.1):
     """One relaxed field, mirroring `n3_capacity_separation._relax` exactly.
 
     The published cliff is measured on **volume-conserving** dynamics — plain
     Allen-Cahn coarsens without bound and every junction is transient, so the
     measure would have nothing stable to read. Seeding and stepping match that
-    experiment line for line; only the spatial dimension is parameterised, and
-    the 2-D case is pinned against `_relax` in the tests.
+    experiment line for line; only the spatial dimension is parameterised.
+
+    ``seed_scale`` (added 2026-10-31) sets the noise amplitude. The default
+    ``0.1`` is the published seeding, which is defective: its sector means are
+    too small to tile space, and about 40% of each field ends up at ``-1``
+    (`Docs/Junction_Selection.md`, "The seeding problem"). Pass ``2 / n_palette``
+    for volume-filling seeding. The default case is pinned in
+    `tests/test_junction_scale.py`.
     """
     rng = np.random.default_rng(seed)
-    f = rng.random((n_palette, *([size] * ndim))) * 0.1
+    f = rng.random((n_palette, *([size] * ndim))) * seed_scale
     for _ in range(steps):
         f, _k = step_multiphase_conserved(f, None, diffusion=diffusion,
                                           gamma=gamma, dt=dt)
