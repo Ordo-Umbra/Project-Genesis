@@ -316,3 +316,32 @@ ringing (`dt` is stable there, but only at `−0.8`).
 
 **Next, and why:** the seeded experiments (audit option 3). S1 is the last live
 defect, and the summary row on the thermal gauge sector rests on one of them.
+
+### Addendum 4, same day: a plain-words explainer
+
+**Asked:** the lead wants others to be able to understand what is being built,
+how, and what it might imply, in simpler language, for a wide audience. They
+also want it to avoid setting groups against each other.
+
+**Done:** `Docs/In_Plain_Words.md`, a new core document, linked first in the
+README's Start-here table and added to the core list in `CLAUDE.md`. It covers
+the question, the two-part idea, how it is tested, four measured results in
+plain terms (including that the `d + 1` result is geometry), what is not
+shown, the idea's relatives in other fields, and a hedged "why it might
+matter".
+
+**Decided with the lead:** frame the idea as joining a conversation many
+fields already share, not as overturning anyone. The lead's view that
+disparate fields are at core stable recursion appears only under "Not shown",
+as the larger hypothesis.
+
+**Pushback given in chat:** a lens that fits every field can't be tested
+unless it says what a field would look like if it *weren't* stable recursion.
+And this repo has already seen a shared pattern turn out to be shared geometry.
+
+**Full suite:** 1,626 passed after the structural fix; the three 3-D vertex
+tests passed on their own. The count is now 1,629.
+
+**Next, and why:** the lead's call. Either re-run the seeded experiments (S1,
+the last live defect) or keep going with the explainer: a shareable page, or
+versions for specific readers.

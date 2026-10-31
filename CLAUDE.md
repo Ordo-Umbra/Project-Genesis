@@ -74,6 +74,7 @@ change, so a reader gets the current position without reading the history.
 Where a claim changed, say so briefly and point to the record. Core documents:
 
 - `README.md`
+- `Docs/In_Plain_Words.md` (for a general reader; keep it in step with the rest)
 - `Docs/The_Principle.md`
 - `Docs/Junction_Selection.md`
 - `Docs/Wall_Wetting.md`

@@ -27,6 +27,7 @@ it, runs them, and reports verdicts — including when the answer is no.
 
 | If you want | Read |
 |---|---|
+| What this is, in plain words, no background needed | [`Docs/In_Plain_Words.md`](Docs/In_Plain_Words.md) |
 | The theory, from zero, in half an hour | [`Docs/The_Principle.md`](Docs/The_Principle.md) |
 | One result that stands entirely alone, no framework needed | [`Docs/Junction_Selection.md`](Docs/Junction_Selection.md) |
 | The full chronological record, ~100 experiments with verdicts | [`Docs/Experiment_Log.md`](Docs/Experiment_Log.md) |
