@@ -144,7 +144,7 @@ predicted — `1/3`:
 | §2 gap, fitting window | difference | ratio `1.77` | not exercised |
 | §2 gap, noise floor (both sweeps) | difference | `n_C` pinned | not exercised |
 | §2/§3 `P = 3`, 2-D | ranking | `2.79×` | **exercised — held** |
-| §2/§3 `P = 3`, 3-D | ranking | `0.68×` | **exercised — held** |
+| §2/§3 `P = 3`, 3-D | ranking | `0.68×` | exercised — held, **at the 2-D junction test** (see below) |
 | §5 eviction, ordered point ahead | boolean | `0.24×` | **exercised — held** |
 | §5 eviction, order costs capacity | boolean | `27–50×` | categorical, see §5 |
 
@@ -155,6 +155,12 @@ live: as the probe widens, `P = 4` closes on `P = 3` from `45.5×` to `16.6×` i
 the plane, and harder in space. The ranking survived a convention that genuinely
 threatened it, which is the strong version of the result and was already the
 honest reading. Same for the eviction condition on the oscillator substrate.
+
+*Updated 2026-10-31.* The 3-D row was scored with the published junction test
+`distinct >= 3`. In 3-D that test reads *edges*, not vertices (§3), so what held
+there is the ranking of triple lines. At the vertex test `distinct >= 4`, the
+3-D winner is `P = 4`, and how that ranking behaves as the probe widens has not
+been scored. The 2-D rows are unaffected.
 
 *One methodological correction, found by checking rather than by reasoning.*
 The first run of that experiment measured leads **additively** and reported the
@@ -721,7 +727,7 @@ structure; the larger ones make more. What they cannot do is hold it together.
 This corner is not chosen by fitting — it is what is left standing.
 
 **This is the falsifiable core.** Another palette scoring within 3× on the joint
-criterion sinks it.
+criterion in the plane sinks it.
 
 *One audit, because this measure is load-bearing.* The integration axis is
 full-palette junction density, and that measure has a known failure mode: once
@@ -733,10 +739,18 @@ The measure now carries a guard — a majority filter plus a resolved-domain-sca
 flag — and the sweep above was re-run with it. **[measured]** Every palette is
 resolved in both dimensions; the guard moves the numbers by less than 25% and
 changes no ranking. In 2-D it *strengthens* the result (the joint margin goes
-88× → 272×, because `P = 4`'s small integration was itself partly texture). In
-3-D `P = 3` still wins, and the `P = 3`:`P = 4` integration ratio moves 5.6× →
-6.4× — still short of the 10× the monopoly claim asks for. **So the 3-D
-weakening recorded below is real, not an artifact of the measure.**
+88× → 272×, because `P = 4`'s small integration was itself partly texture).
+
+*In three dimensions, updated 2026-10-31.* The sweep was also run in 3-D, and
+it reported `P = 3` still winning. **That reading does not stand.** Its
+integration axis uses the 2-D junction test `distinct >= 3`. In 3-D that test
+asks whether an *edge* carries the whole palette, and a three-sector field
+passes it along every triple line. So `P = 3` wins by counting alone, because
+lines outnumber points. On relaxed fields read at the vertex test
+(`distinct >= 4`, §3), the 3-D winner is `P = 4`. The joint criterion has not
+yet been run at the vertex test in 3-D, so the argument of this section is
+measured in the plane only. The original 3-D reading is kept in
+`Experiment_Log.md` and in the `n3_selection_sweep` docstring.
 
 ---
 
@@ -795,13 +809,15 @@ python experiments/n3_robustness_retrospective.py --from RESULTS  # all, was any
 ```
 
 Each prints its own pre-registered predictions, its verdict, and its honest
-scope — including when the prediction failed. 1255 test functions in `tests/`
+scope — including when the prediction failed. 1,615 test functions in `tests/`
 lock the central claims so they cannot drift silently. (That number was `872`
-from the day this file was written until it was counted again — a stale figure
-in a document about auditing stale figures.)
+when this file was written, then `1255`, and each went stale before anyone
+counted again: a stale figure in a document about auditing stale figures.
+Counted 2026-10-31.)
 
 **What would refute the whole thing:** a palette other than three scoring
-comparably on the joint criterion (§6); a capacity sweep that moves the
+comparably on the joint criterion in the plane (§6); a palette other than
+`d + 1` winning at the vertex test in any dimension (§3); a capacity sweep that moves the
 integrated fraction (§2 — run, and it does not); or an integration measure that scales with volume
 rather than surface (§2). Those are the load-bearing measurements. The rest is
 consequence.

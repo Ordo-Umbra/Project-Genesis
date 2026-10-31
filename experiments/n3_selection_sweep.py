@@ -68,6 +68,16 @@ So the selection is dimension-robust in its *winner* and not in its *strength*.
 In 3-D it clears its own falsifier (3×) by very little.  Anyone weighing this
 argument should weigh the 3-D number, not the 2-D one.
 
+*Note added 2026-10-31.* The 3-D reading above is kept as recorded, but it does
+not stand. The integration axis is ``full_palette_junction_density``, whose
+junction test is hardcoded to ``distinct >= 3``, the 2-D vertex number.  In 3-D
+that test asks whether an *edge* carries the whole palette, which every triple
+line of a three-sector field does, so ``P = 3`` wins by counting alone.  At the
+vertex test ``distinct >= 4`` the 3-D winner is ``P = 4``
+(``n3_junction_scale``).  "``P = d + 1`` is ruled out" is therefore wrong.  The
+joint criterion has not been run at the vertex test in 3-D.  See
+``Docs/Constants_Audit.md``.
+
 Usage::
 
     python experiments/n3_selection_sweep.py --output-dir artifacts/n3_selection

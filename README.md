@@ -72,7 +72,7 @@ same asymmetry can be stated without a lattice at all. They meet at exactly one
 
 | Question | Verdict |
 |---|---|
-| Does a field select a palette size, and which? | **`d + 1`**, measured at `d = 1, 2, 3, 4`. Rivals are *identically zero* in 1-, 2- and 4-D; in 3-D the nearest is live at `10×` behind |
+| Does a field select a palette size, and which? | **`d + 1`**, measured at `d = 1, 2, 3, 4` (`d = 4` weakly: 30–90 qualifying cells). Rivals are *identically zero* in 1-, 2- and 4-D. In 3-D one rival read `10×` behind on the published seeding; with seeding that fills the volume it is zero too |
 | Is that selection driven by capacity scarcity? | **No — refuted.** It is geometric: codimension counting, of which Plateau's trivalent vertex is the 2-D case. `P = 3` peaks at every capacity level *including no capacity field at all* |
 | Does distinction outrun integration by a fixed amount? | **Yes, in 2-D.** Distinction is volume-law (`n = 1.99`), integration is surface-law (`n = 0.95`) — a gap of `1.04`, one dimension, and the worst motion under any convention swept is 38% of the experiment's own tolerance |
 | Does the capacity law transplant off the lattice? | **The eviction condition does** — to a Hopfield network and a Kuramoto oscillator population, three structurally unrelated substrates. Whether the crossing sits at a substrate-independent `κ` is **not settled** |
@@ -171,7 +171,7 @@ python experiments/reflection_cost_model.py   # flat pricing, and the filters go
 python experiments/reflection_options.py      # breadth buys the floor, not the height
 python experiments/reflection_retraction.py   # what the interior cannot see
 
-python -m unittest discover -s tests      # 1599 checks, ~15 min
+python -m unittest discover -s tests      # 1615 checks, ~15 min
 python tools/make_figures.py              # regenerate the figures above
 ```
 
@@ -186,7 +186,7 @@ project_genesis/     the instruments — field dynamics, capacity, gauge sector,
                      substrates (Hopfield, Kuramoto), and the measures;
                      reflection*.py and *_ladder.py are the formal half
 experiments/         one file per question, each self-scoring
-tests/               ~1599 checks pinning the central claims so they cannot
+tests/               ~1615 checks pinning the central claims so they cannot
                      drift silently
 Docs/                the theory, the standalone results, the full record
 tools/               figure generation

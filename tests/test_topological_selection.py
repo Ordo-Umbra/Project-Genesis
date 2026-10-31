@@ -119,9 +119,15 @@ class TestSelectsThree(unittest.TestCase):
 
 
 class TestSelectsThreeIn3D(unittest.TestCase):
-    """Three survives in 3-D: triple junctions are abundant *lines*, while the
-    full palette for P≥4 needs sparse quadruple *points* — so a 3-colour palette
-    still maximizes the full-palette junction density."""
+    """Pins the published measure's 3-D behaviour: at ``distinct >= 3`` a
+    3-colour palette maximizes the full-palette density, because triple
+    junctions are abundant *lines* while P≥4 needs sparse quadruple *points*.
+
+    This is the edge reading, not a vertex selection. ``distinct >= 3`` is the
+    2-D vertex number, so in 3-D it counts edges, and P = 3 wins by counting
+    alone. At the vertex test (``distinct >= 4``) the 3-D winner is P = 4; see
+    ``experiments/n3_junction_scale.py`` and ``Docs/Constants_Audit.md``. No
+    test pins that vertex reading yet. The class name is kept for history."""
 
     @staticmethod
     def _evolve3d(P: int, *, size: int = 20, steps: int = 150, seed: int = 7) -> np.ndarray:

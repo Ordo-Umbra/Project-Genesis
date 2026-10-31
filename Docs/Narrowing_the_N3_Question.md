@@ -3,6 +3,9 @@
 *A sequence of verdicts from the Project Genesis testbench.*
 *Working note — 2026-06-10.*
 
+*Note added 2026-10-31: the 3-D conclusion below (three wins in 3-D) is
+superseded. The note on §8 says why.*
+
 ---
 
 ## Abstract
@@ -179,6 +182,16 @@ P≥4 (almost) cannot. The selection is done by the junction geometry; the
 measure only reads it out.
 
 ### 8. Does it survive in three dimensions?
+
+*Note added 2026-10-31. This section is kept as recorded. The mechanism it
+describes is right: in 3-D, three sectors meet along lines and four meet at
+points. What changed is which locus the claim is about. Here, a triple line
+carrying all three colours counted as a neutral junction, so `P = 3` wins
+because lines outnumber points. That is fixed by counting, not found by the
+field. The programme now states the claim at point junctions, which need
+`d + 1` sectors, and there the 3-D winner is `P = 4`. See
+[`Junction_Selection.md`](Junction_Selection.md) and
+[`Constants_Audit.md`](Constants_Audit.md).*
 
 **Yes — and for a sharper reason than in 2-D.** The natural worry was that the
 2-D result rode on junctions being 3-fold, and that 3-D, where Plateau's laws

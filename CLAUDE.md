@@ -47,6 +47,39 @@ result most likely to be read by outsiders, see `Docs/Junction_Selection.md`.
    (for example random Voronoi) scores before crediting the dynamics.
 5. **Quote rankings over magnitudes** when sample counts are small, and say
    how small.
+6. **Keep the record; keep the core current.** This is the lead's rule
+   (2026-10-31), and the next section says how to apply it.
+
+## Record and core documents
+
+Two kinds of document, handled differently.
+
+**Record** is what was run and what was found, as it was found. It is never
+rewritten or deleted. If a later result changes what an entry means, add a
+short dated note at that entry pointing to the correction, and leave the entry
+itself alone. Record documents:
+
+- the dated entries of `Docs/Experiment_Log.md`
+- `Docs/Session_Log.md`
+- dated working notes, such as `Docs/Narrowing_the_N3_Question.md`
+- experiment docstrings: their predictions and post-run notes
+- the other essays in `Docs/`, until the lead says otherwise
+
+**Core** is what the programme holds now. It is updated in place as results
+change, so a reader gets the current position without reading the history.
+Where a claim changed, say so briefly and point to the record. Core documents:
+
+- `README.md`
+- `Docs/The_Principle.md`
+- `Docs/Junction_Selection.md`
+- `Docs/Usage.md`
+- `Docs/Constants_Audit.md` (statuses update as fixes land; findings stay listed)
+- the summary table at the top of `Docs/Experiment_Log.md`
+- this file
+
+New core documents will appear as the work grows. Add each one to this list
+when it does. When a correction lands, check every core document for the old
+claim, not just the one where it was noticed.
 
 ## The recurring failure type: regime-blind defaults
 
@@ -81,9 +114,10 @@ defects stay live for callers who don't opt in, and older docs still quote them.
   is in `Docs/Constants_Audit.md`.
 - **The 2-D junction threshold `m = 3` is still the default** in
   `multiphase.full_palette_junction_density`, `count_triple_junctions` and
-  `selection.py`. In 3-D it reads edges, not vertices. `The_Principle.md` §6 and
-  `Narrowing_the_N3_Question.md` still say three wins in 3-D on that reading.
-  For any `d`, use `junction_scale.full_palette_density(min_valence=d+1)`.
+  `selection.py`. In 3-D it reads edges, not vertices, so `P = 3` wins there by
+  counting alone. The core docs were corrected on 2026-10-31; the record still
+  shows the old reading, with dated notes. For any `d`, use
+  `junction_scale.full_palette_density(min_valence=d+1)`.
 - **d+1 is geometric.** Random Voronoi selects it with no dynamics at all. What
   the relaxation contributes is genericity: degenerate junctions split.
   (`experiments/n3_junction_null.py`, `experiments/n3_junction_genericity.py`)

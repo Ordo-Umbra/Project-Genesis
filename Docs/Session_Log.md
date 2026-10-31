@@ -195,3 +195,36 @@ lead to choose.
 
 **Notes for the next session:** the audit is built from reading. Before
 quoting any "at risk" row as a result, run the one check it names.
+
+### Addendum, same day: keep the record, keep the core current
+
+**Asked:** fix the stale 3-D claims. The lead set a rule for how: keep results
+from previous runs and the issues found, but update the final and core
+documents as the work progresses. New core documents will come later.
+
+**Done:**
+- `CLAUDE.md`: the rule is working principle 6, with a new "Record and core
+  documents" section listing which documents are which. The unlisted essays in
+  `Docs/` default to record.
+- **Core, updated in place:** `The_Principle.md` (§2's robustness row, §6, the
+  refutation list, and the test count), `Usage.md`, `README.md` (the 3-D rival
+  line and the test count), the summary table in `Experiment_Log.md`, and
+  `Constants_Audit.md` (finding 1 now marked corrected, and a new option 5).
+- **Record, dated notes only:** the `Experiment_Log.md` topological-selection
+  entry, `Narrowing_the_N3_Question.md` (top and §8), the `n3_selection_sweep`
+  docstring, and the docstring of `TestSelectsThreeIn3D`. That test pins the
+  edge reading, so it was kept, and its docstring now says what it pins.
+
+**Found:** the m = 3 reading also sat in §2's robustness table ("`P = 3`, 3-D,
+ranking held"), which the first pass of the audit missed. Narrowing's §8 has the
+right mechanism (lines outnumber points) but stated the claim at lines. That
+makes the 3-D result forced by counting, so its note says that rather than
+calling it wrong. No test pins the 3-D vertex reading.
+
+**Open:** the code default is still `m = 3` (M1 stays live). The core docs
+still lag the 2026-10-10 results: `The_Principle.md` and `README.md` don't yet
+carry the Voronoi null, the genericity result, the seeding problem or wetting.
+
+**Next, and why:** bring the core docs up to date with the 2026-10-10 results,
+under the new rule. Or do the structural fix (audit option 2). Ask the lead
+which.

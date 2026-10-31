@@ -41,6 +41,14 @@ field passes it trivially. The repo already measured this: the control table in
 and `P = 4` at `m = 4`. So the 3-D half of §6 reads edges, not vertices, and
 contradicts §3 of the same document. The 2-D readings are unaffected.
 
+*Status, 2026-10-31: the docs are corrected.* The core documents now say this:
+`The_Principle.md` (§2's robustness row, §6, and the refutation list),
+`Usage.md`, `README.md`, and the summary table in `Experiment_Log.md`. The
+record keeps the old reading, with dated notes: the `Experiment_Log.md` entry,
+`Narrowing_the_N3_Question.md`, the `n3_selection_sweep` docstring, and the
+docstring of the 3-D test in `test_topological_selection.py`. The code default
+is still `3`, so M1 stays **live**. No test pins the 3-D vertex reading.
+
 **2. The seeding defect reaches six experiments, not one.** All six pair
 `rand × 0.1` seeding with volume-conserving dynamics:
 
@@ -275,10 +283,7 @@ rest on.
 
 ## What could be done with this (not done here)
 
-1. **Correct the stale 3-D text.** §6 of `The_Principle.md`,
-   `Narrowing_the_N3_Question.md`, the `n3_selection_sweep` docstring and
-   `Usage.md`. No new run is needed: the repo's own control table already
-   explains the reading.
+1. ~~**Correct the stale 3-D text.**~~ Done 2026-10-31 (see finding 1).
 2. **Make 2-D-only measures refuse other dimensions.** For example, raise
    if `full_palette_junction_density` is called with `labels.ndim != 2` and no
    explicit valence, and check `dt·(4d + 2) < 2` in the step functions. That
@@ -289,3 +294,5 @@ rest on.
 4. **Sweep `γ` and the step count** for the junction ranking in 2-D and 3-D.
    These are the two relaxation constants the headline result rests on that
    nobody has moved.
+5. **Pin the 3-D vertex reading with a test.** Only the 3-D *edge* reading is
+   pinned now (`test_topological_selection.py`).
