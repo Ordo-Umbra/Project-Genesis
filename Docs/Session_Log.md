@@ -387,3 +387,49 @@ limit at 5-D, the N⋆ = 3 corridor, and the Voronoi null.
 **Note:** the 2026-10-11 plan was to settle the voice through outside review of
 Traps before drafting more. This section was drafted before any review came
 back, so if the review changes the voice, both sections get revised together.
+
+### Addendum 7, same day: the manual's first full draft
+
+**Asked:** fill out the manual's missing sections where possible.
+
+**Done:** `Manual/Lucidity.md` §1–4 and §6–10, in the Traps/Perspective voice.
+Each section closes with a "Try this". The cases come from the testbench, with
+no names: the `n_phases` guard (§1); wetting and the `−1` labels (§2); "stable
+tiling" still coarsening, and recall checked at four sizes (§3); three
+substrates, and the unsettled point (§4); the CS control and the regime-blind
+pattern with its guard (§6); the overfull 2026-10-10 session and the stale test
+count (§7); flat-cost naming and the re-derive probe (§8); the
+obstacle/blame rewording (§9). §10 is a change table built from this log.
+Wording was checked against the record, and three slips were corrected before
+committing.
+
+**Open:** outside review of the whole draft. The earlier plan was to review
+Traps alone first; now everything can be reviewed together.
+
+## 2026-11-01: Lucidity, first complete edition
+
+**Branch:** `ccr-cd1f1c2a-xul24u`
+
+**Asked:** the lead wants outside review, but in their setting nobody will
+look at something that seems unfinished. It needs to look mostly finished,
+with a clear direction, next steps and open areas.
+
+**Done:** a reviewer's read of the whole manual, then the fixes:
+- a status line ("first complete edition, open for review") in place of
+  "working draft";
+- a note on where the *Seen* examples come from;
+- linked contents;
+- an "Open areas, and what comes next" section: where the manual is thin, what
+  feedback would help most, and next steps;
+- the Inherited Constant count corrected ("three times" → "again and again",
+  pointing to §6);
+- a real case for Forced Zero;
+- one rewrapped paragraph;
+- two new rows in the §10 table.
+
+**Gaps I named in "Open areas" (the lead may edit them):** cases all from one
+body of work; exercises untested; little on understanding built between
+people; little on the cost of the practice; a voice some may find preachy.
+
+**Next, and why:** the lead's call on where to share it. A rendered page is
+available on request.
