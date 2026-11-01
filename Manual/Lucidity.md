@@ -2,9 +2,9 @@
 
 *A practice for coming to understanding, and for staying able to grow it.*
 
-*Working draft: every section in rough form, not yet reviewed. It has no
-author on purpose. It asks to be trusted only as far as you can check it
-yourself.*
+*First complete edition, November 2026. Open for review: see
+[Open areas](#open-areas-and-what-comes-next). It has no author on purpose. It
+asks to be trusted only as far as you can check it yourself.*
 
 ---
 
@@ -17,23 +17,38 @@ because this document says so, drop that part.
 The paths are infinite. A manual can't walk them for you. All it can do is
 mark where others have fallen.
 
+The examples marked *Seen* come from one body of work: a long series of
+computer experiments on how structure forms and lasts. You don't need to know
+that work to use any of this. The examples are there so you can see each
+practice tested at least once, and so you can check them.
+
 ---
 
-## Outline
+## Contents
 
-0. **Traps.** First, because you are already in some of them.
-1. **Distinction.** Begin with the simplest difference you can actually hold.
-2. **The grey.** Look at the boundaries; that is where new things find room.
-3. **Persistence.** Ask what lasts, and test it rather than assume it.
-4. **Many paths.** One path shows you a road. Many paths show you the land.
-5. **Perspective.** Every "best" is best for a given space; name the space.
-6. **Failure.** Record failures as specific facts. When the same failure
-   repeats, the fault is deeper than any one instance.
-7. **Pace.** Understanding has to be absorbed, not only produced.
-8. **The climb.** There is no final rung. Each understanding you state becomes
-   the floor for the next.
-9. **Disagreeing with this manual.** How to find where it is wrong.
-10. **Record of changes.** What was revised, and why.
+0. [**Traps.**](#0-traps) First, because you are already in some of them.
+1. [**Distinction.**](#1-distinction) Begin with the simplest difference you
+   can actually hold.
+2. [**The grey.**](#2-the-grey) Look at the boundaries; that is where new
+   things find room.
+3. [**Persistence.**](#3-persistence) Ask what lasts, and test it rather than
+   assume it.
+4. [**Many paths.**](#4-many-paths) One path shows you a road. Many paths show
+   you the land.
+5. [**Perspective.**](#5-perspective) Every "best" is best for a given space;
+   name the space.
+6. [**Failure.**](#6-failure) Record failures as specific facts. When the same
+   failure repeats, the fault is deeper than any one instance.
+7. [**Pace.**](#7-pace) Understanding has to be absorbed, not only produced.
+8. [**The climb.**](#8-the-climb) There is no final rung. Each understanding
+   you state becomes the floor for the next.
+9. [**Disagreeing with this manual.**](#9-disagreeing-with-this-manual) How to
+   find where it is wrong.
+
+[**Open areas, and what comes next.**](#open-areas-and-what-comes-next) Where
+this is thin, and what would help most.
+
+10. [**Record of changes.**](#10-record-of-changes) What was revised, and why.
 
 ---
 
@@ -66,8 +81,9 @@ change suddenly does.
 you are still standing in that place.
 
 *Seen:* a rule chosen for flat shapes was carried into three and four
-dimensions, where it quietly measured the wrong thing. It happened three
-times, with three different rules, before the pattern had a name.
+dimensions, where it quietly measured the wrong thing. It happened again and
+again, with different rules, before the pattern had a name. Section 6 tells
+what finally fixed it.
 
 ---
 
@@ -140,6 +156,11 @@ before you looked.
 
 *The way out:* separate what you found from what you were bound to find. Both
 are worth knowing. Only one is a discovery.
+
+*Seen:* a result showed every rival scoring exactly zero. Some of those zeros
+were guaranteed by how the question was asked: a set too small to fill a
+meeting point can't fill it, whatever the world is like. Only the other zeros
+said anything about the world.
 
 ---
 
@@ -526,8 +547,8 @@ One failure is an event. The same failure twice is information about the
 system that produced both.
 
 *Seen:* a setting chosen in one situation was carried silently into others,
-and broke there. It happened with one setting, then another, then another,
-and it was fixed each time by adding a new option beside the old setting. The old
+and broke there. It happened with one setting, then another, then another. Each
+time it was fixed by adding a new option beside the old setting, and the old
 one stayed in place, so the same failure kept coming back. The real fix was to
 make each setting refuse to run outside the situation it was chosen for. On
 its first run, that refusal found three more instances nobody had seen.
@@ -687,6 +708,48 @@ would mislead someone. Write it down.
 
 ---
 
+## Open areas, and what comes next
+
+This edition is complete in the sense that every section is written. It is not
+finished, and by its own account it can't be. Here is where it is thinnest.
+
+### Where it is thin
+
+- **One body of work.** Every *Seen* comes from the same series of
+  experiments, most of them computational. The practices need cases from other
+  kinds of work: other sciences, crafts, teaching, recovery, any long effort
+  to understand something.
+- **The exercises are untested.** No reader has yet reported trying a
+  *Try this* and what happened. Until some do, there is no evidence they help.
+- **Working alone.** It says a lot about one person checking their own
+  understanding, and little about understanding built between people:
+  disagreement, trust, and sharing a record.
+- **The cost of the practice.** It says little about tiredness, frustration,
+  or when to set an idea down rather than test it further.
+- **The voice.** It speaks directly, in the second person. Some readers will
+  find that clear, and others will find it preachy.
+
+### What would help most
+
+If you read this, any of these would help:
+
+1. A part that didn't hold for you, and the case where it failed.
+2. A *Try this* you actually tried, and what happened.
+3. A trap of your own, in the form of section 0.
+4. Something important that it never mentions.
+5. A place where the voice put you off.
+
+Each change made in response goes into the record of changes, with its reason.
+
+### What comes next
+
+1. Outside review of this edition.
+2. Cases from other kinds of work, so no practice rests on one road.
+3. Readers' traps, added to section 0.
+4. A second edition, with every change recorded below.
+
+---
+
 ## 10. Record of changes
 
 What was revised, and why. Newest at the bottom.
@@ -699,6 +762,8 @@ What was revised, and why. Newest at the bottom.
 | 2026-10-11 | Traps redrafted in a direct second-person voice | to be read as practice, not description |
 | 2026-10-31 | Section 5, Perspective, drafted | from a conversation about open and solid ideas |
 | 2026-10-31 | Sections 1–4 and 6–9 drafted | to complete the first full draft; none yet reviewed |
+| 2026-11-01 | First complete edition: status line, linked contents, a note on where the examples come from, and an "Open areas" section | prepared for outside review |
+| 2026-11-01 | Inherited Constant: "three times" became "again and again", with a pointer to section 6; Forced Zero gained a case | the count had grown, and every trap with a real case should show it |
 
 Add to this table whenever anything changes, including a change made because
 someone disagreed.
